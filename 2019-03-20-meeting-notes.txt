@@ -1,0 +1,17 @@
+We'll plan to meet at AIM, May 20-24.
+We intend to support abstract groups, groups with a certain presentation (be it permutation, abelian, or other), faithful linear representation with coefficients in Fp, C, Z, or Z/NZ up to various kinds of conjugacy, finite subgroups of SO, GSp and other algebraic groups, subgroups of finite index in various infinite algebraic groups (SL2Z or PSL2Z being the most important example)
+Focus on how do things integrate with the rest of the LMFDB: this is where we can add value.
+Drew will invite Tim Dokchitser
+
+Goals:
+GL_n(C) (n=2, maybe 3)
+GL_2(Fp) (p up to 1000)
+GL_n(Z) (n up to 6)
+Transitive groups (up to 47, but with bounds on the order that depend on the degree)
+Intransitive permutation representations (unclear what the bounds are)
+Finite index subgroups of PSL_2(Z)
+
+Sources of inspiration:
+* Tim Dokchitser's [GroupNames](https://people.maths.bris.ac.uk/~matyd/GroupNames/)
+* Sebastian Pauli's [Congruence Subgroups](https://mathstats.uncg.edu/sites/pauli/congruence/)
+* Atlas of simple groups (the book).  We probably won't be able to support all of the conjugacy class names since some of them are hand-coded.
