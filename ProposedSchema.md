@@ -9,11 +9,11 @@ name              | text    | As in GAP's StructureDescription
 pretty            | text    | LaTeXed version of `name`
 order             | integer | 
 exponent          | integer | 
+perfect           | boolean | 
 abelian           | boolean | 
 cyclic            | boolean | 
 simple            | boolean | 
 solvable          | boolean | 
-perfect           | boolean | 
 center            | text    | Label for the isomoprhism class of the center
 abelian_quotient  | text    | Label for the isomorphism class of the maximal abelian quotient
 derived_group     | text    | Label for the isomorphism class of the derived subgroup
@@ -32,14 +32,13 @@ name          | text     | The name given by GAP (also used by Pari, Magma, Sage
 pretty        | text     | latex of a nicer name for this group (including $)
 n             | smallint | The degree (`n` from `S_n`)
 t             | integer  | The `t`-number, a standard index for conjugacy classes of subgroups of `S_n`
-gapid         | bigint   | The GAP id for the group, 0 if not known
-gapidfull     | text     | GAP id of the group as a pair [order, number], or empty string if it is not available
 order         | numeric  | The size of the group
+gapid         | bigint   | The GAP id for the group, 0 if not known
 parity        | smallint | 1 if the group is a subgroup of A_n, otherwise -1
-ab            | smallint | Whether or not the group is abelian: 1 if yes, 0 if no
-cyc           | smallint | 1 if the group is cyclic, otherwise 0
-solv          | smallint | 1 if the group is solvable, otherwise 0
-prim          | smallint | Whether or not the permutation representation is primitive, 1 for yes, 0 for no
+abelian       | boolean  | 
+cyclic        | boolean  | 
+solvable      | boolean  | 
+primitive     | boolean  | 
 auts          | smallint | The number of automorphisms of a degree `n` field with this as its Galois group
 arith_equiv   | smallint | Number of arithmetically equivalent fields for number fields with this Galois group
 repns         | jsonb    | If `K` is a degree `n` field with this Galois group, this gives other small degree fields with the same Galois closure, up to isomorphism, in terms of their Galois groups.  List of pairs `[n, t]`
@@ -47,54 +46,40 @@ subs          | jsonb    | If `K` is a degree `n` field with this Galois group, 
 resolve       | jsonb    | Low degree resolvents, up to isomorphism, for the a field with this Galois group
 moddecompuniq | jsonb    | ????
 
-Table name: `gps_gmodules`
+Table name: `gps_bravais`
 
-Finite dimensional representations of transitive groups
+Finite subgroups of GL_n(Z), up to Bravais equivalence:
+For G < GL_n(Z), let F(G) be the set of symmetric nxn real matrices F with g^t F g = F for all g in G.
+Let B(G) be the set of b in GL_n(Z) with b^t F b = F for all F in F(G).  Then G and G' are Bravais equivalent if B(G) is conjugate to B(G').
 
-Column   | Type     | Notes
----------|----------|------
-dim      | smallint | 
-n        | smallint | 
-t        | smallint | 
-name     | text     | 
-gens     | jsonb    | 
-index    | smallint | 
-complete | smallint | 
+dim
 
-Table name: `gps_sato_tate`
 
-Sato-Tate groups
+Table name: `gps_qrep`
 
-Column             | Type     | Notes
--------------------|----------|------
-real_dimension     | smallint | 
-trace_zero_density | text     | 
-identity_component | text     | 
-name               | text     | 
-degree             | smallint | 
-trace_histogram    | text     | 
-moments            | jsonb    | 
-components         | smallint | 
-gens               | jsonb    | 
-weight             | smallint | 
-label              | text     | 
-supgroups          | jsonb    | 
-rational           | boolean  | 
-counts             | jsonb    | 
-pretty             | text     | 
-component_group    | text     | 
-subgroups          | jsonb    | 
+Finite subgroups of GL_n(Z), up to GL_n(Q) conjugacy
 
-Table name: `gps_sato_tate0`
+label          | text      | ???
+dim            | smallint
+order          | numeric   | The size of the group
+gapid          | bigint    | The GAP id for the group, 0 if not known
+trans_ids      | integer[] | List of transitive group IDs isomorphic to this finite group
+abelian        | boolean
+cyclic         | boolean
+solvable       | boolean
+irreducible    | boolean
+decomposition  | jsonb     | List of pairs (lab, n) giving the decomposition as a direct sum of irreducible Q-reps.  lab is the label for the corresponding GL_n(Q)-class, and n the multiplicity
+gens           | integer[] | List of matrices generating group
 
-Identity components of Sato-Tate groups
+Table name: `gps_zrep`
 
-Column         | Type     | Notes
----------------|----------|------
-description    | text     | 
-degree         | smallint | 
-label          | text     | 
-pretty         | text     | 
-real_dimension | smallint | 
-name           | text     | 
+Finite subgroups of GL_n(Z), up to GL_n(Z) conjugacy
 
+label          | text     | ???
+dim            | smallint
+order          | numeric  | The size of the group
+gapid          | bigint   | The GAP id for the group, 0 if not known
+q_class        | text     | the label for the GL_n(Q) class containing this conjugacy class
+indecomposible | boolean
+irreducible    | boolean
+decomposition  | jsonb    | List of pairs (lab, n) 
