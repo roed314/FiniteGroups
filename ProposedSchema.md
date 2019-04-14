@@ -1,87 +1,280 @@
+# Groups
+
 ## Abstract groups
 
 `gps_small`: Abstract groups up to isomorphism, as in GAP and Magma.
 
-Column            | Type    | Notes
-------------------|---------|------
-label             | text    | GAP ID encoded as a string `N.n`, where `N` is the order of the group and `n` distinguishes groups of the same order (as determined in GAP)
-name              | text    | As in GAP's StructureDescription
-pretty            | text    | LaTeXed version of `name`
-order             | integer | 
-exponent          | integer | 
-perfect           | boolean | 
-abelian           | boolean | 
-cyclic            | boolean | 
-simple            | boolean | 
-solvable          | boolean | 
-center            | text    | Label for the isomoprhism class of the center
-abelian_quotient  | text    | Label for the isomorphism class of the maximal abelian quotient
-derived_group     | text    | Label for the isomorphism class of the derived subgroup
-maximal_subgroups | jsonb   | List of pairs `(H, m)`, where `H` is the label for a maximal subgroup (up to isomorphism), and `m` is the number of such subgroups
-normal_subgroups  | jsonb   | List of pairs `(H, m)`, where `H` is the label for a normal subgroup (up to isomorphism), and `m` is the number of such subgroups
-clases            | jsonb   | List of triples of integers giving information about conjugacy classes?
+Column            | Type     | Notes
+------------------|----------|------
+label             | text     | GAP ID encoded as a string `N.n`, where `N` is the order of the group and `n` distinguishes groups of the same order (as determined in GAP)
+name              | text     | Primary description
+tex_name          | text     | Latex version of the primary description
+aliases           | text[]   | List of other descriptions, as in groupnames.org (don't include extension labels, since those are generated from the subgroups table)
+tex_aliases       | text[]   | Latex versions of the other descriptions
+order             | integer  | Size of the group
+factored_order    | smallint[] | List of pairs `(p, e)` giving the factorization of the order
+exponent          | integer  | Exponent of the group
+abelian           | boolean  |
+cyclic            | boolean  |
+solvable          | boolean  | chain of normal subgroups with abelian quotients
+supersolvable     | boolean  | chain of normal subgroups with cyclic quotients
+metacyclic        | boolean  | extension of cyclic by cylic
+metabelian        | boolean  | extension of abelian by abelian
+simple            | boolean  |
+almost_simple     | boolean  | lies between a non-abelian simple group and its automorphism group
+quasisimple       | boolean  | perfect group that is a central extension of a simple group
+perfect           | boolean  | commutator subgroup equal to G
+monomial          | boolean  | every complex irrep induced from a 1-d rep of some subgroup
+rational          | boolean  | all characters are rational valued
+Zgroup            | boolean  | all Sylow subgroups cyclic
+Agroup            | boolean  | all Sylow subgroups abelian
+pgroup            | smallint | p if order a power of p, otherwise 0
+elementary        | smallint | If the direct product of a cyclic group and a p-group, gives the product of all possible p.  If not, 0.
+hyperelementary   | smallint | If the extension of a p-group by a cyclic group of order prime to p, gives the product of all possible p.  If not, 0.
+rank              | smallint | the minimal size of a generating system of G.  Usually the same as ngents, but rank might be NULL if not known, or `ngens` may be NULL if no presentation given.
+eulerian_function | numeric  | the ratio of the number of generating sets with cardinality equal to the rank by the size of the automorphism group
+center            | integer  | Subgroup label for the center Z
+center_label      | text     | Label for the isomoprhism class of the center Z (include?)
+central_quotient  | text     | Label for the isomorphism class of G/Z (include?)
+commutator        | integer  | Subgroup label for the commutator subgroup
+commutator_label  | text     | Label for the isomorphism class of the commutator subgroup (include?)
+abelian_quotient  | text     | Label for the isomorphism class of the maximal abelian quotient (include?)
+commutator_count  | integer  | The minimal integer l so that every element of the commutator subgroup can be written as a product of at most l commutators
+frattini          | integer  | Subgroup label for the Frattini subgroup
+frattini_label    | text     | Label for the isomorphism class of the Frattini subgroup (include?)
+frattini_quotient | text     | Label for the isomorphism class of the Frattini quotient (include?)
+fitting           | integer  | Subgroup label for the Fitting subgroup (largest nilpotent normal)
+radical           | integer  | Subgroup label for the radical (largest solvable normal)
+socle             | integer  | Subgroup label for the socle (generated by minimal normal subgroups)
+transitive_degree | integer  | Smallest transitive degree in which this group arises
+smallrep          | integer  | Dimension of the smallest faithful irreducible rep (0 if center non-cyclic)
+aut_order         | numeric  | Order of the automorphism group
+aut_group         | text     | Label for the automorphism group (might be null if not in database)
+outer_order       | numeric  | Order of the outer automorphism group
+outer_group       | text     | Label for the outer automorphism group (might be null if not in database)
+nilpotency_class  | smallint | The smallest n such that G has a central series of length n (-1 if not nilpotent)
+sylow_subgroups   | integer[] | List of pairs `(p, H)`, where `H` is the subgroup label for the conjugacy class of p-Sylow subgroups
+sylow_subgroups   | jsonb    | List of triples `(p, H, m)`, where `H` is the label for a p-Sylow subgroup and m is the number of such subgroups
+ngens             | smallint | Number of generators in the presentation (NULL if no presentation available)
+relations         | text     | Latex string giving the relations (NULL if no presentation available).  We always use generators `a`, `b`, `c`, etc.
+number_conjugacy_classes | integer | Number of conjugacy classes of elements
+number_subgroup_classes  | integer | Number of conjugacy classes of subgroups
+number_subgroups  | integer  | Number of subgroups
+number_normal_subgroups  | integer | Number of normal subgroups
+number_characteristic_subgroups | integer | Number of characteristic subgroups
+derived_series    | integer[] | Subgroup labels for the derived series (each term is the commutator of the previous)
+derived_length    | smallint | The number of steps in the derived series (0 for a perfect group)
+perfect_core      | integer  | The subgroup label for the end of the derived series
+chief_series      | integer[] | Subgroup labels for a chief series (normal series that cannot be refined)
+lower_central_series | integer[] | Subgroup labels for the lower central series (`U_{i+1} = [G, U_i]`)
+upper_central_series | integer[] | Subgroup labels for the upper central series (`U_i/U_{i+1} = Z(G/U{i+1})`)
+abelian_invariants | integer[] | Invariants of the maximal abelian quotient, as a sorted list of prime powers (could also make this NULL for non-abelian groups)
+schur_multiplier  | text     | Label for the Schur multiplier (H_2(G, Z))
+
 
 ## Permutation groups
 
 `gps_transitive`: Transitive group labels, as in GAP and Magma.
 
+There are 4952 transitive groups up to n=23.
+
 Column        | Type     | Notes
 --------------|----------|------
 label         | text     | Label is of the form `nTt` where `n` is the degree and `t` is the "t-number"
+group         | text     | The label for the abstract group
 name          | text     | The name given by GAP (also used by Pari, Magma, Sage, etc)
 pretty        | text     | latex of a nicer name for this group (including $)
 n             | smallint | The degree (`n` from `S_n`)
 t             | integer  | The `t`-number, a standard index for conjugacy classes of subgroups of `S_n`
 order         | numeric  | The size of the group
-gapid         | bigint   | The GAP id for the group, 0 if not known
 parity        | smallint | 1 if the group is a subgroup of A_n, otherwise -1
-abelian       | boolean  | 
-cyclic        | boolean  | 
-solvable      | boolean  | 
-primitive     | boolean  | 
+abelian       | boolean  | (include?)
+cyclic        | boolean  | (include?)
+solvable      | boolean  | (include?)
+primitive     | boolean  | preserves no nontrivial partition of `{1,...,n}`
 auts          | smallint | The number of automorphisms of a degree `n` field with this as its Galois group
 arith_equiv   | smallint | Number of arithmetically equivalent fields for number fields with this Galois group
-repns         | jsonb    | If `K` is a degree `n` field with this Galois group, this gives other small degree fields with the same Galois closure, up to isomorphism, in terms of their Galois groups.  List of pairs `[n, t]`
+repns         | jsonb    | If `K` is a degree `n` field with this Galois group, this gives other small degree fields with the same Galois closure, up to isomorphism, in terms of their Galois groups.  List of pairs `[n, t]` (include?)
 subs          | jsonb    | If `K` is a degree `n` field with this Galois group, this gives the subfields up to isomorphism in terms of their Galois groups
-resolve       | jsonb    | Low degree resolvents, up to isomorphism, for the a field with this Galois group
+resolve       | jsonb    | Low degree resolvents, up to isomorphism, for a field with this Galois group
 moddecompuniq | jsonb    | ????
 
-## Bravais groups
+## Subgroups
 
-`gps_bravais`: Finite subgroups of GL_n(Z), up to Bravais equivalence:
-For `G < GL_n(Z)`, let `F(G)` be the set of symmetric nxn real matrices `F` with `g^t F g = F` for all `g` in `G`.
-Let `B(G)` be the set of `b` in `GL_n(Z)` with `b^t F b = F` for all `F` in `F(G)`.  Then `G` and `G'` are Bravais equivalent if `B(G)` is conjugate to `B(G')`.
+`gps_subgroups`: subgroups/short exact sequences of finite groups
 
+Each row corresponds to a conjugacy class of subgroup.  There may be groups where our list of subgroups is incomplete.
+
+Column            | Type      | Notes
+------------------|-----------|------
+label             | text      | `N.i.
+which             | integer   | A numeric label for this conjugacy class of subgroups within a given ambient group
+extension_which   | integer   | A numeric label for this extension among split/non-split extensions with a fixed kernel and quotient (matching groupnames?)
+subgroup          | text      | Label for the subgroup as an abstract group
+subgroup_order    | numeric   | Order of the subgroup (include?)
+ambient           | text      | Label for the ambient group
+ambient_order     | numeric   | Order of the ambient group (include?)
+quotient          | text      | Label for the quotient, either as a group or a transitive permutation representation of the ambient group (may be null)
+quotient_order    | numeric   | Order of the quotient (include?)
+normal            | boolean   | Whether the subgroup is normal
+characteristic    | boolean   | Whether the subgroup is characteristic
+cyclic            | boolean   | whether this is a cyclic subgroup (include?)
+perfect           | boolean   | whether this is a perfect subgroup (include?)
+hall              | boolean   | whether the subgroup order is coprime to the quotient order
+maximal           | boolean   | whether this is a maximal subgroup
+maximal_normal    | boolean   | whether this is a maximal NORMAL subgroup (may not be maximal)
+minimal           | boolean   | whether this is a minimal subgroup
+minimal_normal    | boolean   | whether this is a minimal NORMAL subgroup (may not be minimal)
+split             | boolean   | whether this sequence is split (null for non-normal)
+core              | integer   | the label for the core: the intersection of all conjugates
+count             | integer   | The number of subgroups in this conjugacy class
+normalizer        | integer   | the label of the normalizer of this subgroup
+central           | boolean   | whether the subgroup is contained in the center of the ambient group
+stem              | boolean   | whether the subgroup is contained in both the center and commutator subgroups of the ambient group
+centralizer       | integer   | the label of the centralizer of this subgroup
+normal_closure    | integer   | the label of the smallest normal subgroup containing this one
+contains          | integer[] | A list of labels for the maximal subgroups contained within this one (NULL if unknown)
+contained_in      | integer[] | A list of labels for the minimal subgroups containing this one (NULL if unknown)
+quotient_fusion   | integer[] | A list of lists: for each conjugacy class of the quotient, lists the conjugacy classes in the ambient group that map to it (NULL if unknown)
+subgroup_fusion   | integer[] | A list: for each conjugacy class in the subgroup, gives the conjugacy class of the ambient group in which it's contained
 
 ## Subgroups of `GLnQ`
 
 `gps_qrep`: Finite subgroups of GL_n(Z), up to GL_n(Q) conjugacy
 
+Note that every finite subgroup of GL_n(Q) is conjugate to one within GL_n(Z),
+so we use the `gps_zrep` table to store actual matrices.
+
 Column         | Type      | Notes
 ---------------|-----------|------
-label          | text      | ???
+label          | text      | `n.i`, where `n` is the dimension, `i` is an index for the Q-class as in the CARAT GAP package (see Hoshi-Yamasaki, Rationality Problem for Algebraic Tori for examples)
 dim            | smallint
 order          | numeric   | The size of the group
-gapid          | bigint    | The GAP id for the group, 0 if not known
-trans_ids      | integer[] | List of transitive group IDs isomorphic to this finite group
-abelian        | boolean
-cyclic         | boolean
-solvable       | boolean
+group          | text      | The LMFDB id for the abstract group
+c_class        | text      | The LFMDB id for the subgroup class in `GL_n(C)`
 irreducible    | boolean
-decomposition  | jsonb     | List of pairs (lab, n) giving the decomposition as a direct sum of irreducible Q-reps.  lab is the label for the corresponding GL_n(Q)-class, and n the multiplicity
-gens           | integer[] | List of matrices generating group
+decomposition  | jsonb     | List of pairs `(label, m)` giving the decomposition as a direct sum of irreducible Q[G]-modules.  `label` is the label for the corresponding `GL_n(Q)`-class, and `m` the multiplicity
 
 ## Subgroups of `GLnZ`
 
 `gps_zrep`: Finite subgroups of GL_n(Z), up to GL_n(Z) conjugacy
 
-Column         | Type     | Notes
----------------|----------|------
-label          | text     | ???
-dim            | smallint
-order          | numeric  | The size of the group
-gapid          | bigint   | The GAP id for the group, 0 if not known
-q_class        | text     | the label for the GL_n(Q) class containing this conjugacy class
-indecomposible | boolean
+For `G < GL_n(Z)`, let `F(G)` be the set of symmetric nxn real matrices `F` with `g^t F g = F` for all `g` in `G`.
+Let `B(G)` be the set of `b` in `GL_n(Z)` with `b^t F b = F` for all `F` in `F(G)`.  Then `G` and `G'` are Bravais equivalent if `B(G)` is conjugate in `GL_n(Z)` to `B(G')`.
+
+
+Column         | Type      | Notes
+---------------|-----------|------
+label          | text      | `n.i.j`, where `n` is the dimension, `i` is an index for the Q-class and `j` is an index for the Z-class as in CARAT (see Hoshi-Yamasaki, Rationality Problem for Algebraic Tori for examples)
+dim            | smallint  | 
+order          | numeric   | The size of the group
+group          | text      | The LMFDB id for the abstract group
+q_class        | text      | The label for the `GL_n(Q)` class containing this class
+c_class        | text      | The label for the `GL_n(C)` class containing this class
+bravais_class  | text      | The label for the Z-class of the Bravais group B(G) (see Def. 2.8 of Opgenorth, Pleskin, Shulz Crystalographic Algorithms and Tables)
+crystal_symobl | text      | The symbol for the crystal family (see Def. 2.11, 2.12 of Opgenorth, Pleskin, Shulz)
+indecomposible | boolean   | Whether the corresponding `Z[G]`-module splits up as a direct sum (the pieces don't necessarily need to be faithful representations)
+irreducible    | boolean   | Whether the corresponding `Q[G]`-module splits up as a direct sum (the pieces don't necessarily need to be faithful representations)
+decomposition  | jsonb     | List of pairs `(label, ker, m)` giving the decomposition of `Z^n` as a direct sum of indecomposible submodules.  Here `m` is the multiplicity and `ker` is an integer giving the subgroup label for the kernel of the representation.
+gens           | integer[] | List of matrices generating group, matching the generators in the `gps_small` table
+
+## Subgroups of `GLnC`
+
+`gps_crep`: Finite subgroups of GL_n(C), up to GL_n(C) conjugacy
+
+Column         | Type      | Notes
+---------------|-----------|------
+label          | text      | `N.
+dim            | smallint  | 
+order          | numeric   | The size of the group
+gapid          | bigint    | The GAP id for the group, 0 if not known
+q_class        | text      | the label for the GL_n(Q) class containing this conjugacy class
 irreducible    | boolean
-decomposition  | jsonb    | List of pairs (lab, n)
+decomposition  | jsonb     | List of pairs `(label, n)`
+indicator      | smallint  | the Frobenius-Schur indicator (0, 1 or -1 for irreducible)
+schur_index    | smallint  | The ratio of the minimal degree of a number field containing all matrix entries by the degree of the number field generated by the traces
+cyc_order_mat  | integer   | an integer m so that the entries in the `gens` column lie in `Q(\zeta_m)`
+cyc_order_traces | integer | an integer m so that the entries in the `traces` column lie in `Q(\zeta_m)`
+denominators   | integer[] | A list of denominators for the matrix images, with the order matching the generators in the `gps_small` table.
+gens           | integer[] | A list of scaled matrices generating the group, with the order matching the generators in the `gps_small` table.  The entries are encoded as lists of pairs `(c, e)` representing the sum of `c*zeta_m^e` (divided by the corresponding denominator in the `denominators` column).  Here `m` is the value of the `cyc_order_mat` column, `c >= 0` and `0 <= 2e < m`.
+traces         | integer[] | The traces of the conjugacy classes (in the order of `gps_small_cc`), encoded as lists of pairs `(c, e)` as above, but using the `m` from `cyc_order_traces`.
+
+## Subgroups of finite matrix groups
+
+`gps_prep`: Subgroups of classical groups over finite fields, up to conjugacy within the ambient group
+
+Initially this table would contain subgroups of `GL_n(F_q)`, but it can easily incorporate subgroups of other groups such as `SL_n`, `Sp_n`, `GSp_n`, and `SO_n`.  Since the main point of this table is to give generators as matrices, it doesn't make sense to extend to exceptional groups of Lie type.
+
+Column         | Type       | Notes
+---------------|------------|------
+label          | text       | `n.q.N.i.j` where `n` is the dimension, `q` is the cardinality of the finite field, `N.i` is the label of the ambient group and `j` is the subgroup identifier from `gps_subgroups`.
+dim            | smallint   | The dimension of the vector space on which the ambient group acts
+q              | smallint   | The cardinality of the finite field
+ambient        | text       | Group label `N.i` for the ambient group
+which          | integer    | Subgroup identifier from `gps_subgroups`
+gens           | smallint[] | Matrices generating the group, in order corresponding to the generators listed in `gps_small`, format TBD
+
+# Conjugacy classes
+
+## Conjugacy classes in abstract groups
+
+`gps_small_cc`: Non-central conjugacy classes in groups
+
+The number of such for groups of order up to 15 (26), 31 (271), 63 (2324), 127 (20451), 255 (219699).  So we guess about 2 million up to 511, 20 million up to 1023 and 200 million up to 2047.
+
+The number of such for groups of order not a power of 2: up to 15 (20), 31 (214), 63 (1795), 127 (15180), 255 (144996).
+
+Big contributors above 10, up to 255 (fraction of count so far): 128 (77%), 64 (67%), 16 (66%), 32 (64%), 12 (50%), 24 (42%), 48 (37%), 96 (35%), 192 (34%), 18 (17%), 14 (15%), 20 (15%), 40 (13%), 36 (11%), 80 (11%), 30 (10%), 72 (10%), 54 (9%), 160 (8%), 56 (8%).
+
+Number of central elements up to 15 (173), 31 (907), 63 (4292), 127 (21255), 255 (115353)
+
+Column        | Type       | Notes
+--------------|------------|------
+label         | text       | `N.i.oJ` where `N.i` is the label for the group, `o` is the order of elements in this class and `J` is a capital letter code
+group         | text       | Label for the group to which this conjugacy class belongs
+size          | integer    | Number of elements in this conjugacy class
+which         | smallint   | 1-based ordering of conjugacy classes (agree with GAP/Magma?)
+order         | integer    | Order of an element in this conjugacy class
+centralizer   | text       | Label for the isomorphism class of the centralizer of an element in this conjugacy class
+powers        | smallint[] | `which` conjugacy class for the image of the pth power map, for p dividing the order of the group
+
+
+## Conjugacy classes in permutation groups
+
+`gps_transitive_cc`: Conjugacy classes in transitive permutation groups
+
+Up to degree 23, here are 291985 non-central classes, 9283 central elements.
+
+Column        | Type       | Notes
+--------------|------------|------
+label         | text       | ???
+group         | text       | transitive label of the group
+degree        | smallint   | the degree of the group (`n` from `S_n`)
+which         | smallint?  | 1-based ordering of conjugacy classes (agree with GAP/Magma?)
+size          | numeric    | Number of elements in this conjugacy class
+order         | smallint   | Order of an element in this conjugacy class
+centralizer   | text       | Label (which?) for the isomorphism class of the centralizer of an element in this conjugacy class
+cycle_type    | smallint[] | sizes of the cycles in a permutation in this class, in descending order and omitting 1s
+rep           | numeric    | a representative element, as the index in the lexicographic ordering of S_n.  This is computed by Sage's Permutations(n).rank(sigma) function, with inverse Permutations(n).unrank(rep) (using Lehmer codes)
+
+## Fusion maps
+
+`gps_quotient_fusion`: Fusion of conjugacy classes in quotients
+
+# Characters
+
+`gps_small_char`: Irreducible complex characters of groups
+
+The actual values are determined using the `traces` column of `gps_crep` and the `quotient_fusion` column of `gps_subgroups`
+
+TODO: Should we also support just counting the characters with a given kernel and image, as is done for [C2xC88](https://people.maths.bris.ac.uk/~matyd/GroupNames/163/C2xC88.html) for example?  This might be done by having an option to specify the isomorphism type of the kernel and a count of such characters rather than giving the actual subgroup.
+
+Column         | Type       | Notes
+---------------|------------|------
+label          | text       | `N.i.j` where `N.i` is the label for the group, and `j` is an enumeration of characters.
+atlas_label   | text        | Label in the Atlas of Finite Groups (see AtlasLabelsOfIrreducibles)
+group          | text       | LMFDB label for the group (domain of the homomorphism to GL_n(C))
+dim            | smallint   | dimension of the representation
+which          | smallint   | `j`, a 1-based ordering of characters of this group (agrees with GAP?)
+kernel         | integer    | The subgroup label for the kernel of this character
+image          | text       | The label for the image as a subgroup of GL_n(C)
