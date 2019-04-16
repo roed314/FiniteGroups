@@ -11,7 +11,8 @@ name              | text     | Primary description
 tex_name          | text     | Latex version of the primary description
 aliases           | text[]   | List of other descriptions, as in groupnames.org (don't include extension labels, since those are generated from the subgroups table)
 tex_aliases       | text[]   | Latex versions of the other descriptions
-order             | integer  | Size of the group
+order             | numeric  | Size of the group
+which             | integer  | The value of `i`
 factored_order    | smallint[] | List of pairs `(p, e)` giving the factorization of the order
 exponent          | integer  | Exponent of the group
 abelian           | boolean  |
@@ -29,8 +30,8 @@ rational          | boolean  | all characters are rational valued
 Zgroup            | boolean  | all Sylow subgroups cyclic
 Agroup            | boolean  | all Sylow subgroups abelian
 pgroup            | smallint | p if order a power of p, otherwise 0
-elementary        | smallint | If the direct product of a cyclic group and a p-group, gives the product of all possible p.  If not, 0.
-hyperelementary   | smallint | If the extension of a p-group by a cyclic group of order prime to p, gives the product of all possible p.  If not, 0.
+elementary        | integer  | If the direct product of a cyclic group and a p-group, gives the product of all possible p.  If not, 0.
+hyperelementary   | integer  | If the extension of a p-group by a cyclic group of order prime to p, gives the product of all possible p.  If not, 0.
 rank              | smallint | the minimal size of a generating system of `G`.  Usually the same as `ngens`, but `rank` might be `NULL` if not known, or `ngens` may be `NULL` if no presentation given.
 eulerian_function | numeric  | the ratio of the number of generating tuples with cardinality equal to the rank by the size of the automorphism group
 center            | integer  | Subgroup label for the center `Z`
@@ -70,6 +71,18 @@ upper_central_series | integer[] | Subgroup labels for the upper central series 
 abelian_invariants | integer[] | Invariants of the maximal abelian quotient, as a sorted list of prime powers (could also make this `NULL` for non-abelian groups)
 schur_multiplier  | text     | Label for the Schur multiplier (H_2(G, Z))
 
+`gps_special_names`: Names for groups
+
+We don't list descriptions in terms of extensions or products (stored in the `gps_subgroups`, `gps_central_products` and `gps_wreath_products`), or classical matrix groups over finite fields (stored in `gps_prep_names`).
+
+Column        | Type     | Notes
+--------------|----------|------
+label         | text     | Abstract isomorphism class of the group
+family        | text     | For example `D` for dihedral or `A` for alternating
+knowl         | text     | Knowl for this family or special group
+name          | text     |
+tex_name      | text     |
+alias_spot    | smallint | Which position this alias should appear in the list of aliases for the group.  0 indicates that it's the main name
 
 ## Permutation groups
 
@@ -100,40 +113,75 @@ moddecompuniq | jsonb    | ????
 
 `gps_subgroups`: subgroups/short exact sequences of finite groups
 
-Each row corresponds to a conjugacy class of subgroup.  There may be groups where our list of subgroups is incomplete.
+Each row corresponds to a conjugacy class of subgroup.  There may be groups where our list of subgroups is incomplete.  In the table below we use the notation `1 -> H -> G -> Q -> 1`.
 
 Column            | Type      | Notes
 ------------------|-----------|------
-label             | text      | `N.i.j` where `N.i` is the label of the ambient group and `j` is a counter (the `which` column)
-which             | integer   | A numeric label for this conjugacy class of subgroups within a given ambient group
-extension_which   | integer   | A numeric label for this extension among split/non-split extensions with a fixed kernel and quotient (matching [groupnames](groupnames.org)?)
-subgroup          | text      | Label for the subgroup as an abstract group
-subgroup_order    | numeric   | Order of the subgroup (include?)
-ambient           | text      | Label for the ambient group
-ambient_order     | numeric   | Order of the ambient group (include?)
-quotient          | text      | Label for the quotient, either as a group or a transitive permutation representation of the ambient group (may be null)
-quotient_order    | numeric   | Order of the quotient (include?)
-normal            | boolean   | Whether the subgroup is normal
-characteristic    | boolean   | Whether the subgroup is characteristic
-cyclic            | boolean   | whether this is a cyclic subgroup (include?)
-perfect           | boolean   | whether this is a perfect subgroup (include?)
-hall              | boolean   | whether the subgroup order is coprime to the quotient order
-maximal           | boolean   | whether this is a maximal subgroup
-maximal_normal    | boolean   | whether this is a maximal NORMAL subgroup (may not be maximal)
-minimal           | boolean   | whether this is a minimal subgroup
-minimal_normal    | boolean   | whether this is a minimal NORMAL subgroup (may not be minimal)
+label             | text      | `N.i.j` where `N.i` is the label of `G` and `j` is a counter (the `which` column)
+which             | integer   | `j`, a numeric label for varying `H` within `G` (up to conjugacy)
+extension_which   | integer   | A numeric label for varying `G` among extensions with fixed `H`, `Q` and `split` (matching [groupnames](groupnames.org)?)
+subgroup          | text      | Label for `H` as an abstract group
+subgroup_order    | numeric   | Order of `H` (include?)
+ambient           | text      | Label for `G`
+ambient_order     | numeric   | Order of `G` (include?)
+quotient          | text      | Label for `Q`, either as a group or a transitive permutation representation of the ambient group (if `H` has nontrivial core `C` should we give the label for the action of `G/C` on `G/H`, or leave the colum `NULL`?)
+quotient_order    | numeric   | Order of `Q` (include?)
+normal            | boolean   | Whether `H` is normal in `G`
+characteristic    | boolean   | Whether `H` is a characteristic subgroup of `G`
+cyclic            | boolean   | whether `H` is cyclic (include?)
+perfect           | boolean   | whether `H` is perfect (include?)
+hall              | boolean   | whether the order of `H` is coprime to the order of `Q`
+maximal           | boolean   | whether `H` is a maximal subgroup of `G`
+maximal_normal    | boolean   | whether `H` is a maximal NORMAL subgroup of `G` (may not be maximal)
+minimal           | boolean   | whether `H` is a minimal subgroup of `G`
+minimal_normal    | boolean   | whether `H` is a minimal NORMAL subgroup of `G` (may not be minimal)
 split             | boolean   | whether this sequence is split (null for non-normal)
-core              | integer   | the label for the core: the intersection of all conjugates
-count             | integer   | The number of subgroups in this conjugacy class
-normalizer        | integer   | the label of the normalizer of this subgroup
-central           | boolean   | whether the subgroup is contained in the center of the ambient group
-stem              | boolean   | whether the subgroup is contained in both the center and commutator subgroups of the ambient group
-centralizer       | integer   | the label of the centralizer of this subgroup
-normal_closure    | integer   | the label of the smallest normal subgroup containing this one
-contains          | integer[] | A list of labels for the maximal subgroups contained within this one (`NULL` if unknown)
-contained_in      | integer[] | A list of labels for the minimal subgroups containing this one (`NULL` if unknown)
-quotient_fusion   | integer[] | A list of lists: for each conjugacy class of the quotient, lists the conjugacy classes in the ambient group that map to it (`NULL` if unknown)
-subgroup_fusion   | integer[] | A list: for each conjugacy class in the subgroup, gives the conjugacy class of the ambient group in which it's contained
+direct            | boolean   | whether this sequence is a direct product (null for non-normal)
+central           | boolean   | whether `H` is contained in the center of `G`
+stem              | boolean   | whether `H` is contained in both the center and commutator subgroups of `G`
+count             | integer   | The number of subgroups of `G` conjugate to `H`
+core              | integer   | the label for the core: the intersection of all conjugates of `H`
+normalizer        | integer   | the label of the normalizer of `H` in `G`
+centralizer       | integer   | the label of the centralizer of `H` in `G`
+normal_closure    | integer   | the label of the smallest normal subgroup of `G` containing `H`
+quotient_action   | integer   | the subgroup label of the kernel of the map from `Q` to `A`.  Here `A = Aut(H)` when the sequence is split or `H` is abliean, and `A = Out(H)` otherwise
+contains          | integer[] | A list of labels for the maximal subgroups of `H`, up to `G`-conjugacy (`NULL` if unknown)
+contained_in      | integer[] | A list of labels for the minimal subgroups of `G` containing `H`, up to `G`-conjugacy (`NULL` if unknown)
+quotient_fusion   | integer[] | A list of lists: for each conjugacy class of `Q`, lists the conjugacy classes in `G` that map to it (`NULL` if unknown)
+subgroup_fusion   | integer[] | A list: for each conjugacy class of `H`, gives the conjugacy class of `G` in which it's contained
+alias_spot        | smallint  | Which position this alias should appear in the list of aliases for the group.  0 indicates that it's the main name; `NULL` if not normal (or if it shouldn't be displayed; we only want to display one of the two orders for a direct product)
+
+## Other products
+
+Direct products, semidirect products and non-split extensions are described well by the `gps_subgroups` table, but there are some other types of products that are not.
+
+`gps_central_products`: Central products of groups
+
+If `Z(G_1)` and `Z(G_2)` contain a common nontrivial subgroup `U` then the quotient `G_1 x G_2 / U` by the diagonally embedded `U` is the central product `G_1 o G_2`.
+
+Question: if there are multiple G-conjugacy classes for `U`, does it matter which we choose?
+
+Column         | Type      | Notes
+---------------|-----------|------
+factor1        | text      | label for `G_1`, lexicographically smaller (ie, smaller order or same order and smaller `i`
+factor2        | text      | label for `G_2`, lexicographically larger
+sub1           | integer   | subgroup label for `U < G_1`
+sub2           | integer   | subgroup label for `U < G_2`
+product        | text      | label for the product
+alias_spot     | smallint  | Which position this alias should appear in the list of aliases for the product.  0 indicates that it's the main name
+
+`gps_wreath_products`: Wreath products of groups
+
+The wreath product of an abstract group `G` and a permutation group `P` of degree `n` is the semidirect product of `G^n` with `P`, where `P` acts by permuting the copies of `G`.
+
+Question: I assume that this depends on the the permutation rep?  So, for example, `P=12T8` and `P=12T9` can yield non-isomorphic wreath products even though they're isomorphic as abstract groups?
+
+Column         | Type      | Notes
+---------------|-----------|------
+acted          | text      | label for `G` as an abstract group
+actor          | text      | label for `P` as a permutation group
+product        | text      | label for the product
+alias_spot     | smallint  | Which position this alias should appear in the list of aliases for the product.  0 indicates that it's the main name
 
 ## Subgroups of `GLnQ`
 
@@ -207,9 +255,10 @@ Column         | Type       | Notes
 label          | text       | `n.q.N.i.j` where `n` is the dimension, `q` is the cardinality of the finite field, `N.i` is the label of the ambient group and `j` is the subgroup identifier from `gps_subgroups`.
 dim            | smallint   | The dimension of the vector space on which the ambient group acts
 q              | smallint   | The cardinality of the finite field
+prime          | boolean    | Whether the cardinality is prime
 ambient        | text       | Group label `N.i` for the ambient group
 which          | integer    | Subgroup identifier from `gps_subgroups`
-gens           | smallint[] | Matrices generating the group, in order corresponding to the generators listed in `gps_groups`, format TBD
+gens           | smallint[] | Matrices generating the group, in order corresponding to the generators listed in `gps_groups`.  If `q` is prime, the entries are integers `c` with `-q < 2c <= q`.  Otherwise, they are lists of integers giving the coefficients for the element as a polynomial (with respect to the Conway polynomial defining the field extension)
 
 `gps_prep_names`: Names for classical groups with a specified `n` and `q`
 
@@ -218,6 +267,7 @@ Column         | Type       | Notes
 group          | text       | label of abstract group
 dim            | smallint   | The dimension of the vector space on which the ambient group acts
 q              | smallint   | The cardinality of the finite field
+family         | text       | For example `GL` or `Spin`
 name           | text       |
 tex_name       | text       |
 
