@@ -19,6 +19,7 @@ abelian           | boolean  |
 cyclic            | boolean  |
 solvable          | boolean  | chain of normal subgroups with abelian quotients
 supersolvable     | boolean  | chain of normal subgroups with cyclic quotients
+nilpotent         | boolean  |
 metacyclic        | boolean  | extension of cyclic by cylic
 metabelian        | boolean  | extension of abelian by abelian
 simple            | boolean  |
@@ -29,9 +30,9 @@ monomial          | boolean  | every complex irrep induced from a 1-d rep of som
 rational          | boolean  | all characters are rational valued
 Zgroup            | boolean  | all Sylow subgroups cyclic
 Agroup            | boolean  | all Sylow subgroups abelian
-pgroup            | smallint | p if order a power of p, otherwise 0
-elementary        | integer  | If the direct product of a cyclic group and a p-group, gives the product of all possible p.  If not, 0.
-hyperelementary   | integer  | If the extension of a p-group by a cyclic group of order prime to p, gives the product of all possible p.  If not, 0.
+pgroup            | smallint | 1 if trivial group, p if order a power of p, otherwise 0
+elementary        | integer  | If the direct product of a cyclic group and a p-group, gives the product of all possible p.  If not, 1.
+hyperelementary   | integer  | If the extension of a p-group by a cyclic group of order prime to p, gives the product of all possible p.  If not, 1.
 rank              | smallint | the minimal size of a generating system of `G`.  Usually the same as `ngens`, but `rank` might be `NULL` if not known, or `ngens` may be `NULL` if no presentation given.
 eulerian_function | numeric  | the ratio of the number of generating tuples with cardinality equal to the rank by the size of the automorphism group
 center            | integer  | Subgroup label for the center `Z`
@@ -150,6 +151,7 @@ contained_in      | integer[] | A list of labels for the minimal subgroups of `G
 quotient_fusion   | integer[] | A list of lists: for each conjugacy class of `Q`, lists the conjugacy classes in `G` that map to it (`NULL` if unknown)
 subgroup_fusion   | integer[] | A list: for each conjugacy class of `H`, gives the conjugacy class of `G` in which it's contained
 alias_spot        | smallint  | Which position this alias should appear in the list of aliases for the group.  0 indicates that it's the main name; `NULL` if not normal (or if it shouldn't be displayed; we only want to display one of the two orders for a direct product)
+new_gen           | numeric   | An encoded permutation that generates `H` together with the smallest numbered maximal subgroup of `H`.  Here we're using the smallest permutation representation of `G`, and the encoding is done using Lehmer codes as in `gps_transitive_cc`.
 
 ## Other products
 
