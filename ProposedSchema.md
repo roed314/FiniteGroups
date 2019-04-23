@@ -9,8 +9,6 @@ Column            | Type     | Notes
 label             | text     | GAP ID encoded as a string `N.i`, where `N` is the order of the group and `i` distinguishes groups of the same order (as determined in GAP).  If not in the Small groups database, replace `i` with an incrementing Cremona letter code.
 name              | text     | Primary description
 tex_name          | text     | Latex version of the primary description
-aliases           | text[]   | List of other descriptions, as in groupnames.org (don't include extension labels, since those are generated from the subgroups table)
-tex_aliases       | text[]   | Latex versions of the other descriptions
 order             | numeric  | Size of the group
 which             | integer  | The value of `i`
 factored_order    | smallint[] | List of pairs `(p, e)` giving the factorization of the order
@@ -70,7 +68,9 @@ chief_series      | integer[] | Subgroup labels for a chief series (normal serie
 lower_central_series | integer[] | Subgroup labels for the lower central series (`U_{i+1} = [G, U_i]`)
 upper_central_series | integer[] | Subgroup labels for the upper central series (`U_i/U_{i+1} = Z(G/U{i+1})`)
 abelian_invariants | integer[] | Invariants of the maximal abelian quotient, as a sorted list of prime powers (could also make this `NULL` for non-abelian groups)
-schur_multiplier  | text     | Label for the Schur multiplier (H_2(G, Z))
+schur_multiplier  | integer[] | Invariants for the Schur multiplier (H_2(G, Z))
+order_stats       | numeric[] | List of pairs `(o, m)` where `m` is the number of elements of order `o`.
+elt_rep_type      | smallint  | Code for the main way that elements are encoded in conjugacy class and subgroup tables.  0=generators+relations, -1=permutation rep, 1=integer matrices, q=matrices over GF(q)
 
 `gps_special_names`: Names for groups
 
@@ -114,44 +114,65 @@ moddecompuniq | jsonb    | ????
 
 `gps_subgroups`: subgroups/short exact sequences of finite groups
 
-Each row corresponds to a conjugacy class of subgroup.  There may be groups where our list of subgroups is incomplete.  In the table below we use the notation `1 -> H -> G -> Q -> 1`.
+Each row in this table corresponds to a subgroup relationship `H <= G`.  When `H` is normal, we write `Q` for the quotient `G/H`.
+
+There are two different notions of equivalence used, indicated in the column `outer_equivalence`.
+If `False`, then subgroups are considered equivalent if they are related by conjugation (inner automorphism) within `G`.
+If `True`, then subgroups are considered equivalent if they are related an automorphism of `G`.
+For a given `G`, all subgroups will be considered up to the same notion of equivalence.
+
+Currently, we use `outer_equivalence` only when `G` is abelian with more than 70 subgroups.
+
+We aim to have (up to equivalence)
+* All normal subgroups for each G in `gps_groups`
+* All maximal subgroups for each G in `gps_groups`
+* All subgroups when feasible
 
 Column            | Type      | Notes
 ------------------|-----------|------
-label             | text      | `N.i.j` where `N.i` is the label of `G` and `j` is a counter (the `which` column)
-which             | integer   | `j`, a numeric label for varying `H` within `G` (up to conjugacy)
+label             | text      | `N.i.j` where `N.i` is the label of `G` and `j` is a counter (the `which` column; should the label include the notion of equivalence?)
+outer_equivalence | boolean   | whether subgroups of `G` are considered up to outer equivalence (vs conjugacy)
+which             | integer   | `j`, a numeric label for varying `H` within `G` (up to equivalence)
+aut_which         | integer   | The minimum `j` equivalent to this under automorphism (`NULL` if `outer_equivalence` true)
 extension_which   | integer   | A numeric label for varying `G` among extensions with fixed `H`, `Q` and `split` (matching [groupnames](groupnames.org)?)
 subgroup          | text      | Label for `H` as an abstract group
 subgroup_order    | numeric   | Order of `H` (include?)
 ambient           | text      | Label for `G`
 ambient_order     | numeric   | Order of `G` (include?)
-quotient          | text      | Label for `Q`, either as a group or a transitive permutation representation of the ambient group (if `H` has nontrivial core `C` should we give the label for the action of `G/C` on `G/H`, or leave the colum `NULL`?)
+quotient          | text      | Label for `Q` as an abstract group (`NULL` if `H` not normal)
 quotient_order    | numeric   | Order of `Q` (include?)
 normal            | boolean   | Whether `H` is normal in `G`
 characteristic    | boolean   | Whether `H` is a characteristic subgroup of `G`
 cyclic            | boolean   | whether `H` is cyclic (include?)
+abelian           | boolean   | whether `H` is abelian (include?)
 perfect           | boolean   | whether `H` is perfect (include?)
-hall              | boolean   | whether the order of `H` is coprime to the order of `Q`
+sylow             | smallint  | if the order of `H` is a power of `p` and coprime to the order of `Q`, stores `p`.  Otherwise, `0`.
+hall              | numeric   | if the order of `H` is coprime to the order of `Q`, stores the radical of the order of `H`.
 maximal           | boolean   | whether `H` is a maximal subgroup of `G`
 maximal_normal    | boolean   | whether `H` is a maximal NORMAL subgroup of `G` (may not be maximal)
 minimal           | boolean   | whether `H` is a minimal subgroup of `G`
 minimal_normal    | boolean   | whether `H` is a minimal NORMAL subgroup of `G` (may not be minimal)
 split             | boolean   | whether this sequence is split (null for non-normal)
-direct            | boolean   | whether this sequence is a direct product (null for non-normal)
+complements       | integer[] | a list of subgroups `K` (up to equivalence) that intersect trivially with `H` and so that `G = HK`
+direct            | boolean   | whether this sequence is a direct product (`NULL` for non-normal)
 central           | boolean   | whether `H` is contained in the center of `G`
 stem              | boolean   | whether `H` is contained in both the center and commutator subgroups of `G`
-count             | integer   | The number of subgroups of `G` conjugate to `H`
+count             | numeric   | The number of subgroups of `G` equivalent to `H`
+conjugacy_class_count | numeric   | The number of conjugacy classes of subgroups in this equivalence class (`NULL` if `outer_equivalence` is false)
 core              | integer   | the label for the core: the intersection of all conjugates of `H`
+coset_action_label| text      | when `H` has trivial core `C` and the size of `Q` is at most 31 (GAP)/47 (Magma), gives the transitive group label for `G` as a permutation representation on `G/H`; `NULL` otherwise
 normalizer        | integer   | the label of the normalizer of `H` in `G`
 centralizer       | integer   | the label of the centralizer of `H` in `G`
 normal_closure    | integer   | the label of the smallest normal subgroup of `G` containing `H`
-quotient_action   | integer   | the subgroup label of the kernel of the map from `Q` to `A`.  Here `A = Aut(H)` when the sequence is split or `H` is abliean, and `A = Out(H)` otherwise
-contains          | integer[] | A list of labels for the maximal subgroups of `H`, up to `G`-conjugacy (`NULL` if unknown)
-contained_in      | integer[] | A list of labels for the minimal subgroups of `G` containing `H`, up to `G`-conjugacy (`NULL` if unknown)
-quotient_fusion   | integer[] | A list of lists: for each conjugacy class of `Q`, lists the conjugacy classes in `G` that map to it (`NULL` if unknown)
+quotient_action_kernel | integer   | the subgroup label of the kernel of the map from `Q` to `A` (`NULL` if `H` is not normal).  Here `A = Aut(H)` when the sequence is split or `H` is abliean, and `A = Out(H)` otherwise
+quotient_action_image | text  | the label for `Q/K` as an abstract group, where `K` is the quotient action kernel (NULL if `H` is not normal)
+contains          | integer[] | A sorted list of labels for the maximal subgroups of `H`, up to equivalence (`NULL` if unknown)
+contained_in      | integer[] | A sorted list of labels for the minimal subgroups of `G` containing `H`, up to equivalence (`NULL` if unknown)
+quotient_fusion   | jsonb     | A list of lists: for each conjugacy class of `Q`, lists the conjugacy classes in `G` that map to it (`NULL` if unknown)
 subgroup_fusion   | integer[] | A list: for each conjugacy class of `H`, gives the conjugacy class of `G` in which it's contained
 alias_spot        | smallint  | Which position this alias should appear in the list of aliases for the group.  0 indicates that it's the main name; `NULL` if not normal (or if it shouldn't be displayed; we only want to display one of the two orders for a direct product)
-new_gen           | numeric   | An encoded permutation that generates `H` together with the smallest numbered maximal subgroup of `H`.  Here we're using the smallest permutation representation of `G`, and the encoding is done using Lehmer codes as in `gps_transitive_cc`.
+new_gen_perm      | numeric   | An encoded permutation that generates `H` together with the smallest numbered maximal subgroup of `H`.  Here we're using the smallest permutation representation of `G`, and the encoding is done using Lehmer codes as in `gps_transitive_cc`.
+new_gen_fp        | integer[] | An encoded element that generates `H` together with the smallest numered maximal subgroup of `H`.  Here we're encoding elements as a list of pairs `[g, e]` where `g` is an integer giving the position of a generator and `e` is an exponent
 
 ## Other products
 
@@ -161,7 +182,7 @@ Direct products, semidirect products and non-split extensions are described well
 
 If `Z(G_1)` and `Z(G_2)` contain a common nontrivial subgroup `U` then the quotient `G_1 x G_2 / U` by the diagonally embedded `U` is the central product `G_1 o G_2`.
 
-Question: if there are multiple G-conjugacy classes for `U`, does it matter which we choose?
+If there are multiple choices of U that yield isomorphic central products, we choose the lowest numbered subgroup label in `G_1`, then the lowest numbered subgroup label in `G_2`.
 
 Column         | Type      | Notes
 ---------------|-----------|------
@@ -229,13 +250,14 @@ gens           | integer[] | List of matrices generating group, matching the gen
 
 `gps_crep`: Finite subgroups of GL_n(C), up to GL_n(C) conjugacy
 
+Question: Should we only include irreducible representations?  Should we give complex numbers exactly (as elements of cyclotomic fields) or approximately?
+
 Column         | Type      | Notes
 ---------------|-----------|------
 label          | text      | `n.N.i.j` where `n` is the dimension, `N.i` is the label of the abstract group, and `j` is determined by sorting the faithful representations lexicographically using the conjugacy class ordering (note that there may be some reducible ones)
 dim            | smallint  | 
 order          | numeric   | The size of the group
-gapid          | bigint    | The GAP id for the group, 0 if not known
-q_class        | text      | the label for the GL_n(Q) class containing this conjugacy class
+group          | text      | The label for the abstract group
 irreducible    | boolean
 decomposition  | jsonb     | List of triples `(label, ker, m)` where `label` is the label of a subgroup of lower dimension, `ker` is the kernel of the map to that subgroup and `m` is the multiplicity.
 indicator      | smallint  | the Frobenius-Schur indicator
@@ -243,8 +265,8 @@ schur_index    | smallint  | The ratio of the minimal degree of a number field c
 cyc_order_mat  | integer   | an integer m so that the entries in the `gens` column lie in `Q(\zeta_m)`
 cyc_order_traces | integer | an integer m so that the entries in the `traces` column lie in `Q(\zeta_m)`
 denominators   | integer[] | A list of denominators for the matrix images, with the order matching the generators in the `gps_groups` table.
-gens           | integer[] | A list of scaled matrices generating the group, with the order matching the generators in the `gps_groups` table.  The entries are encoded as lists of pairs `(c, e)` representing the sum of `c*zeta_m^e` (divided by the corresponding denominator in the `denominators` column).  Here `m` is the value of the `cyc_order_mat` column, `c >= 0` and `0 <= 2e < m`.
-traces         | integer[] | The traces of the conjugacy classes (in the order of `gps_groups_cc`), encoded as lists of pairs `(c, e)` as above, but using the `m` from `cyc_order_traces`.
+gens           | jsonb     | A list of scaled matrices generating the group, with the order matching the generators in the `gps_groups` table.  The entries are encoded as lists of pairs `(c, e)` representing the sum of `c*zeta_m^e` (divided by the corresponding denominator in the `denominators` column).  Here `m` is the value of the `cyc_order_mat` column, `c >= 0` and `0 <= 2e < m`.
+traces         | jsonb | The traces of the conjugacy classes (in the order of `gps_groups_cc`), encoded as lists of pairs `(c, e)` as above, but using the `m` from `cyc_order_traces`.
 
 ## Subgroups of finite matrix groups
 
@@ -278,32 +300,36 @@ tex_name       | text       |
 
 ## Conjugacy classes in abstract groups
 
-`gps_groups_cc`: Non-central conjugacy classes in groups
+`gps_groups_cc`: Conjugacy classes in groups
 
-The number of such for groups of order up to 15 (26), 31 (271), 63 (2324), 127 (20451), 255 (219699).  So we guess about 2 million up to 511, 20 million up to 1023 and 200 million up to 2047.
+The number of non-central conjugacy classes for groups of order up to 15 (26), 31 (271), 63 (2324), 127 (20451), 255 (219699).  So we guess about 2 million up to 511, 20 million up to 1023 and 200 million up to 2047.
 
-The number of such for groups of order not a power of 2: up to 15 (20), 31 (214), 63 (1795), 127 (15180), 255 (144996).
+The number of non-central conjugacy classes for groups of order not a power of 2: up to 15 (20), 31 (214), 63 (1795), 127 (15180), 255 (144996).
 
 Big contributors above 10, up to 255 (fraction of count so far): 128 (77%), 64 (67%), 16 (66%), 32 (64%), 12 (50%), 24 (42%), 48 (37%), 96 (35%), 192 (34%), 18 (17%), 14 (15%), 20 (15%), 40 (13%), 36 (11%), 80 (11%), 30 (10%), 72 (10%), 54 (9%), 160 (8%), 56 (8%).
 
-Number of central elements up to 15 (173), 31 (907), 63 (4292), 127 (21255), 255 (115353)
+Number of central elements up to           15 (173), 31 (907), 63 (4292), 127 (21255), 255 (115353)
+Number of elements in abelian groups up to 15 (161), 31 (794), 63 (3469), 127 (15249), 255 (64885), 511 (268613), 1023 (1106900), 2047 (4531226)
+
+As for subgroups, for large abelian groups we instead store orbits under the full automorphism group (rather than orbits under the inner automorphism group, which are conjugacy classes).
 
 Column        | Type       | Notes
 --------------|------------|------
 label         | text       | `N.i.oJ` where `N.i` is the label for the group, `o` is the order of elements in this class and `J` is a capital letter code
-group         | text       | Label for the group to which this conjugacy class belongs
-size          | integer    | Number of elements in this conjugacy class
-which         | smallint   | 1-based ordering of conjugacy classes (agree with GAP/Magma?)
-order         | integer    | Order of an element in this conjugacy class
-centralizer   | integer    | Label for the isomorphism class of the centralizer of an element in this conjugacy class
-powers        | smallint[] | `which` conjugacy class for the image of the pth power map, for p dividing the order of the group
+outer_equivalence | boolean   | whether this class is considered up to outer equivalence (vs conjugacy)
+group         | text       | Label for the ambient group
+size          | integer    | Number of elements in this conjugacy class/orbit
+which         | integer    | 1-based ordering of classes (agree with GAP/Magma?)
+order         | integer    | Order of an element in this class
+centralizer   | integer    | Label for the centralizer of an element in this class, as a subgroup
+powers        | integer[]  | `which` conjugacy class for the image of the pth power map, for p dividing the order of the group
 
 
 ## Conjugacy classes in permutation groups
 
 `gps_transitive_cc`: Conjugacy classes in transitive permutation groups
 
-Up to degree 23, here are 291985 non-central classes, 9283 central elements.
+Up to degree 23, there are 291985 non-central classes, 9283 central elements.
 
 Column        | Type       | Notes
 --------------|------------|------
@@ -328,9 +354,10 @@ TODO: Should we also support just counting the characters with a given kernel an
 Column         | Type       | Notes
 ---------------|------------|------
 label          | text       | `N.i.j` where `N.i` is the label for the group, and `j` is an enumeration of characters.
-atlas_label   | text        | Label in the Atlas of Finite Groups (see AtlasLabelsOfIrreducibles)
+atlas_label    | text       | Label in the Atlas of Finite Groups (see AtlasLabelsOfIrreducibles)
 group          | text       | LMFDB label for the group (domain of the homomorphism to GL_n(C))
 dim            | smallint   | dimension of the representation
 which          | smallint   | `j`, a 1-based ordering of characters of this group (agrees with GAP?)
 kernel         | integer    | The subgroup label for the kernel of this character
+faithful       | boolean    | Whether the corresponding homomorphism is injective
 image          | text       | The label for the image as a subgroup of GL_n(C)
