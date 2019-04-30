@@ -17,6 +17,12 @@ from sage.arith.srange import srange
 from sage.functions.other import ceil
 from sage.misc.flatten import flatten
 
+# If the group is non-abelian and the transitive degree is under the following bound
+# we store generators as permutations
+TRANSITIVE_DEGREE_BOUND = 20
+# The bound below which we call TransitiveIdentification
+TRANSITIVE_IDENTIFICATION_BOUND = 30
+
 # The following classes support nicely loading and saving
 # to disk in a format readable by postgres
 
@@ -358,6 +364,23 @@ class Groups(Controller):
         self.task_limit = int(cfgp.get('extent', 'task_limit'))
         self.skips = map(int, cfgp.get('extent', 'skips').split(','))
 
+    def recursively_add(self, G, subgroup_order_bound=None, quotient_order_bound=None, label=None):
+        # Recursively add subquotients of G
+        # TODO: add support for subgroup_order_bound and quotient_order_bound (maybe after switch to Magma?)
+        N = ZZ(G.Size())
+        if N <= self.max_small_order:
+            return []
+        if label is None:
+            label = get_tmp_name(G)
+        gp = GroupGap(G, label)
+        all_gps = [gp]
+        for H in gp.subgroup_lattice.subgroups[1:]:
+            all_gps.extend(self.recursively_add(H.H, label=H.subgroup))
+            if H.normal:
+                # TODO: should we modify the pcgs?  GeneratorsOfGroup is quite long....
+                all_gps.extend(self.recursively_add(G.FactorGroupNC(H.H), label=H.quotient))
+        return all_gps
+
     class StageSmall(Stage):
         name = 'Generate Small'
         shortname = 'GenSmall'
@@ -653,11 +676,6 @@ class GroupGap(PGSaver):
         return self.subgroup_lattice.identify(self.G.Socle(), characteristic=True, abelian=abelian)
 
     @pg_integer
-    def transitive_degree(self):
-        # TODO
-        return min(C.quotient_order for C in self.subgroup_lattice.subgroups[1:] if C.core == 1)
-
-    @pg_integer
     def smallrep(self):
         return self.character_table.smallrep
 
@@ -708,19 +726,131 @@ class GroupGap(PGSaver):
         return sorted((C.sylow, C.which) for C in self.subgroup_lattice.subgroups[1:] if C.sylow)
 
     @pg_smallint
-    def ngens(self):
-        # TODO
-        raise NotImplementedError
+    def elt_rep_type(self):
+        if self.G.IsPcGroup():
+            return 0
+        elif self.G.IsPermGroup():
+            return -ZZ(self.G.LargestMovedPoint())
+        elif self.G.IsMatrixGroup():
+            K = self.G.DefaultFieldOfMatrixGroup()
+            if K.IsFinite():
+                return ZZ(K.Size())
+            else:
+                return 1
 
-    @pg_text
-    def relations(self):
-        if self.G.IsFpGroup():
-            G = self.G
+    @pg_smallint
+    def ngens(self):
+        return len(self.G.GeneratorsOfGroup())
+
+    @pg_numeric
+    def pc_code(self):
+        # Encoded relations for Pcgs groups
+        if self.G.IsPcGroup():
+            return ZZ(self.G.CodePcGroup())
+        # Otherwise return None
+
+    @pg_integer
+    def transitive_degree(self):
+        if self.subgroups_known:
+            return min(C.quotient_order for C in self.subgroup_lattice.subgroups[1:] if C.core == 1)
+
+    @pg_integer
+    def transitive_subgroup(self):
+        if self.subgroups_known:
+            if self.transitive_degree <= TRANSITIVE_IDENTIFICATION_BOUND:
+                candidates = [(int(C.coset_action_label.split('T')[1]), C.which) for C in self.subgroup_lattice.subgroups[1:] if C.quotient_order == self.transitive_degree and C.core == 1]
+                tid, which = min(candidates)
+                return which
+            else:
+                for C in self.subgroup_lattice.subgroups[1:]:
+                    if C.core == 1 and C.quotient_order == self.transitive_degree:
+                        return C.which
+
+    def encode(self, g):
+        # Encode into an integer using a method based on the value of elt_rep_type
+        ert = self.elt_rep_type
+        if ert == 0:
+            return self.encode_as_pcgs(g)
+        elif ert < 0:
+            return self.encode_as_perm(g, -ert)
         else:
-            gens = self.G.GeneratorsOfGroup()
-            f = self.G.IsomorphismFpGroupByGeneratorsNC(gens)
-            G = f.Image()
-            # TODO: finish?
+            # TODO: deal with matrices
+            raise NotImplementedError
+
+    def decode(self, code):
+        ert = self.elt_rep_type
+        if ert == 0:
+            return self.decode_as_pcgs(code)
+        elif ert < 0:
+            return self.encode_as_perm(code, -ert)
+        else:
+            # TODO: deal with matrices
+            raise NotImplementedError
+
+    def encode_as_perm(self, g, n):
+        # g should be an element of S_n
+        return Permutations(n)(g.sage()).rank()
+
+    def decode_as_perm(self, code, n):
+        # m should be an integer with 0 <= m < factorial(n)
+        return SymmetricGroup(n)(Permutations(n).unrank(code))
+
+    @lazy_attribute
+    def pcgs(self):
+        return self.G.Pcgs()
+
+    @lazy_attribute
+    def pcgs_relative_orders(self):
+        ords = map(ZZ, self.pcgs.RelativeOrders())
+        if prod(ords) != self.order:
+            raise RuntimeError("Order mismatch")
+        return ords
+
+    def encode_as_pcgs(self, g):
+        vec = map(ZZ, self.pcgs.ExponentsOfPcElement(g))
+        code = 0
+        for e, m in zip(vec, self.pcgs_relative_orders):
+            code *= m
+            code += e
+        return code
+
+    def decode_as_pcgs(self, code):
+        vec = []
+        if code < 0 or code >= self.order:
+            raise ValueError
+        for m in reversed(self.pcgs_relative_orders):
+            c = code % m
+            vec.insert(0, c)
+            code = code // m
+        return self.pcgs.PcElementByExponents(vec)
+
+    @pg_numeric_list
+    def perm_gens(self):
+        # Encoded generators as a permutation group.  NULL if the minimal degree is too large.
+        G = self.G
+        if G.IsPermGroup():
+            n = -self.elt_rep_type # largest moved point
+            gens = G.GeneratorsOfGroup()
+        elif not self.abelian and self.subgroups_known and self.transitive_degree <= TRANSITIVE_DEGREE_BOUND:
+            n = self.transitive_degree
+            H = self.subgroup_lattice.subgroups[self.transitive_subgroup].H
+            # TODO: This will not be a minimal set of generators, but rather the image of a pcgs
+            gens = G.FactorCosetAction(H).Image().GeneratorsOfGroup()
+        else:
+            return None
+        return [self.encode_as_perm(g, n) for g in gens]
+
+    @lazy_attribute
+    def G(self):
+        # Reconstruct the group from the data stored above
+        if self.elt_rep_type == 0: # PcGroup
+            return libgap.PcGroupCode(self.pc_code, self.order)
+        elif self.elt_rep_type < 0: # Permutation group
+            gens = [self.decode(g) for g in self.perm_gens]
+            return libgap.Group(gens)
+        else:
+            # TODO: Matrix groups
+            raise NotImplementedError
 
     @pg_integer
     def number_conjugacy_classes(self):
@@ -782,19 +912,6 @@ class GroupGap(PGSaver):
             D[ZZ(C.Representative().Order())] += ZZ(C.Size())
         return sorted(D.items())
 
-    @pg_smallint
-    def elt_rep_type(self):
-        if self.G.IsPcGroup():
-            return 0
-        elif self.G.IsPermGroup():
-            return -1
-        elif self.G.IsMatrixGroup():
-            K = self.G.DefaultFieldOfMatrixGroup()
-            if K.IsFinite():
-                return ZZ(K.Size())
-            else:
-                return 1
-
     @lazy_attribute
     def character_table(self):
         return CharacterTableGap(self)
@@ -835,11 +952,31 @@ class GroupGap(PGSaver):
 
     @lazy_attribute
     def subgroup_lattice(self):
+        return SubgroupLatticeGap(self, outer=self.outer_equivalence)
+
+    @pg_boolean
+    def subgroups_known(self):
+        # TODO: decide when this should be False
+        return True
+
+    @pg_boolean
+    def subgroup_inclusions_known(self):
+        # TODO: decide when this should be False
+        return True
+
+    @pg_boolean
+    def outer_equivalence(self):
         # Need a better way of deciding whether to use inner/outer subgroup equivalence
-        if self.abelian and self._number_subgroups_abelian() > 70:
-            return SubgroupLatticeGap(self, outer=True)
-        else:
-            return SubgroupLatticeGap(self)
+        return self.abelian and self._number_subgroups_abelian() > 70
+
+    @pg_boolean
+    def normals_known(self):
+        return True
+
+    @pg_smallint
+    def maximal_depth(self):
+        # TODO: figure out the plan for this
+        pass
 
 class SubgroupGap(PGSaver):
     def __init__(self, lattice, H, which, count, contains, contained_in, outer=False):
@@ -1027,7 +1164,7 @@ class SubgroupGap(PGSaver):
         # Have to special case the trivial group
         if self.ambient_order == 1:
             return '1T1'
-        if self.core == 1 and self.quotient_order <= 30:
+        if self.core == 1 and self.quotient_order <= TRANSITIVE_IDENTIFICATION_BOUND:
             F = self.G.FactorCosetAction(self.H, self.lattice.subgroups[1].H).Image()
             tid = F.TransitiveIdentification()
             return '%sT%s'%(self.quotient_order, tid)
@@ -1106,6 +1243,7 @@ class SubgroupGap(PGSaver):
         if self.which == 1: # trivial subgroup
             return None
         K = self.lattice.subgroups[self.contains[0]]
+        # TODO: K might only be conjugate to a subgroup of H, not necessarily a subgroup itself
         # Constructing right transversals could be expensive, so we use PseudoRandom, which will lie outside K with probability at least 1/2.
         while True:
             x = self.H.PseudoRandom()
@@ -1117,22 +1255,17 @@ class SubgroupGap(PGSaver):
         #return T[2]
 
     @pg_numeric
-    def new_gen_perm(self):
-        # TODO: write encode_as_perm
-        return self.lattice.gp.encode_as_perm(self.generating_elt)
-
-    @pg_integer_list
-    def new_gen_fp(self):
-        # TODO: write encode_as_fp
-        return self.lattice.gp.encode_as_fp(self.generating_elt)
+    def new_gen(self):
+        return self.lattice.gp.encode(self.generating_elt)
 
 class SubgroupLatticeGap(object):
     """
     An object representing the lattice of subgroups up to conjugacy.
     """
-    def __init__(self, gp):
+    def __init__(self, gp, outer=False):
         self.gp = gp # Group object
         self.G = gp.G # GAP group
+        self.outer_equivalence = outer
 
     @lazy_attribute
     def subgroups(self):
@@ -1149,7 +1282,7 @@ class SubgroupLatticeGap(object):
             subs = sorted(set(ZZ(c) for c,k in subs))
             sups = sorted(set(ZZ(c) for c,k in sups))
             count = ZZ(C.Size())
-            subgroups.append(SubgroupGap(self, H, i, count, subs, sups))
+            subgroups.append(SubgroupGap(self, H, i, count, subs, sups, outer=self.outer_equivalence))
         return subgroups
 
     @lazy_attribute
@@ -1405,7 +1538,7 @@ class CGroupGap(PGSaver):
 
     @pg_smallint
     def schur_index(self):
-        # TODO: it's not clear that the matrices from IrreducibleAffordingRepresentation are over a cyclotomic field of minimal degree
+        # TODO: https://math.stackexchange.com/questions/814823/schur-index-in-gap
         charU = self.char_values.universe()
         matU = self.matrix_images.universe().base_ring()
         if matU.degree() % charU.degree() != 0:
@@ -1462,7 +1595,7 @@ class CharacterTableGap(object):
         self.cc_by_os = defaultdict(lambda: defaultdict(list))
         T = self.T
         Glabel = self.gp.label
-        if False:
+        if self.outer:
             # TODO
             raise NotImplementedError
         else:
