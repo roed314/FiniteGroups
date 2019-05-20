@@ -7,6 +7,7 @@
 Column            | Type     | Notes
 ------------------|----------|------
 label             | text     | GAP ID encoded as a string `N.i`, where `N` is the order of the group and `i` distinguishes groups of the same order (as determined in GAP).  If not in the Small groups database, replace `i` with an incrementing Cremona letter code.
+old_label         | text     | If the label has been switched from temp to permanent, store temp here.
 name              | text     | Primary description
 tex_name          | text     | Latex version of the primary description
 order             | numeric  | Size of the group
@@ -68,15 +69,18 @@ perfect_core      | integer  | The subgroup label for the end of the derived ser
 chief_series      | integer[] | Subgroup labels for a chief series (normal series that cannot be refined)
 lower_central_series | integer[] | Subgroup labels for the lower central series (`U_{i+1} = [G, U_i]`)
 upper_central_series | integer[] | Subgroup labels for the upper central series (`U_i/U_{i+1} = Z(G/U{i+1})`)
-abelian_invariants | integer[] | Invariants of the maximal abelian quotient, as a sorted list of prime powers (could also make this `NULL` for non-abelian groups)
-schur_multiplier  | integer[] | Invariants for the Schur multiplier (H_2(G, Z))
+primary_abelian_invariants | integer[] | Invariants of the maximal abelian quotient, as a sorted list of prime powers (could also make this `NULL` for non-abelian groups)
+smith_abelian_invariants | integer[] | Invariants of the maximal abelian quotient, as a sorted list of integers, each dividing the next (could also make this `NULL` for non-abelian groups)
+schur_multiplier  | integer[] | Primary invariants for the Schur multiplier (H_2(G, Z))
 order_stats       | numeric[] | List of pairs `(o, m)` where `m` is the number of elements of order `o`.
 elt_rep_type      | smallint  | Code for the main way that elements are encoded in conjugacy class and subgroup tables.  0=generators+relations, -1=permutation rep, 1=integer matrices, q=matrices over GF(q)
-subgroups_known   | boolean   | Whether we store all subgroups of this group
+all_subgroups_known   | boolean   | Whether we store all subgroups of this group
+normal_subgroups_known | boolean   | Whether we store all normal subgroups of this group
+maximal_subgroups_known | boolean  | Whether we store all maximal subgroups of this group
 subgroup_inclusions_known | boolean | Whether we store inclusion relationships among subgroups of this group
 outer_equivalence | boolean   | Whether subgroups are stored up to automorphism (as opposed to up to conjugacy)
-normals_known     | boolean   | Whether we store all maximal subgroups of this group
-maximal_depth     | smallint  | The number of layers from the top of maximal subgroups stored (NULL if the entire subgroup lattice stored; 0 if no maximal subgroups stored)
+subgroup_index_bound | smallint  | If not `NULL`, we store all (equivalence classes of) subgroups of index up to this bound.  Additional subgroups may also be stored (for example, normal subgroups, maximal subgroups, or subgroups of small order)
+subgroup_order_bound | smallint  | If not `NULL`, we store all (equivalence classes of) subgroups of order up to this bound.  Additional subgroups may also be stored (for example, normal subgroups, maximal subgroups, or subgroups of small index) (include?)
 
 `gps_special_names`: Names for groups
 
@@ -173,7 +177,7 @@ normal_closure    | integer   | the label of the smallest normal subgroup of `G`
 quotient_action_kernel | integer   | the subgroup label of the kernel of the map from `Q` to `A` (`NULL` if `H` is not normal).  Here `A = Aut(H)` when the sequence is split or `H` is abliean, and `A = Out(H)` otherwise
 quotient_action_image | text  | the label for `Q/K` as an abstract group, where `K` is the quotient action kernel (NULL if `H` is not normal)
 contains          | integer[] | A sorted list of labels for the maximal subgroups of `H`, up to equivalence (`NULL` if unknown)
-contained_in      | integer[] | A sorted list of labels for the minimal subgroups of `G` containing `H`, up to equivalence (`NULL` if unknown)
+contained_in      | integer[] | A sorted list of labels for the minimal subgroups of `G` containing `H`, up to equivalence (`NULL` if unknown) (include?)
 quotient_fusion   | jsonb     | A list of lists: for each conjugacy class of `Q`, lists the conjugacy classes in `G` that map to it (`NULL` if unknown)
 subgroup_fusion   | integer[] | A list: for each conjugacy class of `H`, gives the conjugacy class of `G` in which it's contained
 alias_spot        | smallint  | Which position this alias should appear in the list of aliases for the group.  0 indicates that it's the main name; `NULL` if not normal (or if it shouldn't be displayed; we only want to display one of the two orders for a direct product)
