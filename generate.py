@@ -1,5 +1,6 @@
 from sage.databases.cremona import cremona_letter_code, class_to_int # for the make_label function
 from sage.misc.lazy_attribute import lazy_attribute
+from itertools import izip_longest
 import json, os, re, sys, random, string
 opj, ope = os.path.join, os.path.exists
 from collections import defaultdict
@@ -16,6 +17,7 @@ from sage.libs.gap.libgap import libgap
 from sage.arith.srange import srange
 from sage.functions.other import ceil
 from sage.misc.flatten import flatten
+from sage.misc.misc_c import prod
 
 # If the group is non-abelian and the transitive degree is under the following bound
 # we store generators as permutations
@@ -333,18 +335,6 @@ class PGSaver(object):
         cls = self.__class__
         return ':'.join(getattr(cls, attr)._save(getattr(self, attr)) for attr in header)
 
-def get_tmp_name(G, order=None):
-    if order is None:
-        order = ZZ(G.Size())
-    if order <= 2000 and order.valuation(2) < 9:
-        N, i = map(ZZ, G.IdGroup())
-        if N != order:
-            raise RuntimeError
-        return "%s.%s" % (N, i)
-    else:
-        # We make up a temporary name that will be revised once all groups are computed
-        return "%s.%s" % (order, ''.join(random.choice(string.ascii_uppercase + string.digits) for _ in range(30)))
-
 class Groups(Controller):
     """
     This class controls the creation of group data for the LMFDB from sources like GAP and Magma
@@ -445,18 +435,7 @@ class Groups(Controller):
                 with open(stage.done.format(N=self.N), 'a') as done:
                     done.write('%s\n' % self.min_gid)
 
-class GroupGap(PGSaver):
-    """
-    An object representing a group computed in GAP, to be saved to the gps_groups table
-
-    Note that various attributes must be filled in externally:
-
-    - the `label` and `which` if the order has 2-adic valuation at least 9 or is larger than 2000.
-    - the `name`
-    - the `tex_name`
-    - the `aliases`
-    - the `tex_aliases`
-    """
+class Group(PGSaver):
     def __init__(self, G=None, label=None):
         # Automatically apply IsomorphismPermGroup?
         if label is not None:
@@ -466,7 +445,7 @@ class GroupGap(PGSaver):
             if self.order <= 2000 and self.order.valuation(2) <= 9: # We can create groups of order 512
                 self.which = ZZ(which)
                 if G is None:
-                    G = libgap.SmallGroup(self.order, self.which)
+                    G = self.driver.SmallGroup(self.order, self.which)
         if G is not None:
             self.G = G
 
@@ -487,11 +466,11 @@ class GroupGap(PGSaver):
 
     @pg_numeric
     def order(self):
-        return ZZ(self.G.Size())
+        return ZZ(self.Size(self.G))
 
     @pg_integer
     def which(self):
-        return ZZ(self.G.IdGroup()[2])
+        return ZZ(tuple(self.IdGroup(self.G))[1])
 
     @pg_smallint_list
     def factored_order(self):
@@ -511,31 +490,34 @@ class GroupGap(PGSaver):
 
     @pg_boolean
     def solvable(self):
-        return bool(self.G.IsSolvableGroup())
+        return bool(self.IsSolvable(self.G))
 
     @pg_boolean
     def supersolvable(self):
-        return bool(self.G.IsSupersolvableGroup())
+        return bool(self.IsSupersolvable(self.G))
 
     @pg_boolean
     def nilpotent(self):
-        return bool(self.G.IsNilpotentGroup())
+        return bool(self.IsNilpotent(self.G))
 
-    @pg_boolean
-    def metacyclic(self):
-        # Some easy checks first
+    def _easy_metacyclic(self):
         if self.order.is_squarefree() or self.cyclic:
             return True
         if not self.solvable:
             return False
-        G = self.G
-        D = G.DerivedSubgroup()
-        if not D.IsCyclic():
-            return False
-        for N in G.NormalSubgroupsAbove(D,[]):
-            if N.IsCyclic() and G.FactorGroup(N).IsCyclic():
-                return True
-        return False
+        if self.abelian:
+            E = self.abelian_invariants
+            pcounter = defaultdict(int)
+            for m in E:
+                p, e = m.is_prime_power(get_data=True)
+                pcounter[p] += 1
+                if pcounter[p] > 2:
+                    return False
+            return True
+
+    @pg_boolean
+    def metacyclic(self):
+        return bool(self.IsMetacyclic(self.G))
 
     @pg_boolean
     def metabelian(self):
@@ -547,20 +529,19 @@ class GroupGap(PGSaver):
 
     @pg_boolean
     def almost_simple(self):
-        return bool(self.G.IsAlmostSimpleGroup())
+        return bool(self.IsAlmostSimple(self.G))
 
     @pg_boolean
     def quasisimple(self):
-        G = self.G
-        return self.perfect and G.FactorGroup(G.Center()).IsSimpleGroup()
+        return bool(self.IsQuasiSimple(self.G))
 
     @pg_boolean
     def perfect(self):
-        return bool(self.G.IsPerfectGroup())
+        return bool(self.IsPerfect(self.G))
 
     @pg_boolean
     def monomial(self):
-        return bool(self.G.IsMonomial())
+        return bool(self.IsMonomial(self.G))
 
     @pg_boolean
     def rational(self):
@@ -597,43 +578,22 @@ class GroupGap(PGSaver):
 
     @pg_integer
     def elementary(self):
-        primes = ZZ(1)
-        if self.solvable:
-            G = self.G
-            for p, e in self.factored_order:
-                # We could use the ComplementSystem and SylowSystem methods; I'm not sure which is faster
-                N = G.SylowComplement(p)
-                P = G.SylowSubgroup(p)
-                if N.IsCyclic() and G.IsNormal(N) and G.IsNormal(P):
-                    primes *= p
-        return primes
+        if not self.solvable:
+            return ZZ(1)
+        G = self.G
+        return prod(p for (p, e), P, N in zip(self.factored_order,
+                                              self.SylowSystem(G),
+                                              self.ComplementSystem(G))
+                    if N.IsCyclic() and G.IsNormal(N) and G.IsNormal(P))
 
     @pg_integer
     def hyperelementary(self):
-        primes = ZZ(1)
-        if self.solvable:
-            G = self.G
-            for p, e in self.factored_order:
-                # We could use the ComplementSystem; I'm not sure which is faster
-                N = G.SylowComplement(p)
-                if N.IsCyclic() and G.IsNormal(N):
-                    primes *= p
-        return primes
-
-    @lazy_attribute
-    def _eulerian_data(self):
-        if self.cyclic:
-            return (ZZ(1), ZZ(1))
+        if not self.solvable:
+            return ZZ(1)
         G = self.G
-        r = ZZ(2)
-        a = ZZ(G.AutomorphismGroup().Size())
-        while True:
-            E = ZZ(G.EulerianFunction(r))
-            if E > 0:
-                if E % a != 0:
-                    raise RuntimeError
-                return r, (E // a)
-            r += 1
+        return prod(p for (p, e), N in zip(self.factored_order,
+                                              self.ComplementSystem(G))
+                    if N.IsCyclic() and G.IsNormal(N))
 
     @pg_smallint
     def rank(self):
@@ -653,7 +613,7 @@ class GroupGap(PGSaver):
 
     @pg_integer
     def commutator_count(self):
-        return ZZ(self.G.CommutatorLength())
+        return ZZ(self.CommutatorLength(self.G))
 
     @pg_integer
     def frattini(self):
@@ -665,7 +625,7 @@ class GroupGap(PGSaver):
 
     @pg_integer
     def radical(self):
-        return self.subgroup_lattice.identify(self.G.RadicalGroup(), characteristic=True)
+        return self.subgroup_lattice.identify(self.Radical(self.G), characteristic=True)
 
     @pg_integer
     def socle(self):
@@ -681,14 +641,14 @@ class GroupGap(PGSaver):
 
     @pg_numeric
     def aut_order(self):
-        return ZZ(self.G.AutomorphismGroup().Size())
+        return ZZ(self.Size(self.G.AutomorphismGroup()))
 
     @pg_text
     def aut_group(self):
         A = self.G.AutomorphismGroup()
-        # TODO: There might be an LMFDB label available even if IdGroup fails, but we can't compute it just from G
+        # TODO: There might be an LMFDB label available even if IdGroup fails
         try:
-            N, i = A.IdGroup()
+            N, i = self.IdGroup(A)
             return '%s.%s'%(N,i)
         except Exception:
             return None
@@ -699,17 +659,15 @@ class GroupGap(PGSaver):
         if self.order == 1:
             return ZZ(1)
         A = self.G.AutomorphismGroup()
-        I = A.InnerAutomorphismsAutomorphismGroup()
-        return ZZ(A.Size()) // ZZ(I.Size())
+        return ZZ(self.OuterOrder(A))
 
     @pg_text
     def outer_group(self):
         A = self.G.AutomorphismGroup()
-        I = A.InnerAutomorphismsAutomorphismGroup()
-        O = A.FactorGroup(I)
-        # TODO: There might be an LMFDB label available even if IdGroup fails, but we can't compute it just from G
+        O = self.OuterGroup(A)
+        # TODO: There might be an LMFDB label available even if IdGroup fails
         try:
-            N, i = O.IdGroup()
+            N, i = self.IdGroup(O)
             return '%s.%s'%(N,i)
         except Exception:
             return None
@@ -717,7 +675,7 @@ class GroupGap(PGSaver):
     @pg_smallint
     def nilpotency_class(self):
         if self.nilpotent:
-            return ZZ(self.G.NilpotencyClassOfGroup())
+            return ZZ(self.NilpotencyClass(self.G))
         else:
             return ZZ(-1)
 
@@ -727,26 +685,27 @@ class GroupGap(PGSaver):
 
     @pg_smallint
     def elt_rep_type(self):
-        if self.G.IsPcGroup():
+        if self.IsPcGroup(self.G):
             return 0
-        elif self.G.IsPermGroup():
-            return -ZZ(self.G.LargestMovedPoint())
-        elif self.G.IsMatrixGroup():
-            K = self.G.DefaultFieldOfMatrixGroup()
+        elif self.IsPermGroup(self.G):
+            return -ZZ(self.Degree(self.G))
+        elif self.IsMatrixGroup(self.G):
+            K = self.CoefficientRing(self.G)
             if K.IsFinite():
-                return ZZ(K.Size())
+                return ZZ(self.RingSize(K))
             else:
-                return 1
+                return ZZ(1)
 
     @pg_smallint
     def ngens(self):
-        return len(self.G.GeneratorsOfGroup())
+        # Magma has a special method for ngens, but this should be fine
+        return len(self.Generators(self.G))
 
     @pg_numeric
     def pc_code(self):
         # Encoded relations for Pcgs groups
-        if self.G.IsPcGroup():
-            return ZZ(self.G.CodePcGroup())
+        if self.elt_rep_type == 0:
+            return ZZ(self.EncodePcGroup(self.G))
         # Otherwise return None
 
     @pg_integer
@@ -782,32 +741,20 @@ class GroupGap(PGSaver):
         if ert == 0:
             return self.decode_as_pcgs(code)
         elif ert < 0:
-            return self.encode_as_perm(code, -ert)
+            return self.decode_as_perm(code, -ert)
         else:
             # TODO: deal with matrices
             raise NotImplementedError
 
-    def encode_as_perm(self, g, n):
-        # g should be an element of S_n
-        return Permutations(n)(g.sage()).rank()
-
-    def decode_as_perm(self, code, n):
-        # m should be an integer with 0 <= m < factorial(n)
-        return SymmetricGroup(n)(Permutations(n).unrank(code))
-
-    @lazy_attribute
-    def pcgs(self):
-        return self.G.Pcgs()
-
     @lazy_attribute
     def pcgs_relative_orders(self):
-        ords = map(ZZ, self.pcgs.RelativeOrders())
+        ords = map(ZZ, self.RelativeOrders(self.G))
         if prod(ords) != self.order:
             raise RuntimeError("Order mismatch")
         return ords
 
     def encode_as_pcgs(self, g):
-        vec = map(ZZ, self.pcgs.ExponentsOfPcElement(g))
+        vec = map(ZZ, self.Eltseq(g))
         code = 0
         for e, m in zip(vec, self.pcgs_relative_orders):
             code *= m
@@ -822,20 +769,20 @@ class GroupGap(PGSaver):
             c = code % m
             vec.insert(0, c)
             code = code // m
-        return self.pcgs.PcElementByExponents(vec)
+        return self.PcElementByExponents(vec)
 
     @pg_numeric_list
     def perm_gens(self):
         # Encoded generators as a permutation group.  NULL if the minimal degree is too large.
         G = self.G
-        if G.IsPermGroup():
+        if self.IsPermGroup(G):
             n = -self.elt_rep_type # largest moved point
-            gens = G.GeneratorsOfGroup()
+            gens = self.Generators(G)
         elif not self.abelian and self.subgroups_known and self.transitive_degree <= TRANSITIVE_DEGREE_BOUND:
             n = self.transitive_degree
             H = self.subgroup_lattice.subgroups[self.transitive_subgroup].H
             # TODO: This will not be a minimal set of generators, but rather the image of a pcgs
-            gens = G.FactorCosetAction(H).Image().GeneratorsOfGroup()
+            gens = self.Generators(self.CosetImage(G, H))
         else:
             return None
         return [self.encode_as_perm(g, n) for g in gens]
@@ -844,17 +791,17 @@ class GroupGap(PGSaver):
     def G(self):
         # Reconstruct the group from the data stored above
         if self.elt_rep_type == 0: # PcGroup
-            return libgap.PcGroupCode(self.pc_code, self.order)
+            return self.DecodePcGroup(self.pc_code, self.order)
         elif self.elt_rep_type < 0: # Permutation group
             gens = [self.decode(g) for g in self.perm_gens]
-            return libgap.Group(gens)
+            return self.PermGroup(gens, -self.elt_rep_type)
         else:
             # TODO: Matrix groups
             raise NotImplementedError
 
     @pg_integer
     def number_conjugacy_classes(self):
-        return ZZ(self.G.NrConjugacyClasses())
+        return ZZ(self.NrConjugacyClasses(self.G))
 
     @pg_integer
     def number_subgroup_classes(self):
@@ -895,36 +842,30 @@ class GroupGap(PGSaver):
 
     @pg_integer_list
     def upper_central_series(self):
-        return [self.subgroup_lattice.identify(H, normal=True) for H in self.G.UpperCentralSeries()]
+        return [self.subgroup_lattice.identify(H, normal=True) for H in self.UpperCentralSeries(self.G)]
 
-    @pg_integer_list
-    def abelian_invariants(self):
-        return map(ZZ, self.G.AbelianInvariants())
-
-    @pg_integer_list
-    def schur_multiplier(self):
-        return map(ZZ, self.G.AbelianInvariantsMultiplier())
-
-    @pg_numeric_list
-    def order_stats(self):
-        D = defaultdict(int)
-        for C in self.G.ConjugacyClasses():
-            D[ZZ(C.Representative().Order())] += ZZ(C.Size())
-        return sorted(D.items())
-
+    # Magma and GAP define different abelian invariants, so we define each in terms of the other
     @lazy_attribute
-    def character_table(self):
-        return CharacterTableGap(self)
+    def _pparts(self):
+        invs = self.primary_abelian_invariants
+        parts = defaultdict(list)
+        for q in invs:
+            p, e = q.is_prime_power(get_data=True)
+            parts[p].append(e)
+        return parts
+    @pg_integer_list
+    def smith_abelian_invariants(self):
+        parts = self._pparts
+        return list(reversed(map(prod, izip_longest(*map(reversed, parts.values()), fillvalue=1))))
+    @pg_integer_list
+    def primary_abelian_invariants(self):
+        return sorted(flatten([[p**e for p,e in a.factor()] for a in self.smith_abelian_invariants]))
 
     def _number_subgroups_abelian(self):
         """
         Count the number of subgroups of an abelian group.
         """
-        invs = self.abelian_invariants
-        parts = defaultdict(list)
-        for q in invs:
-            p, e = q.is_prime_power(get_data=True)
-            parts[p].append(e)
+        parts = self._pparts
         total = 1
         def add_down(D, P):
             """
@@ -950,13 +891,22 @@ class GroupGap(PGSaver):
             total *= pcontribution
         return total
 
-    @lazy_attribute
-    def subgroup_lattice(self):
-        return SubgroupLatticeGap(self, outer=self.outer_equivalence)
+    @pg_integer_list
+    def schur_multiplier(self):
+        return map(ZZ, self.AbelianInvariantsMultiplier(self.G))
 
     @pg_boolean
-    def subgroups_known(self):
+    def all_subgroups_known(self):
         # TODO: decide when this should be False
+        return True
+
+    @pg_boolean
+    def normal_subgroups_known(self):
+        return True
+
+    @pg_smallint
+    def maximal_subgroups_known(self):
+        # TODO: figure out the plan for this
         return True
 
     @pg_boolean
@@ -964,21 +914,297 @@ class GroupGap(PGSaver):
         # TODO: decide when this should be False
         return True
 
+    @pg_smallint
+    def subgroup_index_bound(self):
+        # TODO: figure out the plan for this
+        pass
+
+    @pg_smallint
+    def subgroup_order_bound(self):
+        # TODO: figure out the plan for this
+        pass
+
     @pg_boolean
     def outer_equivalence(self):
         # Need a better way of deciding whether to use inner/outer subgroup equivalence
         return self.abelian and self._number_subgroups_abelian() > 70
 
-    @pg_boolean
-    def normals_known(self):
+    def get_tmp_name(self, G, order=None):
+        if order is None:
+            order = ZZ(self.Size(G))
+        if order <= 2000 and order.valuation(2) < 9:
+            N, i = map(ZZ, self.IdGroup(G))
+            if N != order:
+                raise RuntimeError
+            return "%s.%s" % (N, i)
+        else:
+            # We make up a temporary name that will be revised once all groups are computed
+            return "%s.%s" % (order, ''.join(random.choice(string.ascii_uppercase + string.digits) for _ in range(30)))
+
+class MagmaMixin(object):
+    """
+    Function definitions used in multiple Gap-implemented classes
+    """
+    Size = staticmethod(magma.Order)
+    IdGroup = staticmethod(magma.IdentifyGroup)
+    FactorGroupNC = staticmethod(lambda G,H: G/H)
+    IsPerfect = staticmethod(magma.IsPerfect)
+    CosetImage = staticmethod(magma.CosetImage)
+    TransitiveIdentification = staticmethod(magma.TransitiveGroupIdentification)
+    PseudoRandom = staticmethod(magma.Random)
+
+class GroupMagma(Group, MagmaMixin):
+    """
+    An object representing a group computed in Magma, to be saved to the gps_groups table
+    """
+    driver = magma
+    IsSolvable = staticmethod(magma.IsSolvable)
+    def IsSupersolvable(self, G):
+        if not G.IsSolvable():
+            return False
+        if G.IsNilpotent():
+            return True
+        C = [ZZ(H.Order()) for H in G.ChiefSeries()]
+        for a, b in zip(C[:-1], C[1:]):
+            if not (a // b).is_prime():
+                return False
         return True
+    IsNilpotent = staticmethod(magma.IsNilpotent)
+    def IsMetacyclic(self, G):
+        ans = self._easy_metacyclic()
+        if ans is not None:
+            return ans
+        if self.pgroup:
+            return G.IsMetacyclicPGroup()
+        D = G.DerivedSubgroup()
+        if not D.IsCyclic():
+            return False
+        # We could pull back from the quotient, but I can't figure out how to construct the natural homomorphism to the quotient.
+        for N in G.Subgroups(D, Normal=True):
+            if N.IsCyclic() and magma.new('%s subset %s' % (D.name(), N.name())):
+                Q = G / N
+                if Q.IsCyclic():
+                    return True
+        return False
+    def IsAlmostSimple(self, G):
+        # In order to be almost simple, we need a simple nonabelian normal subgroup with trivial centralizer
+        if self.abelian or self.solvable:
+            return False
+        for N in G.NormalSubgroups():
+            if N.IsSimple() and G.Centralizer(N).Order() == 1:
+                return True
+        return False
+    def IsQuasiSimple(self, G):
+        return self.perfect and (G / G.Center()).IsSimple()
+    def IsMonomial(self, G):
+        if not self.solvable:
+            return False
+        if self.supersolvable or (self.solvable and self.Agroup):
+            return True
+        # TODO
+        raise NotImplementedError
+    SylowSystem = staticmethod(magma.SylowBasis)
+    ComplementSystem = staticmethod(magma.ComplementBasis)
+    Radical = staticmethod(magma.Radical)
+    @lazy_attribute
+    def _eulerian_data(self):
+        # TODO: I don't know how to compute this in Magma
+        raise NotImplementedError
+    OuterOrder = staticmethod(magma.OuterOrder)
+    OuterGroup = staticmethod(magma.OuterFPGroup)
+    NilpotencyClass = staticmethod(magma.NilpotencyClass)
+    def IsPcGroup(self, G):
+        return G.Category() == magma('GrpPC')
+    def IsPermGroup(self, G):
+        return G.Category() == magma('GrpPerm')
+    def IsMatrixGroup(self, G):
+        return G.Category() == magma('GrpMat')
+    Degree = staticmethod(magma.Degree)
+    CoefficientRing = staticmethod(magma.CoefficientRing)
+    def RingSize(self, R):
+        return magma('#%s'%R.name())
+    Generators = staticmethod(magma.Generators)
+    EncodePcGroup = staticmethod(magma.SmallGroupEncoding)
+    DecodePcGroup = staticmethod(magma.SmallGroupDecoding)
+    def PermGroup(self, gens, n):
+        # all gens should have the same degree
+        return magma('PermutationGroup<%s|%s>' % (n, ', '.join(map(str, gens))))
+    def encode_as_perm(self, g, n):
+        # g should be an element of S_n
+        S = SymmetricGroup(n)
+        P = Permutations(n)
+        return P(S(map(tuple, g.CycleDecomposition().sage()))).rank()
+    def decode_as_perm(self, code, n):
+        # code should be an integer with 0 <= m < factorial(n)
+        S = SymmetricGroup(n)
+        P = Permutations(n)
+        # This function is used in reconstructing G, so we don't have it available
+        return magma('SymmetricGroup(%s)!%s' % (n, S(P.unrank(code))))
+    RelativeOrders = staticmethod(magma.PCPrimes)
+    Eltseq = staticmethod(magma.Eltseq)
+    def PcElementByExponents(self, vec):
+        return magma('%s!%s' % (self.G.name(), vec))
 
-    @pg_smallint
-    def maximal_depth(self):
-        # TODO: figure out the plan for this
-        pass
+    NrConjugacyClasses = staticmethod(magma.Nclasses)
+    def UpperCentralSeries(self, G):
+        # Magma has a different order for the upper central series than GAP does; we reverse to agree with GAP
+        return reversed(G.UpperCentralSeries())
 
-class SubgroupGap(PGSaver):
+    @pg_integer_list
+    def smith_abelian_invariants(self):
+        return map(ZZ, self.G.AbelianInvariants())
+
+    def AbelianInvariantsMultiplier(self, G):
+        ans = []
+        for p, e in self.factored_order:
+            ans.extend([ZZ(c) for c in G.pMultiplicator(p) if c > 1])
+        return sorted(ans)
+
+    @pg_numeric_list
+    def order_stats(self):
+        D = defaultdict(int)
+        for C in self.G.ConjugacyClasses():
+            D[ZZ(C[1])] += ZZ(C[2])
+        return sorted(D.items())
+
+    @lazy_attribute
+    def subgroup_lattice(self):
+        return SubgroupLatticeMagma(self)
+
+    @lazy_attribute
+    def character_table(self):
+        return CharacterTableMagma(self)
+
+class GapMixin(object):
+    """
+    Function definitions used in multiple Gap-implemented classes
+    """
+    Size = staticmethod(libgap.Size)
+    IdGroup = staticmethod(libgap.IdGroup)
+    FactorGroupNC = staticmethod(libgap.FactorGroupNC)
+    IsPerfect = staticmethod(libgap.IsPerfectGroup)
+    @staticmethod
+    def CosetImage(G, H):
+        return G.FactorCosetAction(H).Image()
+    TransitiveIdentification = staticmethod(libgap.TransitiveIdentification)
+    PseudoRandom = staticmethod(libgap.PseudoRandom)
+
+class GroupGap(Group, GapMixin):
+    """
+    An object representing a group computed in GAP, to be saved to the gps_groups table
+
+    Note that various attributes must be filled in externally:
+
+    - the `label` and `which` if the order has 2-adic valuation at least 9 or is larger than 2000.
+    - the `name`
+    - the `tex_name`
+    - the `aliases`
+    - the `tex_aliases`
+    """
+    driver = libgap
+    IsSolvable = staticmethod(libgap.IsSolvableGroup)
+    IsSupersolvable = staticmethod(libgap.IsSupersolvableGroup)
+    IsNilpotent = staticmethod(libgap.IsNilpotentGroup)
+    def IsMetacyclic(self, G):
+        ans = self._easy_metacyclic()
+        if ans is not None:
+            return ans
+        D = G.DerivedSubgroup()
+        if not D.IsCyclic():
+            return False
+        for N in G.NormalSubgroupsAbove(D,[]):
+            if N.IsCyclic() and G.FactorGroup(N).IsCyclic():
+                return True
+        return False
+    IsAlmostSimple = staticmethod(libgap.IsAlmostSimpleGroup)
+    def IsQuasiSimple(self, G):
+        return self.perfect and G.FactorGroup(G.Center()).IsSimpleGroup()
+    IsMonomial = staticmethod(libgap.IsMonomial)
+    SylowSystem = staticmethod(libgap.SylowSystem)
+    ComplementSystem = staticmethod(libgap.ComplementSystem)
+    CommutatorLength = staticmethod(libgap.CommutatorLength)
+    Radical = staticmethod(libgap.RadicalGroup)
+    @staticmethod
+    def OuterOrder(A):
+        I = A.InnerAutomorphismsAutomorphismGroup()
+        return ZZ(A.Size()) // ZZ(I.Size())
+    @staticmethod
+    def OuterGroup(A):
+        I = A.InnerAutomorphismsAutomorphismGroup()
+        return A.FactorGroup(I)
+    NilpotencyClass = staticmethod(libgap.NilpotencyClassOfGroup)
+    IsPcGroup = staticmethod(libgap.IsPcGroup)
+    IsPermGroup = staticmethod(libgap.IsPermGroup)
+    IsMatrixGroup = staticmethod(libgap.IsMatrixGroup)
+    Degree = staticmethod(libgap.LargestMovedPoint)
+    CoefficientRing = staticmethod(libgap.DefaultFieldOfMatrixGroup)
+    RingSize = staticmethod(libgap.Size)
+    Generators = staticmethod(libgap.GeneratorsOfGroup)
+    EncodePcGroup = staticmethod(libgap.CodePcGroup)
+    DecodePcGroup = staticmethod(libgap.PcGroupCode)
+    @staticmethod
+    def PermGroup(gens, n):
+        return libgap.Group(gens)
+
+    @lazy_attribute
+    def _eulerian_data(self):
+        if self.cyclic:
+            return (ZZ(1), ZZ(1))
+        G = self.G
+        r = ZZ(2)
+        a = ZZ(G.AutomorphismGroup().Size())
+        while True:
+            E = ZZ(G.EulerianFunction(r))
+            if E > 0:
+                if E % a != 0:
+                    raise RuntimeError
+                return r, (E // a)
+            r += 1
+
+    @staticmethod
+    def encode_as_perm(g, n):
+        # g should be an element of S_n
+        return Permutations(n)(g.sage()).rank()
+    @staticmethod
+    def decode_as_perm(code, n):
+        # code should be an integer with 0 <= m < factorial(n)
+        return SymmetricGroup(n)(Permutations(n).unrank(code))
+
+    @lazy_attribute
+    def pcgs(self):
+        return self.G.Pcgs()
+    def RelativeOrders(self, G):
+        return self.pcgs.RelativeOrders()
+    def Eltseq(self, g):
+        return self.pcgs.ExponentsOfPcElement(g)
+    def PcElementByExponents(self, vec):
+        return self.pcgs.PcElementByExponents(vec)
+
+    NrConjugacyClasses = staticmethod(libgap.NrConjugacyClasses)
+    UpperCentralSeries = staticmethod(libgap.UpperCentralSeries)
+
+    @pg_integer_list
+    def primary_abelian_invariants(self):
+        return map(ZZ, self.G.AbelianInvariants())
+
+    AbelianInvariantsMultiplier = staticmethod(AbelianInvariantsMultiplier)
+
+    @pg_numeric_list
+    def order_stats(self):
+        D = defaultdict(int)
+        for C in self.G.ConjugacyClasses():
+            D[ZZ(C.Representative().Order())] += ZZ(C.Size())
+        return sorted(D.items())
+
+    @lazy_attribute
+    def subgroup_lattice(self):
+        return SubgroupLatticeGap(self)
+
+    @lazy_attribute
+    def character_table(self):
+        return CharacterTableGap(self)
+
+class Subgroup(PGSaver):
     def __init__(self, lattice, H, which, count, contains, contained_in, outer=False):
         self.lattice = lattice
         self.G = lattice.G
@@ -1016,11 +1242,11 @@ class SubgroupGap(PGSaver):
 
     @pg_text
     def subgroup(self):
-        return get_tmp_name(self.H, self.subgroup_order)
+        return self.lattice.gp.get_tmp_name(self.H, self.subgroup_order)
 
     @pg_numeric
     def subgroup_order(self):
-        return ZZ(self.H.Size())
+        return ZZ(self.Size(self.H))
 
     @pg_text
     def ambient(self):
@@ -1038,7 +1264,7 @@ class SubgroupGap(PGSaver):
         elif self.quotient_order == 1:
             return '1.1'
         elif self.normal:
-            return get_tmp_name(self.G.FactorGroupNC(self.H), self.quotient_order)
+            return self.lattice.gp.get_tmp_name(self.FactorGroupNC(self.G, self.H), self.quotient_order)
 
     @pg_numeric
     def quotient_order(self):
@@ -1050,7 +1276,7 @@ class SubgroupGap(PGSaver):
 
     @pg_boolean
     def characteristic(self):
-        return bool(self.G.IsCharacteristicSubgroup(self.H))
+        return bool(self.IsCharacteristic(self.G, self.H))
 
     @pg_boolean
     def cyclic(self):
@@ -1062,7 +1288,7 @@ class SubgroupGap(PGSaver):
 
     @pg_boolean
     def perfect(self):
-        return bool(self.H.IsPerfectGroup())
+        return bool(self.IsPerfect(self.H))
 
     @pg_smallint
     def sylow(self):
@@ -1117,11 +1343,12 @@ class SubgroupGap(PGSaver):
     @pg_integer_list
     def complements(self):
         # TODO: for solvable groups there is also the ComplementClassesRepresentatives method available; should check if that's faster
+        # TODO: when N is not normal, the size of the intersection could depend on the choice of representative subgroups
         N = self.H
         desired_order = self.quotient_order
         return sorted(i for i, H in enumerate(self.lattice.subgroups[1:],1)
                       if H.subgroup_order == desired_order and
-                      N.Intersection(H.H).Size() == 1)
+                      self.Size(self.Intersection(N, H.H)) == 1)
 
     @pg_boolean
     def direct(self):
@@ -1132,11 +1359,11 @@ class SubgroupGap(PGSaver):
 
     @pg_boolean
     def central(self):
-        return bool(self.G.IsCentral(self.H))
+        return bool(self.IsCentral(self.G, self.H))
 
     @pg_boolean
     def stem(self):
-        return self.central and self.G.DerivedSubgroup().IsSubset(self.H)
+        return self.central and self.IsSubset(self.G.DerivedSubgroup(), self.H)
 
     @pg_numeric
     def count(self):
@@ -1165,12 +1392,13 @@ class SubgroupGap(PGSaver):
         if self.ambient_order == 1:
             return '1T1'
         if self.core == 1 and self.quotient_order <= TRANSITIVE_IDENTIFICATION_BOUND:
-            F = self.G.FactorCosetAction(self.H, self.lattice.subgroups[1].H).Image()
-            tid = F.TransitiveIdentification()
+            F = self.CosetImage(self.G, self.H)
+            tid = self.TransitiveIdentification(F)
             return '%sT%s'%(self.quotient_order, tid)
 
     @pg_integer
     def normalizer(self):
+        # For Magma, set in __init__
         if self.normal:
             return self.lattice.gp.number_subgroup_classes
         else:
@@ -1178,6 +1406,7 @@ class SubgroupGap(PGSaver):
 
     @pg_integer
     def centralizer(self):
+        # For Magma, set in __init__
         if self.central:
             return self.lattice.gp.number_subgroup_classes
         else:
@@ -1188,6 +1417,7 @@ class SubgroupGap(PGSaver):
         if self.normal:
             return self.which
         else:
+            # TODO: could do this just using the lattice
             return self.lattice.identify(self.G.NormalClosure(self.H), normal=True)
 
     @pg_integer
@@ -1246,8 +1476,8 @@ class SubgroupGap(PGSaver):
         # TODO: K might only be conjugate to a subgroup of H, not necessarily a subgroup itself
         # Constructing right transversals could be expensive, so we use PseudoRandom, which will lie outside K with probability at least 1/2.
         while True:
-            x = self.H.PseudoRandom()
-            if x not in K:
+            x = self.PseudoRandom(self.H)
+            if not self.Contains(K, x):
                 return x
         # The following would be a deterministic way to find an element
         #T = self.H.RightTransversal(K)
@@ -1258,19 +1488,117 @@ class SubgroupGap(PGSaver):
     def new_gen(self):
         return self.lattice.gp.encode(self.generating_elt)
 
-class SubgroupLatticeGap(object):
+class SubgroupMagma(Subgroup, MagmaMixin):
+    @staticmethod
+    def IsCharacteristic(G, H):
+        if not G.IsNormal(H):
+            return False
+        A = G.AutomorphismGroup()
+        for phi in A.Generators():
+            if not phi.IsInner():
+                phiH = magma('%s(%s)' % (phi.name(), H.name()))
+                if phiH != H:
+                    return False
+        return True
+    @staticmethod
+    def Intersection(A, B):
+        return magma('%s meet %s' % (A.name(), B.name()))
+    IsCentral = magma.IsCentral
+    @staticmethod
+    def IsSubset(A, B):
+        # We use GAP's convention on ordering: this tests whether B is a subset of A
+        return magma('%s subset %s' % (B.name(), A.name()))
+    @staticmethod
+    def Contains(X, x):
+        return magma('%s in %s' % (x.name(), X.name()))
+
+class SubgroupGap(Subgroup, GapMixin):
+    IsCharacteristic = libgap.IsCharacteristicSubgroup
+    Intersection = libgap.Intersection
+    IsCentral = libgap.IsCentral
+    IsSubset = libgap.IsSubset
+    @staticmethod
+    def Contains(X, x):
+        return x in X
+
+class SubgroupLattice(object):
     """
     An object representing the lattice of subgroups up to conjugacy.
     """
-    def __init__(self, gp, outer=False):
+    def __init__(self, gp):
         self.gp = gp # Group object
-        self.G = gp.G # GAP group
-        self.outer_equivalence = outer
+        self.G = gp.G # GAP/Magma group
+        self.outer_equivalence = gp.outer_equivalence
 
+class SubgroupLatticeMagma(SubgroupLattice):
     @lazy_attribute
     def subgroups(self):
         """
-        A representative
+        A representative from each class of subgroups
+        """
+        subgroups = [None] # shift by 1 to align with Magma's numbering
+        G = self.G
+        gp = self.gp
+        if gp.subgroup_inclusions_known:
+            # Check option consistency
+            if not (gp.all_subgroups_known and gp.normal_subgroups_known and gp.maximal_subgroups_known and gp.subgroup_index_bound is None and gp.subgroup_order_bound is None):
+                raise ValueError("Inconsistent options")
+            # TODO: doesn't work for matrix groups
+            self.L = L = G.SubgroupLattice(Properties=True, Normalizers=True, Centralizers=True)
+            LG = L.Top()
+            for i in range(1,len(L)+1):
+                elt = magma('%s!%s' % (L.name(), i))
+                H = elt.Group()
+                subs = map(ZZ, elt.MaximalSubgroups())
+                sups = map(ZZ, elt.MinimalOvergroups())
+                count = ZZ(elt.Length())
+                # TODO: deal with the case of outer=True
+                C = SubgroupMagma(self, H, i, count, subs, sups, outer=self.outer_equivalence)
+                C.order = ZZ(elt.Order())
+                C.centralizer = ZZ(LG.Centralizer(elt))
+                C.normalizer = ZZ(LG.Normalizer(elt))
+                subgroups.append(C)
+        elif gp.all_subgroups_known:
+            if not (gp.normal_subgroups_known and gp.maximal_subgroups_known and gp.subgroup_index_bound is None and gp.subgroup_order_bound is None):
+                raise ValueError("Inconsistent options")
+            for i, elt in enumerate(G.Subgroups(), 1):
+                H = magma('%s`subgroup' % (elt.name()))
+                count = ZZ(magma('%s`length' % (elt.name())))
+                order = ZZ(magma('%s`order' % (elt.name())))
+                # TODO: deal with the case of outer=True
+                C = SubgroupMagma(self, H, i, count, None, None, outer=self.outer_equivalence)
+                # TODO: set the attributes which depend on the lattice: maximal, maximal_normal, minimal, minimal_normal, normalizer?, centralizer?, new_gen
+                subgroups.append(C)
+        else:
+            # TODO: do some of these options require a permutation group?
+            Hs = []
+            bound = gp.subgroup_index_bound
+            Gorder = gp.order
+            normals = gp.normal_subgroups_known
+            if bound is not None:
+                Hs.extend(G.Subgroups(IndexLimit=gp.subgroup_index_bound))
+            # TODO: do we want to support subgroup_order_bound?
+            if normals:
+                for Nrec in G.NormalSubgroups():
+                    order = ZZ(magma('%s`order' % (Nrec.name())))
+                    if bound is None or bound * order < Gorder:
+                        Hs.append(Nrec)
+            if gp.maximal_subgroups_known:
+                for Hrec in G.MaximalSubgroups():
+                    order = ZZ(magma('%s`order' % (Hrec.name())))
+                    H = magma('%s`subgroup' % (Hrec.name()))
+                    if ((bound is None or bound * order < Gorder) and
+                        not (normals and G.IsNormal(H))):
+                        Hs.append(Hrec)
+            # TODO: finish this case
+            subgroups.extend(G.NormalSubgroups())
+        return subgroups
+
+class SubgroupLatticeGap(SubgroupLattice):
+    @lazy_attribute
+    def subgroups(self):
+        """
+        A representative from each class of subgroups
         """
         subgroups = [None] # shift by 1 to align with GAP's numbering
         G = self.G
@@ -1282,6 +1610,7 @@ class SubgroupLatticeGap(object):
             subs = sorted(set(ZZ(c) for c,k in subs))
             sups = sorted(set(ZZ(c) for c,k in sups))
             count = ZZ(C.Size())
+            # TODO: deal with the case of outer=True
             subgroups.append(SubgroupGap(self, H, i, count, subs, sups, outer=self.outer_equivalence))
         return subgroups
 
