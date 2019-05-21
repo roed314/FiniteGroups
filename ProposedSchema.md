@@ -297,6 +297,7 @@ prime          | boolean    | Whether the cardinality is prime
 ambient        | text       | Group label `N.i` for the ambient group
 counter          | integer    | Subgroup identifier from `gps_subgroups`
 gens           | smallint[] | Matrices generating the group, in order corresponding to the generators listed in `gps_groups`.  If `q` is prime, the entries are integers `c` with `-q < 2c <= q`.  Otherwise, they are lists of integers giving the coefficients for the element as a polynomial (with respect to the Conway polynomial defining the field extension)
+proj_label | text | The label `N.i.j` of the image of the group in the quotient of the ambient group by its subgroup of scalars, where `N.i` is the label of the quotient and `j` is the subgroup identifier.
 
 `gps_prep_names`: Names for classical groups with a specified `n` and `q`
 
