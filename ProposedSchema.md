@@ -253,7 +253,7 @@ group          | text      | The LMFDB id for the abstract group
 q_class        | text      | The label for the `GL_n(Q)` class containing this class
 c_class        | text      | The label for the `GL_n(C)` class containing this class
 bravais_class  | text      | The label for the Z-class of the Bravais group B(G) (see Def. 2.8 of Opgenorth, Pleskin, Shulz Crystalographic Algorithms and Tables)
-crystal_symobl | text      | The symbol for the crystal family (see Def. 2.11, 2.12 of Opgenorth, Pleskin, Shulz)
+crystal_symbol | text      | The symbol for the crystal family (see Def. 2.11, 2.12 of Opgenorth, Pleskin, Shulz)
 indecomposible | boolean   | Whether the corresponding `Z[G]`-module splits up as a direct sum (the pieces don't necessarily need to be faithful representations)
 irreducible    | boolean   | Whether the corresponding `Q[G]`-module splits up as a direct sum (the pieces don't necessarily need to be faithful representations)
 decomposition  | jsonb     | List of pairs `(label, ker, m)` giving the decomposition of `Z^n` as a direct sum of indecomposible submodules.  Here `m` is the multiplicity and `ker` is an integer giving the subgroup label for the kernel of the representation.
