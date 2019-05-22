@@ -84,18 +84,28 @@ is_wreath_product | boolean | whether this group is a wreath product
 is_central_product | boolean | whether this group is a central product
 is_finite_matrix_group | boolean | whether this group shows up in `gps_prep_names`
 
-`gps_special_names`: Names for groups
+`gps_families`: Names for families of groups
 
-We don't list descriptions in terms of extensions or products (stored in the `gps_subgroups`, `gps_central_products` and `gps_wreath_products`), or classical matrix groups over finite fields (stored in `gps_prep_names`).
+Here we list information common to all elements of a family of groups (like the dihedral or alternating groups).  We don't list descriptions in terms of extensions or products (stored in the `gps_subgroups`, `gps_central_products` and `gps_wreath_products`), or classical matrix groups over finite fields (stored in `gps_prep_names`).
 
 Column        | Type     | Notes
 --------------|----------|------
-label         | text     | Abstract isomorphism class of the group
 family        | text     | For example `D` for dihedral or `A` for alternating
 knowl         | text     | Knowl for this family or special group
 name          | text     |
 tex_name      | text     |
 alias_spot    | smallint | Which position this alias should appear in the list of aliases for the group.  0 indicates that it's the main name
+magma command | text     | ??????  add????
+
+
+`gps_special_names`: Connection between common names for groups. Again, we don't list descriptions in terms of extensions or products (stored in the `gps_subgroups`, `gps_central_products` and `gps_wreath_products`), or classical matrix groups over finite fields (stored in `gps_prep_names`).
+
+Column        | Type     | Notes
+--------------|----------|------
+label         | text     | Abstract isomorphism class of the group
+family        | text     | For example `D` for dihedral or `A` for alternating
+parameters    | jsonb    |
+
 
 ## Permutation groups
 
