@@ -92,10 +92,10 @@ Column        | Type     | Notes
 --------------|----------|------
 family        | text     | For example `D` for dihedral or `A` for alternating
 knowl         | text     | Knowl for this family or special group
-name          | text     |
-tex_name      | text     |
-alias_spot    | smallint | Which position this alias should appear in the list of aliases for the group.  0 indicates that it's the main name
-magma command | text     | ??????  add????
+name          | text     | description of family
+tex_name      | text     | As formattable string, for example C_{{{n}}}
+priority      | smallint | Which position this alias should appear in the list of aliases for the group. 
+magma command | text     | As formattable string, for example CyclicGroup({n})
 
 
 `gps_special_names`: Connection between common names for groups. Again, we don't list descriptions in terms of extensions or products (stored in the `gps_subgroups`, `gps_central_products` and `gps_wreath_products`), or classical matrix groups over finite fields (stored in `gps_prep_names`).
@@ -104,7 +104,7 @@ Column        | Type     | Notes
 --------------|----------|------
 label         | text     | Abstract isomorphism class of the group
 family        | text     | For example `D` for dihedral or `A` for alternating
-parameters    | jsonb    |
+parameters    | jsonb    | To be used in formatting
 
 
 ## Permutation groups
