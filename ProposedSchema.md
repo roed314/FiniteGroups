@@ -91,18 +91,28 @@ is_direct_product  | boolean | whether this group can be expressed as a nontrivi
 composition_factors | text[]  | LMFDB labels for the composition factors, sorted by order then id.
 composition_length  | smallint | the number of composition factors
 
-`gps_special_names`: Names for groups
+`gps_families`: Names for families of groups
 
-We don't list descriptions in terms of extensions or products (stored in the `gps_subgroups`, `gps_central_products` and `gps_wreath_products`), or classical matrix groups over finite fields (stored in `gps_prep_names`).
+Here we list information common to all elements of a family of groups (like the dihedral or alternating groups).  We don't list descriptions in terms of extensions or products (stored in the `gps_subgroups`, `gps_central_products` and `gps_wreath_products`), or classical matrix groups over finite fields (stored in `gps_prep_names`).
+
+Column        | Type     | Notes
+--------------|----------|------
+family        | text     | For example `D` for dihedral or `A` for alternating
+knowl         | text     | Knowl for this family or special group
+name          | text     | description of family
+tex_name      | text     | As formattable string, for example C_{{{n}}}
+priority      | smallint | Which position this alias should appear in the list of aliases for the group. 
+magma_cmd | text     | As formattable string, for example CyclicGroup({n})
+
+
+`gps_special_names`: Connection between common names for groups. Again, we don't list descriptions in terms of extensions or products (stored in the `gps_subgroups`, `gps_central_products` and `gps_wreath_products`), or classical matrix groups over finite fields (stored in `gps_prep_names`).
 
 Column        | Type     | Notes
 --------------|----------|------
 label         | text     | Abstract isomorphism class of the group
 family        | text     | For example `D` for dihedral or `A` for alternating
-knowl         | text     | Knowl for this family or special group
-name          | text     |
-tex_name      | text     |
-alias_spot    | smallint | Which position this alias should appear in the list of aliases for the group.  0 indicates that it's the main name
+parameters    | jsonb    | To be used in formatting
+
 
 ## Permutation groups
 
@@ -261,7 +271,7 @@ group          | text      | The LMFDB id for the abstract group
 q_class        | text      | The label for the `GL_n(Q)` class containing this class
 c_class        | text      | The label for the `GL_n(C)` class containing this class
 bravais_class  | text      | The label for the Z-class of the Bravais group B(G) (see Def. 2.8 of Opgenorth, Pleskin, Shulz Crystalographic Algorithms and Tables)
-crystal_symobl | text      | The symbol for the crystal family (see Def. 2.11, 2.12 of Opgenorth, Pleskin, Shulz)
+crystal_symbol | text      | The symbol for the crystal family (see Def. 2.11, 2.12 of Opgenorth, Pleskin, Shulz)
 indecomposible | boolean   | Whether the corresponding `Z[G]`-module splits up as a direct sum (the pieces don't necessarily need to be faithful representations)
 irreducible    | boolean   | Whether the corresponding `Q[G]`-module splits up as a direct sum (the pieces don't necessarily need to be faithful representations)
 decomposition  | jsonb     | List of pairs `(label, ker, m)` giving the decomposition of `Z^n` as a direct sum of indecomposible submodules.  Here `m` is the multiplicity and `ker` is an integer giving the subgroup label for the kernel of the representation.
@@ -306,6 +316,7 @@ ambient        | text       | Group label `N.i` for the ambient group
 counter        | integer    | Subgroup identifier from `gps_subgroups`
 projective_image | text       | label for the quotient by the center of the ambient group
 gens           | smallint[] | Matrices generating the group, in order corresponding to the generators listed in `gps_groups`.  If `q` is prime, the entries are integers `c` with `-q < 2c <= q`.  Otherwise, they are lists of integers giving the coefficients for the element as a polynomial (with respect to the Conway polynomial defining the field extension)
+proj_label | text | The label `N.i.j` of the image of the group in the quotient of the ambient group by its subgroup of scalars, where `N.i` is the label of the quotient and `j` is the subgroup identifier.
 
 `gps_prep_names`: Names for classical groups with a specified `n` and `q`
 
