@@ -45,4 +45,8 @@
 * Rename Meow Wolf to Tim
 * RCS knowls
 
+## Last Stage
+
+* Should www.lmfdb.org/Group (or browse page like it) be where the breadcrumb www.lmfdb.org/Groups  goes?
+
 
