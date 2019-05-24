@@ -11,8 +11,8 @@ old_label         | text     | If the label has been switched from temp to perma
 name              | text     | Primary description
 tex_name          | text     | Latex version of the primary description
 order             | numeric  | Size of the group
-counter             | integer  | The value of `i`
-factored_order    | smallint[] | List of pairs `(p, e)` giving the factorization of the order
+counter           | integer  | The value of `i`
+factors_of_order  | smallint[] | List of primes dividing the order
 exponent          | integer  | Exponent of the group
 abelian           | boolean  |
 cyclic            | boolean  |
@@ -54,6 +54,7 @@ aut_order         | numeric  | Order of the automorphism group
 aut_group         | text     | Label for the automorphism group (might be null if not in database)
 outer_order       | numeric  | Order of the outer automorphism group
 outer_group       | text     | Label for the outer automorphism group (might be null if not in database)
+factors_of_aut_order | integer[] | List of primes dividing the order of the automorphism group
 nilpotency_class  | smallint | The smallest n such that G has a central series of length n (-1 if not nilpotent)
 ngens             | smallint | Number of generators in the presentation (`NULL` if no presentation available)
 pc_code           | numeric  | Encoded pcgs from which relations can be recovered
@@ -73,9 +74,11 @@ smith_abelian_invariants | integer[] | Invariants of the maximal abelian quotien
 schur_multiplier  | integer[] | Primary invariants for the Schur multiplier (H_2(G, Z))
 order_stats       | numeric[] | List of pairs `(o, m)` where `m` is the number of elements of order `o`.
 elt_rep_type      | smallint  | Code for the main way that elements are encoded in conjugacy class and subgroup tables.  0=generators+relations, -1=permutation rep, 1=integer matrices, q=matrices over GF(q)
+perm_gens     | numeric[] | encoded generators for a minimal permutation representation of this group (NULL if abelian or transitive degree too large)
 all_subgroups_known   | boolean   | Whether we store all subgroups of this group
 normal_subgroups_known | boolean   | Whether we store all normal subgroups of this group
 maximal_subgroups_known | boolean  | Whether we store all maximal subgroups of this group
+sylow_subgroups_known | boolean  | Whether we store all sylow subgroups of this group
 subgroup_inclusions_known | boolean | Whether we store inclusion relationships among subgroups of this group
 outer_equivalence | boolean   | Whether subgroups are stored up to automorphism (as opposed to up to conjugacy)
 subgroup_index_bound | smallint  | If not `NULL`, we store all (equivalence classes of) subgroups of index up to this bound.  Additional subgroups may also be stored (for example, normal subgroups, maximal subgroups, or subgroups of small order)
@@ -83,6 +86,10 @@ moddecompuniq | jsonb    | ????
 is_wreath_product | boolean | whether this group is a wreath product
 is_central_product | boolean | whether this group is a central product
 is_finite_matrix_group | boolean | whether this group shows up in `gps_prep_names`
+is_direct_product  | boolean | whether this group can be expressed as a nontrivial direct product
+is_direct_product  | boolean | whether this group can be expressed as a nontrivial semidirect product
+composition_factors | text[]  | LMFDB labels for the composition factors, sorted by order then id.
+composition_length  | smallint | the number of composition factors
 
 `gps_special_names`: Names for groups
 
@@ -188,6 +195,7 @@ quotient_fusion   | jsonb     | A list of lists: for each conjugacy class of `Q`
 subgroup_fusion   | integer[] | A list: for each conjugacy class of `H`, gives the conjugacy class of `G` in which it's contained
 alias_spot        | smallint  | Which position this alias should appear in the list of aliases for the group.  0 indicates that it's the main name; `NULL` if not normal (or if it shouldn't be displayed; we only want to display one of the two orders for a direct product)
 generators        | numeric[] | Encoded elements that generate `H` together.  Elements are encoded according to the groups `elt_rep_type` attribute
+projective_image  | text      | label for the quotient by the center of the ambient group
 
 ## Other products
 
@@ -263,7 +271,7 @@ gens           | integer[] | List of matrices generating group, matching the gen
 
 `gps_crep`: Finite subgroups of GL_n(C), up to GL_n(C) conjugacy
 
-Question: Should we only include irreducible representations?  Should we give complex numbers exactly (as elements of cyclotomic fields) or approximately?
+Question: Should we only include irreducible representations?
 
 Column         | Type      | Notes
 ---------------|-----------|------
@@ -295,7 +303,8 @@ dim            | smallint   | The dimension of the vector space on which the amb
 q              | smallint   | The cardinality of the finite field
 prime          | boolean    | Whether the cardinality is prime
 ambient        | text       | Group label `N.i` for the ambient group
-counter          | integer    | Subgroup identifier from `gps_subgroups`
+counter        | integer    | Subgroup identifier from `gps_subgroups`
+projective_image | text       | label for the quotient by the center of the ambient group
 gens           | smallint[] | Matrices generating the group, in order corresponding to the generators listed in `gps_groups`.  If `q` is prime, the entries are integers `c` with `-q < 2c <= q`.  Otherwise, they are lists of integers giving the coefficients for the element as a polynomial (with respect to the Conway polynomial defining the field extension)
 
 `gps_prep_names`: Names for classical groups with a specified `n` and `q`
@@ -332,11 +341,11 @@ Column        | Type       | Notes
 label         | text       | `N.i.oJ` where `N.i` is the label for the group, `o` is the order of elements in this class and `J` is a capital letter code
 group         | text       | Label for the ambient group
 size          | integer    | Number of elements in this conjugacy class/orbit
-counter       | integer    | 1-based ordering of classes (agree with GAP/Magma?).  Sorted by order of representative, then size of the class, then group power classes together.  Within a power class, 
+counter       | integer    | 1-based ordering of classes (agree with GAP/Magma?).  Sorted by order of representative, then size of the class, then group power classes together.  We choose a smallest representative for each power class
 order         | integer    | Order of an element in this class
 centralizer   | integer    | Label for the centralizer of an element in this class, as a subgroup
-powers        | integer[]  | which `counter` conjugacy class for the image of the pth power map, for p dividing the order of the group
-
+powers        | integer[]  | which `counter` conjugacy class for the image of the pth power map, for p dividing the order of the group or the Euler phi function of the exponent of the group
+representative | numeric    | An encoded representative for this conjugacy class, using the group's elt_rep_type
 
 ## Conjugacy classes in permutation groups
 
@@ -371,6 +380,7 @@ group          | text       | LMFDB label `N.i` for the group (domain of the hom
 dim            | smallint   | `d`, the dimension of the representation
 counter        | smallint   | `j`, a 1-based ordering of characters of this group, sorted lexicographically by value
 kernel         | integer    | The subgroup label for the kernel of this character
+center         | integer    | The subgroup label for the subgroup that this character maps into the diagonal matrices
 faithful       | boolean    | Whether the corresponding homomorphism is injective
 image          | text       | The label for the image as a subgroup of GL_n(C)
 
