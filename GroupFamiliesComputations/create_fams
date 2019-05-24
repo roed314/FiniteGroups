@@ -1,0 +1,197 @@
+/* magma functions to create families for the lmfdb gps_special_names table */
+/* Last Edited:  Jen Paulhus May 24, 2019 */
+
+
+/* So far this creates:  Cn, Dn, Sn, An, GL, SL, PSL, and Qn to 2000 */
+/* Except for sizes of group listed below */
+
+
+/* This program creates files cyclic_fams, dihedral_fams, etc. which
+are used to populate the gps_special_names table with the command
+db.gps_special_names.copy_from('cyclic_fams.txt', sep=':')  */
+
+NonIDGps:=[512,1024, 1152, 1536, 1920];   /* Groups Magma cannot ID */
+HasID:=[512,1152, 1536, 1920];
+
+/* Cyclic Groups */
+prtfile:="cyclic_fams";
+family:="C";
+PrintFile(prtfile, "label|family|parameters");
+PrintFile(prtfile, "text|text|jsonb \n");
+for n in [1..2000] do
+    if n notin NonIDGps then
+       gp_id:=IdentifyGroup(CyclicGroup(n));
+       label:=IntegerToString(gp_id[1]) cat "." cat IntegerToString(gp_id[2]);
+       parameters:="{\"n\":" cat IntegerToString(n) cat "}";
+       strg:=label cat "|" cat family cat "|" cat parameters;
+       PrintFile(prtfile, strg);
+    elif n in HasID then    /* These are all confirmed to be SmallGroup(x,1) */
+       gp_id:=<n,1>;
+       label:=IntegerToString(gp_id[1]) cat "." cat IntegerToString(gp_id[2]);
+       parameters:="{\"n\":" cat IntegerToString(n) cat "}";  
+       strg:=label cat "|" cat family cat "|" cat parameters;
+       PrintFile(prtfile, strg);
+    end if;   
+end for;
+
+
+/* Dihedral Groups */
+prtfile:="dihedral_fams";
+family:="D";
+PrintFile(prtfile, "label|family|parameters");
+PrintFile(prtfile, "text|text|jsonb \n");
+for n in [3..1000] do
+    if 2*n notin NonIDGps then
+       gp_id:=IdentifyGroup(DihedralGroup(n));
+       label:=IntegerToString(gp_id[1]) cat "." cat IntegerToString(gp_id[2]);
+       parameters:="{\"n\":" cat IntegerToString(n) cat "}";  
+       strg:=label cat "|" cat family cat "|" cat parameters;
+       PrintFile(prtfile, strg);
+
+    elif 2*n in HasID then    /* These are all confirmed to be SmallGroup(x,1) */
+       if 2*n eq 512 then 
+       	   gp_id:=<2*n,2042>;
+	elif 2*n eq 1152 then
+	   gp_id:=<2*n,7120>;
+        elif 2*n eq 1536 then
+	   gp_id:=<2*n, 10499676 >; 
+	elif 2*n eq 1920 then
+	   gp_id:=<2*n,5508>;
+	end if;
+       label:=IntegerToString(gp_id[1]) cat "." cat IntegerToString(gp_id[2]);
+       parameters:="{\"n\":" cat IntegerToString(n) cat "}";  
+       strg:=label cat "|" cat family cat "|" cat parameters;
+      PrintFile(prtfile, strg);
+
+    end if;		
+end for;
+
+
+
+
+/* Sym/Alt Groups */
+prtfile:="SnAn_fams";
+family1:="S";
+family2:="A";
+PrintFile(prtfile, "label|family|parameters");
+PrintFile(prtfile, "text|text|jsonb \n");
+for n in [1..6] do
+    gp_id:=IdentifyGroup(Sym(n));
+    label:=IntegerToString(gp_id[1]) cat "." cat IntegerToString(gp_id[2]);
+    parameters:="{\"n\":" cat IntegerToString(n) cat "}";
+    strg:=label cat "|" cat family1 cat "|" cat parameters;
+    PrintFile(prtfile, strg);
+    gp_id:=IdentifyGroup(AlternatingGroup(n));
+    label:=IntegerToString(gp_id[1]) cat "." cat IntegerToString(gp_id[2]);
+    parameters:="{\"n\":" cat IntegerToString(n) cat "}";
+    strg:=label cat "|" cat family2 cat "|" cat parameters;
+    PrintFile(prtfile, strg);
+end for;
+
+
+
+/* GL, SL, PSL */
+prtfile:="GLSLPSL_fams";
+family1:="GL";
+family2:="SL";
+family3:="PSL";
+PrintFile(prtfile, "label|family|parameters");
+PrintFile(prtfile, "text|text|jsonb \n");
+
+
+/* Special cases n=3 */
+
+gp_id:=IdentifyGroup(GL(3,2));
+label:=IntegerToString(gp_id[1]) cat "." cat IntegerToString(gp_id[2]);
+parameters:="{\"n\":" cat IntegerToString(3) cat ", \"q\":" cat IntegerToString(2) cat "}";
+strg:=label cat "|" cat family1 cat "|" cat parameters;
+PrintFile(prtfile, strg);
+
+
+
+gp_id:=IdentifyGroup(SL(3,2));
+label:=IntegerToString(gp_id[1]) cat "." cat IntegerToString(gp_id[2]);
+parameters:="{\"n\":" cat IntegerToString(3) cat ", \"q\":" cat IntegerToString(2) cat "}";
+strg:=label cat "|" cat family2 cat "|" cat parameters;
+PrintFile(prtfile, strg);
+
+gp_id:=IdentifyGroup(PSL(3,2));
+label:=IntegerToString(gp_id[1]) cat "." cat IntegerToString(gp_id[2]);
+parameters:="{\"n\":" cat IntegerToString(3) cat ", \"q\":" cat IntegerToString(2) cat "}";
+strg:=label cat "|" cat family3 cat "|" cat parameters;
+PrintFile(prtfile, strg);
+
+gp_id:=IdentifyGroup(PSL(2,13));
+label:=IntegerToString(gp_id[1]) cat "." cat IntegerToString(gp_id[2]);
+parameters:="{\"n\":" cat IntegerToString(2) cat ", \"q\":" cat IntegerToString(13) cat "}";
+strg:=label cat "|" cat family3 cat "|" cat parameters;
+PrintFile(prtfile, strg);
+
+
+n:=2;
+
+for q in [2..5] do /* ALL THREE */
+    gp_id:=IdentifyGroup(GL(n,q));
+    label:=IntegerToString(gp_id[1]) cat "." cat IntegerToString(gp_id[2]);
+parameters:="{\"n\":" cat IntegerToString(n) cat ", \"q\":" cat IntegerToString(q) cat "}";
+    strg:=label cat "|" cat family1 cat "|" cat parameters;
+    PrintFile(prtfile, strg);
+
+    gp_id:=IdentifyGroup(SL(n,q));
+    label:=IntegerToString(gp_id[1]) cat "." cat IntegerToString(gp_id[2]);
+    parameters:="{\"n\":" cat IntegerToString(n) cat ", \"q\":" cat IntegerToString(q) cat "}";
+    strg:=label cat "|" cat family2 cat "|" cat parameters;
+    PrintFile(prtfile, strg);
+
+    gp_id:=IdentifyGroup(PSL(n,q));
+    label:=IntegerToString(gp_id[1]) cat "." cat IntegerToString(gp_id[2]);
+    parameters:="{\"n\":" cat IntegerToString(n) cat ", \"q\":" cat IntegerToString(q) cat "}";
+    strg:=label cat "|" cat family3 cat "|" cat parameters;
+    PrintFile(prtfile, strg);
+
+
+end for;
+
+
+
+for q in [7,8,9,11] do /* SL and PSL */
+
+   gp_id:=IdentifyGroup(SL(n,q));
+    label:=IntegerToString(gp_id[1]) cat "." cat IntegerToString(gp_id[2]);
+    parameters:="{\"n\":" cat IntegerToString(n) cat ", \"q\":" cat IntegerToString(q) cat "}";
+    strg:=label cat "|" cat family2 cat "|" cat parameters;
+    PrintFile(prtfile, strg);
+
+    gp_id:=IdentifyGroup(PSL(n,q));
+    label:=IntegerToString(gp_id[1]) cat "." cat IntegerToString(gp_id[2]);
+    parameters:="{\"n\":" cat IntegerToString(n) cat ", \"q\":" cat IntegerToString(q) cat "}";
+    strg:=label cat "|" cat family3 cat "|" cat parameters;
+    PrintFile(prtfile, strg);
+
+end for;
+
+
+
+/* Quaternion Groups */
+prtfile:="quaternion_fams";
+family:="Q";
+PrintFile(prtfile, "label|family|parameters");
+PrintFile(prtfile, "text|text|jsonb \n");
+for i in [1..8] do
+    n:=2^i;
+    stg:="Q" cat IntegerToString(n);
+    gp_id:=IdentifyGroup(Group(stg));
+    label:=IntegerToString(gp_id[1]) cat "." cat IntegerToString(gp_id[2]);
+    parameters:="{\"n\":" cat IntegerToString(n) cat "}";
+    strg:=label cat "|" cat family cat "|" cat parameters;
+    PrintFile(prtfile, strg);
+end for;
+
+/* Special case n=512 */
+
+gp_id:=<512,2044>;
+label:=IntegerToString(gp_id[1]) cat "." cat IntegerToString(gp_id[2]);
+parameters:="{\"n\":" cat IntegerToString(n) cat "}";
+strg:=label cat "|" cat family cat "|" cat parameters;
+PrintFile(prtfile, strg);
+
