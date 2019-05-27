@@ -9,7 +9,7 @@ There are currently 4 strategies under consideration.
 
     PROs: Labels are short and easy to assign, we don't need to know all the subgroups of G to assign labels.
     CONs: Labels have no mathematical meaning.
-	  Labels cannot be reconstructed, we have to store explicit generators for each subgroup forever.
+	      Labels cannot be reconstructed, we have to store explicit generators for each subgroup forever.
 
 (2) Label subgroups H using the permutation representation pi_H:G -> S_n given by the action of G on cosets of H
     (so n=[G:H]) and we number cosets 1,...,n).  The S_n-conjugacy class of pi_H(G) uniquely determines the
