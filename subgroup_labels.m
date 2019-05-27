@@ -29,12 +29,12 @@ There are currently 4 strategies under consideration.
     The function sig(G,H) below computes this "signature" of the subgroup H.
 
     PROs: The label sig(G,H) is an intrinsic invariant of H that depends only on fixing a list of generators for G.
-	  The label sig(G,H) can be computed directly from H without enumerating subgroups or conjugacy classes of G.
+	      The label sig(G,H) can be computed directly from H without enumerating subgroups or conjugacy classes of G.
     CONs: Labels are long (but if we are prepared to compute all of them we can sort them and use ordinals instead).
-	  Labels are hard to compute, infeasibly so if n=[G:H] is at all large.  The code in this file can handle n
-	  up to perhaps 14 or 15, and an optimized implementation could surely go much further, but without a
-	  polynomial-time (or even subexponential-time) algorithm this is never going to be practical for most of
-	  the groups we care about.
+	      Labels are hard to compute, infeasibly so if n=[G:H] is at all large.  The code in this file can handle n
+	      up to perhaps 14 or 15, and an optimized implementation could surely go much further, but without a
+	      polynomial-time (or even subexponential-time) algorithm this is never going to be practical for most of
+	      the groups we care about.
 
 Neither (1) nor (2) is particularly attractive.  The remaining options under consideration all involve labels n.i.j,
 where n=[G:H] is the index, i is an ordinal that distinguishes Gassmann equivalence classes of the same index, and j is
@@ -56,11 +56,12 @@ elements of H (in any order) and uses an efficiently computable map from element
 In order to keep labels small we assume that we compute all the Gassmann classes for a given index so we can assign
 ordinals to them (but we don't have to do this for all subgroups, just all with the same index).
 
-  (3) Label subgroups n.i.j by ordering the Gassmann classes of index n lexicographically using either the permutation
-      character or the sequence of conjugacy class counts computed by the function SubgroupClass below (note these
-      orderings are different, we need to choose one).  This determines i, and to compute j we order Gassmann equivalent
-      subgroups by the signature sig(G,H) described in (2).  Most Gassmann classes are singletons, in which case we
-      set j=1 and do not need to compute sig(G,H).  This approach is implemented by the function LabelSubgroupsSlow below.
+  (3) Label subgroups n.i.j by ordering the Gassmann classes of index n lexicographically using either the
+      permutation character or the sequence of conjugacy class counts computed by the function SubgroupClass below
+      (note these orderings are different, we need to choose one).  This determines i, and to compute j we order
+      Gassmann equivalent subgroups by the signature sig(G,H) described in (2).  Most Gassmann classes are singletons,
+      in which case we set j=1 and do not need to compute sig(G,H).  This approach is implemented by the function
+      LabelSubgroupsSlow below.
 
    PROs: Well defined mathematically meaningful labels that can be computed somehwat efficiently.
          We don't need to label all subgroups, but we do need to label all with the same index.
@@ -68,17 +69,18 @@ ordinals to them (but we don't have to do this for all subgroups, just all with 
 
     (4) Label subgroups n.i.j computing n and i as above, but to compute j we first order subgroups H in the same
         Gassmann class using the lex ordering on sorted list of labels of all (proper) supergroups of H (one can
-	    and often does have Gassmann equivalent subgroups for which the lists of supergroups are differ).  Note that here
-	    "supergroup" refers to inclusions in the poset of conjugacy classes of subgroups: we consider K to be a supergroup
-	    of H if it contains any G-conjugate of H (note that we are free to fix any G-conjugate of K provided we check all
-	    the G-conjugates of H for inclusion).  Only in cases where two or more Gassmann equivalent subgroups have the same
-	    set of supergroups do we resort to computing permutation rep signatures, and rather than computing sig(G,H), we are
-	    free to replace G with any supergroup K of H and instead compute sig(K,H), which helps a lot when [K:H] is smaller
-	    then [G:H].  We need to be careful to account for the fact that there may be two or more G-conjugates of H contained
-	    in K that are not K-conjugate, so we compute the sorted list sig(K,H') where H' varies over G-conjugates of H in K
-	    to esure we get a signature that is G-invariant (but computing a bunch of signatures of smaller index is much better
-	    than computing one of large index, and we are free to choose K to minimize the index, since we know that all the
-	    subgroups we want to distinguish have the same set of supergroups).
+	    and often does have Gassmann equivalent subgroups for which the lists of supergroups are differ).  Note that
+        here "supergroup" refers to inclusions in the poset of conjugacy classes of subgroups: we consider K to be
+        a supergroup of H if it contains any G-conjugate of H (note that we are free to fix any G-conjugate of K
+        provided we check all the G-conjugates of H for inclusion).  Only in cases where two or more Gassmann
+        equivalent subgroups have the same set of supergroups do we resort to computing permutation rep signatures,
+        and rather than computing sig(G,H), we are free to replace G with any supergroup K of H and instead compute
+        sig(K,H), which helps a lot when [K:H] is smaller then [G:H].  We need to be careful to account for the fact
+        that there may be two or more G-conjugates of H contained in K that are not K-conjugate, so we compute the
+        sorted list sig(K,H') where H' varies over G-conjugates of H in K to esure we get a signature that is
+        G-invariant (but computing a bunch of signatures of smaller index is much better than computing one of large
+        index, and we are free to choose K to minimize the index, since we know that all the subgroups we want to
+        distinguish have the same set of supergroups).
 
 	This approach is implemented by the function LabelSubgroups below.
 
