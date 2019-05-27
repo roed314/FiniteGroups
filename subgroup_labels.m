@@ -9,7 +9,7 @@ There are currently 4 strategies under consideration.
 
     PROs: Labels are short and easy to assign, we don't need to know all the subgroups of G to assign labels.
     CONs: Labels have no mathematical meaning.
-	      Labels cannot be reconstructed, we have to store explicit generators for each subgroup forever.
+      Labels cannot be reconstructed, we have to store explicit generators for each subgroup forever.
 
 (2) Label subgroups H using the permutation representation pi_H:G -> S_n given by the action of G on cosets of H
     (so n=[G:H]) and we number cosets 1,...,n).  The S_n-conjugacy class of pi_H(G) uniquely determines the
@@ -29,12 +29,12 @@ There are currently 4 strategies under consideration.
     The function sig(G,H) below computes this "signature" of the subgroup H.
 
     PROs: The label sig(G,H) is an intrinsic invariant of H that depends only on fixing a list of generators for G.
-	      The label sig(G,H) can be computed directly from H without enumerating subgroups or conjugacy classes of G.
+          The label sig(G,H) can be computed directly from H without enumerating subgroups or conjugacy classes of G.
     CONs: Labels are long (but if we are prepared to compute all of them we can sort them and use ordinals instead).
-	      Labels are hard to compute, infeasibly so if n=[G:H] is at all large.  The code in this file can handle n
-	      up to perhaps 14 or 15, and an optimized implementation could surely go much further, but without a
-	      polynomial-time (or even subexponential-time) algorithm this is never going to be practical for most of
-	      the groups we care about.
+          Labels are hard to compute, infeasibly so if n=[G:H] is at all large.  The code in this file can handle n
+          up to perhaps 14 or 15, and an optimized implementation could surely go much further, but without a
+          polynomial-time (or even subexponential-time) algorithm this is never going to be practical for most of
+          the groups we care about.
 
 Neither (1) nor (2) is particularly attractive.  The remaining options under consideration all involve labels n.i.j,
 where n=[G:H] is the index, i is an ordinal that distinguishes Gassmann equivalence classes of the same index, and j is
@@ -69,7 +69,7 @@ ordinals to them (but we don't have to do this for all subgroups, just all with 
 
     (4) Label subgroups n.i.j computing n and i as above, but to compute j we first order subgroups H in the same
         Gassmann class using the lex ordering on sorted list of labels of all (proper) supergroups of H (one can
-	    and often does have Gassmann equivalent subgroups for which the lists of supergroups are differ).  Note that
+        and often does have Gassmann equivalent subgroups for which the lists of supergroups are differ).  Note that
         here "supergroup" refers to inclusions in the poset of conjugacy classes of subgroups: we consider K to be
         a supergroup of H if it contains any G-conjugate of H (note that we are free to fix any G-conjugate of K
         provided we check all the G-conjugates of H for inclusion).  Only in cases where two or more Gassmann
@@ -82,13 +82,13 @@ ordinals to them (but we don't have to do this for all subgroups, just all with 
         index, and we are free to choose K to minimize the index, since we know that all the subgroups we want to
         distinguish have the same set of supergroups).
 
-	This approach is implemented by the function LabelSubgroups below.
+    This approach is implemented by the function LabelSubgroups below.
 
-	PROs: Well defined mathematically meaningful labels that can be computed somehwat efficiently.
-	      We don't need to label all subgroups, but we do need to label all with index >= m for some m.
-	CONs: There are still screw cases where this is hopelessly slow (e.g. PSL(2,29)), but it should be fast
-	      enough to feasible label all the subgroups of any groups in the small groups database, and lots of
-	      subgroups of transitive groups (at least up to a reasonable index bound).
+    PROs: Well defined mathematically meaningful labels that can be computed somehwat efficiently.
+          We don't need to label all subgroups, but we do need to label all with index >= m for some m.
+    CONs: There are still screw cases where this is hopelessly slow (e.g. PSL(2,29)), but it should be fast
+          enough to feasible label all the subgroups of any groups in the small groups database, and lots of
+          subgroups of transitive groups (at least up to a reasonable index bound).
 
 The functions test_small, test_transitive, test_gl2p, and test_psl2q at the bottom of this file can be used to test the
 functions LabelSubgroups and LabelSubgroupsSlow.  Each takes a bound m that restricts the groups under consideration
@@ -107,84 +107,84 @@ order up to 255.
 // with the same cycle type as g, where cycles are ordered largest to smallest,
 // and then rotated to have min element first and compared lexicographically 
 function minSn(Sn,g)
-	if Order(g) eq 1 then return g; end if;
-	C:=Reverse(Sort(CycleStructure(g)));
-	X := [];
-	n:=0;
-	for c in C do
-		if c[1] gt 1 then
-			for i:=1 to c[2] do
-				Append(~X,{@i:i in [n+1..n+c[1]]@});
-				n +:= c[1];
-			end for;
-		end if;
-	end for;
-	m:=Sn!X;
-	_,h := IsConjugate(Sn,g,m);
-	assert g^h eq m;
-	return h;
+    if Order(g) eq 1 then return g; end if;
+    C:=Reverse(Sort(CycleStructure(g)));
+    X := [];
+    n:=0;
+    for c in C do
+        if c[1] gt 1 then
+            for i:=1 to c[2] do
+                Append(~X,{@i:i in [n+1..n+c[1]]@});
+                n +:= c[1];
+            end for;
+        end if;
+    end for;
+    m:=Sn!X;
+    _,h := IsConjugate(Sn,g,m);
+    assert g^h eq m;
+    return h;
 end function;
 
 // When sorting cycles we put larger cycles fist so we can drop singletons off the end
 function ccmp(a,b)
-	if #a gt #b then return -1; end if;
-	if #a lt #b then return 1; end if;
-	if a lt b then return -1; end if;
-	if a gt b then return 1; end if;
-	return 0;
+    if #a gt #b then return -1; end if;
+    if #a lt #b then return 1; end if;
+    if a lt b then return -1; end if;
+    if a gt b then return 1; end if;
+    return 0;
 end function;
 
 // Given perm g return its standard cycle rep (largest cycles first, cycles start with min, equal length cycles lex order)
 // Note that we are relying on the fact that Magma returns cycles rotated to have min element first
 function cyc(g)
-	cc := Sort([[n:n in c]:c in CycleDecomposition(g)|#c gt 1],ccmp);
-	return cc;
+    cc := Sort([[n:n in c]:c in CycleDecomposition(g)|#c gt 1],ccmp);
+    return cc;
 end function;
 
 // Given list of cycles, returns corresponding permutation in Sn
 function perm(Sn,cc)
-	return Sn![{@n:n in c@}:c in cc];
+    return Sn![{@n:n in c@}:c in cc];
 end function;
 
 // returns h such that c^g is the minimal rep of H-orbit of cycle rep c
 function minH(Sn,H,g)
-	if IsIdentity(g) then return g; end if;
-	if #H gt 10^7 then printf "Enumerating conjugates in group of order %o is going to take a while...\n", #H; end if;
-	m := perm(Sn,Min([cyc(x):x in g^H]));
-	_,h := IsConjugate(H,g,m);
-	return h;
+    if IsIdentity(g) then return g; end if;
+    if #H gt 10^7 then printf "Enumerating conjugates in group of order %o is going to take a while...\n", #H; end if;
+    m := perm(Sn,Min([cyc(x):x in g^H]));
+    _,h := IsConjugate(H,g,m);
+    return h;
 end function;
 
 // returns h such that g^h is minimal element of H-orbit of g
 function opt(Sn,H,g)
-	cc := cyc(g);
-	s := Reverse(Sort([c[1]:c in CycleStructure(g)|c[1] gt 1]));
-	h := Identity(H);
-	// optimize cycles of same size together (this is necessary, we cannot optimize cycles 1-by-1)
-	for n in s do
-		ng := perm(Sn,[c:c in CycleDecomposition(g)|#c eq n]);
-		nh := minH(Sn,H,ng);
-		g := g^nh;
-		h *:= nh;
-		H := Centralizer(H,ng^nh);
-	end for;
-	return h;
+    cc := cyc(g);
+    s := Reverse(Sort([c[1]:c in CycleStructure(g)|c[1] gt 1]));
+    h := Identity(H);
+    // optimize cycles of same size together (this is necessary, we cannot optimize cycles 1-by-1)
+    for n in s do
+        ng := perm(Sn,[c:c in CycleDecomposition(g)|#c eq n]);
+        nh := minH(Sn,H,ng);
+        g := g^nh;
+        h *:= nh;
+        H := Centralizer(H,ng^nh);
+    end for;
+    return h;
 end function;
 
 // Given list of generators for a permutation group of degree n, returns lex-minimal Sn-conjugate list
 function canonicalize(S)
-	if #S eq 0 then return S; end if;
-	Sn := SymmetricGroup(Degree(Universe(S)));
-	h := minSn(Sn,S[1]);
-	S := [g^h : g in S];
-	H := Centralizer(Sn,S[1]);
-	for i:=2 to #S do
-		//h := minH(Sn,H,S[i]);
-		h := opt(Sn,H,S[i]);
-		S := [g^h : g in S];
-		H := Centralizer(H,S[i]);
-	end for;
-	return S;
+    if #S eq 0 then return S; end if;
+    Sn := SymmetricGroup(Degree(Universe(S)));
+    h := minSn(Sn,S[1]);
+    S := [g^h : g in S];
+    H := Centralizer(Sn,S[1]);
+    for i:=2 to #S do
+        //h := minH(Sn,H,S[i]);
+        h := opt(Sn,H,S[i]);
+        S := [g^h : g in S];
+        H := Centralizer(H,S[i]);
+    end for;
+    return S;
 end function;
 
 /*
@@ -192,29 +192,29 @@ Given subgroup H of G returns lex-minimal images of generators of G in permutati
 This uniquely identifies H up to conjugacy (and is invariant under conjugation).
 */
 function sig(G,H)
-	return [cyc(g):g in canonicalize([pi(g):g in Generators(G)])] where pi:=CosetAction(G,H);
+    return [cyc(g):g in canonicalize([pi(g):g in Generators(G)])] where pi:=CosetAction(G,H);
 end function;
 
 function testsig(m:index := 0)
-	for n:= 4 to m do
-		k := NumberOfSmallGroups(n);
-		for i:=1 to k do
-			G := SmallGroup(n,i);
-			S := [H`subgroup:H in Subgroups(G)|#H`subgroup gt 1 and #H`subgroup lt n]; //`
-			if index gt 0 then S := [H:H in S|Index(G,H) eq index]; end if;
-			for j in Sort([x:x in {Index(G,H):H in S}]) do
-				printf "Checking index %o subgroups of %o.%o...",j,n,i; t:=Cputime();
-				T := [H:H in S|Index(G,H) eq j];
-				assert #T eq #{sig(G,H):H in T};				   // check uniqueness
-				for H in T do
-					assert #{sig(G,H):i in [1..5]} eq 1;           // check determinism
-					assert #{sig(G,K):K in Conjugates(G,H)} eq 1;  // check conjugacy-invariance
-				end for;
-				printf "%.3os\n",Cputime()-t;
-			end for;
-		end for;
-	end for;
-	return true;
+    for n:= 4 to m do
+        k := NumberOfSmallGroups(n);
+        for i:=1 to k do
+            G := SmallGroup(n,i);
+            S := [H`subgroup:H in Subgroups(G)|#H`subgroup gt 1 and #H`subgroup lt n]; //`
+            if index gt 0 then S := [H:H in S|Index(G,H) eq index]; end if;
+            for j in Sort([x:x in {Index(G,H):H in S}]) do
+                printf "Checking index %o subgroups of %o.%o...",j,n,i; t:=Cputime();
+                T := [H:H in S|Index(G,H) eq j];
+                assert #T eq #{sig(G,H):H in T};                   // check uniqueness
+                for H in T do
+                    assert #{sig(G,H):i in [1..5]} eq 1;           // check determinism
+                    assert #{sig(G,K):K in Conjugates(G,H)} eq 1;  // check conjugacy-invariance
+                end for;
+                printf "%.3os\n",Cputime()-t;
+            end for;
+        end for;
+    end for;
+    return true;
 end function;
 
 /*
@@ -226,11 +226,11 @@ construct phi explicitly if you care about the ordering
 */
 function SubgroupClass(H,phi)
     T:=AssociativeArray();
-	for c in ConjugacyClasses(H) do
+    for c in ConjugacyClasses(H) do
         k := phi(c[3]);
         if IsDefined(T,k) then T[k] +:= c[2]; else T[k] := c[2]; end if;
-	end for;
-	return Sort([[k,T[k]]:k in Keys(T)]);
+    end for;
+    return Sort([[k,T[k]]:k in Keys(T)]);
 end function;
 
 // Given a list of objects S and a function f on S creates an associative array satisfying A[f(s)] = [t:t in S|f(t) eq f(s)]
@@ -247,155 +247,155 @@ end function;
 Given a group G, assigns a unique label n.i.j to each conjugacy class of subgroups H of G such that
     n = [G:H]
     i = unique identifier of the Gassmann class of G among index n subgroups sorted by conjugacy class statistics
-	(this depends on ordering conjugacy classes of G, which caller can control by specifying the class map phi)
+    (this depends on ordering conjugacy classes of G, which caller can control by specifying the class map phi)
     j = distinguishes H within its Gassmann class by sorting images of generators for G in permutation rep [H\G]
-	(this depends on the choice of generators of G, which caller can control by constructing G appropriately)
+    (this depends on the choice of generators of G, which caller can control by constructing G appropriately)
 Note that computing j is expensive because it involves computing the lexicogrpahically minimal sequence of generators
 up to conjugation in S_n and may be infeasible if n is large.
 */
 function LabelSubgroups(G:phi:=ClassMap(G),max_index:=0)
-	S := Sort(Subgroups(G:IndexLimit:=max_index),func<a,b|b`order-a`order>); // reverse sort by order to sort by index
-	L := [H`subgroup:H in S]; //`
-	LL := AssociativeArray();	// LL[i] will be set to the label of the subgroup L[i]
-	N := IndexFibers([1..#L],func<i|Index(G,L[i])>);
-	for n in Sort([n:n in Keys(N)]) do  // loop over indexes of subgroups (in increasing order)
-		if max_index gt 0 and n gt max_index then break; end if;
-		if #N[n] eq 1 then LL[N[n][1]] := [n,1,1]; continue; end if;
-		C := IndexFibers(N[n],func<i|SubgroupClass(L[i],phi)>);
-		I := [C[c]:c in Sort([c:c in Keys(C)])];
-		for i:=1 to #I do
-			if #I[i] eq 1 then LL[I[i][1]] := [n,i,1]; continue; end if;
-			printf "Labelling %o subgroups in Gassmann class %o.%o\n", #I[i], n, i;
-			S := Sort([<sig(G,L[j]),j>:j in I[i]]);
-			for j:=1 to #S do LL[S[j][2]] := [n,i,j]; end for;
-		end for;
-	end for;
-	return Sort([<LL[i],L[i]>:i in [1..#L]],func<a,b| a[1] lt b[1] select -1 else a[1] gt b[1] select 1 else 0>);
+    S := Sort(Subgroups(G:IndexLimit:=max_index),func<a,b|b`order-a`order>); // reverse sort by order to sort by index
+    L := [H`subgroup:H in S]; //`
+    LL := AssociativeArray();   // LL[i] will be set to the label of the subgroup L[i]
+    N := IndexFibers([1..#L],func<i|Index(G,L[i])>);
+    for n in Sort([n:n in Keys(N)]) do  // loop over indexes of subgroups (in increasing order)
+        if max_index gt 0 and n gt max_index then break; end if;
+        if #N[n] eq 1 then LL[N[n][1]] := [n,1,1]; continue; end if;
+        C := IndexFibers(N[n],func<i|SubgroupClass(L[i],phi)>);
+        I := [C[c]:c in Sort([c:c in Keys(C)])];
+        for i:=1 to #I do
+            if #I[i] eq 1 then LL[I[i][1]] := [n,i,1]; continue; end if;
+            printf "Labelling %o subgroups in Gassmann class %o.%o\n", #I[i], n, i;
+            S := Sort([<sig(G,L[j]),j>:j in I[i]]);
+            for j:=1 to #S do LL[S[j][2]] := [n,i,j]; end for;
+        end for;
+    end for;
+    return Sort([<LL[i],L[i]>:i in [1..#L]],func<a,b| a[1] lt b[1] select -1 else a[1] gt b[1] select 1 else 0>);
 end function;
 
 // Given subgroups K and H of G such that K is conjugate to a subgroup of H, return such a conjugate
 function ConjugatesInSubgroup(G,H,K)
-	return [KK:KK in Conjugates(G,K)|KK subset H];
+    return [KK:KK in Conjugates(G,K)|KK subset H];
 end function;
 
 // Given a list of subgroups L of G with indices LI returns list of indices i such that
 // L[j] is conjugate to a subgroup of L[i]
 function Supergroups(G,L,LI,j)
-	C := Conjugates(G,L[j]);
-	n := LI[j];
-	return [i:i in [1..#L]|LI[i] lt n and IsDivisibleBy(n,LI[i]) and #[HH:HH in C|HH subset L[i]] gt 0];
+    C := Conjugates(G,L[j]);
+    n := LI[j];
+    return [i:i in [1..#L]|LI[i] lt n and IsDivisibleBy(n,LI[i]) and #[HH:HH in C|HH subset L[i]] gt 0];
 end function;
 
 /*
 Given a group G, assigns a unique label n.i.j to each conjugacy class of subgroups H of G such that
     n = [G:H]
     i = unique identifier of the Gassmann class of G among index n subgroups sorted by conjugacy class statistics
-	(this depends on ordering conjugacy classes of G, which caller can control by specifying the class map phi)
+    (this depends on ordering conjugacy classes of G, which caller can control by specifying the class map phi)
     j = distinguishes H within its Gassmann class by first sorting using sorted list of all labels of all proper
         supergroups of H with ties broken by lexicographically sorting images of generators in permutation rep as
-	above (this is rarely required).
-	(this depends on ordering conjugacy classes of all subgroups of G, not just those of G, as well as generators for G)
+    above (this is rarely required).
+    (this depends on ordering conjugacy classes of all subgroups of G, not just those of G, as well as generators for G)
 Note that the value of j assigned by this function may disagree with that assigned by LabelSubgroupsSlow!
 (but n and i will be the same)
 */
 function LabelSubgroups(G:phi:=ClassMap(G),max_index:=0)
-	S := Sort(Subgroups(G:IndexLimit:=max_index),func<a,b|b`order-a`order>); // reverse sort by order to sort by index
-	L := [H`subgroup:H in S]; //`
-	LI := [#G div H`order:H in S]; //`
-	LL := AssociativeArray();	// LL[i] will be set to the label of the subgroup L[i]
-	N := IndexFibers([1..#L],func<i|LI[i]>);
-	for n in Sort([n:n in Keys(N)]) do  // loop over indexes of subgroups (in increasing order)
-		if max_index gt 0 and n gt max_index then break; end if;
-		if #N[n] eq 1 then LL[N[n][1]] := [n,1,1]; continue; end if;
-		C := IndexFibers(N[n],func<i|SubgroupClass(L[i],phi)>);
-		I := [C[c]:c in Sort([c:c in Keys(C)])];
-		for i:=1 to #I do
-			if #I[i] eq 1 then LL[I[i][1]] := [n,i,1]; continue; end if;
-			// printf "Labelling %o subgroups in Gassmann class %o.%o\n", #I[i], n, i;
-			O := IndexFibers(I[i],func<j|Sort([<LL[k],k>:k in Supergroups(G,L,LI,j)])>);
-			O := [[O[o],[x[2]:x in o]]: o in Sort([o:o in Keys(O)])];
-			j := 1;
-			for o in O do // loop over sorted list of supergroup labels
-				if #o[1] eq 1 then LL[o[1][1]] := [n,i,j]; j+:=1; continue; end if;
-				printf "Labelling %o subgroups in Gassmann class %o.%o with %o common overgroups\n", #o[1], n, i, #o[2];
+    S := Sort(Subgroups(G:IndexLimit:=max_index),func<a,b|b`order-a`order>); // reverse sort by order to sort by index
+    L := [H`subgroup:H in S]; //`
+    LI := [#G div H`order:H in S]; //`
+    LL := AssociativeArray();   // LL[i] will be set to the label of the subgroup L[i]
+    N := IndexFibers([1..#L],func<i|LI[i]>);
+    for n in Sort([n:n in Keys(N)]) do  // loop over indexes of subgroups (in increasing order)
+        if max_index gt 0 and n gt max_index then break; end if;
+        if #N[n] eq 1 then LL[N[n][1]] := [n,1,1]; continue; end if;
+        C := IndexFibers(N[n],func<i|SubgroupClass(L[i],phi)>);
+        I := [C[c]:c in Sort([c:c in Keys(C)])];
+        for i:=1 to #I do
+            if #I[i] eq 1 then LL[I[i][1]] := [n,i,1]; continue; end if;
+            // printf "Labelling %o subgroups in Gassmann class %o.%o\n", #I[i], n, i;
+            O := IndexFibers(I[i],func<j|Sort([<LL[k],k>:k in Supergroups(G,L,LI,j)])>);
+            O := [[O[o],[x[2]:x in o]]: o in Sort([o:o in Keys(O)])];
+            j := 1;
+            for o in O do // loop over sorted list of supergroup labels
+                if #o[1] eq 1 then LL[o[1][1]] := [n,i,j]; j+:=1; continue; end if;
+                printf "Labelling %o subgroups in Gassmann class %o.%o with %o common overgroups\n", #o[1], n, i, #o[2];
                 // we may be repeating work here (and we should really let caller specify the class map)
                 psis := [ClassMap(L[k]):k in o[2]];
-				S := IndexFibers(o[1],
+                S := IndexFibers(o[1],
                          func<k|[Sort([SubgroupClass(K,psi):K in ConjugatesInSubgroup(G,Domain(psi),L[k])]):psi in psis]>);
-				S := [S[s]:s in Sort([s:s in Keys(S)])];
-				for s in S do
-					if #s eq 1 then LL[s[1]] := [n,i,j]; j+:=1; continue; end if;
+                S := [S[s]:s in Sort([s:s in Keys(S)])];
+                for s in S do
+                    if #s eq 1 then LL[s[1]] := [n,i,j]; j+:=1; continue; end if;
                     // last supergroup will have maximal index (and thus contain groups in s with minimal index)
-					H := L[o[2][#o[2]]];
-					printf "*** Computing signatures of %o index %o subgroups ***\n", #s, #H div #L[s[1]];
-					t := Cputime();
-					Z := Sort([<Sort([sig(H,K):K in ConjugatesInSubgroup(G,H,L[k])]),k> : k in s]);
-					for z in Z do LL[z[2]] := [n,i,j]; j+:=1; end for;
-				end for;
-			end for;
-		end for;
-	end for;
-	return Sort([<LL[i],L[i]>:i in [1..#L]],func<a,b| a[1] lt b[1] select -1 else a[1] gt b[1] select 1 else 0>);
+                    H := L[o[2][#o[2]]];
+                    printf "*** Computing signatures of %o index %o subgroups ***\n", #s, #H div #L[s[1]];
+                    t := Cputime();
+                    Z := Sort([<Sort([sig(H,K):K in ConjugatesInSubgroup(G,H,L[k])]),k> : k in s]);
+                    for z in Z do LL[z[2]] := [n,i,j]; j+:=1; end for;
+                end for;
+            end for;
+        end for;
+    end for;
+    return Sort([<LL[i],L[i]>:i in [1..#L]],func<a,b| a[1] lt b[1] select -1 else a[1] gt b[1] select 1 else 0>);
 end function;
 
 
 function test_small(m,f:max_index:=0,quiet:=true)
-	for n:= 1 to m do
-		k := NumberOfSmallGroups(n);
-		for i:=1 to k do
-			t := Cputime();
-			L := f(SmallGroup(n,i):max_index:=max_index);
-			if not quiet then
+    for n:= 1 to m do
+        k := NumberOfSmallGroups(n);
+        for i:=1 to k do
+            t := Cputime();
+            L := f(SmallGroup(n,i):max_index:=max_index);
+            if not quiet then
                 printf "Subgroups labels for %o.%o:\n", n,i;
                 for x in L do printf "   %o.%o.%o\n",x[1][1],x[1][2],x[1][3]; end for;
             end if;
-			printf "Computed %o subgroup labels for group %o.%o in %.3os\n", #L,n,i,Cputime()-t;
-		end for;
-	end for;
-	return true;
+            printf "Computed %o subgroup labels for group %o.%o in %.3os\n", #L,n,i,Cputime()-t;
+        end for;
+    end for;
+    return true;
 end function;
 
 function test_transitive(m,f:max_index:=0,max_size:=0,quiet:=true)
-	for n:= 1 to m do
-		k := NumberOfTransitiveGroups(n);
-		for i:=1 to k do
-			t := Cputime();
-			G := TransitiveGroup(n,i);
-			if max_size gt 0 and #G gt max_size then break; end if;
-			L := f(G:max_index:=max_index);
-			if not quiet then
+    for n:= 1 to m do
+        k := NumberOfTransitiveGroups(n);
+        for i:=1 to k do
+            t := Cputime();
+            G := TransitiveGroup(n,i);
+            if max_size gt 0 and #G gt max_size then break; end if;
+            L := f(G:max_index:=max_index);
+            if not quiet then
                 printf "Subgroups labels for %oT%o:\n", n,i;
                 for x in L do printf "   %o.%o.%o\n",x[1][1],x[1][2],x[1][3]; end for;
             end if;
-			printf "Computed %o subgroup labels for group %oT%o in %.3os\n", #L,n,i,Cputime()-t;
-		end for;
-	end for;
-	return true;
+            printf "Computed %o subgroup labels for group %oT%o in %.3os\n", #L,n,i,Cputime()-t;
+        end for;
+    end for;
+    return true;
 end function;
 
 function test_gl2p(m,f:max_index:=0,quiet:=true)
-	for p in PrimesInInterval(1,m) do
-		t := Cputime();
-		L := f(GL(2,p):max_index:=max_index);
+    for p in PrimesInInterval(1,m) do
+        t := Cputime();
+        L := f(GL(2,p):max_index:=max_index);
         if not quiet then
             printf "Subgroups labels for GL(2,%o):\n", p;
             for x in L do printf "   %o.%o.%o\n",x[1][1],x[1][2],x[1][3]; end for;
          end if;
-		printf "Computed %o subgroup labels for group GL(2,%o) in %.3os\n", #L,p,Cputime()-t;
-	end for;
-	return true;
+        printf "Computed %o subgroup labels for group GL(2,%o) in %.3os\n", #L,p,Cputime()-t;
+    end for;
+    return true;
 end function;
 
 function test_psl2q(m,f:max_index:=0,quiet:=true)
-	for q in [2..m] do
-		if not IsPrimePower(q) then continue; end if;
-		t := Cputime();
-		L := f(PSL(2,q):max_index:=max_index);
-		if not quiet then
+    for q in [2..m] do
+        if not IsPrimePower(q) then continue; end if;
+        t := Cputime();
+        L := f(PSL(2,q):max_index:=max_index);
+        if not quiet then
             printf "Subgroups labels for PSL(2,%o):\n", q;
             for x in L do printf "   %o.%o.%o\n",x[1][1],x[1][2],x[1][3]; end for;
         end if;
-		printf "Computed %o subgroup labels for groupPSL(2,%o) in %.3os\n", #L,q,Cputime()-t;
-	end for;
-	return true;
+        printf "Computed %o subgroup labels for groupPSL(2,%o) in %.3os\n", #L,q,Cputime()-t;
+    end for;
+    return true;
 end function;
