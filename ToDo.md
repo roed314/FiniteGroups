@@ -20,7 +20,18 @@
 
 * Character tables visible or add conjugacy classes (and order statistics)
 * Create subgroup lattice as graph
+  * I added a version of this using a canvas.  Here are some notes
+  * Subgroups have an intial layout which might not be great, but it could be worse, and they are dragable
+  * Clicking on a subgroup gives information about that subgroup below the canvas
+  * Subgroups have typeset pretty names
+  * On the downside, the typesetting is done beforehand and are png's included in static/graphs/img.  There are ~17000 of them
+  * This covers over 90,000 groups because there are many duplicates
+  * Putting them by other means probably means using foreignobject on the canvas.  I can do that with formatted html, but it looks worse and does not work as well
+  * Using katex looks pretty complicated right now (just getting katex html does not work)
+  * Using mathjax might be an option, but then we have mathjax and katex, and it still might not work/look good.  There is some hope of using svg output from mathjax, especially with version 3
+  * We could generate images on the fly. I have done this with WeBWorK problems, and it worked ok there.  But, I am not sure I want to put the time in to set it up if we don't want to go in that direction
 * Click vs. Mouseover of subgroups?
+  * currently the diagram uses clicks.  We might want both: mouseover for highlighting and click for showing information.
 * Add list of orders of elements in the group to top
 * Add special names (aliases) to *Construction* section
 * Add permutation representations
