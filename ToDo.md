@@ -30,6 +30,7 @@
   * Using katex looks pretty complicated right now (just getting katex html does not work)
   * Using mathjax might be an option, but then we have mathjax and katex, and it still might not work/look good.  There is some hope of using svg output from mathjax, especially with version 3
   * We could generate images on the fly. I have done this with WeBWorK problems, and it worked ok there.  But, I am not sure I want to put the time in to set it up if we don't want to go in that direction
+  * On my (Jen) screen: http://teal.lmfdb.xyz/Groups/Abstract/24.5  the left hand side of the graph is currently cut off. So the C2xC4 subgroup should have a subscript to the left of it indicating the number of conjugate subgroups but I don't see that and I don't see part of the first C.
 * Click vs. Mouseover of subgroups?
   * currently the diagram does both: mouseover for highlighting and click for showing information.
 * Add list of orders of elements in the group to top
