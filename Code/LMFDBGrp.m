@@ -27,10 +27,10 @@ declare attributes LMFDBGrp:
   pGroup,
   Elementary,
   Hyperelementary,
-  Rank
+  Rank,
   EulerianFunction,
   Center,
-  CenterLabel
+  CenterLabel,
   CentralQuotient,
   Commutator,
   CommutatorLabel,
@@ -39,7 +39,7 @@ declare attributes LMFDBGrp:
   Frattini,
   FrattiniLabel,
   FrattiniQuotient,
-  Fitting
+  Fitting,
   Radical,
   Socle,
   TransitiveDegree,
@@ -275,7 +275,7 @@ declare attributes LMFDBGrpConjChtr:
   Counter,
   Kernel,
   Center,
-  Faithful
+  Faithful,
   Image;
 
 declare verbose LMFDBGrpChtrQQ, 1;
