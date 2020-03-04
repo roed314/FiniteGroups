@@ -27,7 +27,7 @@ declare attributes LMFDBGrp:
   pGroup,
   Elementary,
   Hyperelementary,
-  Rank,
+  Rank
   EulerianFunction,
   Center,
   CenterLabel
