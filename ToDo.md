@@ -3,7 +3,7 @@
 ## Backend
 
 ### Planning
-* Devise hash for determining isomorphism classes
+* Devise hash for determining isomorphism classes (should we use center/derived/Frattini/solvable radical/Sylow?)
 * Labeling for subgroups
 * Labeling for conjugacy classes
 * Write more upload code
