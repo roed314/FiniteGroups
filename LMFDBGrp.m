@@ -22,8 +22,8 @@ declare attributes LMFDBGrp:
   IsPerfect,
   IsMonomial,
   IsRational,
-  ZGroup,
-  AGroup,
+  IsZGroup,
+  IsAGroup,
   pGroup,
   Elementary,
   Hyperelementary,
@@ -86,6 +86,13 @@ declare attributes LMFDBGrp:
   CompositionFactors,
   CompositionLength;
 
+intrinsic Print(G::LMFDBGrp)
+  {Print LMFDBGrp}
+  printf "LMFDBDGrp %o:\n", G`Label;
+  printf "  Name %o\n", G`Name;
+  printf "  Order %o", G`Order;
+end intrinsic;
+
 declare verbose LMFDBGrpPerm, 1;
 declare type LMFDBGrpPerm;
 declare attributes LMFDBGrpPerm:
@@ -107,6 +114,12 @@ declare attributes LMFDBGrpPerm:
   Quotients,
   Generators;
 
+intrinsic Print(G::LMFDBGrpPerm)
+  {Print LMFDBGrpPerm}
+  printf "LMFDBDGrpPerm %o:\n", G`Label;
+  printf "  Order %o", G`Order;
+end intrinsic;
+
 declare verbose LMFDBSubGrp, 1;
 declare type LMFDBSubGrp;
 declare attributes LMFDBSubGrp:
@@ -116,7 +129,8 @@ declare attributes LMFDBSubGrp:
   CounterByIndex,
   AutomorphismCounter,
   ExtensionCounter,
-  Subgroup,
+  //Subgroup,
+  GroupLabel,
   SubgroupOrder,
   Ambient,
   AmbientOrder,
@@ -155,6 +169,14 @@ declare attributes LMFDBSubGrp:
   Generators,
   ProjectiveImage;
 
+intrinsic Print(H::LMFDBSubGrp)
+  {Print LMFDBGrp}
+  printf "LMFDBDSubGrp %o:\n", H`Label;
+  printf "  Group label%o\n", H`GroupLabel;
+  printf "  Order %o\n", H`SubgroupOrder;
+  printf "  Normal? %o", H`IsNormal;
+end intrinsic;
+
 declare verbose LMFDBCtrlProd, 1;
 declare type LMFDBCtrlProd;
 declare attributes LMFDBCtrlProd:
@@ -162,16 +184,30 @@ declare attributes LMFDBCtrlProd:
   Factor2,
   Sub1,
   Sub2,
-  Product,
+  //Product,
+  Label,
   AliasSpot;
+
+intrinsic Print(P::LMFDBCtrlProd)
+  {Print LMFDBCtrlProd}
+  printf "LMFDBCtrlProd %o:\n", P`Label;
+  printf "  Central product of %o and %o", P`Factor1, P`Factor2;
+end intrinsic;
 
 declare verbose LMFDBWrthProd, 1;
 declare type LMFDBWrthProd;
 declare attributes LMFDBWrthProd:
   Acted,
   Actor,
-  Product,
+  //Product,
+  Label,
   AliasSpot;
+
+intrinsic Print(P::LMFDBWrthProd)
+  {Print LMFDBWrthProd}
+  printf "LMFDBWrthProd %o:\n", P`Label;
+  printf " Wreath product of %o by %o", P`Acted, P`Actor;
+end intrinsic;
 
 declare verbose LMFDBRepQQ, 1;
 declare type LMFDBRepQQ;
@@ -183,6 +219,14 @@ declare attributes LMFDBRepQQ:
   CCClass,
   IsIrreducible,
   Decomposition;
+
+intrinsic Print(Rho::LMFDBRepQQ)
+  {Print LMFDBRepQQ}
+  printf "LMFDBRepQQ %o:\n", Rho`Label;
+  printf "  Dimension %o:\n", Rho`Dimension;
+  printf "  Group %o:\n", Rho`Group;
+  printf "  Irreducible? %o", Rho`IsIrreducible;
+end intrinsic;
 
 declare verbose LMFDBRepZZ, 1;
 declare type LMFDBRepZZ;
@@ -199,6 +243,14 @@ declare attributes LMFDBRepZZ:
   IsIrreducible,
   Decomposition,
   Generators;
+
+intrinsic Print(Rho::LMFDBRepZZ)
+  {Print LMFDBRepZZ}
+  printf "LMFDBRepZZ %o:\n", Rho`Label;
+  printf "  Dimension %o:\n", Rho`Dimension;
+  printf "  Group %o:\n", Rho`Group;
+  printf "  Irreducible? %o", Rho`IsIrreducible;
+end intrinsic;
 
 declare verbose LMFDBRepCC, 1;
 declare type LMFDBRepCC;
@@ -218,9 +270,17 @@ declare attributes LMFDBRepCC:
   Generators,
   Traces;
 
-declare verbose LMFDBRepp, 1;
-declare type LMFDBRepp;
-declare attributes LMFDBRepp:
+intrinsic Print(Rho::LMFDBRepCC)
+  {Print LMFDBRepCC}
+  printf "LMFDBRepCC %o:\n", Rho`Label;
+  printf "  Dimension %o:\n", Rho`Dimension;
+  printf "  Group %o:\n", Rho`Group;
+  printf "  Irreducible? %o", Rho`IsIrreducible;
+end intrinsic;
+
+declare verbose LMFDBRepP, 1;
+declare type LMFDBRepP;
+declare attributes LMFDBRepP:
   Label,
   Dimension,
   q,
@@ -231,15 +291,29 @@ declare attributes LMFDBRepp:
   Generators,
   ProjectiveImageLabel;
 
-declare verbose LMFDBReppNames, 1;
-declare type LMFDBReppNames;
-declare attributes LMFDBReppNames:
+intrinsic Print(Rho::LMFDBRepP)
+  {Print LMFDBRepP}
+  printf "LMFDBRepP %o:\n", Rho`Label;
+  printf "  Dimension %o:\n", Rho`Dimension;
+  printf "  Ambient %o:", Rho`Ambient;
+end intrinsic;
+
+declare verbose LMFDBRepPNames, 1;
+declare type LMFDBRepPNames;
+declare attributes LMFDBRepPNames:
   Group,
   Dimension,
   q,
   Family,
   Name,
   TeXName;
+
+intrinsic Print(s::LMFDBRepPNames)
+  {Print LMFDBRepPNames}
+  printf "LMFDBRepPNames %o:\n", Rho`Name;
+  printf "  Dimension %o:\n", Rho`Dimension;
+  printf "  Group %o:", Rho`Group;
+end intrinsic;
 
 declare verbose LMFDBGrpConjCls, 1;
 declare type LMFDBGrpConjCls;
@@ -253,11 +327,19 @@ declare attributes LMFDBGrpConjCls:
   Powers,
   Representative;
 
+intrinsic Print(C::LMFDBGrpConjCls)
+  {Print LMFDBGrpConjCls}
+  printf "LMFDBGrpConjCls %o:\n", C`Label;
+  printf "  Size %o:\n", C`Size;
+  printf "  Representative %o", C`Representative;
+  printf "  Group %o:\n", C`Group;
+end intrinsic;
+
 declare verbose LMFDBGrpPermConjCls, 1;
 declare type LMFDBGrpPermConjCls;
 declare attributes LMFDBGrpPermConjCls:
   Label,
-  Groups,
+  Group,
   Degree,
   Counter,
   Size,
@@ -266,9 +348,17 @@ declare attributes LMFDBGrpPermConjCls:
   CycleType,
   Representative;
 
-declare verbose LMFDBGrpChtr, 1;
-declare type LMFDBGrpConjChtr;
-declare attributes LMFDBGrpConjChtr:
+intrinsic Print(C::LMFDBGrpPermConjCls)
+  {Print LMFDBGrpConjCls}
+  printf "LMFDBGrpPermConjCls %o:\n", C`Label;
+  printf "  Size %o:\n", C`Size;
+  printf "  Representative %o", C`Representative;
+  printf "  Group %o:\n", C`Group;
+end intrinsic;
+
+declare verbose LMFDBGrpChtrCC, 1;
+declare type LMFDBGrpChtrCC;
+declare attributes LMFDBGrpChtrCC:
   Label,
   Group,
   Dimension,
@@ -278,12 +368,29 @@ declare attributes LMFDBGrpConjChtr:
   Faithful
   Image;
 
+intrinsic Print(Chi::LMFDBGrpChtrCC)
+  {Print LMFDBGrpChtrCC}
+  printf "LMFDBGrpChtrCC %o:\n", Chi`Label;
+  printf "  Dimension %o:\n", Chi`Dimension;
+  printf "  Group %o:", Chi`Group;
+end intrinsic;
+
 declare verbose LMFDBGrpChtrQQ, 1;
 declare type LMFDBGrpConjChtrQQ;
 declare attributes LMFDBGrpConjChtrQQ:
   Label,
+  Group,
   ComplexDimension,
   RationalDimension,
   Multiplicity,
   Indicator,
   SchurIndex;
+
+intrinsic Print(Chi::LMFDBGrpChtrQQ)
+  {Print LMFDBGrpChtrQQ}
+  printf "LMFDBGrpChtrQQ %o:\n", Chi`Label;
+  printf "  Rational Dimension %o:\n", Chi`RationalDimension;
+  printf "  Group %o:", Chi`Group;
+end intrinsic;
+
+// include hashing function? see https://magma.maths.usyd.edu.au/magma/handbook/text/27
