@@ -7,7 +7,7 @@ intrinsic GetBasicAttributes() -> Any
     "IsCyclic",
     "IsSolvable",
     "IsNilpotent",
-    //"IsMetaCyclic", double check this one...
+    //"IsMetaCyclic", double check this one...there is IsMetacyclicPGroup
     //"IsMetaAbelian",
     "IsSimple",
     //"IsSuperSolvable",
