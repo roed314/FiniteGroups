@@ -1,6 +1,7 @@
 declare verbose LMFDBGrp, 1;
 declare type LMFDBGrp;
 declare attributes LMFDBGrp:
+  MagmaGrp,
   Label,
   OldLabel,
   Name,
