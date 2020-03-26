@@ -6,21 +6,21 @@ declare attributes LMFDBGrp:
   OldLabel,
   Name,
   TeXName,
-  Order,
+  Order, //
   Counter,
   FactorsOfOrder,
-  Exponent,
-  IsAbelian,
-  IsCyclic,
-  IsSolvable,
+  Exponent, //
+  IsAbelian, //
+  IsCyclic, //
+  IsSolvable, //
   IsSuperSolvable,
-  IsNilpotent,
+  IsNilpotent, //
   IsMetaCyclic,
   IsMetaAbelian,
-  IsSimple,
+  IsSimple, //
   IsAlmostSimple,
   IsQuasiSimple,
-  IsPerfect,
+  IsPerfect, //
   IsMonomial,
   IsRational,
   IsZGroup,
@@ -30,42 +30,42 @@ declare attributes LMFDBGrp:
   Hyperelementary,
   Rank,
   EulerianFunction,
-  Center,
+  Center, //
   CenterLabel,
   CentralQuotient,
   Commutator,
   CommutatorLabel,
   AbelianQuotient,
   CommutatorCount,
-  FrattiniSubgroup,
+  FrattiniSubgroup, //
   FrattiniLabel,
   FrattiniQuotient,
   FittingSubgroup,
-  Radical,
-  Socle,
-  // TODO: check rest of these for basic attrs
+  Radical, //
+  Socle, //
   TransitiveDegree,
   TransitiveSubgroup,
   SmallRep,
   AutOrder,
-  AutGroup,
+  AutomorphismGroup, //
   OuterOrder,
   OuterGroup,
   FactorsOfAutOrder,
-  NilpotencyClass,
-  Ngens,
+  NilpotencyClass, //
+  Ngens, //
   PCCode,
+  // TODO: check rest of these for basic attrs
   NumberConjugacyClasses,
   NumberSubgroupClasses,
   NumberSubgroups,
   NumberNormalSubgroups,
   NumberCharacteristicSubgroups,
-  DerivedSeries,
-  DerivedLength,
+  DerivedSeries, //
+  DerivedLength, //
   PerfectCore,
-  ChiefSeries,
-  LowerCentralSeries,
-  UpperCentralSeries,
+  ChiefSeries, //
+  LowerCentralSeries, //
+  UpperCentralSeries, //
   PrimaryAbelianInvariants,
   SmithAbelianInvariants,
   SchurMultiplier,

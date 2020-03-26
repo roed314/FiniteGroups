@@ -16,7 +16,15 @@ intrinsic GetBasicAttributes() -> Any
     //"Commutator",
     "FrattiniSubgroup",
     "Radical",
-    "Socle"
+    "Socle",
+    "AutomorphismGroup",
+    "NilpotencyClass",
+    "Ngens",
+    "DerivedSeries",
+    "DerivedLength",
+    "ChiefSeries",
+    "LowerCentralSeries",
+    "UpperCentralSeries",
     ];
 end intrinsic;
 
