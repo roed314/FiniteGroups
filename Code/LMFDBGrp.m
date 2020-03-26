@@ -31,18 +31,19 @@ declare attributes LMFDBGrp:
   Rank,
   EulerianFunction,
   Center,
-  CenterLabel
+  CenterLabel,
   CentralQuotient,
   Commutator,
   CommutatorLabel,
   AbelianQuotient,
   CommutatorCount,
-  Frattini,
+  FrattiniSubgroup,
   FrattiniLabel,
   FrattiniQuotient,
-  Fitting
+  FittingSubgroup,
   Radical,
   Socle,
+  // TODO: check rest of these for basic attrs
   TransitiveDegree,
   TransitiveSubgroup,
   SmallRep,
@@ -90,8 +91,8 @@ declare attributes LMFDBGrp:
 intrinsic Print(G::LMFDBGrp)
   {Print LMFDBGrp}
   printf "LMFDBDGrp %o:\n", G`Label;
-  printf "  Name %o\n", G`Name;
-  printf "  Order %o", G`Order;
+  //printf "  Name %o\n", G`Name;
+  //printf "  Order %o", G`Order;
 end intrinsic;
 
 declare verbose LMFDBGrpPerm, 1;
@@ -366,7 +367,7 @@ declare attributes LMFDBGrpChtrCC:
   Counter,
   Kernel,
   Center,
-  Faithful
+  Faithful,
   Image;
 
 intrinsic Print(Chi::LMFDBGrpChtrCC)
