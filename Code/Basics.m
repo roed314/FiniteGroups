@@ -24,7 +24,7 @@ intrinsic GetBasicAttributes() -> Any
     "DerivedLength",
     "ChiefSeries",
     "LowerCentralSeries",
-    "UpperCentralSeries",
+    "UpperCentralSeries"
     ];
 end intrinsic;
 
