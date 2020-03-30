@@ -60,13 +60,13 @@ declare attributes LMFDBGrp:
   NumberSubgroups,
   NumberNormalSubgroups,
   NumberCharacteristicSubgroups,
-  DerivedSeries, //
+  DerivedSeries, // ? only Lie gps?
   DerivedLength, //
   PerfectCore,
   ChiefSeries, //
   LowerCentralSeries, //
   UpperCentralSeries, //
-  PrimaryAbelianInvariants,
+  PrimaryAbelianInvariants, //
   SmithAbelianInvariants,
   SchurMultiplier,
   OrderStats,
