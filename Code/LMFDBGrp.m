@@ -60,7 +60,7 @@ declare attributes LMFDBGrp:
   NumberSubgroups,
   NumberNormalSubgroups,
   NumberCharacteristicSubgroups,
-  DerivedSeries, //
+  DerivedSeries, // ? only Lie gps?
   DerivedLength, //
   PerfectCore,
   ChiefSeries, //
