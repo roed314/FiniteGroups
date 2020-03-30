@@ -66,7 +66,7 @@ declare attributes LMFDBGrp:
   ChiefSeries, //
   LowerCentralSeries, //
   UpperCentralSeries, //
-  PrimaryAbelianInvariants,
+  PrimaryAbelianInvariants, //
   SmithAbelianInvariants,
   SchurMultiplier,
   OrderStats,

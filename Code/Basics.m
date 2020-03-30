@@ -7,7 +7,6 @@ intrinsic GetBasicAttributes() -> Any
     "IsCyclic",
     "IsSolvable",
     "IsNilpotent",
-    //"IsMetaCyclic", double check this one...there is IsMetacyclicPGroup
     //"IsMetaAbelian",
     "IsSimple",
     //"IsSuperSolvable",
@@ -25,6 +24,9 @@ intrinsic GetBasicAttributes() -> Any
     "ChiefSeries",
     "LowerCentralSeries",
     "UpperCentralSeries",
+    //"PrimaryAbelianInvariants", // only if abelian
+    //"IsWreathProduct", // only for GrpPerm
+    "CompositionFactors"
     ];
 end intrinsic;
 
@@ -36,6 +38,6 @@ intrinsic AssignBasicAttributes(G::LMFDBGrp) -> Any
     eval_str := Sprintf("return %o(GG);", attr);
     G``attr := eval eval_str;
   end for;
-  //G`IsSuperSolvable := IsSupersoluble(GG); // thanks a lot Australia! :D
+  //G`IsSuperSolvable := IsSupersoluble(GG); // thanks a lot Australia! :D; only for GrpPC...
   return Sprintf("Basic attributes assigned to %o", G);
 end intrinsic;
