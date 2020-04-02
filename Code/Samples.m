@@ -14,7 +14,7 @@ function abels(id)
 end function;
 
 function mat(n, p, gens)
-    if p == 0 then
+    if p eq 0 then
         G := GL(n, IntegerRing());
     else
         G := GL(n, p);

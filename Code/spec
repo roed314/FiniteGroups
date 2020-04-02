@@ -3,4 +3,5 @@
   Basics.m
   Hash.m
   Samples.m
+  ComputeAttributes.m
 }
