@@ -31,7 +31,7 @@ intrinsic GetBasicAttributes() -> Any
 end intrinsic;
 
 intrinsic AssignBasicAttributes(G::LMFDBGrp) -> Any
-  {Assign basic attributes}
+  {Assign basic attributes. G`label and G`MagmaGrp must already be assigned.}
   attrs := GetBasicAttributes();
   GG := G`MagmaGrp;
   for attr in attrs do

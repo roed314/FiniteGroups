@@ -1,3 +1,4 @@
+// see https://github.com/roed314/FiniteGroups/blob/master/ProposedSchema.md
 declare verbose LMFDBGrp, 1;
 declare type LMFDBGrp;
 declare attributes LMFDBGrp:
@@ -6,21 +7,21 @@ declare attributes LMFDBGrp:
   OldLabel,
   Name,
   TeXName,
-  Order, //
+  Order,
   Counter,
   FactorsOfOrder,
-  Exponent, //
-  IsAbelian, //
-  IsCyclic, //
-  IsSolvable, //
+  Exponent,
+  IsAbelian,
+  IsCyclic,
+  IsSolvable,
   IsSuperSolvable,
-  IsNilpotent, //
+  IsNilpotent,
   IsMetacyclic,
   IsMetabelian,
-  IsSimple, //
+  IsSimple,
   IsAlmostSimple,
   IsQuasiSimple,
-  IsPerfect, //
+  IsPerfect,
   IsMonomial,
   IsRational,
   IsZGroup,
@@ -30,43 +31,43 @@ declare attributes LMFDBGrp:
   Hyperelementary,
   Rank,
   EulerianFunction,
-  Center, //
+  Center,
   CenterLabel,
   CentralQuotient,
   Commutator,
   CommutatorLabel,
   AbelianQuotient,
   CommutatorCount,
-  FrattiniSubgroup, //
+  FrattiniSubgroup,
   FrattiniLabel,
   FrattiniQuotient,
   FittingSubgroup,
-  Radical, //
-  Socle, //
+  Radical,
+  Socle,
   TransitiveDegree,
   TransitiveSubgroup,
   SmallRep,
   AutOrder,
-  AutomorphismGroup, //
+  AutomorphismGroup,
   OuterOrder,
   OuterGroup,
   FactorsOfAutOrder,
-  NilpotencyClass, //
-  Ngens, //
+  NilpotencyClass,
+  Ngens,
   PCCode,
   // TODO: check rest of these for basic attrs
-  NumberConjugacyClasses,
-  NumberSubgroupClasses,
-  NumberSubgroups,
-  NumberNormalSubgroups,
-  NumberCharacteristicSubgroups,
-  DerivedSeries, // ? only Lie gps?
-  DerivedLength, //
+  NumberOfConjugacyClasses,
+  NumberOfSubgroupClasses,
+  NumberOfSubgroups,
+  NumberOfNormalSubgroups,
+  NumberOfCharacteristicSubgroups,
+  DerivedSeries,
+  DerivedLength,
   PerfectCore,
-  ChiefSeries, //
-  LowerCentralSeries, //
-  UpperCentralSeries, //
-  PrimaryAbelianInvariants, //
+  ChiefSeries,
+  LowerCentralSeries,
+  UpperCentralSeries,
+  PrimaryAbelianInvariants,
   SmithAbelianInvariants,
   SchurMultiplier,
   OrderStats,
