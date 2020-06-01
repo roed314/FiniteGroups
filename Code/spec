@@ -3,6 +3,7 @@
   Basics.m
   Hash.m
   Samples.m
-  ComputeAttributes.m
   MR.m
+  GrpAttributes.m
+
 }

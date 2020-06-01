@@ -4,10 +4,10 @@ see https://github.com/roed314/FiniteGroups/blob/master/ProposedSchema.md for de
 
 DONE: Order, Exponent, IsAbelian, IsCyclic, IsSolvable, IsNilpotent, IsMetacyclic, IsSimple, IsPerfect, Center, FrattiniSubgroup, Radical, Socle, AutomorphismGroup, NilpotencyClass, Ngens, DerivedSeries, DerivedLength, ChiefSeries, LowerCentralSeries, UpperCentralSeries, PrimaryAbelianInvariants, Commutator, NumberOfConjugacyClasses, IsAlmostSimple
 
-TODO: MagmaGrp, Label, OldLabel, Name, TeXName, Counter, FactorsOfOrder, IsSuperSolvable, IsMetabelian, IsQuasiSimple, IsMonomial, IsRational, IsZGroup, IsAGroup, pGroup, Elementary, Hyperelementary, Rank, EulerianFunction, CenterLabel, CentralQuotient, CommutatorLabel, AbelianQuotient, CommutatorCount, FrattiniLabel, FrattiniQuotient, FittingSubgroup, TransitiveDegree, TransitiveSubgroup, SmallRep, AutOrder, OuterOrder, OuterGroup, FactorsOfAutOrder, PCCode, NumberOfSubgroupClasses, NumberOfSubgroups, NumberOfNormalSubgroups, NumberOfCharacteristicSubgroups, PerfectCore, SmithAbelianInvariants, SchurMultiplier, OrderStats, EltRepType, PermGens, AllSubgroupsKnown, NormalSubgroupsKnown, MaximalSubgroupsKnown, SylowSubgroupsKnown, SubgroupInclusionsKnown, OuterEquivalence, SubgroupIndexBound, IsWreathProduct, IsCentralProduct, IsFiniteMatrixGroup, IsDirectProduct, IsSemidirectProduct, CompositionFactors, CompositionLength;
+TODO: MagmaGrp, Label, OldLabel, Name, TeXName, Counter, FactorsOfOrder, IsSuperSolvable, IsMetabelian, IsQuasiSimple, IsMonomial, IsRational, IsZGroup, IsAGroup, pGroup, Elementary, Hyperelementary, Rank, EulerianFunction, CenterLabel, CentralQuotient, CommutatorLabel, AbelianQuotient, CommutatorCount, FrattiniLabel, FrattiniQuotient, FittingSubgroup, TransitiveDegree, TransitiveSubgroup, SmallRep, AutOrder, OuterOrder, OuterGroup, FactorsOfAutOrder, PCCode, NumberOfSubgroupClasses, NumberOfSubgroups, NumberOfNormalSubgroups, NumberOfCharacteristicSubgroups, PerfectCore, SmithAbelianInvariants, SchurMultiplier, OrderStats, EltRepType, PermGens, AllSubgroupsKnown, NormalSubgroupsKnown, MaximalSubgroupsKnown, SylowSubgroupsKnown, SubgroupInclusionsKnown, OuterEquivalence, SubgroupIndexBound, IsWreathProduct, IsCentralProduct, IsFiniteMatrixGroup, IsDirectProduct, IsSemidirectProduct, CompositionLength;
 */
  
-intrinsic IsAlmostSimple(G:LMFDBGrp) -> Any
+intrinsic IsAlmostSimple(G::LMFDBGrp) -> Any
   {}
   // In order to be almost simple, we need a simple nonabelian normal subgroup with trivial centralizer
   GG := G`MagmaGrp;
@@ -24,15 +24,19 @@ intrinsic IsAlmostSimple(G:LMFDBGrp) -> Any
 end intrinsic;
 
 intrinsic NumberOfConjugacyClasses(G::LMFDBGrp) -> Any
-  {}
+  {Number of conjugacy classes in a group}
   GG := G`MagmaGrp;
   return Nclasses(GG);
 end intrinsic;
 
 intrinsic Commutator(G::LMFDBGrp) -> Any
   {Compute commutator subgroup}
+  if HasAttribute(G, "Commutator") then
+    return G`Commutator;
+  end if;
   GG := G`MagmaGrp;
   G`Commutator := CommutatorSubgroup(GG);
+  return G`Commutator;
 end intrinsic;
 
 intrinsic PrimaryAbelianInvariants(G::LMFDBGrp) -> Any
@@ -45,19 +49,26 @@ end intrinsic;
 
 intrinsic IsSupersolvable(G::LMFDBGrp) -> BoolElt
   {Check if LMFDBGrp is supersolvable}
+  if HasAttribute(G, "IsSuperSolvable") then
+    return G`IsSuperSolvable;
+  end if;
   GG := G`MagmaGrp;
   if not IsSolvable(GG) then
+    G`IsSuperSolvable:=false;
     return false;
   end if;
   if IsNilpotent(GG) then
+    G`IsSuperSolvable:=true;
     return true;
   end if;
   C := [Order(H) : H in ChiefSeries(GG)];
   for i := 1 to #C-1 do
     if not IsPrime(C[i] div C[i+1]) then
+      G`IsSuperSolvable:=false;
       return false;
     end if;
   end for;
+  G`IsSuperSolvable:=true;
   return true;
 end intrinsic;
 
@@ -137,4 +148,15 @@ intrinsic IsMetacyclic(G::LMFDBGrp) -> BoolElt
     end if;
   end for;
   return false;
+end intrinsic;
+
+intrinsic Get(G::Any, attr::MonStgElt) -> Any
+  {}
+  if HasAttribute(G, attr) then
+    return G``attr;
+  else
+    val := eval attr*"(G)";
+    G``attr := val;
+    return val;
+  end if;
 end intrinsic;
