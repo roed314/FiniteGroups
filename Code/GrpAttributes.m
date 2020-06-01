@@ -24,15 +24,19 @@ intrinsic IsAlmostSimple(G::LMFDBGrp) -> Any
 end intrinsic;
 
 intrinsic NumberOfConjugacyClasses(G::LMFDBGrp) -> Any
-  {}
+  {Number of conjugacy classes in a group}
   GG := G`MagmaGrp;
   return Nclasses(GG);
 end intrinsic;
 
 intrinsic Commutator(G::LMFDBGrp) -> Any
   {Compute commutator subgroup}
+  if HasAttribute(G, "Commutator") then
+    return G`Commutator;
+  end if;
   GG := G`MagmaGrp;
   G`Commutator := CommutatorSubgroup(GG);
+  return G`Commutator;
 end intrinsic;
 
 intrinsic PrimaryAbelianInvariants(G::LMFDBGrp) -> Any
@@ -45,19 +49,26 @@ end intrinsic;
 
 intrinsic IsSupersolvable(G::LMFDBGrp) -> BoolElt
   {Check if LMFDBGrp is supersolvable}
+  if HasAttribute(G, "IsSuperSolvable") then
+    return G`IsSuperSolvable;
+  end if;
   GG := G`MagmaGrp;
   if not IsSolvable(GG) then
+    G`IsSuperSolvable:=false;
     return false;
   end if;
   if IsNilpotent(GG) then
+    G`IsSuperSolvable:=true;
     return true;
   end if;
   C := [Order(H) : H in ChiefSeries(GG)];
   for i := 1 to #C-1 do
     if not IsPrime(C[i] div C[i+1]) then
+      G`IsSuperSolvable:=false;
       return false;
     end if;
   end for;
+  G`IsSuperSolvable:=true;
   return true;
 end intrinsic;
 
