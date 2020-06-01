@@ -51,14 +51,14 @@ intrinsic GetBasicAttributesSubGrp(pair::Boolean) -> Any
       "Normalizer",
       "Centralizer",
       "NormalClosure",
-      "IsCentral",
+      "IsCentral"
       ];
   else
     return [
       "IsCyclic",
       "IsAbelian",
-      "IsPerfect",
-      ]
+      "IsPerfect"
+      ];
   end if;
 end intrinsic;
 
