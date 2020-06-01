@@ -138,3 +138,14 @@ intrinsic IsMetacyclic(G::LMFDBGrp) -> BoolElt
   end for;
   return false;
 end intrinsic;
+
+intrinsic Get(G::Any, attr::MonStgElt) -> Any
+  {}
+  if HasAttribute(G, attr) then
+    return G``attr;
+  else
+    val := eval attr*"(G)";
+    G``attr := val;
+    return val;
+  end if;
+end intrinsic;
