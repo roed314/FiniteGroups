@@ -51,6 +51,7 @@ intrinsic GetBasicAttributesSubGrp(pair::Boolean) -> Any
       "Normalizer",
       "Centralizer",
       "NormalClosure",
+      "IsCentral",
       ];
   else
     return [

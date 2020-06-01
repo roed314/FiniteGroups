@@ -126,16 +126,15 @@ end intrinsic;
 declare verbose LMFDBSubGrp, 1;
 declare type LMFDBSubGrp;
 declare attributes LMFDBSubGrp:
-  MagmaAmbient,
-  MagmaSubGrp,
-  Label,
-  OuterEquivalence,
+  MagmaAmbient, // input
+  MagmaSubGrp, // input
+  Label, // process
+  OuterEquivalence, // input
   Counter,
   CounterByIndex,
   AutomorphismCounter,
   ExtensionCounter,
-  //Subgroup,
-  GroupLabel,
+  Subgroup,
   SubgroupOrder,
   Ambient,
   AmbientOrder,
