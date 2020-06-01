@@ -7,7 +7,7 @@ DONE: Order, Exponent, IsAbelian, IsCyclic, IsSolvable, IsNilpotent, IsMetacycli
 TODO: MagmaGrp, Label, OldLabel, Name, TeXName, Counter, FactorsOfOrder, IsSuperSolvable, IsMetabelian, IsQuasiSimple, IsMonomial, IsRational, IsZGroup, IsAGroup, pGroup, Elementary, Hyperelementary, Rank, EulerianFunction, CenterLabel, CentralQuotient, CommutatorLabel, AbelianQuotient, CommutatorCount, FrattiniLabel, FrattiniQuotient, FittingSubgroup, TransitiveDegree, TransitiveSubgroup, SmallRep, AutOrder, OuterOrder, OuterGroup, FactorsOfAutOrder, PCCode, NumberOfSubgroupClasses, NumberOfSubgroups, NumberOfNormalSubgroups, NumberOfCharacteristicSubgroups, PerfectCore, SmithAbelianInvariants, SchurMultiplier, OrderStats, EltRepType, PermGens, AllSubgroupsKnown, NormalSubgroupsKnown, MaximalSubgroupsKnown, SylowSubgroupsKnown, SubgroupInclusionsKnown, OuterEquivalence, SubgroupIndexBound, IsWreathProduct, IsCentralProduct, IsFiniteMatrixGroup, IsDirectProduct, IsSemidirectProduct, CompositionFactors, CompositionLength;
 */
  
-intrinsic IsAlmostSimple(G:LMFDBGrp) -> Any
+intrinsic IsAlmostSimple(G::LMFDBGrp) -> Any
   {}
   // In order to be almost simple, we need a simple nonabelian normal subgroup with trivial centralizer
   GG := G`MagmaGrp;
