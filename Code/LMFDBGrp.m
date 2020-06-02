@@ -80,6 +80,9 @@ declare attributes LMFDBGrp:
   SubgroupInclusionsKnown,
   OuterEquivalence,
   SubgroupIndexBound,
+  SylowSubgroups,
+  //IsZgroup,
+  //IsAgroup,
   //ModDecompUniq,
   IsWreathProduct,
   IsCentralProduct,
@@ -88,7 +91,6 @@ declare attributes LMFDBGrp:
   IsSemidirectProduct,
   CompositionFactors,
   CompositionLength;
-
 intrinsic Print(G::LMFDBGrp)
   {Print LMFDBGrp}
   printf "LMFDBDGrp %o:\n", G`Label;
