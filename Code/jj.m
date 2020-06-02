@@ -1,7 +1,7 @@
 
 intrinsic FactorsOfOrder(G::LMFDBGrp) -> Any
   {Prime factors of the order of the group}
-  gord:=G`Order;
+  gord:=Get(G,"Order");
   return [z[1] : z in Factorization(gord)];
 end intrinsic;
 
@@ -57,7 +57,7 @@ end intrinsic;
 intrinsic Elementary(G::LMFDBGrp) -> Any
   {Product of a all primes p such that G is a direct product of a p-group and a cyclic group}
   ans := 1;
-  if G`IsSolvable and G`Order gt 1 then
+  if Get(G,"IsSolvable") and Get(G,"Order") gt 1 then
     g:=G`MagmaGrp;
     g:=PCGroup(g);
     sylowsys:= SylowBasis(g);
@@ -75,7 +75,7 @@ end intrinsic;
 intrinsic Hyperelementary(G::LMFDBGrp) -> Any
   {Product of all primes p such that G is an extension of a p-group by a group of order prime to p}
   ans := 1;
-  if G`IsSolvable and G`Order gt 1 then
+  if Get(G,"IsSolvable") and Get(G,"Order") gt 1 then
     g:=G`MagmaGrp;
     g:=PCGroup(g);
     comp:=ComplementBasis(g);
