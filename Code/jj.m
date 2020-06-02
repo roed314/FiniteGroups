@@ -1,17 +1,4 @@
 
-//intrinsic IsSuperSolvable(G::LMFDBGrp) -> BoolElt
-//  {Determine if a group is supersolvable}
-//  G:=G`MagmaGrp;
-//  ms:=MaximalSubgroups(G);
-//  for h in ms do
-//    if not IsPrime(Index(G, h`subgroup)) then
-//      G`IsSuperSolvable := false;
-//      break;
-//    end if;
-//  end for;
-//  G`IsSuperSolvable := true;
-//end intrinsic;
-
 intrinsic FactorsOfOrder(G::LMFDBGrp) -> Any
   {Prime factors of the order of the group}
   gord:=G`Order;
@@ -32,11 +19,12 @@ intrinsic IsMonomial(G::LMFDBGrp) -> BoolElt
   elif Get(G, "IsSupersolvable") then
     return true;
   // elif G`IsSolvable and G`IsAgroup then
-  //   G`IsMonomial := true;
+  //   return true;
   else
     ct:=CharacterTable(g);
+    maxd := Degree(ct[#ct]);
     stat:=[false : c in ct];
-    hh:=<z`subgroup : z in Subgroups(g)>;
+    hh:=<z`subgroup : z in LowIndexSubgroups(g, maxd)>;
     for h in hh do
         lc := LinearCharacters(h);
         indc := <Induction(z,g) : z in lc>;
@@ -101,16 +89,22 @@ intrinsic Hyperelementary(G::LMFDBGrp) -> Any
   return ans;
 end intrinsic;
 
-intrinsic TransitiveDegree(G::LMFDBGrp) -> Any
-  {Smallest transitive degree for a faithful permutation representation}
+intrinsic TransitiveSubgroup(G::LMFDBGrp) -> Any
+  {Subgroup producing a minimal degree transitive faithful permutation representation}
   g:=G`MagmaGrp;
   ss:=Subgroups(g);
   tg:=ss[1]`subgroup;
   for j:=#ss to 1 by -1 do
     if Core(g,ss[j]`subgroup) eq tg then
-      return Get(G, "Order")/ss[j]`order;
+      return ss[j]`subgroup;
     end if;
   end for;
+end intrinsic;
+
+intrinsic TransitiveDegree(G::LMFDBGrp) -> Any
+  {Smallest transitive degree for a faithful permutation representation}
+  ts:=Get(G, "TransitiveSubgroup");
+  return Get(G, "Order")/Order(ts);
 end intrinsic;
 
 intrinsic SmallRep(G::LMFDBGrp) -> Any
