@@ -2,15 +2,15 @@
 samples := AssociativeArray();
 
 function smalls(n, ids)
-    return [SmallGroup(n, i) : i in ids];
+    return <SmallGroup(n, i) : i in ids>;
 end function;
 
 function trans(ids)
-    return [TransitiveGroup(i[1], i[2]) : i in ids];
+    return <TransitiveGroup(i[1], i[2]) : i in ids>;
 end function;
 
-function abels(id)
-    return [AbelianGroup(i) : i in ids];
+function abels(ids)
+    return <PCGroup(AbelianGroup(i)) : i in ids>;
 end function;
 
 function mat(n, p, gens)
@@ -19,7 +19,7 @@ function mat(n, p, gens)
     else
         G := GL(n, p);
     end if;
-    return [sub<G | [G!gen : gen in gens]>];
+    return <sub<G | [G!gen : gen in gens]>>;
 end function;
 
 samples[120] := smalls(120, [4, 5, 15, 26, 28, 34]) cat
