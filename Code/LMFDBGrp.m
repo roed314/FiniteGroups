@@ -14,7 +14,7 @@ declare attributes LMFDBGrp:
   IsAbelian,
   IsCyclic,
   IsSolvable,
-  IsSuperSolvable,
+  IsSupersolvable,
   IsNilpotent,
   IsMetacyclic,
   IsMetabelian,

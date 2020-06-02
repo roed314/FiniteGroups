@@ -1,7 +1,7 @@
 
 intrinsic FactorsOfOrder(G::LMFDBGrp) -> Any
   {Prime factors of the order of the group}
-  gord:=G`Order;
+  gord:=Get(G,"Order");
   return [z[1] : z in Factorization(gord)];
 end intrinsic;
 
@@ -22,9 +22,15 @@ intrinsic IsMonomial(G::LMFDBGrp) -> BoolElt
   //   return true;
   else
     ct:=CharacterTable(g);
-    maxd := Degree(ct[#ct]);
+    maxd := Integers() ! Degree(ct[#ct]); // Crazy that coercion is needed
     stat:=[false : c in ct];
-    hh:=<z`subgroup : z in LowIndexSubgroups(g, maxd)>;
+    ls:= LowIndexSubgroups(g, maxd); // Different return types depending on input
+    lst := Type(ls[1]);
+    if lst eq GrpPC or lst eq GrpPerm or lst eq GrpMat then
+      hh:= ls;
+    else
+      hh:=<z`subgroup : z in LowIndexSubgroups(g, maxd)>;
+    end if;
     for h in hh do
         lc := LinearCharacters(h);
         indc := <Induction(z,g) : z in lc>;
@@ -57,7 +63,7 @@ end intrinsic;
 intrinsic Elementary(G::LMFDBGrp) -> Any
   {Product of a all primes p such that G is a direct product of a p-group and a cyclic group}
   ans := 1;
-  if G`IsSolvable and G`Order gt 1 then
+  if Get(G,"IsSolvable") and Get(G,"Order") gt 1 then
     g:=G`MagmaGrp;
     g:=PCGroup(g);
     sylowsys:= SylowBasis(g);
@@ -75,7 +81,7 @@ end intrinsic;
 intrinsic Hyperelementary(G::LMFDBGrp) -> Any
   {Product of all primes p such that G is an extension of a p-group by a group of order prime to p}
   ans := 1;
-  if G`IsSolvable and G`Order gt 1 then
+  if Get(G,"IsSolvable") and Get(G,"Order") gt 1 then
     g:=G`MagmaGrp;
     g:=PCGroup(g);
     comp:=ComplementBasis(g);
