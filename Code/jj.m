@@ -1,7 +1,7 @@
 
 intrinsic FactorsOfOrder(G::LMFDBGrp) -> Any
   {Prime factors of the order of the group}
-  gord:=G`Order;
+  gord:=Get(G,"Order");
   return [z[1] : z in Factorization(gord)];
 end intrinsic;
 
@@ -18,13 +18,19 @@ intrinsic IsMonomial(G::LMFDBGrp) -> BoolElt
     return false;
   elif Get(G, "IsSupersolvable") then
     return true;
-  // elif G`IsSolvable and G`IsAgroup then
-  //   return true;
+  elif Get(G,"IsSolvable") and Get(G,"IsAGroup") then
+    return true;
   else
     ct:=CharacterTable(g);
-    maxd := Degree(ct[#ct]);
+    maxd := Integers() ! Degree(ct[#ct]); // Crazy that coercion is needed
     stat:=[false : c in ct];
-    hh:=<z`subgroup : z in LowIndexSubgroups(g, maxd)>;
+    ls:= LowIndexSubgroups(g, maxd); // Different return types depending on input
+    lst := Type(ls[1]);
+    if lst eq GrpPC or lst eq GrpPerm or lst eq GrpMat then
+      hh:= ls;
+    else
+      hh:=<z`subgroup : z in LowIndexSubgroups(g, maxd)>;
+    end if;
     for h in hh do
         lc := LinearCharacters(h);
         indc := <Induction(z,g) : z in lc>;
@@ -57,7 +63,7 @@ end intrinsic;
 intrinsic Elementary(G::LMFDBGrp) -> Any
   {Product of a all primes p such that G is a direct product of a p-group and a cyclic group}
   ans := 1;
-  if G`IsSolvable and G`Order gt 1 then
+  if Get(G,"IsSolvable") and Get(G,"Order") gt 1 then
     g:=G`MagmaGrp;
     g:=PCGroup(g);
     sylowsys:= SylowBasis(g);
@@ -75,7 +81,7 @@ end intrinsic;
 intrinsic Hyperelementary(G::LMFDBGrp) -> Any
   {Product of all primes p such that G is an extension of a p-group by a group of order prime to p}
   ans := 1;
-  if G`IsSolvable and G`Order gt 1 then
+  if Get(G,"IsSolvable") and Get(G,"Order") gt 1 then
     g:=G`MagmaGrp;
     g:=PCGroup(g);
     comp:=ComplementBasis(g);
@@ -107,6 +113,14 @@ intrinsic TransitiveDegree(G::LMFDBGrp) -> Any
   return Get(G, "Order")/Order(ts);
 end intrinsic;
 
+intrinsic PermGens(G::LMFDBGrp) -> Any
+  {Generators of a minimal degree transitive faithful permutation representation}
+  ts:=Get(G, "TransitiveSubgroup");
+  g:=G`MagmaGrp;
+  gg:=CosetImage(g,ts);
+  return [z : z in Generators(gg)];
+end intrinsic;
+
 intrinsic SmallRep(G::LMFDBGrp) -> Any
   {Smallest degree of a faithful irreducible representation}
   if not IsCyclic(Get(G,"Center")) then
@@ -122,3 +136,44 @@ intrinsic SmallRep(G::LMFDBGrp) -> Any
   return 0; // Should not get here
 end intrinsic;
 
+intrinsic ClassPositionsOfKernel(lc::AlgChtrElt) -> Any
+  {List of conjugacy class positions in the kernel of the character lc}
+  return [j : j in [1..#lc] | lc[j] eq lc[1]];
+end intrinsic;
+
+intrinsic dosum(li) -> Any
+  {Total a list}
+  return &+li;
+end intrinsic;
+
+intrinsic CommutatorCount(G::LMFDBGrp) -> Any
+  {Smallest integer n such that every element of the derived subgroup is a product of n commutators}
+  g:=G`MagmaGrp;
+  ct := CharacterTable(g);
+  nccl:= #ct;
+  kers := [Set(ClassPositionsOfKernel(lc)) : lc in ct | Degree(lc) eq 1];
+  derived := kers[1];
+  for s in kers do derived := derived meet s; end for;
+  commut := {z : z in [1..nccl] | dosum([ct[j][z]/ct[j][1] : j in [1..#ct[1]]]) ne 0};
+  other:= derived diff commut;
+  n:=1;
+  G_n := derived;
+  while not IsEmpty(other) do
+    new:={};
+    for i in other do
+      for j in derived do
+        for k in G_n do
+          if StructureConstant(g,i,j,k) ne 0 then
+            new := new join {i};
+            break j;
+          end if;
+        end for;
+      end for;
+    end for;
+    n:= n+1;
+    G_n:=G_n join new;
+    other:= other diff new;
+  end while;
+
+  return n;
+end intrinsic;
