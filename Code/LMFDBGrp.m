@@ -398,3 +398,15 @@ intrinsic Print(Chi::LMFDBGrpChtrQQ)
 end intrinsic;
 
 // include hashing function? see https://magma.maths.usyd.edu.au/magma/handbook/text/27
+
+// This function returns the value of an attribute, computing it and caching it using the function of the same name if necessary.
+intrinsic Get(G::Any, attr::MonStgElt) -> Any
+  {}
+  if HasAttribute(G, attr) then
+    return G``attr;
+  else
+    val := eval attr*"(G)";
+    G``attr := val;
+    return val;
+  end if;
+end intrinsic;
