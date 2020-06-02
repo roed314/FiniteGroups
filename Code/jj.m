@@ -22,9 +22,15 @@ intrinsic IsMonomial(G::LMFDBGrp) -> BoolElt
   //   return true;
   else
     ct:=CharacterTable(g);
-    maxd := Degree(ct[#ct]);
+    maxd := Integers() ! Degree(ct[#ct]); // Crazy that coercion is needed
     stat:=[false : c in ct];
-    hh:=<z`subgroup : z in LowIndexSubgroups(g, maxd)>;
+    ls:= LowIndexSubgroups(g, maxd); // Different return types depending on input
+    lst := Type(ls[1]);
+    if lst eq GrpPC or lst eq GrpPerm or lst eq GrpMat then
+      hh:= ls;
+    else
+      hh:=<z`subgroup : z in LowIndexSubgroups(g, maxd)>;
+    end if;
     for h in hh do
         lc := LinearCharacters(h);
         indc := <Induction(z,g) : z in lc>;
