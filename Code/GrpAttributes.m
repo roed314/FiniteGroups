@@ -25,14 +25,12 @@ end intrinsic;
 
 intrinsic NumberOfConjugacyClasses(G::LMFDBGrp) -> Any
   {Number of conjugacy classes in a group}
-  GG := G`MagmaGrp;
-  return Nclasses(GG);
+  return Nclasses(G`MagmaGrp);
 end intrinsic;
 
 intrinsic Commutator(G::LMFDBGrp) -> Any
   {Compute commutator subgroup}
-  GG := G`MagmaGrp;
-  return CommutatorSubgroup(GG);
+  return CommutatorSubgroup(G`MagmaGrp);
 end intrinsic;
 
 intrinsic PrimaryAbelianInvariants(G::LMFDBGrp) -> Any
@@ -41,6 +39,7 @@ intrinsic PrimaryAbelianInvariants(G::LMFDBGrp) -> Any
     GG := G`MagmaGrp;
     return PrimaryAbelianInvariants(GG);
   end if;
+  // TODO: This should return the invariants of the maximal abelian quotient
 end intrinsic;
 
 intrinsic IsSupersolvable(G::LMFDBGrp) -> BoolElt
