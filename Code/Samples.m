@@ -76,6 +76,7 @@ samples[432] := smalls(432, [2, 4, 8, 228, 734]) cat
                 trans([[9, 26], [12, 156], [18, 151]]);
 samples[480] := smalls(480, [4, 159, 161, 218, 970, 1188, 1213]) cat
                 trans([[16, 777], [20, 116], [20, 117], [24, 1353]]);
+
 for j in [1..50] do
   g:=trans([[8,j]]);
   if not IsDefined(samples, Order(g[1])) then
@@ -83,3 +84,12 @@ for j in [1..50] do
   end if;
   samples[Order(g[1])] cat:= g;
 end for;
+
+for j in [1..34] do
+  g:=trans([[9,j]]);
+  if not IsDefined(samples, Order(g[1])) then
+    samples[Order(g[1])] := <>;
+  end if;
+  samples[Order(g[1])] cat:= g;
+end for;
+
