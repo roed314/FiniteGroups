@@ -1,0 +1,41 @@
+load "Samples.m";
+
+harder:=["IsMetabelian","IsMonomial","IsRational","Elementary","Hyperelementary", "TransitiveSubgroup", "TransitiveDegree","SmallRep"];
+
+function initg(g,nm)
+  G:=New(LMFDBGrp);
+  G`Label:=nm;
+  G`MagmaGrp:=g;
+  "Init ", GroupName(g);
+  AssignBasicAttributes(G);
+  for j in harder do Get(G,j); end for;
+  return(G);
+end function;
+
+for k->v in samples do
+  samples[k] := [initg(z, "none") : z in v];
+end for;
+
+G := New(LMFDBGrp);
+G`Label := "whateva";
+G`MagmaGrp := Alt(9);
+AssignBasicAttributes(G);
+
+s4 := New(LMFDBGrp);
+s4`Label := "s4";
+s4`MagmaGrp := TransitiveGroup(4,5);
+AssignBasicAttributes(s4);
+
+q8 := New(LMFDBGrp);
+q8`Label := "q8";
+q8`MagmaGrp := TransitiveGroup(8,5);
+AssignBasicAttributes(q8);
+
+d6:=<New(LMFDBGrp) : z in [1..NumberOfTransitiveGroups(6)]>;
+for j:=1 to #d6 do
+  d6[j]`Label := Sprintf("%oT%o", 6, j);
+  d6[j]`MagmaGrp := TransitiveGroup(6,j);
+  AssignBasicAttributes(d6[j]);
+end for;
+
+
