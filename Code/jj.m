@@ -113,6 +113,14 @@ intrinsic TransitiveDegree(G::LMFDBGrp) -> Any
   return Get(G, "Order")/Order(ts);
 end intrinsic;
 
+intrinsic PermGens(G::LMFDBGrp) -> Any
+  {Generators of a minimal degree transitive faithful permutation representation}
+  ts:=Get(G, "TransitiveSubgroup");
+  g:=G`MagmaGrp;
+  gg:=CosetImage(g,ts);
+  return [z : z in Generators(gg)];
+end intrinsic;
+
 intrinsic SmallRep(G::LMFDBGrp) -> Any
   {Smallest degree of a faithful irreducible representation}
   if not IsCyclic(Get(G,"Center")) then
@@ -128,3 +136,44 @@ intrinsic SmallRep(G::LMFDBGrp) -> Any
   return 0; // Should not get here
 end intrinsic;
 
+intrinsic ClassPositionsOfKernel(lc::AlgChtrElt) -> Any
+  {List of conjugacy class positions in the kernel of the character lc}
+  return [j : j in [1..#lc] | lc[j] eq lc[1]];
+end intrinsic;
+
+intrinsic dosum(li) -> Any
+  {Total a list}
+  return &+li;
+end intrinsic;
+
+intrinsic CommutatorCount(G::LMFDBGrp) -> Any
+  {Smallest integer n such that every element of the derived subgroup is a product of n commutators}
+  g:=G`MagmaGrp;
+  ct := CharacterTable(g);
+  nccl:= #ct;
+  kers := [Set(ClassPositionsOfKernel(lc)) : lc in ct | Degree(lc) eq 1];
+  derived := kers[1];
+  for s in kers do derived := derived meet s; end for;
+  commut := {z : z in [1..nccl] | dosum([ct[j][z]/ct[j][1] : j in [1..#ct[1]]]) ne 0};
+  other:= derived diff commut;
+  n:=1;
+  G_n := derived;
+  while not IsEmpty(other) do
+    new:={};
+    for i in other do
+      for j in derived do
+        for k in G_n do
+          if StructureConstant(g,i,j,k) ne 0 then
+            new := new join {i};
+            break j;
+          end if;
+        end for;
+      end for;
+    end for;
+    n:= n+1;
+    G_n:=G_n join new;
+    other:= other diff new;
+  end while;
+
+  return n;
+end intrinsic;

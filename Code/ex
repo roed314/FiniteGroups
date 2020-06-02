@@ -1,6 +1,8 @@
 load "Samples.m";
 
-harder:=["IsMetabelian","IsMonomial","IsRational","Elementary","Hyperelementary", "TransitiveSubgroup", "TransitiveDegree","SmallRep","IsZGroup","IsAGroup"];
+harder:=["IsMetabelian","IsMonomial","IsRational","Elementary",
+  "Hyperelementary", "TransitiveSubgroup", "TransitiveDegree","SmallRep",
+  "IsZGroup","IsAGroup","PermGens","CommutatorCount"];
 
 function initg(g,nm)
   G:=New(LMFDBGrp);
