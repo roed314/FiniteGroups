@@ -18,8 +18,8 @@ intrinsic IsMonomial(G::LMFDBGrp) -> BoolElt
     return false;
   elif Get(G, "IsSupersolvable") then
     return true;
-  // elif G`IsSolvable and G`IsAgroup then
-  //   return true;
+  elif Get(G,"IsSolvable") and Get(G,"IsAGroup") then
+    return true;
   else
     ct:=CharacterTable(g);
     maxd := Integers() ! Degree(ct[#ct]); // Crazy that coercion is needed
