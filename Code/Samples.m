@@ -2,15 +2,15 @@
 samples := AssociativeArray();
 
 function smalls(n, ids)
-    return [SmallGroup(n, i) : i in ids];
+    return <SmallGroup(n, i) : i in ids>;
 end function;
 
 function trans(ids)
-    return [TransitiveGroup(i[1], i[2]) : i in ids];
+    return <TransitiveGroup(i[1], i[2]) : i in ids>;
 end function;
 
-function abels(id)
-    return [AbelianGroup(i) : i in ids];
+function abels(ids)
+    return <PCGroup(AbelianGroup(i)) : i in ids>;
 end function;
 
 function mat(n, p, gens)
@@ -19,7 +19,7 @@ function mat(n, p, gens)
     else
         G := GL(n, p);
     end if;
-    return [sub<G | [G!gen : gen in gens]>];
+    return <sub<G | [G!gen : gen in gens]>>;
 end function;
 
 samples[120] := smalls(120, [4, 5, 15, 26, 28, 34]) cat
@@ -76,3 +76,20 @@ samples[432] := smalls(432, [2, 4, 8, 228, 734]) cat
                 trans([[9, 26], [12, 156], [18, 151]]);
 samples[480] := smalls(480, [4, 159, 161, 218, 970, 1188, 1213]) cat
                 trans([[16, 777], [20, 116], [20, 117], [24, 1353]]);
+
+for j in [1..50] do
+  g:=trans([[8,j]]);
+  if not IsDefined(samples, Order(g[1])) then
+    samples[Order(g[1])] := <>;
+  end if;
+  samples[Order(g[1])] cat:= g;
+end for;
+
+for j in [1..34] do
+  g:=trans([[9,j]]);
+  if not IsDefined(samples, Order(g[1])) then
+    samples[Order(g[1])] := <>;
+  end if;
+  samples[Order(g[1])] cat:= g;
+end for;
+
