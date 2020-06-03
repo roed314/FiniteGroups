@@ -83,11 +83,11 @@ subgroup_inclusions_known | boolean | Whether we store inclusion relationships a
 outer_equivalence | boolean   | Whether subgroups are stored up to automorphism (as opposed to up to conjugacy)
 subgroup_index_bound | smallint  | If not `NULL`, we store all (equivalence classes of) subgroups of index up to this bound.  Additional subgroups may also be stored (for example, normal subgroups, maximal subgroups, or subgroups of small order)
 moddecompuniq | jsonb    | ????
-is_wreath_product | boolean | whether this group is a wreath product
-is_central_product | boolean | whether this group is a central product
-is_finite_matrix_group | boolean | whether this group shows up in `gps_prep_names`
-is_direct_product  | boolean | whether this group can be expressed as a nontrivial direct product
-is_direct_product  | boolean | whether this group can be expressed as a nontrivial semidirect product
+wreath_product | boolean | whether this group is a wreath product
+central_product | boolean | whether this group is a central product
+finite_matrix_group | boolean | whether this group shows up in `gps_prep_names`
+direct_product  | boolean | whether this group can be expressed as a nontrivial direct product
+semidirect_product  | boolean | whether this group can be expressed as a nontrivial semidirect product
 composition_factors | text[]  | LMFDB labels for the composition factors, sorted by order then id.
 composition_length  | smallint | the number of composition factors
 

@@ -401,6 +401,9 @@ end intrinsic;
 
 // include hashing function? see https://magma.maths.usyd.edu.au/magma/handbook/text/27
 
+declare type NoneType;
+None := New(NoneType);
+
 // This function returns the value of an attribute, computing it and caching it using the function of the same name if necessary.
 intrinsic Get(G::Any, attr::MonStgElt) -> Any
   {}
@@ -412,3 +415,4 @@ intrinsic Get(G::Any, attr::MonStgElt) -> Any
     return val;
   end if;
 end intrinsic;
+
