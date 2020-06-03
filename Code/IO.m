@@ -80,6 +80,18 @@ intrinsic LoadGrp(line::MonStgElt, attrs::SeqEnum: sep:="|") -> LMFDBGrp
     return G;
 end intrinsic;
 
+intrinsic SaveGrpAttributes() -> SeqEnum
+  {}
+  GrpAttrs := GetAttributes(LMFDBGrp);
+  DefaultAttrs := [];
+  for attr in GrpAttrs do
+    if Regexp("^[a-z]+", attr) then
+      Append(~DefaultAttrs, attr);
+    end if;
+  end for;
+  return DefaultAttrs;
+end intrinsic;
+
 intrinsic SaveGrp(G::LMFDBGrp, attrs::SeqEnum: sep:="|", finalize:=false) -> MonStgElt
     {Save an LMFDB group to a single line.  If finalize, look up subgroups in the subgroups table, otherwise store}
     return Join([SaveAttr(attr, Get(G, attr), G) : attr in attrs], sep);
