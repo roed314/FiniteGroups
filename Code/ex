@@ -1,12 +1,11 @@
 load "Samples.m";
 
-harder:=["IsMetabelian","IsMonomial","IsRational","Elementary",
-  "Hyperelementary", "TransitiveSubgroup", "TransitiveDegree","SmallRep",
-  "IsZGroup","IsAGroup","PermGens","CommutatorCount"];
+harder:=["metabelian","monomial","rational","elementary",
+  "hyperelementary", "MagmaTransitiveSubgroup", "transitive_degree","smallrep","Zgroup","Agroup","perm_gens","commutator_count"];
 
 function initg(g,nm)
   G:=New(LMFDBGrp);
-  G`Label:=nm;
+  G`label:=nm;
   G`MagmaGrp:=g;
   AssignBasicAttributes(G);
   for j in harder do dummy:=Get(G,j); end for;

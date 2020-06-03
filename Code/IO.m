@@ -6,33 +6,30 @@ IntegerListCols := ["factors_of_order", "factors_of_aut_order", "derived_series"
 
 intrinsic LoadIntegerList(inp::MonStgElt) -> SeqEnum
     {}
-    assert inp[1] eq "{" && inp[#inp-1] eq "}";
+    assert inp[1] eq "{" and inp[#inp] eq "}";
+    /*
     return [StringToInteger(elt) : elt in Split(Substring(inp, 2, #inp-2), ",")];
+    */
+    return eval ReplaceString(~inp,["{","}"],["[","]"]);
 end intrinsic;
 intrinsic SaveIntegerList(out::SeqEnum) ->  MonStgElt
     {}
     return "{" * Join([IntegerToString(o) : o in out], ",") * "}";
 end intrinsic;
 
-intrinsic EncodePerm(x::GrpPermElt) -> RngInt
-    {}
-    n := Degree(Parent(x));
-    // TODO: Implement to_lehmer_code from sage/combinat/permutation.py
-end intrinsic;
-intrinsic DecodePerm(x::RngInt, n::RngInt) -> GrpPermElt
-    {}
-    // TODO: Implement from_lehmer_code from sage/combinat/permutation.py
-end intrinsic;
 intrinsic LoadPerms(inp::MonStgElt, n::RngInt) -> SeqEnum
     {}
     return [DecodePerm(elt, n) : elt in LoadIntegerList(inp)];
-end instrinsic;
+end intrinsic;
 intrinsic SavePerms(out::SeqEnum) -> MonStgElt
     {}
     return SaveIntegerList([EncodePerm(o) : o in out]);
 end intrinsic;
 
-intrinsic LoadAttr(attr::MonStgElt, inp::MonStgElt, cat::Cat) -> Any
+intrinsic LoadSubgroup(inp::MonStgElt) -> Any
+    {Load a subgroup??}
+
+intrinsic LoadAttr(attr::MonStgElt, inp::MonStgElt, obj::Any) -> Any
     {Load a single attribue}
     // Decomposition is a bit different for gps_crep and gps_zrep/gps_qrep
     if attr in TextCols then
@@ -45,7 +42,7 @@ intrinsic LoadAttr(attr::MonStgElt, inp::MonStgElt, cat::Cat) -> Any
         return [];
     end if;
 end intrinsic;
-intrinsic SaveAttr(attr::MonStgElt, val::Any, cat::Cat, finalize::BoolElt) -> MonStgElt
+intrinsic SaveAttr(attr::MonStgElt, val::Any, obj::Any, finalize::BoolElt) -> MonStgElt
     {Save a single attribute}
     if attr in TextCols then
         return val;
@@ -76,7 +73,7 @@ intrinsic LoadGrp(line::MonStgElt, attrs::SeqEnum: sep:="|") -> LMFDBGrp
     for i in [1..#data] do
         if data[i] ne "\\N" then
             attr := attrs[i];
-            G``attr := LoadAttr(attr, data[i], LMFDBGrp);
+            G``attr := LoadAttr(attr, data[i], G);
         end if;
     end for;
     SetGrp(G); // set MagmaGrp based on stored attributes
@@ -84,6 +81,15 @@ intrinsic LoadGrp(line::MonStgElt, attrs::SeqEnum: sep:="|") -> LMFDBGrp
 end intrinsic;
 
 intrinsic SaveGrp(G::LMFDBGrp, attrs::SeqEnum: sep:="|", finalize:=false) -> MonStgElt
+    {Save an LMFDB group to a single line.  If finalize, look up subgroups in the subgroups table, otherwise store}
+    return Join([SaveAttr(attr, Get(G, attr), G) : attr in attrs], sep);
+end intrinsic;
+
+GrpAttrs := [];
+
+intrinsic PrintData(G::LMFDBGrp: sep:="|", finalize:=false) -> Tup
     {}
-    return Join([SaveAttr(attr, G``attr, LMFDBGrp, finalize) : attr in attrs], sep);
+    return <[SaveGrp(G, GrpAttrs: sep:=sep, finalize:=finalize)],
+            [SaveSubGrp(H, SubGrpAttrs: sep:=sep, finalize:=finalize) : H in Get(G, "Subgroups")],
+            [SaveConjCls(cc, ConjClsAttrs: sep:=sep, finalize:=finalize) : cc in Get(G, "ConjugacyClasses")]>;
 end intrinsic;
