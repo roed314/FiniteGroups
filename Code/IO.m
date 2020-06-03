@@ -20,18 +20,60 @@ intrinsic EncodePerm(x::GrpPermElt) -> RngInt
 end intrinsic;
 
 /*
-7121     p = []
-7122     open_spots = list(range(1,len(lehmer)+1))
-7123     for ivi in lehmer:
-7124         p.append(open_spots.pop(ivi))
-7125 
-7126     if parent is None:
-7127         parent = Permutations()
-7128     return parent(p)
+def rank(self):
+    r"""
+    Return the rank of ``self`` in the lexicographic ordering on the
+    symmetric group to which ``self`` belongs.
+
+    EXAMPLES::
+
+        sage: Permutation([1,2,3]).rank()
+        0
+        sage: Permutation([1, 2, 4, 6, 3, 5]).rank()
+        10
+        sage: perms = Permutations(6).list()
+        sage: [p.rank() for p in perms] == list(range(factorial(6)))
+        True
+    """
+    n = len(self)
+
+    factoradic = self.to_lehmer_code()
+
+    #Compute the index
+    rank = 0
+    for i in reversed(range(0, n)):
+        rank += factoradic[n-1-i]*factorial(i)
+
+    return rank
 */
-intrinsic IntegerToLehmerCode(x::RngIntElt, n::RngIntElt) -> SeqEnum
-  {Returns the Lehmer code for x as a permutation in Sym(n)}
-  return false;
+intrinsic LehmerCodeToRank(lehmer::SeqEnum) -> RngIntElt
+  {Convert Lehmer code to integer}
+  rank := 0;
+  n := #lehmer;
+  for i := n-1 to 0 by -1 do
+    rank +:= lehmer[n-i]*Factorial(i);
+  end for;
+  return rank;
+end intrinsic;
+/*
+#Find the factoradic of rank
+    factoradic = [None] * n
+    for j in range(1,n+1):
+        factoradic[n-j] = Integer(rank % j)
+        rank = int(rank) // j
+
+    return from_lehmer_code(factoradic, Permutations(n))
+*/
+intrinsic RankToLehmerCode(x::RngIntElt, n::RngIntElt) -> SeqEnum
+  {Returns the Lehmer code for rank x}
+  lehmer := [];
+  for j in [1..n] do
+    Append(~lehmer, x mod j);
+    //Insert(~lehmer, 1, x mod j);
+    x := x div j;
+  end for;
+  Reverse(~lehmer);
+  return lehmer;
 end intrinsic;
 
 intrinsic LehmerCodeToPermutation(lehmer::SeqEnum) -> GrpPermElt
@@ -50,7 +92,7 @@ end intrinsic;
 intrinsic DecodePerm(x::RngInt, n::RngInt) -> GrpPermElt
     {Given Lehmer Code, return corresponding permutation}
     // TODO: Implement from_lehmer_code from sage/combinat/permutation.py
-    return LehmerCodeToPermutation(IntegerToLehmerCode(x,n));
+    return LehmerCodeToPermutation(RankToLehmerCode(x,n));
 end intrinsic;
 
 intrinsic LoadPerms(inp::MonStgElt, n::RngInt) -> SeqEnum
@@ -62,7 +104,7 @@ intrinsic SavePerms(out::SeqEnum) -> MonStgElt
     return SaveIntegerList([EncodePerm(o) : o in out]);
 end intrinsic;
 
-intrinsic LoadAttr(attr::MonStgElt, inp::MonStgElt, cat::Cat) -> Any
+intrinsic LoadAttr(attr::MonStgElt, inp::MonStgElt, c::Cat) -> Any
     {Load a single attribue}
     // Decomposition is a bit different for gps_crep and gps_zrep/gps_qrep
     if attr in TextCols then
@@ -75,7 +117,7 @@ intrinsic LoadAttr(attr::MonStgElt, inp::MonStgElt, cat::Cat) -> Any
         return [];
     end if;
 end intrinsic;
-intrinsic SaveAttr(attr::MonStgElt, val::Any, cat::Cat, finalize::BoolElt) -> MonStgElt
+intrinsic SaveAttr(attr::MonStgElt, val::Any, c::Cat, finalize::BoolElt) -> MonStgElt
     {Save a single attribute}
     if attr in TextCols then
         return val;
