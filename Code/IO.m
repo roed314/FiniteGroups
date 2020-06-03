@@ -1,6 +1,6 @@
 TextCols := ["label", "old_label", "name", "tex_name"];
 
-IntegerCols := ["order", "counter", "exponent", "pgroup", "elementary", "hyperelementary", "rank", "eulerian_function", "center", "commutator", "commutator_count", "frattini", "fitting", "radical", "socle", "transitive_degree", "transitive_subgroup", "faithful_rep", "aut_order", "outer_order", "nilpotency_class", "ngens", "pc_code", "number_conjugacy_classes", "number_subgroup_classes", "number_subgroups", "number_normal_subgroups", "mumber_characteristic_subgroups", "derived_length", "perfect_core", "elt_rep_type", "subgroup_index_bound", "composition_length"];
+IntegerCols := ["order", "counter", "exponent", "pgroup", "elementary", "hyperelementary", "rank", "eulerian_function", "center", "commutator", "commutator_count", "frattini", "fitting", "radical", "socle", "transitive_degree", "transitive_subgroup", "faithful_reps", "aut_order", "outer_order", "nilpotency_class", "ngens", "pc_code", "number_conjugacy_classes", "number_subgroup_classes", "number_subgroups", "number_normal_subgroups", "mumber_characteristic_subgroups", "derived_length", "perfect_core", "elt_rep_type", "subgroup_index_bound", "composition_length"];
 
 IntegerListCols := ["factors_of_order", "factors_of_aut_order", "derived_series", "chief_series", "lower_central_series", "upper_central_series", "primary_abelian_invariants", "smith_abelian_invariants", "schur_multiplier", "order_stats", "perm_gens", "composition_factors"];
 
