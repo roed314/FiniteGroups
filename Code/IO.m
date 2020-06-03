@@ -1,8 +1,8 @@
-TextCols := ["Label", "OldLabel", "Name", "TexName"];
+TextCols := ["label", "old_label", "name", "tex_name"];
 
-IntegerCols := ["Order", "Counter", "Exponent", "pGroup", "Elementary", "Hyperelementary", "Rank", "Numeric", "Center", "Commutator", "CommutatorCount", "Frattini", "Fitting", "Radical", "Socle", "TransitiveDegree", "TransitiveSubgroup", "SmallRep", "AutOrder", "OuterOrder", "NilpotencyClass", "Ngens", "PCCode", "NumberConjugacyClasses", "NumbeSubgroupClasses", "NumberSubgroups", "NumberNormalSubgroups", "NumberCharacteristicSubgroups", "DerivedLength", "PerfectCore", "EltRepType", "SubgroupIndexBound", "CompositionLength"];
+IntegerCols := ["order", "counter", "exponent", "pgroup", "elementary", "hyperelementary", "rank", "eulerian_function", "center", "commutator", "commutator_count", "frattini", "fitting", "radical", "socle", "transitive_degree", "transitive_subgroup", "faithful_reps", "aut_order", "outer_order", "nilpotency_class", "ngens", "pc_code", "number_conjugacy_classes", "number_subgroup_classes", "number_subgroups", "number_normal_subgroups", "mumber_characteristic_subgroups", "derived_length", "perfect_core", "elt_rep_type", "subgroup_index_bound", "composition_length"];
 
-IntegerListCols := ["FactorsOfOrder", "FactorsOfAutOrder", "DerivedSeries", "ChiefSeries", "LowerCentralSeries", "UpperCentralSeries", "PrimaryAbelianInvariants", "SmithAbelianInvariants", "SchurMultiplier", "OrderStats", "PermGens", "CompositionFactors"];
+IntegerListCols := ["factors_of_order", "factors_of_aut_order", "derived_series", "chief_series", "lower_central_series", "upper_central_series", "primary_abelian_invariants", "smith_abelian_invariants", "schur_multiplier", "order_stats", "perm_gens", "composition_factors"];
 
 intrinsic LoadIntegerList(inp::MonStgElt) -> SeqEnum
     {}
@@ -57,10 +57,10 @@ end intrinsic;
 
 intrinsic SetGrp(G::LMFDBGrp)
     {Set the MagmaGrp attribute using data included in other attributes}
-    if HasAttribute(G, "PCCode") and HasAttribute(G, "Order") then
-        G`MagmaGrp := SmallGroupDecoding(G`PCCode, G`Order);
-    elif HasAtribute(G, "PermGens") and HasAttribute(G, "TransitiveDegree") then
-        G`MagmaGrp := PermutationGroup<G`TransitiveDegree | G`PermGens>;
+    if HasAttribute(G, "pccode") and HasAttribute(G, "order") then
+        G`MagmaGrp := SmallGroupDecoding(G`pccode, G`order);
+    elif HasAttribute(G, "perm_gens") and HasAttribute(G, "transitive_degree") then
+        G`MagmaGrp := PermutationGroup<G`transitive_degree | G`perm_gens>;
     // TODO: Add matrix group case, use EltRep to decide which data to reconstruct from
     end if;
 end intrinsic;

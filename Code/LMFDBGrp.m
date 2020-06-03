@@ -46,7 +46,7 @@ declare attributes LMFDBGrp:
   socle,
   transitive_degree,
   MagmaTransitiveSubgroup,
-  smallrep,
+  faithful_reps,
   aut_order,
   MagmaAutGroup,
   outer_order,

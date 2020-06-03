@@ -256,7 +256,7 @@ intrinsic perm_gens(G::LMFDBGrp) -> Any
   return [z : z in Generators(gg)];
 end intrinsic;
 
-intrinsic smallrep(G::LMFDBGrp) -> Any
+intrinsic faithful_rep(G::LMFDBGrp) -> Any
   {Smallest degree of a faithful irreducible representation}
   if not IsCyclic(Get(G,"MagmaCenter")) then
     return 0;
