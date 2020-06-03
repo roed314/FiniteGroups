@@ -64,7 +64,7 @@ end intrinsic;
 
 intrinsic AssignBasicAttributes(H::LMFDBSubGrp) -> Any
   {Assign basic attributes. G`MagmaSubGrp must already be assigned.}
-  GG := H`MamgaAmbient;
+  GG := H`MagmaAmbient;
   HH := H`MagmaSubGrp;
   attrs := GetBasicAttributesSubGrp(true);
   for attr in attrs do

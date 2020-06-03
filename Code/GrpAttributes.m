@@ -386,3 +386,59 @@ intrinsic CompositionLength(G::LMFDBGrp) -> Any
 end intrinsic;
 
 
+intrinsic AutOrder(G::LMFDBGrp) -> RingIntElt
+   {returns order of automorphism group}
+   aut:=Get(G, "AutomorphismGroup");
+   return #aut;
+end intrinsic;
+
+intrinsic FactorsOfAutOrder(G::LMFDBGrp) -> SeqEnum
+   {returns primes in factorization of automorphism group}
+   autOrd:=Get(G,"AutOrder");
+   return PrimeFactors(autOrd);
+end intrinsic;
+
+intrinsic OuterOrder(G::LMFDBGrp) -> RingIntElt
+   {returns order of OuterAutomorphisms }
+    aut:=Get(G, "AutomorphismGroup");
+   return OuterOrder(aut);
+end intrinsic;
+
+intrinsic OuterGroup(G::LMFDBGrp) -> Any
+   {returns OuterAutomorphism Group}
+   aut:=Get(G, "AutomorphismGroup");
+   return OuterFPGroup(aut);
+end intrinsic;
+
+
+intrinsic CenterLabel(G::LMFDBGrp) -> Any
+   {Label string for Center}
+   return Label(Center(G`MagmaGrp));
+end intrinsic;
+
+
+intrinsic CentralQuotient(G::LMFDBGrp) -> Any
+   {label string for CentralQuotient}
+   return Label(quo<G`MagmaGrp | Center(G`MagmaGrp)>);
+end intrinsic;
+
+
+intrinsic CommutatorLabel(G::LMFDBGrp) -> Any
+   {label string for Commutator Subgroup}
+   return Label(CommutatorSubgroup(G`MagmaGrp));
+end intrinsic;
+
+
+intrinsic FrattiniLabel(G::LMFDBGrp) -> Any
+   {label string for Frattini Subgroup}
+   return Label(FrattiniSubgroup(G`MagmaGrp));
+end intrinsic;
+
+
+intrinsic FrattiniQuotient(G::LMFDBGrp) -> Any
+   {label string for Frattini Quotient}
+   return Label(quo<G`MagmaGrp | FrattiniSubgroup(G`MagmaGrp)>);
+end intrinsic;
+
+
+
