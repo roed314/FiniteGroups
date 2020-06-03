@@ -26,7 +26,10 @@ intrinsic SavePerms(out::SeqEnum) -> MonStgElt
     return SaveIntegerList([EncodePerm(o) : o in out]);
 end intrinsic;
 
-intrinsic LoadAttr(attr::MonStgElt, inp::MonStgElt, c::Cat) -> Any
+intrinsic LoadSubgroup(inp::MonStgElt) -> Any
+    {Load a subgroup??}
+
+intrinsic LoadAttr(attr::MonStgElt, inp::MonStgElt, obj::Any) -> Any
     {Load a single attribue}
     // Decomposition is a bit different for gps_crep and gps_zrep/gps_qrep
     if attr in TextCols then
@@ -39,7 +42,7 @@ intrinsic LoadAttr(attr::MonStgElt, inp::MonStgElt, c::Cat) -> Any
         return [];
     end if;
 end intrinsic;
-intrinsic SaveAttr(attr::MonStgElt, val::Any, c::Cat, finalize::BoolElt) -> MonStgElt
+intrinsic SaveAttr(attr::MonStgElt, val::Any, obj::Any, finalize::BoolElt) -> MonStgElt
     {Save a single attribute}
     if attr in TextCols then
         return val;
@@ -70,14 +73,14 @@ intrinsic LoadGrp(line::MonStgElt, attrs::SeqEnum: sep:="|") -> LMFDBGrp
     for i in [1..#data] do
         if data[i] ne "\\N" then
             attr := attrs[i];
-            G``attr := LoadAttr(attr, data[i], LMFDBGrp);
+            G``attr := LoadAttr(attr, data[i], G);
         end if;
     end for;
     SetGrp(G); // set MagmaGrp based on stored attributes
     return G;
 end intrinsic;
 
-intrinsic SaveGrp(G::LMFDBGrp, attrs::SeqEnum: sep:="|", finalize:=false) -> MonStgElt
-    {}
-    return Join([SaveAttr(attr, G``attr, LMFDBGrp, finalize) : attr in attrs], sep);
+intrinsic SaveGrp(G::LMFDBGrp, attrs::SeqEnum: sep:="|") -> MonStgElt
+    {Save an LMFDB group to a single line.  If finalize, look up subgroups in the subgroups table, otherwise store}
+    return Join([SaveAttr(attr, G``attr, G) : attr in attrs], sep);
 end intrinsic;
