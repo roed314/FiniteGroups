@@ -6,7 +6,7 @@ IntegerListCols := ["FactorsOfOrder", "FactorsOfAutOrder", "DerivedSeries", "Chi
 
 intrinsic LoadIntegerList(inp::MonStgElt) -> RngInt
     {}
-    assert inp[1] eq "{" && inp[#inp-1] eq "}";
+    assert inp[1] eq "{" and inp[#inp-1] eq "}";
     return [StringToInteger(elt) : elt in Split(Substring(inp, 2, #inp-2), ",")];
 end intrinsic;
 intrinsic SaveIntegerList(out::SeqEnum) ->  MonStgElt
@@ -15,18 +15,48 @@ intrinsic SaveIntegerList(out::SeqEnum) ->  MonStgElt
 end intrinsic;
 
 intrinsic EncodePerm(x::GrpPermElt) -> RngInt
-    {}
-    n := Degree(Parent(x));
-    // TODO: Implement to_lehmer_code from sage/combinat/permutation.py
+    {return Lehmer code for permutation x}
+    return LehmerCode(x);
 end intrinsic;
+
+/*
+7121     p = []
+7122     open_spots = list(range(1,len(lehmer)+1))
+7123     for ivi in lehmer:
+7124         p.append(open_spots.pop(ivi))
+7125 
+7126     if parent is None:
+7127         parent = Permutations()
+7128     return parent(p)
+*/
+intrinsic IntegerToLehmerCode(x::RngIntElt, n::RngIntElt) -> SeqEnum
+  {Returns the Lehmer code for x as a permutation in Sym(n)}
+  return false;
+end intrinsic;
+
+intrinsic LehmerCodeToPermutation(lehmer::SeqEnum) -> GrpPermElt
+  {Returns permutation corresponding to Lehmer code.}
+  n := #lehmer;
+  lehmer := [el + 1 : el in lehmer];
+  p_seq := [];
+  open_spots := [1..n];
+  for j in lehmer do
+    Append(~p_seq, open_spots[j]);
+    Remove(~open_spots,j);
+  end for;
+  return Sym(n)!p_seq;
+end intrinsic;
+
 intrinsic DecodePerm(x::RngInt, n::RngInt) -> GrpPermElt
-    {}
+    {Given Lehmer Code, return corresponding permutation}
     // TODO: Implement from_lehmer_code from sage/combinat/permutation.py
+    return LehmerCodeToPermutation(IntegerToLehmerCode(x,n));
 end intrinsic;
+
 intrinsic LoadPerms(inp::MonStgElt, n::RngInt) -> SeqEnum
     {}
     return [DecodePerm(elt, n) : elt in LoadIntegerList(inp)];
-end instrinsic;
+end intrinsic;
 intrinsic SavePerms(out::SeqEnum) -> MonStgElt
     {}
     return SaveIntegerList([EncodePerm(o) : o in out]);
@@ -36,20 +66,20 @@ intrinsic LoadGrpAttr(attr::MonStgElt, inp::MonStgElt) -> Any
     {Load a group with its attributes}
     if attr in TextCols then
         return inp;
-    else if attr in IntegerCols then
+    elif attr in IntegerCols then
         return StringToInteger(inp);
-    else if attr in IntegerListCols then
+    elif attr in IntegerListCols then
         return LoadIntegerList(inp);
-    else if attr in SubgroupCols then
+    elif attr in SubgroupCols then
         return [];
     end if;
 end intrinsic;
 
 intrinsic SetGrp(G::LMFDBGrp)
     {Set the MagmaGrp attribute using data included in other attributes}
-    if HasAttribute(G, "PCCode") && HasAttribute(G, "Order") then
+    if HasAttribute(G, "PCCode") and HasAttribute(G, "Order") then
         G`MagmaGrp := SmallGroupDecoding(G`PCCode, G`Order);
-    else if HasAtribute(G, "PermGens") && HasAttribute(G, "TransitiveDegree") then
+    elif HasAtribute(G, "PermGens") and HasAttribute(G, "TransitiveDegree") then
         G`MagmaGrp := PermutationGroup<G`TransitiveDegree | G`PermGens>;
     // TODO: Add matrix group case, use EltRep to decide which data to reconstruct from
     end if;
