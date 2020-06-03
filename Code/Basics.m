@@ -28,7 +28,7 @@ intrinsic AssignBasicAttributes(G::LMFDBGrp) -> Any
     eval_str := Sprintf("return %o(GG);", mag_attr);
     G``db_attr := eval eval_str;
   end for;
-  //G`IsSuperSolvable := IsSupersoluble(GG); // thanks a lot Australia! :D; only for GrpPC...
+  //G`IsSuperSolvable := IsSupersoluble(GG); // thanks a lot Australia! :D; only for GrpPC... 
   return Sprintf("Basic attributes assigned to %o", G);
 end intrinsic;
 
