@@ -29,3 +29,18 @@ intrinsic IsDirectProduct(G::LMFDBGrp) -> Any
   {Returns true if G is a direct product; otherwise returns false.}
   return IsSemidirectProduct(G : direct := true);
 end intrinsic;
+
+intrinsic SchurMultiplier(G::LMFDBGrp) -> Any
+  {}
+  invs := [];
+  ps := FactorsOfOrder(G);
+  GG := Get(G, "MagmaGrp");
+  for p in ps do
+    for el in pMultiplicator(GG,p) do // handbook claims pMultiplicator works for GrpFin, but in Magma only for GrpPerm...
+      if el gt 1 then
+        Append(~invs, el);
+      end if;
+    end for;
+  end for;
+  return invs;
+end intrinsic;
