@@ -4,7 +4,7 @@ IntegerCols := ["Order", "Counter", "Exponent", "pGroup", "Elementary", "Hyperel
 
 IntegerListCols := ["FactorsOfOrder", "FactorsOfAutOrder", "DerivedSeries", "ChiefSeries", "LowerCentralSeries", "UpperCentralSeries", "PrimaryAbelianInvariants", "SmithAbelianInvariants", "SchurMultiplier", "OrderStats", "PermGens", "CompositionFactors"];
 
-intrinsic LoadIntegerList(inp::MonStgElt) -> RngInt
+intrinsic LoadIntegerList(inp::MonStgElt) -> SeqEnum
     {}
     assert inp[1] eq "{" && inp[#inp-1] eq "}";
     return [StringToInteger(elt) : elt in Split(Substring(inp, 2, #inp-2), ",")];
@@ -32,15 +32,28 @@ intrinsic SavePerms(out::SeqEnum) -> MonStgElt
     return SaveIntegerList([EncodePerm(o) : o in out]);
 end intrinsic;
 
-intrinsic LoadGrpAttr(attr::MonStgElt, inp::MonStgElt) -> Any
-    {Load a group with its attributes}
+intrinsic LoadAttr(attr::MonStgElt, inp::MonStgElt, cat::Cat) -> Any
+    {Load a single attribue}
+    // Decomposition is a bit different for gps_crep and gps_zrep/gps_qrep
     if attr in TextCols then
         return inp;
-    else if attr in IntegerCols then
+    elif attr in IntegerCols then
         return StringToInteger(inp);
-    else if attr in IntegerListCols then
+    elif attr in IntegerListCols then
         return LoadIntegerList(inp);
-    else if attr in SubgroupCols then
+    elif attr in SubgroupCols then
+        return [];
+    end if;
+end intrinsic;
+intrinsic SaveAttr(attr::MonStgElt, val::Any, cat::Cat, finalize::BoolElt) -> MonStgElt
+    {Save a single attribute}
+    if attr in TextCols then
+        return val;
+    elif attr in IntegerCols then
+        return IntegerToString(val);
+    elif attr in IntegerListCols then
+        return SaveIntegerList(val);
+    elif attr in SubgroupCols then
         return [];
     end if;
 end intrinsic;
@@ -49,7 +62,7 @@ intrinsic SetGrp(G::LMFDBGrp)
     {Set the MagmaGrp attribute using data included in other attributes}
     if HasAttribute(G, "PCCode") && HasAttribute(G, "Order") then
         G`MagmaGrp := SmallGroupDecoding(G`PCCode, G`Order);
-    else if HasAtribute(G, "PermGens") && HasAttribute(G, "TransitiveDegree") then
+    elif HasAtribute(G, "PermGens") && HasAttribute(G, "TransitiveDegree") then
         G`MagmaGrp := PermutationGroup<G`TransitiveDegree | G`PermGens>;
     // TODO: Add matrix group case, use EltRep to decide which data to reconstruct from
     end if;
@@ -63,10 +76,14 @@ intrinsic LoadGrp(line::MonStgElt, attrs::SeqEnum: sep:="|") -> LMFDBGrp
     for i in [1..#data] do
         if data[i] ne "\\N" then
             attr := attrs[i];
-            G``attr := LoadGrpAttr(attr, data[i]);
+            G``attr := LoadAttr(attr, data[i], LMFDBGrp);
         end if;
     end for;
     SetGrp(G); // set MagmaGrp based on stored attributes
     return G;
 end intrinsic;
 
+intrinsic SaveGrp(G::LMFDBGrp, attrs::SeqEnum: sep:="|", finalize:=false) -> MonStgElt
+    {}
+    return Join([SaveAttr(attr, G``attr, LMFDBGrp, finalize) : attr in attrs], sep);
+end intrinsic;
