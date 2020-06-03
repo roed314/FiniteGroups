@@ -4,7 +4,7 @@ IntegerCols := ["Order", "Counter", "Exponent", "pGroup", "Elementary", "Hyperel
 
 IntegerListCols := ["FactorsOfOrder", "FactorsOfAutOrder", "DerivedSeries", "ChiefSeries", "LowerCentralSeries", "UpperCentralSeries", "PrimaryAbelianInvariants", "SmithAbelianInvariants", "SchurMultiplier", "OrderStats", "PermGens", "CompositionFactors"];
 
-intrinsic LoadIntegerList(inp::MonStgElt) -> RngInt
+intrinsic LoadIntegerList(inp::MonStgElt) -> SeqEnum
     {}
     assert inp[1] eq "{" && inp[#inp-1] eq "}";
     return [StringToInteger(elt) : elt in Split(Substring(inp, 2, #inp-2), ",")];
