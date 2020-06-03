@@ -77,7 +77,16 @@ intrinsic LoadGrp(line::MonStgElt, attrs::SeqEnum: sep:="|") -> LMFDBGrp
     return G;
 end intrinsic;
 
-intrinsic SaveGrp(G::LMFDBGrp, attrs::SeqEnum: sep:="|") -> MonStgElt
+intrinsic SaveGrp(G::LMFDBGrp, attrs::SeqEnum: sep:="|", finalize:=false) -> MonStgElt
     {Save an LMFDB group to a single line.  If finalize, look up subgroups in the subgroups table, otherwise store}
-    return Join([SaveAttr(attr, G``attr, G) : attr in attrs], sep);
+    return Join([SaveAttr(attr, Get(G, attr), G) : attr in attrs], sep);
+end intrinsic;
+
+GrpAttrs := [];
+
+intrinsic PrintData(G::LMFDBGrp: sep:="|", finalize:=false) -> Tup
+    {}
+    return <[SaveGrp(G, GrpAttrs: sep:=sep, finalize:=finalize)],
+            [SaveSubGrp(H, SubGrpAttrs: sep:=sep, finalize:=finalize) : H in Get(G, "Subgroups")],
+            [SaveConjCls(cc, ConjClsAttrs: sep:=sep, finalize:=finalize) : cc in Get(G, "ConjugacyClasses")]>;
 end intrinsic;
