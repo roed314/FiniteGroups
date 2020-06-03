@@ -241,7 +241,7 @@ declare attributes LMFDBRepZZ:
   dim,
   order,
   group,
-  q_Class,
+  q_class,
   c_class,
   bravais_class,
   crystal_symbol,
