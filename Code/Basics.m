@@ -42,7 +42,7 @@ intrinsic AssignBasicAttributes(G::LMFDBGrp) -> Any
   return Sprintf("Basic attributes assigned to %o", G);
 end intrinsic;
 
-intrinsic GetBasicAttributesSubGrp(pair::Boolean) -> Any
+intrinsic GetBasicAttributesSubGrp(pair::BoolElt) -> Any
   {Outputs SeqEnum of basic attributes}
   if pair then
     return [

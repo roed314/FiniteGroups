@@ -429,6 +429,11 @@ intrinsic CommutatorLabel(G::LMFDBGrp) -> Any
 end intrinsic;
 
 
+intrinsic AbelianQuotient(G::LMFDBGrp) -> Any
+   {label string for quotient of Commutator Subgroup}
+   return Label(quo<G`MagmaGrp | CommutatorSubgroup(G`MagmaGrp)>);
+end intrinsic;
+
 intrinsic FrattiniLabel(G::LMFDBGrp) -> Any
    {label string for Frattini Subgroup}
    return Label(FrattiniSubgroup(G`MagmaGrp));
