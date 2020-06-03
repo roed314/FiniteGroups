@@ -3,7 +3,7 @@ intrinsic pgroup(G::LMFDBGrp) -> RngInt
     if #G eq 1 then
 	return 1;
     else
-	fac := Factorization[#G];
+	fac := Factorization(#G);
         if #fac gt 1 then
 	   /* #G has more than one prime divisor. */ 
 	   return 0;
