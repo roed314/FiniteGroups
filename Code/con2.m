@@ -1,2 +1,2 @@
-AttachSpec("spec2");
+AttachSpec("spec");
 load ex;
