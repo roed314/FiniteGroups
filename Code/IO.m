@@ -6,7 +6,7 @@ IntegerListCols := ["FactorsOfOrder", "FactorsOfAutOrder", "DerivedSeries", "Chi
 
 intrinsic LoadIntegerList(inp::MonStgElt) -> SeqEnum
     {}
-    assert inp[1] eq "{" && inp[#inp-1] eq "}";
+    assert inp[1] eq "{" and inp[#inp-1] eq "}";
     return [StringToInteger(elt) : elt in Split(Substring(inp, 2, #inp-2), ",")];
 end intrinsic;
 intrinsic SaveIntegerList(out::SeqEnum) ->  MonStgElt
@@ -14,19 +14,10 @@ intrinsic SaveIntegerList(out::SeqEnum) ->  MonStgElt
     return "{" * Join([IntegerToString(o) : o in out], ",") * "}";
 end intrinsic;
 
-intrinsic EncodePerm(x::GrpPermElt) -> RngInt
-    {}
-    n := Degree(Parent(x));
-    // TODO: Implement to_lehmer_code from sage/combinat/permutation.py
-end intrinsic;
-intrinsic DecodePerm(x::RngInt, n::RngInt) -> GrpPermElt
-    {}
-    // TODO: Implement from_lehmer_code from sage/combinat/permutation.py
-end intrinsic;
 intrinsic LoadPerms(inp::MonStgElt, n::RngInt) -> SeqEnum
     {}
     return [DecodePerm(elt, n) : elt in LoadIntegerList(inp)];
-end instrinsic;
+end intrinsic;
 intrinsic SavePerms(out::SeqEnum) -> MonStgElt
     {}
     return SaveIntegerList([EncodePerm(o) : o in out]);
@@ -63,9 +54,9 @@ end intrinsic;
 
 intrinsic SetGrp(G::LMFDBGrp)
     {Set the MagmaGrp attribute using data included in other attributes}
-    if HasAttribute(G, "PCCode") && HasAttribute(G, "Order") then
+    if HasAttribute(G, "PCCode") and HasAttribute(G, "Order") then
         G`MagmaGrp := SmallGroupDecoding(G`PCCode, G`Order);
-    elif HasAtribute(G, "PermGens") && HasAttribute(G, "TransitiveDegree") then
+    elif HasAtribute(G, "PermGens") and HasAttribute(G, "TransitiveDegree") then
         G`MagmaGrp := PermutationGroup<G`TransitiveDegree | G`PermGens>;
     // TODO: Add matrix group case, use EltRep to decide which data to reconstruct from
     end if;
