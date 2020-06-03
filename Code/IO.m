@@ -6,8 +6,11 @@ IntegerListCols := ["FactorsOfOrder", "FactorsOfAutOrder", "DerivedSeries", "Chi
 
 intrinsic LoadIntegerList(inp::MonStgElt) -> SeqEnum
     {}
-    assert inp[1] eq "{" and inp[#inp-1] eq "}";
+    assert inp[1] eq "{" and inp[#inp] eq "}";
+    /*
     return [StringToInteger(elt) : elt in Split(Substring(inp, 2, #inp-2), ",")];
+    */
+    return eval ReplaceString(~inp,["{","}"],["[","]"]);
 end intrinsic;
 intrinsic SaveIntegerList(out::SeqEnum) ->  MonStgElt
     {}
