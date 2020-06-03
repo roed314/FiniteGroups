@@ -57,9 +57,9 @@ end intrinsic;
 
 intrinsic SetGrp(G::LMFDBGrp)
     {Set the MagmaGrp attribute using data included in other attributes}
-    if HasAttribute(G, "pccode") && HasAttribute(G, "order") then
+    if HasAttribute(G, "pccode") and HasAttribute(G, "order") then
         G`MagmaGrp := SmallGroupDecoding(G`pccode, G`order);
-    elif HasAttribute(G, "perm_gens") && HasAttribute(G, "transitive_degree") then
+    elif HasAttribute(G, "perm_gens") and HasAttribute(G, "transitive_degree") then
         G`MagmaGrp := PermutationGroup<G`transitive_degree | G`perm_gens>;
     // TODO: Add matrix group case, use EltRep to decide which data to reconstruct from
     end if;
