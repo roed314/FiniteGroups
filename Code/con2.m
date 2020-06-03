@@ -1,0 +1,2 @@
+AttachSpec("spec");
+load ex;
