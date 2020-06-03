@@ -1,6 +1,6 @@
 load "Samples.m";
 
-harder:=["IsMaximal"];
+harder:=["maximal"];
 
 
 function initg(g,nm)

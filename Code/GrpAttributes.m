@@ -1,17 +1,10 @@
-/*
-list of attributes to compute. DONE is either done here or in Basics.m
-see https://github.com/roed314/FiniteGroups/blob/master/ProposedSchema.md for description of attributes
-
-DONE: Order, Exponent, IsAbelian, IsCyclic, IsSolvable, IsNilpotent, IsMetacyclic, IsSimple, IsPerfect, Center, FrattiniSubgroup, Radical, Socle, AutomorphismGroup, NilpotencyClass, Ngens, DerivedSeries, DerivedLength, ChiefSeries, LowerCentralSeries, UpperCentralSeries, PrimaryAbelianInvariants, Commutator, NumberOfConjugacyClasses, IsAlmostSimple
-
-TODO: MagmaGrp, Label, OldLabel, Name, TeXName, Counter, FactorsOfOrder, IsSuperSolvable, IsMetabelian, IsQuasiSimple, IsMonomial, IsRational, IsZGroup, IsAGroup, pGroup, Elementary, Hyperelementary, Rank, EulerianFunction, CenterLabel, CentralQuotient, CommutatorLabel, AbelianQuotient, CommutatorCount, FrattiniLabel, FrattiniQuotient, FittingSubgroup, TransitiveDegree, TransitiveSubgroup, SmallRep, AutOrder, OuterOrder, OuterGroup, FactorsOfAutOrder, PCCode, NumberOfSubgroupClasses, NumberOfSubgroups, NumberOfNormalSubgroups, NumberOfCharacteristicSubgroups, PerfectCore, SmithAbelianInvariants, SchurMultiplier, OrderStats, EltRepType, PermGens, AllSubgroupsKnown, NormalSubgroupsKnown, MaximalSubgroupsKnown, SylowSubgroupsKnown, SubgroupInclusionsKnown, OuterEquivalence, SubgroupIndexBound, IsWreathProduct, IsCentralProduct, IsFiniteMatrixGroup, IsDirectProduct, IsSemidirectProduct, CompositionLength;
-*/
+/* list of attributes to compute.*/
  
-intrinsic IsAlmostSimple(G::LMFDBGrp) -> Any
+intrinsic almost_simple(G::LMFDBGrp) -> Any
   {}
   // In order to be almost simple, we need a simple nonabelian normal subgroup with trivial centralizer
   GG := G`MagmaGrp;
-  if G`IsAbelian or G`IsSolvable then
+  if G`abelian or G`solvable then
     return false;
   end if;
   // will we have the normal subgroups stored to G?
@@ -23,17 +16,17 @@ intrinsic IsAlmostSimple(G::LMFDBGrp) -> Any
   return false;
 end intrinsic;
 
-intrinsic NumberOfConjugacyClasses(G::LMFDBGrp) -> Any
+intrinsic number_conjugacy_classes(G::LMFDBGrp) -> Any
   {Number of conjugacy classes in a group}
   return Nclasses(G`MagmaGrp);
 end intrinsic;
 
-intrinsic Commutator(G::LMFDBGrp) -> Any
+intrinsic commutator(G::LMFDBGrp) -> Any
   {Compute commutator subgroup}
   return CommutatorSubgroup(G`MagmaGrp);
 end intrinsic;
 
-intrinsic PrimaryAbelianInvariants(G::LMFDBGrp) -> Any
+intrinsic primary_abelian_invariants(G::LMFDBGrp) -> Any
   {If G is abelian, return the PrimaryAbelianInvariants.}
   if G`IsAbelian then
     GG := G`MagmaGrp;
@@ -42,7 +35,7 @@ intrinsic PrimaryAbelianInvariants(G::LMFDBGrp) -> Any
   // TODO: This should return the invariants of the maximal abelian quotient
 end intrinsic;
 
-intrinsic IsSupersolvable(G::LMFDBGrp) -> BoolElt
+intrinsic supersolvable(G::LMFDBGrp) -> BoolElt
   {Check if LMFDBGrp is supersolvable}
   GG := G`MagmaGrp;
   if not IsSolvable(GG) then
@@ -61,6 +54,7 @@ intrinsic IsSupersolvable(G::LMFDBGrp) -> BoolElt
 end intrinsic;
 
 // for LMFDBGrp
+// Next 3 intrinsics are helpers for metacyclic
 intrinsic EasyIsMetacyclic(G::LMFDBGrp) -> BoolElt
   {Easy checks for possibly being metacyclic}
   if IsSquarefree(G`Order) or G`IsCyclic then
@@ -108,7 +102,7 @@ intrinsic CyclicSubgroups(G::GrpAb) -> SeqEnum
   return cycs;
 end intrinsic;
 
-intrinsic IsMetacyclic(G::LMFDBGrp) -> BoolElt
+intrinsic metacyclic(G::LMFDBGrp) -> BoolElt
   {Check if LMFDBGrp is metacyclic}
   easy := EasyIsMetacyclic(G);
   if not easy cmpeq 0 then
@@ -139,26 +133,26 @@ intrinsic IsMetacyclic(G::LMFDBGrp) -> BoolElt
 end intrinsic;
 
 
-intrinsic FactorsOfOrder(G::LMFDBGrp) -> Any
+intrinsic factors_of_order(G::LMFDBGrp) -> Any
   {Prime factors of the order of the group}
-  gord:=Get(G,"Order");
+  gord:=Get(G,"order");
   return [z[1] : z in Factorization(gord)];
 end intrinsic;
 
-intrinsic IsMetabelian(G::LMFDBGrp) -> BoolElt
+intrinsic metabelian(G::LMFDBGrp) -> BoolElt
   {Determine if a group is metabelian}
   g:=G`MagmaGrp;
   return IsAbelian(DerivedSubgroup(g));
 end intrinsic;
 
-intrinsic IsMonomial(G::LMFDBGrp) -> BoolElt
+intrinsic monomial(G::LMFDBGrp) -> BoolElt
   {Determine if a group is monomial}
   g:=G`MagmaGrp;
   if not IsSolvable(g) then
     return false;
-  elif Get(G, "IsSupersolvable") then
+  elif Get(G, "supersolvable") then
     return true;
-  elif Get(G,"IsSolvable") and Get(G,"IsAGroup") then
+  elif Get(G,"solvable") and Get(G,"Agroup") then
     return true;
   else
     ct:=CharacterTable(g);
@@ -188,7 +182,7 @@ intrinsic IsMonomial(G::LMFDBGrp) -> BoolElt
   return false;
 end intrinsic;
 
-intrinsic IsRational(G::LMFDBGrp) -> BoolElt
+intrinsic rational(G::LMFDBGrp) -> BoolElt
   {Determine if a group is rational, i.e., all characters are rational}
   g:=G`MagmaGrp;
   ct,szs:=RationalCharacterTable(g);
@@ -200,15 +194,15 @@ intrinsic IsRational(G::LMFDBGrp) -> BoolElt
   return true;
 end intrinsic;
 
-intrinsic Elementary(G::LMFDBGrp) -> Any
+intrinsic elementary(G::LMFDBGrp) -> Any
   {Product of a all primes p such that G is a direct product of a p-group and a cyclic group}
   ans := 1;
-  if Get(G,"IsSolvable") and Get(G,"Order") gt 1 then
+  if Get(G,"solvable") and Get(G,"order") gt 1 then
     g:=G`MagmaGrp;
     g:=PCGroup(g);
     sylowsys:= SylowBasis(g);
     comp:=ComplementBasis(g);
-    facts:= FactorsOfOrder(G);
+    facts:= factors_of_order(G);
     for j:=1 to #sylowsys do
       if IsNormal(g, sylowsys[j]) and IsNormal(g,comp[j]) and IsCyclic(comp[j]) then
         ans := ans*facts[j];
@@ -218,14 +212,14 @@ intrinsic Elementary(G::LMFDBGrp) -> Any
   return ans;
 end intrinsic;
 
-intrinsic Hyperelementary(G::LMFDBGrp) -> Any
+intrinsic hyperelementary(G::LMFDBGrp) -> Any
   {Product of all primes p such that G is an extension of a p-group by a group of order prime to p}
   ans := 1;
-  if Get(G,"IsSolvable") and Get(G,"Order") gt 1 then
+  if Get(G,"solvable") and Get(G,"order") gt 1 then
     g:=G`MagmaGrp;
     g:=PCGroup(g);
     comp:=ComplementBasis(g);
-    facts:= FactorsOfOrder(G);
+    facts:= factors_of_order(G);
     for j:=1 to #comp do
       if IsNormal(g,comp[j]) and IsCyclic(comp[j]) then
         ans := ans*facts[j];
@@ -235,7 +229,8 @@ intrinsic Hyperelementary(G::LMFDBGrp) -> Any
   return ans;
 end intrinsic;
 
-intrinsic TransitiveSubgroup(G::LMFDBGrp) -> Any
+
+intrinsic MagmaTransitiveSubgroup(G::LMFDBGrp) -> Any
   {Subgroup producing a minimal degree transitive faithful permutation representation}
   g:=G`MagmaGrp;
   ss:=Subgroups(g);
@@ -247,23 +242,23 @@ intrinsic TransitiveSubgroup(G::LMFDBGrp) -> Any
   end for;
 end intrinsic;
 
-intrinsic TransitiveDegree(G::LMFDBGrp) -> Any
+intrinsic transitive_degree(G::LMFDBGrp) -> Any
   {Smallest transitive degree for a faithful permutation representation}
-  ts:=Get(G, "TransitiveSubgroup");
-  return Get(G, "Order")/Order(ts);
+  ts:=Get(G, "MagmaTransitiveSubgroup");
+  return Get(G, "order")/Order(ts);
 end intrinsic;
 
-intrinsic PermGens(G::LMFDBGrp) -> Any
+intrinsic perm_gens(G::LMFDBGrp) -> Any
   {Generators of a minimal degree transitive faithful permutation representation}
-  ts:=Get(G, "TransitiveSubgroup");
+  ts:=Get(G, "MagmaTransitiveSubgroup");
   g:=G`MagmaGrp;
   gg:=CosetImage(g,ts);
   return [z : z in Generators(gg)];
 end intrinsic;
 
-intrinsic SmallRep(G::LMFDBGrp) -> Any
+intrinsic smallrep(G::LMFDBGrp) -> Any
   {Smallest degree of a faithful irreducible representation}
-  if not IsCyclic(Get(G,"Center")) then
+  if not IsCyclic(Get(G,"MagmaCenter")) then
     return 0;
   end if;
   g:=G`MagmaGrp;
@@ -276,6 +271,7 @@ intrinsic SmallRep(G::LMFDBGrp) -> Any
   return 0; // Should not get here
 end intrinsic;
 
+// Next 2 intrinsics are helpers for commutator_count
 intrinsic ClassPositionsOfKernel(lc::AlgChtrElt) -> Any
   {List of conjugacy class positions in the kernel of the character lc}
   return [j : j in [1..#lc] | lc[j] eq lc[1]];
@@ -286,7 +282,7 @@ intrinsic dosum(li) -> Any
   return &+li;
 end intrinsic;
 
-intrinsic CommutatorCount(G::LMFDBGrp) -> Any
+intrinsic commutator_count(G::LMFDBGrp) -> Any
   {Smallest integer n such that every element of the derived subgroup is a product of n commutators}
   g:=G`MagmaGrp;
   ct := CharacterTable(g);
@@ -318,8 +314,8 @@ intrinsic CommutatorCount(G::LMFDBGrp) -> Any
   return n;
 end intrinsic;
 
-
-intrinsic SylowSubgroups(G::LMFDBGrp) -> Any
+// Check redundancy of Sylow call
+intrinsic MagmaSylowSubgroups(G::LMFDBGrp) -> Any
   {Compute SylowSubgroups of the group G}
   GG := G`MagmaGrp;
   SS := AssociativeArray();
@@ -331,9 +327,9 @@ intrinsic SylowSubgroups(G::LMFDBGrp) -> Any
   return SS;
 end intrinsic;
 
-intrinsic IsZGroup(G::LMFDBGrp) -> Any
+intrinsic Zgroup(G::LMFDBGrp) -> Any
   {Check whether all the Syllowsubgroups are cylic}
-  SS := SylowSubgroups(G);
+  SS := MagmaSylowSubgroups(G);
   K := Keys(SS);
   for k in K do
     if not IsCyclic(SS[k]) then
@@ -343,9 +339,9 @@ intrinsic IsZGroup(G::LMFDBGrp) -> Any
   return true;
 end intrinsic;
 
-intrinsic IsAGroup(G::LMFDBGrp) -> Any
+intrinsic Agroup(G::LMFDBGrp) -> Any
   {Check whether all the Syllowsubgroups are abelian}
-  SS := SylowSubgroups(G);
+  SS := MagmaSylowSubgroups(G);
   K := Keys(SS);
   for k in K do
     if not IsAbelian(SS[k]) then
@@ -355,23 +351,23 @@ intrinsic IsAGroup(G::LMFDBGrp) -> Any
   return true;
 end intrinsic;
 
-intrinsic IsQuasiSimple(G::LMFDBGrp) -> Any
+intrinsic quasisimple(G::LMFDBGrp) -> Any
   {}
   GG := G`MagmaGrp;
   return (IsPerfect(GG) and IsSimple(quo< GG | Center(GG)>));
 end intrinsic;
 
-intrinsic SmithAbelianInvariants(G::LMFDBGrp) -> Any
+intrinsic smith_abelian_invariants(G::LMFDBGrp) -> Any
   {Compute invariant factors of maximal abelian quotient}
-  C := Get(G, "Commutator");
+  C := Get(G, "MagmaCommutator");
   GG := G`MagmaGrp;
   A := quo< GG | C>;
   return InvariantFactors(A);
 end intrinsic;
 
-intrinsic PerfectCore(G::LMFDBGrp) -> Any
+intrinsic perfect_core(G::LMFDBGrp) -> Any
   {Compute perfect core, the maximal perfect subgroup}
-  DD := Get(G, "DerivedSeries");
+  DD := Get(G, "derived_series");
   for i := 1 to #DD-1 do
     if DD[i] eq DD[i+1] then
       return DD[i];
@@ -380,70 +376,97 @@ intrinsic PerfectCore(G::LMFDBGrp) -> Any
   return DD[#DD];
 end intrinsic;
 
-intrinsic CompositionLength(G::LMFDBGrp) -> Any
+intrinsic composition_length(G::LMFDBGrp) -> Any
   {Compute length of composition series.}
-  return #Get(G,"CompositionFactors"); // Correct if trivial group is labeled G_0
+  return #Get(G,"composition_factors"); // Correct if trivial group is labeled G_0
 end intrinsic;
 
 
-intrinsic AutOrder(G::LMFDBGrp) -> RingIntElt
+intrinsic aut_order(G::LMFDBGrp) -> RingIntElt
    {returns order of automorphism group}
-   aut:=Get(G, "AutomorphismGroup");
+   aut:=Get(G, "MagmaAutGroup");
    return #aut;
 end intrinsic;
 
-intrinsic FactorsOfAutOrder(G::LMFDBGrp) -> SeqEnum
+intrinsic factors_of_aut_order(G::LMFDBGrp) -> SeqEnum
    {returns primes in factorization of automorphism group}
-   autOrd:=Get(G,"AutOrder");
+   autOrd:=Get(G,"aut_order");
    return PrimeFactors(autOrd);
 end intrinsic;
 
-intrinsic OuterOrder(G::LMFDBGrp) -> RingIntElt
+intrinsic outer_order(G::LMFDBGrp) -> RingIntElt
    {returns order of OuterAutomorphisms }
-    aut:=Get(G, "AutomorphismGroup");
+    aut:=Get(G, "MagmaAutGroup");
    return OuterOrder(aut);
 end intrinsic;
 
-intrinsic OuterGroup(G::LMFDBGrp) -> Any
+intrinsic outer_group(G::LMFDBGrp) -> Any
    {returns OuterAutomorphism Group}
-   aut:=Get(G, "AutomorphismGroup");
+   aut:=Get(G, "MagmaAutGroup");
    return OuterFPGroup(aut);
 end intrinsic;
 
 
-intrinsic CenterLabel(G::LMFDBGrp) -> Any
+intrinsic center_label(G::LMFDBGrp) -> Any
    {Label string for Center}
-   return Label(Center(G`MagmaGrp));
+   return label(Center(G`MagmaGrp));
 end intrinsic;
 
 
-intrinsic CentralQuotient(G::LMFDBGrp) -> Any
+intrinsic central_quotient(G::LMFDBGrp) -> Any
    {label string for CentralQuotient}
-   return Label(quo<G`MagmaGrp | Center(G`MagmaGrp)>);
+   return label(quo<G`MagmaGrp | Center(G`MagmaGrp)>);
 end intrinsic;
 
 
-intrinsic CommutatorLabel(G::LMFDBGrp) -> Any
+intrinsic MagmaCommutator(G::LMFDBGrp) -> Any
+   {Commutator subgroup}
+   return CommutatorSubgroup(G);
+end intrinsic;
+
+
+intrinsic commutator_label(G::LMFDBGrp) -> Any
    {label string for Commutator Subgroup}
-   return Label(CommutatorSubgroup(G`MagmaGrp));
+   comm:= Get(G,"MagmaCommutator");
+   return label(comm);
 end intrinsic;
 
 
-intrinsic AbelianQuotient(G::LMFDBGrp) -> Any
+intrinsic abelian_quotient(G::LMFDBGrp) -> Any
    {label string for quotient of Commutator Subgroup}
-   return Label(quo<G`MagmaGrp | CommutatorSubgroup(G`MagmaGrp)>);
+      comm:= Get(G,"MagmaCommutator");
+   return label(quo<G`MagmaGrp | G`MagmaCommutator>);
 end intrinsic;
 
-intrinsic FrattiniLabel(G::LMFDBGrp) -> Any
+
+
+intrinsic MagmaFrattini(G::LMFDBGrp) -> Any
+   { Frattini Subgroup}
+   return FrattiniSubgroup(G`MagmaGrp);
+end intrinsic;
+
+
+
+
+intrinsic frattini_label(G::LMFDBGrp) -> Any
    {label string for Frattini Subgroup}
-   return Label(FrattiniSubgroup(G`MagmaGrp));
+   fratt:= Get(G,"MagmaFrattini");
+return label(fratt);
 end intrinsic;
 
 
-intrinsic FrattiniQuotient(G::LMFDBGrp) -> Any
+intrinsic frattini_quotient(G::LMFDBGrp) -> Any
    {label string for Frattini Quotient}
-   return Label(quo<G`MagmaGrp | FrattiniSubgroup(G`MagmaGrp)>);
+   fratt:= Get(G,"MagmaFrattini");
+   return label(quo<G`MagmaGrp | fratt>);
 end intrinsic;
 
+
+
+
+intrinsic MagmaFitting(G::LMFDBGrp) -> Any
+   {Fitting Subgroup}
+   return FittingSubgroup(G`MagmaGrp);
+end intrinsic;
 
 
