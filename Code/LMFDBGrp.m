@@ -178,7 +178,7 @@ declare attributes LMFDBSubGrp:
 intrinsic Print(H::LMFDBSubGrp)
   {Print LMFDBGrp}
   printf "LMFDBDSubGrp %o:\n", H`Label;
-  printf "  Group label%o\n", H`GroupLabel;
+  printf "  Group label%o\n ", H`Ambient;
   printf "  Order %o\n", H`SubgroupOrder;
   printf "  Normal? %o", H`IsNormal;
 end intrinsic;
