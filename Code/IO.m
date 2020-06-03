@@ -6,8 +6,11 @@ IntegerListCols := ["FactorsOfOrder", "FactorsOfAutOrder", "DerivedSeries", "Chi
 
 intrinsic LoadIntegerList(inp::MonStgElt) -> SeqEnum
     {}
-    assert inp[1] eq "{" and inp[#inp-1] eq "}";
+    assert inp[1] eq "{" and inp[#inp] eq "}";
+    /*
     return [StringToInteger(elt) : elt in Split(Substring(inp, 2, #inp-2), ",")];
+    */
+    return eval ReplaceString(~inp,["{","}"],["[","]"]);
 end intrinsic;
 intrinsic SaveIntegerList(out::SeqEnum) ->  MonStgElt
     {}
@@ -77,7 +80,16 @@ intrinsic LoadGrp(line::MonStgElt, attrs::SeqEnum: sep:="|") -> LMFDBGrp
     return G;
 end intrinsic;
 
-intrinsic SaveGrp(G::LMFDBGrp, attrs::SeqEnum: sep:="|") -> MonStgElt
+intrinsic SaveGrp(G::LMFDBGrp, attrs::SeqEnum: sep:="|", finalize:=false) -> MonStgElt
     {Save an LMFDB group to a single line.  If finalize, look up subgroups in the subgroups table, otherwise store}
-    return Join([SaveAttr(attr, G``attr, G) : attr in attrs], sep);
+    return Join([SaveAttr(attr, Get(G, attr), G) : attr in attrs], sep);
+end intrinsic;
+
+GrpAttrs := [];
+
+intrinsic PrintData(G::LMFDBGrp: sep:="|", finalize:=false) -> Tup
+    {}
+    return <[SaveGrp(G, GrpAttrs: sep:=sep, finalize:=finalize)],
+            [SaveSubGrp(H, SubGrpAttrs: sep:=sep, finalize:=finalize) : H in Get(G, "Subgroups")],
+            [SaveConjCls(cc, ConjClsAttrs: sep:=sep, finalize:=finalize) : cc in Get(G, "ConjugacyClasses")]>;
 end intrinsic;

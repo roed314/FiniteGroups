@@ -1,4 +1,4 @@
-intrinsic Label(G::Grp) -> Any
+intrinsic label(G::Grp) -> Any
 {Assigns label for small groups only right now}
    if CanIdentifyGroup(#G) then
       id:=IdentifyGroup(G);
@@ -10,7 +10,7 @@ intrinsic Label(G::Grp) -> Any
 end intrinsic;
 
 
-intrinsic Label(G:LMFDBGrp) -> Any
+intrinsic label(G:LMFDBGrp) -> Any
 {Assign label to a LMFDBGrp type}
-  return Label(G`MagmaGrp);
+  return label(G`MagmaGrp);
 end intrinsic;

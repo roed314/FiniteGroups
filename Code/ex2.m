@@ -1,4 +1,5 @@
 G := New(LMFDBGrp);
+<<<<<<< HEAD
 G`Label := "whateva";
 G`MagmaGrp := DihedralGroup(12);
 AssignBasicAttributes(G);
@@ -9,14 +10,14 @@ S:=Subgroups(GG);
 
 H:=New(LMFDBSubGrp);
 H`MagmaSubGrp := Random(S)`subgroup;
-H`Label := Label(H`MagmaSubGrp) cat ".1";
-H`Ambient := G`Label;
+H`label := label(H`MagmaSubGrp) cat ".1";
+H`ambient := G`label;
 H`MagmaAmbient := GG;
-H`SubgroupOrder := #H`MagmaSubGrp;
+H`subgroup_order := #H`MagmaSubGrp;
 AssignBasicAttributes(H);
 
 
-harder:=["IsMaximal"];
+harder:=["maximal","abelian","normal"];
 
 for j in harder do dummy:=Get(H,j); end for;
 
