@@ -409,6 +409,11 @@ intrinsic None() -> Any
  return _None;
 end intrinsic;
 
+intrinsic Print(None)
+  {Print none}
+  printf "none";
+end intrinsic;
+
 // This function returns the value of an attribute, computing it and caching it using the function of the same name if necessary.
 intrinsic Get(G::Any, attr::MonStgElt) -> Any
   {}

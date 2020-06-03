@@ -57,12 +57,23 @@ end intrinsic;
 
 
 intrinsic split(H::LMFDBSubGrp) -> Any
-  {Determine if a subgroup is minimal normal subgroup}
+  {Returns whether this sequence with H splits or not, null when non-normal}
+  dirbool := false;
   GG := H`MagmaAmbient;
   HH := H`MagmaSubGrp;
+  S := Subgroups(GG); 
   if not IsNormal(GG, HH) then
     return None();
+  else 
+    comps := [el : el in S | el`order eq (Order(GG) div Order(HH))];
+    for s in comps do
+      K := s`subgroup;
+      if #(HH meet K) eq 1 then
+        return true;
+      end if;
+    end for;
   end if;
+  return dirbool;
 end intrinsic;
 
 
