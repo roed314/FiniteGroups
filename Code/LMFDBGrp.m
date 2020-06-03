@@ -219,7 +219,7 @@ declare verbose LMFDBRepQQ, 1;
 declare type LMFDBRepQQ;
 declare attributes LMFDBRepQQ:
   Label,
-  Dimension,
+  Dim,
   Order,
   Group,
   CCClass,
@@ -229,7 +229,7 @@ declare attributes LMFDBRepQQ:
 intrinsic Print(Rho::LMFDBRepQQ)
   {Print LMFDBRepQQ}
   printf "LMFDBRepQQ %o:\n", Rho`Label;
-  printf "  Dimension %o:\n", Rho`Dimension;
+  printf "  Dimension %o:\n", Rho`Dim;
   printf "  Group %o:\n", Rho`Group;
   printf "  Irreducible? %o", Rho`IsIrreducible;
 end intrinsic;
@@ -238,7 +238,7 @@ declare verbose LMFDBRepZZ, 1;
 declare type LMFDBRepZZ;
 declare attributes LMFDBRepZZ:
   Label,
-  Dimension,
+  Dim,
   Order,
   Group,
   QQClass,
@@ -253,7 +253,7 @@ declare attributes LMFDBRepZZ:
 intrinsic Print(Rho::LMFDBRepZZ)
   {Print LMFDBRepZZ}
   printf "LMFDBRepZZ %o:\n", Rho`Label;
-  printf "  Dimension %o:\n", Rho`Dimension;
+  printf "  Dimension %o:\n", Rho`Dim;
   printf "  Group %o:\n", Rho`Group;
   printf "  Irreducible? %o", Rho`IsIrreducible;
 end intrinsic;
@@ -262,7 +262,7 @@ declare verbose LMFDBRepCC, 1;
 declare type LMFDBRepCC;
 declare attributes LMFDBRepCC:
   Label,
-  Dimension,
+  Dim,
   Order,
   Group,
   IsIrreducible,
@@ -279,7 +279,7 @@ declare attributes LMFDBRepCC:
 intrinsic Print(Rho::LMFDBRepCC)
   {Print LMFDBRepCC}
   printf "LMFDBRepCC %o:\n", Rho`Label;
-  printf "  Dimension %o:\n", Rho`Dimension;
+  printf "  Dimension %o:\n", Rho`Dim;
   printf "  Group %o:\n", Rho`Group;
   printf "  Irreducible? %o", Rho`IsIrreducible;
 end intrinsic;
@@ -288,7 +288,7 @@ declare verbose LMFDBRepP, 1;
 declare type LMFDBRepP;
 declare attributes LMFDBRepP:
   Label,
-  Dimension,
+  Dim,
   q,
   IsPrime,
   Ambient,
@@ -300,7 +300,7 @@ declare attributes LMFDBRepP:
 intrinsic Print(Rho::LMFDBRepP)
   {Print LMFDBRepP}
   printf "LMFDBRepP %o:\n", Rho`Label;
-  printf "  Dimension %o:\n", Rho`Dimension;
+  printf "  Dimension %o:\n", Rho`Dim;
   printf "  Ambient %o:", Rho`Ambient;
 end intrinsic;
 
@@ -308,7 +308,7 @@ declare verbose LMFDBRepPNames, 1;
 declare type LMFDBRepPNames;
 declare attributes LMFDBRepPNames:
   Group,
-  Dimension,
+  Dim,
   q,
   Family,
   Name,
@@ -317,7 +317,7 @@ declare attributes LMFDBRepPNames:
 intrinsic Print(s::LMFDBRepPNames)
   {Print LMFDBRepPNames}
   printf "LMFDBRepPNames %o:\n", Rho`Name;
-  printf "  Dimension %o:\n", Rho`Dimension;
+  printf "  Dimension %o:\n", Rho`Dim;
   printf "  Group %o:", Rho`Group;
 end intrinsic;
 
@@ -367,7 +367,7 @@ declare type LMFDBGrpChtrCC;
 declare attributes LMFDBGrpChtrCC:
   Label,
   Group,
-  Dimension,
+  Dim,
   Counter,
   Kernel,
   Center,
@@ -377,7 +377,7 @@ declare attributes LMFDBGrpChtrCC:
 intrinsic Print(Chi::LMFDBGrpChtrCC)
   {Print LMFDBGrpChtrCC}
   printf "LMFDBGrpChtrCC %o:\n", Chi`Label;
-  printf "  Dimension %o:\n", Chi`Dimension;
+  printf "  Dimension %o:\n", Chi`Dim;
   printf "  Group %o:", Chi`Group;
 end intrinsic;
 
@@ -386,8 +386,8 @@ declare type LMFDBGrpConjChtrQQ;
 declare attributes LMFDBGrpConjChtrQQ:
   Label,
   Group,
-  ComplexDimension,
-  RationalDimension,
+  CDim,
+  QDim,
   Multiplicity,
   Indicator,
   SchurIndex;
@@ -395,7 +395,7 @@ declare attributes LMFDBGrpConjChtrQQ:
 intrinsic Print(Chi::LMFDBGrpChtrQQ)
   {Print LMFDBGrpChtrQQ}
   printf "LMFDBGrpChtrQQ %o:\n", Chi`Label;
-  printf "  Rational Dimension %o:\n", Chi`RationalDimension;
+  printf "  Rational Dimension %o:\n", Chi`RationalDim;
   printf "  Group %o:", Chi`Group;
 end intrinsic;
 
