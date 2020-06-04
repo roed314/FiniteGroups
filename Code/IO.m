@@ -10,17 +10,12 @@ BoolCols := ["Agroup", "Zgroup", "abelian", "all_subgroups_known", "almost_simpl
 
 intrinsic LoadBool(inp::MonStgElt) -> BoolElt
     {}
-    if inp eq "t" then
-        return true;
-    elif inp eq "f" then
-        return false;
-    else
-        error Sprintf("Invalid boolean %o", inp);
-    end if;
+    assert inp in ["t", "f"];
+    return (inp eq "t");
 end intrinsic;
-intrinsic SaveBool(inp::BoolElt) -> MonStgElt
+intrinsic SaveBool(out::BoolElt) -> MonStgElt
     {}
-    if inp then return "t"; else return "f"; end if;
+    return (out select "t" else "f");
 end intrinsic;
 
 intrinsic LoadIntegerList(inp::MonStgElt) -> SeqEnum
@@ -85,11 +80,11 @@ intrinsic SaveAttr(attr::MonStgElt, val::Any, obj::Any) -> MonStgElt
     elif attr in IntegerCols then
         return IntegerToString(val);
     elif attr in BoolCols then
-        return SaveBool(inp);
+        return SaveBool(val);
     elif attr in IntegerListCols then
         return SaveIntegerList(val);
     elif attr in TextListCols then
-        return SaveTextList(inp);
+        return SaveTextList(val);
     else
         error "Unknown attribute type";
     end if;
