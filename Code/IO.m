@@ -1,13 +1,16 @@
-TextCols := ["Label", "OldLabel", "Name", "TexName"];
+TextCols := ["label", "old_label", "name", "tex_name"];
 
-IntegerCols := ["Order", "Counter", "Exponent", "pGroup", "Elementary", "Hyperelementary", "Rank", "Numeric", "Center", "Commutator", "CommutatorCount", "Frattini", "Fitting", "Radical", "Socle", "TransitiveDegree", "TransitiveSubgroup", "SmallRep", "AutOrder", "OuterOrder", "NilpotencyClass", "Ngens", "PCCode", "NumberConjugacyClasses", "NumbeSubgroupClasses", "NumberSubgroups", "NumberNormalSubgroups", "NumberCharacteristicSubgroups", "DerivedLength", "PerfectCore", "EltRepType", "SubgroupIndexBound", "CompositionLength"];
+IntegerCols := ["order", "counter", "exponent", "pgroup", "elementary", "hyperelementary", "rank", "eulerian_function", "center", "commutator", "commutator_count", "frattini", "fitting", "radical", "socle", "transitive_degree", "transitive_subgroup", "faithful_reps", "aut_order", "outer_order", "nilpotency_class", "ngens", "pc_code", "number_conjugacy_classes", "number_subgroup_classes", "number_subgroups", "number_normal_subgroups", "mumber_characteristic_subgroups", "derived_length", "perfect_core", "elt_rep_type", "subgroup_index_bound", "composition_length"];
 
-IntegerListCols := ["FactorsOfOrder", "FactorsOfAutOrder", "DerivedSeries", "ChiefSeries", "LowerCentralSeries", "UpperCentralSeries", "PrimaryAbelianInvariants", "SmithAbelianInvariants", "SchurMultiplier", "OrderStats", "PermGens", "CompositionFactors"];
+IntegerListCols := ["factors_of_order", "factors_of_aut_order", "derived_series", "chief_series", "lower_central_series", "upper_central_series", "primary_abelian_invariants", "smith_abelian_invariants", "schur_multiplier", "order_stats", "perm_gens", "composition_factors"];
 
 intrinsic LoadIntegerList(inp::MonStgElt) -> SeqEnum
     {}
-    assert inp[1] eq "{" and inp[#inp-1] eq "}";
+    assert inp[1] eq "{" and inp[#inp] eq "}";
+    /*
     return [StringToInteger(elt) : elt in Split(Substring(inp, 2, #inp-2), ",")];
+    */
+    return eval ReplaceString(~inp,["{","}"],["[","]"]);
 end intrinsic;
 intrinsic SaveIntegerList(out::SeqEnum) ->  MonStgElt
     {}
@@ -23,7 +26,10 @@ intrinsic SavePerms(out::SeqEnum) -> MonStgElt
     return SaveIntegerList([EncodePerm(o) : o in out]);
 end intrinsic;
 
-intrinsic LoadAttr(attr::MonStgElt, inp::MonStgElt, c::Cat) -> Any
+intrinsic LoadSubgroup(inp::MonStgElt) -> Any
+    {Load a subgroup??}
+
+intrinsic LoadAttr(attr::MonStgElt, inp::MonStgElt, obj::Any) -> Any
     {Load a single attribue}
     // Decomposition is a bit different for gps_crep and gps_zrep/gps_qrep
     if attr in TextCols then
@@ -36,7 +42,7 @@ intrinsic LoadAttr(attr::MonStgElt, inp::MonStgElt, c::Cat) -> Any
         return [];
     end if;
 end intrinsic;
-intrinsic SaveAttr(attr::MonStgElt, val::Any, c::Cat, finalize::BoolElt) -> MonStgElt
+intrinsic SaveAttr(attr::MonStgElt, val::Any, obj::Any, finalize::BoolElt) -> MonStgElt
     {Save a single attribute}
     if attr in TextCols then
         return val;
@@ -51,10 +57,10 @@ end intrinsic;
 
 intrinsic SetGrp(G::LMFDBGrp)
     {Set the MagmaGrp attribute using data included in other attributes}
-    if HasAttribute(G, "PCCode") and HasAttribute(G, "Order") then
-        G`MagmaGrp := SmallGroupDecoding(G`PCCode, G`Order);
-    elif HasAtribute(G, "PermGens") and HasAttribute(G, "TransitiveDegree") then
-        G`MagmaGrp := PermutationGroup<G`TransitiveDegree | G`PermGens>;
+    if HasAttribute(G, "pccode") and HasAttribute(G, "order") then
+        G`MagmaGrp := SmallGroupDecoding(G`pccode, G`order);
+    elif HasAttribute(G, "perm_gens") and HasAttribute(G, "transitive_degree") then
+        G`MagmaGrp := PermutationGroup<G`transitive_degree | G`perm_gens>;
     // TODO: Add matrix group case, use EltRep to decide which data to reconstruct from
     end if;
 end intrinsic;
@@ -67,14 +73,39 @@ intrinsic LoadGrp(line::MonStgElt, attrs::SeqEnum: sep:="|") -> LMFDBGrp
     for i in [1..#data] do
         if data[i] ne "\\N" then
             attr := attrs[i];
-            G``attr := LoadAttr(attr, data[i], LMFDBGrp);
+            G``attr := LoadAttr(attr, data[i], G);
         end if;
     end for;
     SetGrp(G); // set MagmaGrp based on stored attributes
     return G;
 end intrinsic;
 
-intrinsic SaveGrp(G::LMFDBGrp, attrs::SeqEnum: sep:="|", finalize:=false) -> MonStgElt
+intrinsic SaveGrpAttributes() -> SeqEnum
+  {}
+  GrpAttrs := GetAttributes(LMFDBGrp);
+  DefaultAttrs := [];
+  DefaultAttrs cat:= ["Agroup", "Zgroup"];
+  for attr in GrpAttrs do
+    if Regexp("^[a-z]+", attr) then
+      Append(~DefaultAttrs, attr);
+    end if;
+  end for;
+  return DefaultAttrs;
+end intrinsic;
+
+intrinsic SaveGrp(G::LMFDBGrp : attrs:=[], sep:="|", finalize:=false) -> MonStgElt
+    {Save an LMFDB group to a single line.  If finalize, look up subgroups in the subgroups table, otherwise store}
+    if attrs eq [] then
+      attrs := SaveGrpAttributes();
+    end if;
+    return Join([SaveAttr(attr, Get(G, attr), G) : attr in attrs], sep);
+end intrinsic;
+
+GrpAttrs := [];
+
+intrinsic PrintData(G::LMFDBGrp: sep:="|", finalize:=false) -> Tup
     {}
-    return Join([SaveAttr(attr, G``attr, LMFDBGrp, finalize) : attr in attrs], sep);
+    return <[SaveGrp(G, GrpAttrs: sep:=sep, finalize:=finalize)],
+            [SaveSubGrp(H, SubGrpAttrs: sep:=sep, finalize:=finalize) : H in Get(G, "Subgroups")],
+            [SaveConjCls(cc, ConjClsAttrs: sep:=sep, finalize:=finalize) : cc in Get(G, "ConjugacyClasses")]>;
 end intrinsic;

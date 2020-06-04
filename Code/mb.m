@@ -1,3 +1,5 @@
+/* Added to GrpAttributes.m */
+
 intrinsic pgroup(G::LMFDBGrp) -> RngInt
     {1 if trivial group, p if order a power of p, otherwise 0}
     if G`Order eq 1 then

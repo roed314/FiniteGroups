@@ -1,4 +1,4 @@
-intrinsic IsMaximal(H::LMFDBSubGrp) -> BoolElt
+intrinsic maximal(H::LMFDBSubGrp) -> BoolElt
   {Determine if a subgroup is maximal}
   GG := H`MagmaAmbient;
   HH := H`MagmaSubGrp;
