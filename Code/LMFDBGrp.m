@@ -55,7 +55,6 @@ declare attributes LMFDBGrp:
   nilpotency_class,
   ngens,
   pc_code,
-  // TODO: check rest of these for basic attrs
   number_conjugacy_classes,
   number_subgroup_classes,
   number_subgroups,
@@ -366,6 +365,7 @@ end intrinsic;
 declare verbose LMFDBGrpChtrCC, 1;
 declare type LMFDBGrpChtrCC;
 declare attributes LMFDBGrpChtrCC:
+  MagmaChtr,
   label,
   group,
   dim,
@@ -416,4 +416,3 @@ intrinsic Get(G::Any, attr::MonStgElt) -> Any
     return val;
   end if;
 end intrinsic;
-
