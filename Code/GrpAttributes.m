@@ -530,7 +530,7 @@ intrinsic Subgroups(G::LMFDBGrp) -> SeqEnum
     return S;
 end intrinsic;
 
-intrinsic ConjugacyClasses(G::LMFDB) ->  SeqEnum
+intrinsic ConjugacyClasses(G::LMFDBGrp) ->  SeqEnum
 {The list of conjugacy classes for this group}
     C := [];
     // Need to fix sorting, add labels and maybe other things here.

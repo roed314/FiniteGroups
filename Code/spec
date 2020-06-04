@@ -18,5 +18,6 @@
   IO.m
   SmallGroups.m
   LabelSubgroups.m
+  orderCC.m
   mb.m
 }
