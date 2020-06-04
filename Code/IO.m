@@ -73,7 +73,7 @@ intrinsic LoadAttr(attr::MonStgElt, inp::MonStgElt, obj::Any) -> Any
 end intrinsic;
 intrinsic SaveAttr(attr::MonStgElt, val::Any, obj::Any) -> MonStgElt
     {Save a single attribute}
-    if val eq None() then
+    if Type(val) eq NoneType then
         return "\\N";
     elif attr in TextCols then
         return val;
@@ -122,6 +122,10 @@ intrinsic DefaultAttributes(c::Cat) -> SeqEnum
     end if;
     all_attrs := GetAttributes(c);
     for attr in all_attrs do
+        // Blacklist attributes that aren't working
+        if attr in ["central_product"] then
+            continue;
+        end if;
         if Regexp("^[a-z]+", attr) then
             Append(~defaults, attr);
         end if;

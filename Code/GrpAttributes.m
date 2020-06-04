@@ -35,6 +35,13 @@ intrinsic primary_abelian_invariants(G::LMFDBGrp) -> Any
   // TODO: This should return the invariants of the maximal abelian quotient
 end intrinsic;
 
+intrinsic quasi_simple(G::LMFDBGrp) -> BoolElt
+{}
+  GG := Get(G, "MagmaGrp");
+  Q := quo< GG | Get(G, "MagmaCenter")>; // will center be stored?
+  return (Get(G, "perfect") and IsSimple(Q));
+end intrinsic;
+
 intrinsic supersolvable(G::LMFDBGrp) -> BoolElt
   {Check if LMFDBGrp is supersolvable}
   GG := G`MagmaGrp;
@@ -57,14 +64,14 @@ end intrinsic;
 // Next 3 intrinsics are helpers for metacyclic
 intrinsic EasyIsMetacyclic(G::LMFDBGrp) -> BoolElt
   {Easy checks for possibly being metacyclic}
-  if IsSquarefree(G`Order) or G`IsCyclic then
+  if IsSquarefree(Get(G, "order")) or Get(G, "cyclic") then
     return true;
   end if;
-  if not G`IsSolvable then
+  if not Get(G, "solvable") then
     return false;
   end if;
-  if G`IsAbelian then
-    if #G`SmithAbelianInvariants gt 2 then // take Smith invariants (Invariant Factors), check if length <= 2
+  if Get(G, "abelian") then
+    if #Get(G, "smith_abelian_invariants") gt 2 then // take Smith invariants (Invariant Factors), check if length <= 2
       return false;
     end if;
     return true;
@@ -109,7 +116,7 @@ intrinsic metacyclic(G::LMFDBGrp) -> BoolElt
     return easy;
   end if;
   GG := G`MagmaGrp;
-  if G`pGroup ne 0 then
+  if Get(G, "pgroup") ne 0 then
     return IsMetacyclicPGroup(GG);
   // IsMetacyclicPGroup doesn't work for abelian groups...
   end if;
@@ -281,7 +288,7 @@ intrinsic faithful_reps(G::LMFDBGrp) -> Any
       A[v] +:= 1;
     end if;
   end for;
-  return Sort([[k[1], k[2], m] : k -> v in A]); // m not defined... :(
+  return Sort([[k[1], k[2], v] : k -> v in A]);
 end intrinsic;
 
 intrinsic smallrep(G::LMFDBGrp) -> Any
@@ -398,11 +405,15 @@ intrinsic perfect_core(G::LMFDBGrp) -> Any
   return DD[#DD];
 end intrinsic;
 
+intrinsic composition_factors(G::LMFDBGrp) -> Any
+    {labels for composition factors}
+    return [label(H) : H in CompositionFactors(G`MagmaGrp)];
+end intrinsic;
+
 intrinsic composition_length(G::LMFDBGrp) -> Any
   {Compute length of composition series.}
   return #Get(G,"composition_factors"); // Correct if trivial group is labeled G_0
 end intrinsic;
-
 
 intrinsic aut_order(G::LMFDBGrp) -> RingIntElt
    {returns order of automorphism group}
@@ -443,7 +454,7 @@ end intrinsic;
 
 intrinsic MagmaCommutator(G::LMFDBGrp) -> Any
    {Commutator subgroup}
-   return CommutatorSubgroup(G);
+   return CommutatorSubgroup(G`MagmaGrp);
 end intrinsic;
 
 
@@ -518,8 +529,20 @@ intrinsic Subgroups(G::LMFDBGrp) -> SeqEnum
         H`MagmaAmbient := G`MagmaGrp;
         H`MamgaSubGrp := tup[2];
         H`label := tup[1];
+        AssignBasicAttributes(H);
         Append(~S, H);
     end for;
     // Need to add special labels, and additional groups when max_index != 0
     return S;
+end intrinsic;
+
+intrinsic ConjugacyClasses(G::LMFDB) ->  SeqEnum
+{The list of conjugacy classes for this group}
+    C := [];
+    // Need to fix sorting, add labels and maybe other things here.
+    for mc in ConjugacyClasses(G`MagmaGrp) do
+        cc := New(LMFDBGrpConjCls);
+        cc`MagmaConjCls := mc;
+        Append(~C, cc);
+    end for;
 end intrinsic;
