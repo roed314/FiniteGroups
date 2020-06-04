@@ -15,4 +15,5 @@
   utils.m
   IO.m
   SmallGroups.m
+  LabelSubgroups.m
 }

@@ -281,7 +281,7 @@ intrinsic faithful_reps(G::LMFDBGrp) -> Any
       A[v] +:= 1;
     end if;
   end for;
-  return Sort([[k[1], k[2], m] : k -> v in A]); // m not defined... :(
+  return Sort([[k[1], k[2], m] : k -> m in A]);
 end intrinsic;
 
 intrinsic smallrep(G::LMFDBGrp) -> Any
@@ -398,11 +398,15 @@ intrinsic perfect_core(G::LMFDBGrp) -> Any
   return DD[#DD];
 end intrinsic;
 
+intrinsic composition_factors(G::LMFDBGrp) -> Any
+    {labels for composition factors}
+    return [label(H) : H in CompositionFactors(G`MagmaGrp)];
+end intrinsic;
+
 intrinsic composition_length(G::LMFDBGrp) -> Any
   {Compute length of composition series.}
   return #Get(G,"composition_factors"); // Correct if trivial group is labeled G_0
 end intrinsic;
-
 
 intrinsic aut_order(G::LMFDBGrp) -> RingIntElt
    {returns order of automorphism group}
@@ -443,7 +447,7 @@ end intrinsic;
 
 intrinsic MagmaCommutator(G::LMFDBGrp) -> Any
    {Commutator subgroup}
-   return CommutatorSubgroup(G);
+   return CommutatorSubgroup(G`MagmaGrp);
 end intrinsic;
 
 
@@ -518,8 +522,20 @@ intrinsic Subgroups(G::LMFDBGrp) -> SeqEnum
         H`MagmaAmbient := G`MagmaGrp;
         H`MamgaSubGrp := tup[2];
         H`label := tup[1];
+        AssignBasicAttributes(H);
         Append(~S, H);
     end for;
     // Need to add special labels, and additional groups when max_index != 0
     return S;
+end intrinsic;
+
+intrinsic ConjugacyClasses(G::LMFDB) ->  SeqEnum
+{The list of conjugacy classes for this group}
+    C := [];
+    // Need to fix sorting, add labels and maybe other things here.
+    for mc in ConjugacyClasses(G`MagmaGrp) do
+        cc := New(LMFDBGrpConjCls);
+        cc`MagmaConjCls := mc;
+        Append(~C, cc);
+    end for;
 end intrinsic;
