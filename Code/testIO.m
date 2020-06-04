@@ -2,6 +2,7 @@ G := New(LMFDBGrp);
 G`MagmaGrp := SmallGroup(24,3);
 G`label := "test";
 AssignBasicAttributes(G);
+/*
 test_attrs := [
                 "order",
                 //"counter",
@@ -24,6 +25,8 @@ test_attrs := [
                 "Agroup",
                 "pgroup"
               ];
+*/
+test_attrs := DefaultAttributes(LMFDBGrp);
 for attr in test_attrs do
   print attr;
   Get(G, attr);

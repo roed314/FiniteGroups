@@ -123,7 +123,11 @@ intrinsic DefaultAttributes(c::Cat) -> SeqEnum
     all_attrs := GetAttributes(c);
     for attr in all_attrs do
         // Blacklist attributes that aren't working
-        if attr in ["central_product"] then
+        blacklist := [
+                      "central_product",
+                      "all_subgroups_known"
+                    ];
+        if attr in blacklist then
             continue;
         end if;
         if Regexp("^[a-z]+", attr) then

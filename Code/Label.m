@@ -10,7 +10,7 @@ intrinsic label(G::Grp) -> Any
 end intrinsic;
 
 
-intrinsic label(G:LMFDBGrp) -> Any
+intrinsic label(G::LMFDBGrp) -> Any
 {Assign label to a LMFDBGrp type}
   return label(G`MagmaGrp);
 end intrinsic;
