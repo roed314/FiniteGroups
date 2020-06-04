@@ -4,7 +4,7 @@ G`label := "test";
 AssignBasicAttributes(G);
 test_attrs := [
                 "order",
-                "counter",
+                //"counter",
                 "factors_of_order",
                 "exponent",
                 "abelian",
