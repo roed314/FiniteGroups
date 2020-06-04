@@ -5,6 +5,7 @@
   Samples.m
   Label.m
   LabelSubgroups.m
+  LC.m
   GrpAttributes.m
   MR.m
   jj.m
@@ -16,4 +17,5 @@
   utils.m
   IO.m
   SmallGroups.m
+  LabelSubgroups.m
 }

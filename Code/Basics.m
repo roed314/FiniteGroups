@@ -14,12 +14,7 @@ intrinsic GetBasicAttributesGrp() -> Any
    ["AutomorphismGroup" , "MagmaAutGroup"],
    ["NilpotencyClass" , "nilpotency_class"],
    ["Ngens" , "ngens"],
-   ["DerivedSeries" , "derived_series"],
-   ["DerivedLength" , "derived_length"],
-   ["ChiefSeries" , "chief_series"],
-   ["LowerCentralSeries" , "lower_central_series"],
-   ["UpperCentralSeries" , "upper_central_series"],
-   ["CompositionFactors" , "composition_factors"]
+   ["DerivedLength" , "derived_length"]
     ];
 end intrinsic;
 
