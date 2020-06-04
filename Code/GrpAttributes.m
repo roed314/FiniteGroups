@@ -261,7 +261,7 @@ intrinsic faithful_reps(G::LMFDBGrp) -> Any
   if not IsCyclic(Get(G, "MagmaCenter")) then
     return [];
   end if;
-  A := AssociatieArray();
+  A := AssociativeArray();
   g := G`MagmaGrp;
   ct := CharacterTable(g);
   for j:=1 to #ct do
@@ -275,13 +275,13 @@ intrinsic faithful_reps(G::LMFDBGrp) -> Any
         s := 0;
       end if;
       v := <Degree(ch), s>;
-      if not HasKey(A, v) then
+      if not IsDefined(A, v) then
         A[v] := 0;
       end if;
       A[v] +:= 1;
     end if;
   end for;
-  return Sort([[k[1], k[2], m] : k -> v in A]);
+  return Sort([[k[1], k[2], m] : k -> v in A]); // m not defined... :(
 end intrinsic;
 
 intrinsic smallrep(G::LMFDBGrp) -> Any
@@ -506,7 +506,7 @@ end intrinsic;
 intrinsic Subgroups(G::LMFDBGrp) -> SeqEnum
     {The list of subgroups computed for this group}
     S := [];
-    by_index := 
+    by_index := AssociativeArray();
     if G`all_subgroups_known then
         max_index := 0;
     else

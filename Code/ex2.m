@@ -1,6 +1,6 @@
 G := New(LMFDBGrp);
 G`label := "whateva";
-G`MagmaGrp := Alt(9);
+G`MagmaGrp := DihedralGroup(12);
 AssignBasicAttributes(G);
 
 

@@ -13,5 +13,7 @@
   JP.m
   lehmer.m
   utils.m
+  IO.m
+  SmallGroups.m
   mb.m
 }
