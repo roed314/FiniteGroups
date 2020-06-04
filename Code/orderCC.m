@@ -103,36 +103,37 @@ gens:=[h : h in Generators(g)];
 
   priorities:= [ncc + 1 : z in cc];
   cnt:=1;
-  labels := [* "" : z in cc *];
-  ordering := [0:z in cc];
+  expos := [0:z in cc];
   finalkeys:= [[0,0,0,0] : z in cc];
 
   kys:=Sort([z : z in Keys(step2)]);
 //"Keys", kys;
-  /* utility for below, gen is a class index */
-  setpriorities:=function(adiv,val,gen,priorities)
+  // utility for below, gen is a class index
+  setpriorities:=function(adiv,val,gen,priorities,expos)
     notdone:=0;
     for j in adiv do
       if priorities[j] gt ncc then notdone+:=1; end if;
     end for;
     pcnt:=1;
     while notdone gt 0 do
-      for sgn in [1,-1] do
-        ac := pm(gen, sgn*pcnt);
+      if GCD(pcnt, cc[gen][1]) eq 1 then
+        for sgn in [1,-1] do
+          ac := pm(gen, sgn*pcnt);
 //"Testing", gen, " to ", sgn*pcnt," got ", ac, priorities;
-        if priorities[ac] gt ncc then 
-          notdone -:=1; 
-          priorities[ac]:=val;
-          val+:=1;
-        end if;
-      end for;
+          if priorities[ac] gt ncc then 
+            notdone -:=1; 
+            priorities[ac]:=val;
+            expos[ac] := sgn*pcnt;
+            val+:=1;
+          end if;
+        end for;
+      end if;
       pcnt+:=1;
     end while;
-    return priorities, val;
+    return priorities, val, expos;
   end function;
 
   for k in kys do
-//"Key ",k, step2[k];
     if #step2[k] eq 1 and #Rep(step2[k]) eq 1 then
       ; /* nothing to do */
     else
@@ -154,7 +155,7 @@ gens:=[h : h in Generators(g)];
             mydivkey:=revmap[gcl];
             for dd in step2[mydivkey] do
               if gcl in dd then
-                priorities, cnt:=setpriorities(dd,cnt,gcl,priorities);
+                priorities, cnt, expos:=setpriorities(dd,cnt,gcl,priorities,expos);
                 break;
               end if;
             end for;
@@ -164,7 +165,7 @@ gens:=[h : h in Generators(g)];
               powerdiv:=revmap[newgen];
               for dd in step2[powerdiv] do
                 if newgen in dd then
-                  priorities, cnt:=setpriorities(dd,cnt,newgen,priorities);
+                  priorities, cnt, expos:=setpriorities(dd,cnt,newgen,priorities,expos);
                   break;
                 end if;
               end for;
@@ -176,12 +177,34 @@ gens:=[h : h in Generators(g)];
     // We now have enough apex generators for these divisions
     for divi in step2[k] do
       for aclass in divi do
-        finalkeys[aclass] := [k[1],k[2],k[2], priorities[aclass]];
+        finalkeys[aclass] := [k[1],k[2],k[3], priorities[aclass],expos[aclass]];
       end for;
     end for;
   end for; /* End of keys loop */
   ParallelSort(~finalkeys,~cc);
+  labels:=["" : z in cc];
+  divcnt:=0;
+  oord:=0;
+  divcntdown:=0;
+  // if a new order, reset order and division
+  // if just a new division, reset that
+  for j:=1 to #cc do
+    if oord ne finalkeys[j][1] then
+      oord:=finalkeys[j][1];
+      divcnt:=1;
+      divcntdown:=finalkeys[j][3];
+    end if;
+    if divcntdown eq 0 then
+      divcnt +:=1;
+      divcntdown:=finalkeys[j][3];
+    end if;
+    divcntdown -:= 1;
+    if finalkeys[j][3] gt 1 then
+      labels[j]:=Sprintf("%o%o%o", finalkeys[j][1], num2letters(divcnt),finalkeys[j][5]);
+    else
+      labels[j]:=Sprintf("%o%o", finalkeys[j][1], num2letters(divcnt));
+    end if;
+  end for;
 
-
-  return cc,finalkeys;
+  return cc,finalkeys, labels;
 end intrinsic;
