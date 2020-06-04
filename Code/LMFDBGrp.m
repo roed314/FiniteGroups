@@ -324,6 +324,7 @@ end intrinsic;
 declare verbose LMFDBGrpConjCls, 1;
 declare type LMFDBGrpConjCls;
 declare attributes LMFDBGrpConjCls:
+  MagmaConjCls,
   label,
   group,
   size,

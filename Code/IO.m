@@ -84,6 +84,7 @@ intrinsic SaveGrpAttributes() -> SeqEnum
   {}
   GrpAttrs := GetAttributes(LMFDBGrp);
   DefaultAttrs := [];
+  DefaultAttrs cat:= ["Agroup", "Zgroup"];
   for attr in GrpAttrs do
     if Regexp("^[a-z]+", attr) then
       Append(~DefaultAttrs, attr);
@@ -92,8 +93,11 @@ intrinsic SaveGrpAttributes() -> SeqEnum
   return DefaultAttrs;
 end intrinsic;
 
-intrinsic SaveGrp(G::LMFDBGrp, attrs::SeqEnum: sep:="|", finalize:=false) -> MonStgElt
+intrinsic SaveGrp(G::LMFDBGrp : attrs:=[], sep:="|", finalize:=false) -> MonStgElt
     {Save an LMFDB group to a single line.  If finalize, look up subgroups in the subgroups table, otherwise store}
+    if attrs eq [] then
+      attrs := SaveGrpAttributes();
+    end if;
     return Join([SaveAttr(attr, Get(G, attr), G) : attr in attrs], sep);
 end intrinsic;
 
