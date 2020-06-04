@@ -130,7 +130,7 @@ intrinsic sig(G::Grp, H::Grp) -> SeqEnum
     {Given subgroup H of G returns lex-minimal images of generators of G in permutation rep [H\G]
      This uniquely identifies H up to conjugacy (and is invariant under conjugation).}
     return [cyc(g) : g in canonicalize([pi(g) : g in Generators(G)])] where pi:=CosetAction(G,H);
-end function;
+end intrinsic;
 
 intrinsic SubgroupClass(H::Grp, phi::Map) -> SeqEnum
     {Given a class map phi:G->[1..n] for a group G with n conjugacy classes and a subgroup H of G returns sorted list of
@@ -146,7 +146,7 @@ intrinsic SubgroupClass(H::Grp, phi::Map) -> SeqEnum
     return Sort([[k, v] : k -> v in T]);
 end intrinsic;
 
-intrinsic IndexFibers(S::SeqEnum, f::Map) -> Assoc
+intrinsic IndexFibers(S::SeqEnum, f::UserProgram) -> Assoc
     {Given a list of objects S and a function f on S creates an associative array satisfying A[f(s)] = [t:t in S|f(t) eq f(s)]}
     A:=AssociativeArray();
     for x in S do
@@ -170,6 +170,7 @@ intrinsic Supergroups(G::Grp, L::SeqEnum, LI::SeqEnum, j::RngIntElt) -> SeqEnum
 end intrinsic;
 
 intrinsic LabelSubgroups(G::Grp : phi:=ClassMap(G), max_index:=0) -> SeqEnum
+    {}
     S := Sort(Subgroups(G:IndexLimit:=max_index),func<a,b|b`order-a`order>); // reverse sort by order to sort by index
     L := [H`subgroup:H in S]; //`
     LI := [#G div H`order:H in S]; //`

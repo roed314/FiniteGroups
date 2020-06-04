@@ -35,6 +35,13 @@ intrinsic primary_abelian_invariants(G::LMFDBGrp) -> Any
   // TODO: This should return the invariants of the maximal abelian quotient
 end intrinsic;
 
+intrinsic quasi_simple(G::LMFDBGrp) -> BoolElt
+{}
+  GG := Get(G, "MagmaGrp");
+  Q := quo< GG | Get(G, "MagmaCenter")>; // will center be stored?
+  return (Get(G, "perfect") and IsSimple(Q));
+end intrinsic;
+
 intrinsic supersolvable(G::LMFDBGrp) -> BoolElt
   {Check if LMFDBGrp is supersolvable}
   GG := G`MagmaGrp;
@@ -57,14 +64,14 @@ end intrinsic;
 // Next 3 intrinsics are helpers for metacyclic
 intrinsic EasyIsMetacyclic(G::LMFDBGrp) -> BoolElt
   {Easy checks for possibly being metacyclic}
-  if IsSquarefree(G`Order) or G`IsCyclic then
+  if IsSquarefree(Get(G, "order")) or Get(G, "cyclic") then
     return true;
   end if;
-  if not G`IsSolvable then
+  if not Get(G, "solvable") then
     return false;
   end if;
-  if G`IsAbelian then
-    if #G`SmithAbelianInvariants gt 2 then // take Smith invariants (Invariant Factors), check if length <= 2
+  if Get(G, "abelian") then
+    if #Get(G, "smith_abelian_invariants") gt 2 then // take Smith invariants (Invariant Factors), check if length <= 2
       return false;
     end if;
     return true;
@@ -109,7 +116,7 @@ intrinsic metacyclic(G::LMFDBGrp) -> BoolElt
     return easy;
   end if;
   GG := G`MagmaGrp;
-  if G`pGroup ne 0 then
+  if Get(G, "pgroup") ne 0 then
     return IsMetacyclicPGroup(GG);
   // IsMetacyclicPGroup doesn't work for abelian groups...
   end if;
@@ -281,7 +288,7 @@ intrinsic faithful_reps(G::LMFDBGrp) -> Any
       A[v] +:= 1;
     end if;
   end for;
-  return Sort([[k[1], k[2], m] : k -> v in A]); // m not defined... :(
+  return Sort([[k[1], k[2], v] : k -> v in A]); // m not defined... :(
 end intrinsic;
 
 intrinsic smallrep(G::LMFDBGrp) -> Any

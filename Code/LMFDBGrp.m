@@ -92,7 +92,7 @@ declare attributes LMFDBGrp:
   composition_length;
 intrinsic Print(G::LMFDBGrp)
   {Print LMFDBGrp}
-  printf "LMFDBDGrp %o:\n", G`label;
+  printf "LMFDBDGrp %o\n", G`label;
   //printf "  Name %o\n", G`name;
   //printf "  Order %o", G`order;
 end intrinsic;

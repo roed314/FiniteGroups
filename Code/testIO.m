@@ -25,6 +25,7 @@ test_attrs := [
                 "pgroup"
               ];
 for attr in test_attrs do
+  print attr;
   Get(G, attr);
 end for;
-SaveGrp(G : attrs:=test_attrs, sep:="|", finalize:=false)
+SaveLMFDBObject(G : attrs:=test_attrs, sep:="|");
