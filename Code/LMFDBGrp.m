@@ -9,7 +9,7 @@ declare attributes LMFDBGrp:
   tex_name,
   order,
   counter,
-  factors_of_rder,
+  factors_of_order,
   exponent,
   abelian,
   cyclic,
