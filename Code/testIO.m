@@ -2,6 +2,7 @@ G := New(LMFDBGrp);
 G`MagmaGrp := SmallGroup(24,3);
 G`label := "test";
 AssignBasicAttributes(G);
+/*
 test_attrs := [
                 "order",
                 //"counter",
@@ -16,7 +17,7 @@ test_attrs := [
                 "metabelian",
                 "simple",
                 "almost_simple",
-                "quasi_simple",
+                "quasisimple",
                 "perfect",
                 "monomial",
                 "rational",
@@ -24,7 +25,10 @@ test_attrs := [
                 "Agroup",
                 "pgroup"
               ];
+*/
+test_attrs := DefaultAttributes(LMFDBGrp);
 for attr in test_attrs do
+  print attr;
   Get(G, attr);
 end for;
-SaveGrp(G : attrs:=test_attrs, sep:="|", finalize:=false)
+SaveLMFDBObject(G : attrs:=test_attrs, sep:="|");

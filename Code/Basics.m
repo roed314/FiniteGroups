@@ -14,12 +14,7 @@ intrinsic GetBasicAttributesGrp() -> Any
    ["AutomorphismGroup" , "MagmaAutGroup"],
    ["NilpotencyClass" , "nilpotency_class"],
    ["Ngens" , "ngens"],
-   ["DerivedSeries" , "derived_series"],
-   ["DerivedLength" , "derived_length"],
-   ["ChiefSeries" , "chief_series"],
-   ["LowerCentralSeries" , "lower_central_series"],
-   ["UpperCentralSeries" , "upper_central_series"],
-   ["CompositionFactors" , "composition_factors"]
+   ["DerivedLength" , "derived_length"]
     ];
 end intrinsic;
 
@@ -33,7 +28,7 @@ intrinsic AssignBasicAttributes(G::LMFDBGrp) -> Any
     eval_str := Sprintf("return %o(GG);", mag_attr);
     G``db_attr := eval eval_str;
   end for;
-  //G`IsSuperSolvable := IsSupersoluble(GG); // thanks a lot Australia! :D; only for GrpPC...
+  //G`IsSuperSolvable := IsSupersoluble(GG); // thanks a lot Australia! :D; only for GrpPC... 
   return Sprintf("Basic attributes assigned to %o", G);
 end intrinsic;
 
