@@ -110,7 +110,3 @@ intrinsic PrintData(G::LMFDBGrp: sep:="|") -> Tup
             [SaveLMFDBObject(H: sep:=sep) : H in Get(G, "Subgroups")],
             [SaveLMFDBObject(cc: sep:=sep) : cc in Get(G, "ConjugacyClasses")]>;
 end intrinsic;
-
-intrinsic TestSaveGrp(G::LMFDBGrp : attrs := [], sep := "|") -> MonStgElt
-    {}
-end intrinsic;
