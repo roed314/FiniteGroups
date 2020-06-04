@@ -1,3 +1,11 @@
+intrinsic NewLMFDBGrp(GG::Grp, lab::MonStgElt) -> LMFDBGrp
+  {Create a new LMFDBGrp object G with G`MagmaGrp := magma_gp and G`label := label}
+  G := New(LMFDBGrp);
+  G`MagmaGrp := GG;
+  G`label := lab;
+  return G;
+end intrinsic;
+
 intrinsic GetBasicAttributesGrp() -> Any
   {Outputs SeqEnum of basic attributes}
   return [
@@ -28,7 +36,7 @@ intrinsic AssignBasicAttributes(G::LMFDBGrp) -> Any
     eval_str := Sprintf("return %o(GG);", mag_attr);
     G``db_attr := eval eval_str;
   end for;
-  //G`IsSuperSolvable := IsSupersoluble(GG); // thanks a lot Australia! :D; only for GrpPC... 
+  //G`IsSuperSolvable := IsSupersoluble(GG); // thanks a lot Australia! :D; only for GrpPC...
   return Sprintf("Basic attributes assigned to %o", G);
 end intrinsic;
 
@@ -66,7 +74,7 @@ intrinsic AssignBasicAttributes(H::LMFDBSubGrp) -> Any
   attrs := GetBasicAttributesSubGrp(false);
   for attr in attrs do
     mag_attr:=attr[1];
-    db_attr:=attr[2];	     
+    db_attr:=attr[2];
     eval_str := Sprintf("return %o(HH)", mag_attr);
     H``db_attr := eval eval_str;
   end for;

@@ -19,7 +19,5 @@ intrinsic counter(G::LMFDBGrp) -> RngIntElt
 {Second entry in label}
    lab:= Get(G,"label");
    spl:=Split(lab,".");
-   return spl[2];
+   return eval spl[2];
 end intrinsic;
-
-

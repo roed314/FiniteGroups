@@ -130,7 +130,21 @@ intrinsic DefaultAttributes(c::Cat) -> SeqEnum
                       "elt_rep_type",
                       "eulerian_function",
                       "finite_matrix_group",
-                      "maximal_subgroups_known"
+                      "maximal_subgroups_known",
+                      "name",
+                      "normal_subgroups_known",
+                      "old_label",
+                      "outer_equivalence",
+                      "pc_code",
+                      "perfect_core",
+                      "primary_abelian_invariants",
+                      "rank",
+                      "schur_multiplier",
+                      "smith_abelian_invariants",
+                      "subgroup_inclusions_known",
+                      "subgroup_index_bound",
+                      "sylow_subgroups_known",
+                      "tex_name"
                     ];
         if attr in blacklist then
             continue;
