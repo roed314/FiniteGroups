@@ -401,12 +401,18 @@ end intrinsic;
 
 intrinsic composition_factors(G::LMFDBGrp) -> Any
     {labels for composition factors}
+    // TODO
+    // Magma outputs a tuple of integers, so this breaks
+    // see https://magma.maths.usyd.edu.au/magma/handbook/text/625#6962
     return [label(H) : H in CompositionFactors(G`MagmaGrp)];
 end intrinsic;
 
 intrinsic composition_length(G::LMFDBGrp) -> Any
   {Compute length of composition series.}
-  return #Get(G,"composition_factors"); // Correct if trivial group is labeled G_0
+  // TODO: change back once composition_factors is fixed
+  GG := Get(G, "MagmaGrp");
+  return #CompositionFactors(GG);
+  //return #Get(G,"composition_factors"); // Correct if trivial group is labeled G_0
 end intrinsic;
 
 intrinsic aut_order(G::LMFDBGrp) -> RingIntElt

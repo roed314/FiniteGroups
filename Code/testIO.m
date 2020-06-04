@@ -1,6 +1,6 @@
 G := New(LMFDBGrp);
 G`MagmaGrp := SmallGroup(24,3);
-G`label := "test";
+G`label := "24.3";
 AssignBasicAttributes(G);
 /*
 test_attrs := [

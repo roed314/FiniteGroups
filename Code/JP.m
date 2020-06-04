@@ -9,7 +9,7 @@ intrinsic stem(H::LMFDBSubGrp) -> BoolElt
    if HH in Cent and HH in Comm then
       return true;
    else
-     return fales;
+     return false;
    end if;
 end intrinsic;
 

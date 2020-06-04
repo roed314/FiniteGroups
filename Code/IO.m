@@ -125,7 +125,12 @@ intrinsic DefaultAttributes(c::Cat) -> SeqEnum
         // Blacklist attributes that aren't working
         blacklist := [
                       "central_product",
-                      "all_subgroups_known"
+                      "all_subgroups_known",
+                      "composition_factors",
+                      "elt_rep_type",
+                      "eulerian_function",
+                      "finite_matrix_group",
+                      "maximal_subgroups_known"
                     ];
         if attr in blacklist then
             continue;
