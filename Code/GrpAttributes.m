@@ -506,7 +506,7 @@ end intrinsic;
 intrinsic Subgroups(G::LMFDBGrp) -> SeqEnum
     {The list of subgroups computed for this group}
     S := [];
-    by_index := 
+    by_index := true;
     if G`all_subgroups_known then
         max_index := 0;
     else
