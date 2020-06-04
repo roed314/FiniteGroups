@@ -8,12 +8,11 @@ intrinsic minimal_normal(H::LMFDBSubGrp) -> BoolElt // Need to be subgroup attri
   else
     for r in NormalSubgroups(GG) do
       N := r`subgroup;
-      if #(N meet HH) gt 2 then
+      if (N subset HH) and (N ne HH) and (Order(N) ne 1) then
         return false;
-      else 
-        return true;
       end if;
     end for;
+    return true;
   end if;
 end intrinsic;
 
@@ -36,4 +35,9 @@ intrinsic split(H::LMFDBSubGrp) -> Any // Need to be subgroup attribute file
   end if;
   return false;
 end intrinsic;
+
+
+
+
+
 
