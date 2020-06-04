@@ -1,13 +1,4 @@
 
-/*
-  Separate function which 
-
-  When we get an apex generator:
-    Loop through the division assigning priorities
-    Loop through divisors, get gen for a division
-
-*/
-
 intrinsic ordercc(G::Any) -> Any
   {}
   g:=G;
@@ -179,5 +170,5 @@ gens:=[h : h in Generators(g)];
     end for;
   end for; /* End of keys loop */
 
-  return finalkeys;
+  return cc,finalkeys;
 end intrinsic;
