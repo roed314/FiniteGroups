@@ -9,7 +9,7 @@ declare attributes LMFDBGrp:
   tex_name,
   order,
   counter,
-  factors_of_rder,
+  factors_of_order,
   exponent,
   abelian,
   cyclic,
@@ -20,7 +20,7 @@ declare attributes LMFDBGrp:
   metabelian,
   simple,
   almost_simple,
-  quasi_simple,
+  quasisimple,
   perfect,
   monomial,
   rational,
@@ -43,7 +43,6 @@ declare attributes LMFDBGrp:
   frattini_quotient,
   MagmaFitting,
   MagmaRadical,
-  socle,
   transitive_degree,
   MagmaTransitiveSubgroup,
   faithful_reps,
@@ -60,12 +59,8 @@ declare attributes LMFDBGrp:
   number_subgroups,
   number_normal_subgroups,
   number_characteristic_subgroups,
-  derived_series,
   derived_length,
   perfect_core,
-  chief_series,
-  lower_central_series,
-  upper_central_series,
   primary_abelian_invariants,
   smith_abelian_invariants,
   schur_multiplier,
@@ -403,7 +398,17 @@ end intrinsic;
 // include hashing function? see https://magma.maths.usyd.edu.au/magma/handbook/text/27
 
 declare type NoneType;
-None := New(NoneType);
+_None := New(NoneType);
+
+intrinsic None() -> Any
+{None}
+ return _None;
+end intrinsic;
+
+intrinsic Print(None)
+  {Print none}
+  printf "none";
+end intrinsic;
 
 // This function returns the value of an attribute, computing it and caching it using the function of the same name if necessary.
 intrinsic Get(G::Any, attr::MonStgElt) -> Any
