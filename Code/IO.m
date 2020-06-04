@@ -10,7 +10,8 @@ intrinsic LoadIntegerList(inp::MonStgElt) -> SeqEnum
     /*
     return [StringToInteger(elt) : elt in Split(Substring(inp, 2, #inp-2), ",")];
     */
-    return eval ReplaceString(~inp,["{","}"],["[","]"]);
+    ReplaceString(~inp,["{","}"],["[","]"]);
+    return eval inp;
 end intrinsic;
 intrinsic SaveIntegerList(out::SeqEnum) ->  MonStgElt
     {}
@@ -108,4 +109,9 @@ intrinsic PrintData(G::LMFDBGrp: sep:="|", finalize:=false) -> Tup
     return <[SaveGrp(G, GrpAttrs: sep:=sep, finalize:=finalize)],
             [SaveSubGrp(H, SubGrpAttrs: sep:=sep, finalize:=finalize) : H in Get(G, "Subgroups")],
             [SaveConjCls(cc, ConjClsAttrs: sep:=sep, finalize:=finalize) : cc in Get(G, "ConjugacyClasses")]>;
+end intrinsic;
+
+intrinsic TestSaveGrp(G::LMFDBGrp : attrs := [], sep := "|", finalize := false) -> MonStgElt
+  {}
+re
 end intrinsic;
