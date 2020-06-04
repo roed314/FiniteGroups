@@ -14,6 +14,7 @@ intrinsic stem(H::LMFDBSubGrp) -> BoolElt
 end intrinsic;
 
 
+/* For groups */
 intrinsic counter(G::LMFDBGrp) -> RngIntElt
 {Second entry in label}
    lab:= Get(G,"label");
