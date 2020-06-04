@@ -36,19 +36,6 @@ intrinsic split(H::LMFDBSubGrp) -> Any // Need to be subgroup attribute file
   return false;
 end intrinsic;
 
-intrinsic order_stats(G::LMFDBGrp) -> Any
-  {gives an order pair of order of elements and number of element}
-  GG := G`MagmaGrp;
-  A := AssociativeArray()
-  C := Classes(GG);
-  L := {c[1]: c in C};
-  for l in L do 
-    for c in C do 
-      A[l] := &+[c[2] : c in C | c[1] eq l];
-    end for;
-  end for;
-  return A;
-end intrinsic;
 
 
 
