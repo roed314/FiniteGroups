@@ -1,4 +1,15 @@
 
+intrinsic num2letters(n::RngIntElt) -> MonStgElt
+  {Convert a positive integer into a string of letters as a counter}
+  s := "";
+  while n gt 0 do
+    r := (n-1) mod 26;
+    s := CodeToString(r+65)*s;
+    n := (n-1) div 26;
+  end while;
+  return s;
+end intrinsic;
+
 intrinsic ordercc(G::Any) -> Any
   {}
   g:=G;
@@ -169,6 +180,8 @@ gens:=[h : h in Generators(g)];
       end for;
     end for;
   end for; /* End of keys loop */
+  ParallelSort(~finalkeys,~cc);
+
 
   return cc,finalkeys;
 end intrinsic;
