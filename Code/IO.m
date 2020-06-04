@@ -107,8 +107,3 @@ intrinsic PrintData(G::LMFDBGrp: sep:="|", finalize:=false) -> Tup
             [SaveSubGrp(H, SubGrpAttrs: sep:=sep, finalize:=finalize) : H in Get(G, "Subgroups")],
             [SaveConjCls(cc, ConjClsAttrs: sep:=sep, finalize:=finalize) : cc in Get(G, "ConjugacyClasses")]>;
 end intrinsic;
-
-intrinsic TestSaveGrp(G::LMFDBGrp : attrs := [], sep := "|", finalize := false) -> MonStgElt
-  {}
-re
-end intrinsic;
