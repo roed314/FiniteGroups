@@ -10,7 +10,8 @@ intrinsic LoadIntegerList(inp::MonStgElt) -> SeqEnum
     /*
     return [StringToInteger(elt) : elt in Split(Substring(inp, 2, #inp-2), ",")];
     */
-    return eval ReplaceString(~inp,["{","}"],["[","]"]);
+    ReplaceString(~inp,["{","}"],["[","]"]);
+    return eval inp;
 end intrinsic;
 intrinsic SaveIntegerList(out::SeqEnum) ->  MonStgElt
     {}
@@ -25,9 +26,6 @@ intrinsic SavePerms(out::SeqEnum) -> MonStgElt
     {}
     return SaveIntegerList([EncodePerm(o) : o in out]);
 end intrinsic;
-
-intrinsic LoadSubgroup(inp::MonStgElt) -> Any
-    {Load a subgroup??}
 
 intrinsic LoadAttr(attr::MonStgElt, inp::MonStgElt, obj::Any) -> Any
     {Load a single attribue}
