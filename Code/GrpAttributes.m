@@ -256,19 +256,41 @@ intrinsic perm_gens(G::LMFDBGrp) -> Any
   return [z : z in Generators(gg)];
 end intrinsic;
 
-intrinsic smallrep(G::LMFDBGrp) -> Any
-  {Smallest degree of a faithful irreducible representation}
-  if not IsCyclic(Get(G,"MagmaCenter")) then
-    return 0;
+intrinsic faithful_reps(G::LMFDBGrp) -> Any
+  {Dimensions and Frobenius-Schur indicators of faithful irreducible representations}
+  if not IsCyclic(Get(G, "MagmaCenter")) then
+    return [];
   end if;
-  g:=G`MagmaGrp;
+  A := AssociatieArray();
+  g := G`MagmaGrp;
   ct := CharacterTable(g);
   for j:=1 to #ct do
-    if IsFaithful(ct[j]) then
-      return Degree(ct[j]);
+    ch := ct[j];
+    if IsFaithful(ch) then
+      if IsOrthogonalCharacter(ch) then
+        s := 1;
+      elif IsSymplecticCharacter(ch) then
+        s := -1;
+      else
+        s := 0;
+      end if;
+      v := <Degree(ch), s>;
+      if not HasKey(A, v) then
+        A[v] := 0;
+      end if;
+      A[v] +:= 1;
     end if;
   end for;
-  return 0; // Should not get here
+  return Sort([[k[1], k[2], m] : k -> v in A]);
+end intrinsic;
+
+intrinsic smallrep(G::LMFDBGrp) -> Any
+  {Smallest degree of a faithful irreducible representation}
+  if IsCyclic(Get(G, "MagmaCenter")) then
+    return Get(G, "faithful_reps")[1][1];
+  else
+    return 0;
+  end if;
 end intrinsic;
 
 // Next 2 intrinsics are helpers for commutator_count
@@ -451,7 +473,7 @@ end intrinsic;
 intrinsic frattini_label(G::LMFDBGrp) -> Any
    {label string for Frattini Subgroup}
    fratt:= Get(G,"MagmaFrattini");
-return label(fratt);
+   return label(fratt);
 end intrinsic;
 
 
@@ -470,3 +492,7 @@ intrinsic MagmaFitting(G::LMFDBGrp) -> Any
 end intrinsic;
 
 
+intrinsic Subgroups(G::LMFDBGrp) -> SeqEnum
+    {The list of subgroups that we have computed for this group}
+    return [];
+end intrinsic;
