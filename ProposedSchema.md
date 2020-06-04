@@ -196,7 +196,7 @@ cyclic            | boolean   | whether `H` is cyclic (include?)
 abelian           | boolean   | whether `H` is abelian (include?)
 perfect           | boolean   | whether `H` is perfect (include?)
 sylow             | smallint  | if the order of `H` is a power of `p` and coprime to the order of `Q`, stores `p`.  Otherwise, `0`.
-hall              | numeric   | if the order of `H` is coprime to the order of `Q`, stores the radical of the order of `H`.
+hall              | numeric   | if the order of `H` is coprime to the order of `Q`, stores the radical of the order of `H`. Otherwise, `0`.
 maximal           | boolean   | whether `H` is a maximal subgroup of `G`
 maximal_normal    | boolean   | whether `H` is a maximal NORMAL subgroup of `G` (may not be maximal)
 minimal           | boolean   | whether `H` is a minimal subgroup of `G`
