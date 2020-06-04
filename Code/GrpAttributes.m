@@ -256,7 +256,7 @@ intrinsic perm_gens(G::LMFDBGrp) -> Any
   return [z : z in Generators(gg)];
 end intrinsic;
 
-intrinsic smallrep(G::LMFDBGrp) -> Any
+intrinsic faithful_rep(G::LMFDBGrp) -> Any
   {Smallest degree of a faithful irreducible representation}
   if not IsCyclic(Get(G,"MagmaCenter")) then
     return 0;
@@ -439,13 +439,10 @@ intrinsic abelian_quotient(G::LMFDBGrp) -> Any
 end intrinsic;
 
 
-
 intrinsic MagmaFrattini(G::LMFDBGrp) -> Any
    { Frattini Subgroup}
    return FrattiniSubgroup(G`MagmaGrp);
 end intrinsic;
-
-
 
 
 intrinsic frattini_label(G::LMFDBGrp) -> Any
@@ -462,11 +459,25 @@ intrinsic frattini_quotient(G::LMFDBGrp) -> Any
 end intrinsic;
 
 
-
-
 intrinsic MagmaFitting(G::LMFDBGrp) -> Any
    {Fitting Subgroup}
    return FittingSubgroup(G`MagmaGrp);
 end intrinsic;
 
+
+intrinsic pgroup(G::LMFDBGrp) -> RngInt
+    {1 if trivial group, p if order a power of p, otherwise 0}
+    if G`order eq 1 then
+        return 1;
+    else
+        fac := Factorization(G`order);
+        if #fac gt 1 then
+           /* #G has more than one prime divisor. */ 
+           return 0;
+        else
+            /* First component in fac[1] is unique prime divisor. */
+            return fac[1][1]; 
+        end if;
+    end if;
+end intrinsic;
 
