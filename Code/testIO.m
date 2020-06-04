@@ -16,7 +16,7 @@ test_attrs := [
                 "metabelian",
                 "simple",
                 "almost_simple",
-                "quasi_simple",
+                "quasisimple",
                 "perfect",
                 "monomial",
                 "rational",

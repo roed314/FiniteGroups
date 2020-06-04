@@ -35,7 +35,7 @@ intrinsic primary_abelian_invariants(G::LMFDBGrp) -> Any
   // TODO: This should return the invariants of the maximal abelian quotient
 end intrinsic;
 
-intrinsic quasi_simple(G::LMFDBGrp) -> BoolElt
+intrinsic quasisimple(G::LMFDBGrp) -> BoolElt
 {}
   GG := Get(G, "MagmaGrp");
   Q := quo< GG | Get(G, "MagmaCenter")>; // will center be stored?
@@ -378,12 +378,6 @@ intrinsic Agroup(G::LMFDBGrp) -> Any
     end if;
   end for;
   return true;
-end intrinsic;
-
-intrinsic quasisimple(G::LMFDBGrp) -> Any
-  {}
-  GG := G`MagmaGrp;
-  return (IsPerfect(GG) and IsSimple(quo< GG | Center(GG)>));
 end intrinsic;
 
 intrinsic smith_abelian_invariants(G::LMFDBGrp) -> Any
