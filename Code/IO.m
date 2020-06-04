@@ -27,9 +27,6 @@ intrinsic SavePerms(out::SeqEnum) -> MonStgElt
     return SaveIntegerList([EncodePerm(o) : o in out]);
 end intrinsic;
 
-intrinsic LoadSubgroup(inp::MonStgElt) -> Any
-    {Load a subgroup??}
-
 intrinsic LoadAttr(attr::MonStgElt, inp::MonStgElt, obj::Any) -> Any
     {Load a single attribue}
     // Decomposition is a bit different for gps_crep and gps_zrep/gps_qrep
