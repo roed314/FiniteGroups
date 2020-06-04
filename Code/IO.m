@@ -36,8 +36,8 @@ intrinsic LoadAttr(attr::MonStgElt, inp::MonStgElt, obj::Any) -> Any
         return StringToInteger(inp);
     elif attr in IntegerListCols then
         return LoadIntegerList(inp);
-    elif attr in SubgroupCols then
-        return [];
+    else
+        error "Unknown attribute type";
     end if;
 end intrinsic;
 intrinsic SaveAttr(attr::MonStgElt, val::Any, obj::Any, finalize::BoolElt) -> MonStgElt
@@ -48,8 +48,8 @@ intrinsic SaveAttr(attr::MonStgElt, val::Any, obj::Any, finalize::BoolElt) -> Mo
         return IntegerToString(val);
     elif attr in IntegerListCols then
         return SaveIntegerList(val);
-    elif attr in SubgroupCols then
-        return [];
+    else
+        error "Unknown attribute type";
     end if;
 end intrinsic;
 
@@ -99,11 +99,19 @@ intrinsic SaveGrp(G::LMFDBGrp : attrs:=[], sep:="|", finalize:=false) -> MonStgE
     return Join([SaveAttr(attr, Get(G, attr), G) : attr in attrs], sep);
 end intrinsic;
 
-GrpAttrs := [];
+intrinsic SaveSubGrp(G::LMFDBSubGrp : attrs:=[], sep:="|") -> MonStgElt
+{}
+    return Join([SaveAttr(attr, Get(G, attr), G) : attr in attrs], sep);
+end intrinsic;
+
+intrinsic SaveConjCls(G::LMFDBGrpConjCls : attrs:=[], sep:="|") -> MonStgElt
+{}
+    return Join([SaveAttr(attr, Get(G, attr), G) : attr in attrs], sep);
+end intrinsic;
 
 intrinsic PrintData(G::LMFDBGrp: sep:="|", finalize:=false) -> Tup
     {}
-    return <[SaveGrp(G, GrpAttrs: sep:=sep, finalize:=finalize)],
-            [SaveSubGrp(H, SubGrpAttrs: sep:=sep, finalize:=finalize) : H in Get(G, "Subgroups")],
-            [SaveConjCls(cc, ConjClsAttrs: sep:=sep, finalize:=finalize) : cc in Get(G, "ConjugacyClasses")]>;
+    return <[SaveGrp(G: sep:=sep, finalize:=finalize)],
+            [SaveSubGrp(H: sep:=sep, finalize:=finalize) : H in Get(G, "Subgroups")],
+            [SaveConjCls(cc: sep:=sep, finalize:=finalize) : cc in Get(G, "ConjugacyClasses")]>;
 end intrinsic;
