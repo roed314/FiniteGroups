@@ -161,9 +161,24 @@ We aim to have (up to equivalence)
 * All maximal subgroups for each G in `gps_groups`
 * All subgroups when feasible
 
+Subgroups can have two kinds of labels.  The normal label is computed in the subgroup_labels.m file, and includes the index and Gassman equivalence classes.  For groups where we only compute subgroups up to a certain index bound, we also provide special labels for subgroups we want to store that lie outside that index range.  These special labels are as follows.  In each case we start with the label of the abstract group.
+* The center is labeled Z.
+* The commutator/derived subgroup is labeled D.
+* The Fitting subgroup is labeled F.
+* The Frattini subgroup is labeled Phi.
+* The radical is labeled R.
+* The socle is labeled S.
+* The chosen transitive subgroup (namely, one with minimal index and trivial core) is labeled T.
+* Series are labeled with a letter and then an integer:
+  * U0 > U1 > ... is the upper central series
+  * L0 > L1 > ... is the lower central series
+  * D0 > D1 > ... is the derived series
+  * C0 > C1 > ... is a chief series
+
 Column            | Type      | Notes
 ------------------|-----------|------
-label             | text      | `N.i.j` where `N.i` is the label of `G` and `j` is a counter (the `counter` column; should the label include the notion of equivalence?)
+label             | text      | `N.i.m.g.j` where `N.i` is the label of `G`, `m` is the index`, `g` is a counter over Gassman equivalence classes and `j` is a counter within classes
+special_labels    | text[]    | Labels for normal subgroups, maximal subgroups and others (such as the center, Frattini...) that are below the index bound.
 outer_equivalence | boolean   | whether subgroups of `G` are considered up to outer equivalence (vs conjugacy)
 counter           | integer   | which subgroup (0 = whole group, 1=
 counter_by_index  | integer   | `j`, a numeric label for varying `H` within `G` (up to equivalence)
