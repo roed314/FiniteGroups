@@ -7,12 +7,14 @@ intrinsic outer_equivalence(H::LMFDBSubGrp) -> BoolElt
     return H`Grp`outer_equivalence;
 end intrinsic;
 
-intrinsic maximal(H::LMFDBSubGrp) -> BoolElt // Need to be subgroup attribute file
-  {Determine if a subgroup is maximal}
+
+/* moved to Basic */
+/* intrinsic maximal(H::LMFDBSubGrp) -> BoolElt */// Need to be subgroup attribute file
+/*  {Determine if a subgroup is maximal}
   GG := Get(H, "MagmaAmbient");
   HH := H`MagmaSubGrp;
   return IsMaximal(GG, HH);
-end intrinsic;
+  end intrinsic; */
 
 
 intrinsic minimal(H::LMFDBSubGrp) -> BoolElt // Need to be subgroup attribute file
