@@ -131,3 +131,49 @@ intrinsic MagmaAmbient(H::LMFDBSubGrp) -> Grp
 {The underlying magma group of the ambient group}
     return (H`Grp)`MagmaGrp;
 end intrinsic;
+
+
+intrinsic minimal_normal(H::LMFDBSubGrp) -> BoolElt // Need to be subgroup attribute file
+  {Determine whether a subgroup is minimal normal or not}
+  GG := Get(H, "MagmaAmbient");
+  HH := H`MagmaSubGrp;
+  if not IsNormal(GG, HH) then 
+    return false;
+  else
+    for r in NormalSubgroups(GG) do
+      N := r`subgroup;
+      if (N subset HH) and (N ne HH) and (Order(N) ne 1) then
+        return false;
+      end if;
+    end for;
+    return true;
+  end if;
+end intrinsic;
+
+
+intrinsic split(H::LMFDBSubGrp) -> Any // Need to be subgroup attribute file
+  {Returns whether this sequence with H splits or not, null when non-normal}
+  GG := Get(H, "MagmaAmbient");
+  HH := H`MagmaSubGrp;
+  S := Subgroups(GG); 
+  if not IsNormal(GG, HH) then
+    return None();
+  else 
+    comps := [el : el in S | el`order eq (Order(GG) div Order(HH))]; 
+    for s in comps do
+      K := s`subgroup;
+      if #(K meet HH) eq 1 then 
+        return true;
+      end if;
+    end for;
+  end if;
+  return false;
+end intrinsic;
+
+intrinsic projective_image(H::LMFDBSubGrp) -> Any // Need to be subgroup attribute file
+  {returns label of the quotient by the center of the ambient group}
+  GG := H`MagmaAmbient;
+  HH := H`MagmaSubGrp; 
+  return label(quo<GG|HH meet Center(GG)>);
+end intrinsic;
+
