@@ -35,3 +35,20 @@ intrinsic socle(G::LMFDBGrp) -> Any
   assert spot le #nl;
   return Group(nl! spot);
 end intrinsic;
+
+intrinsic coset_action_label(H::LMFDBSubGrp) -> Any
+  {Determine the transitive classification for G/H}
+  GG := Get(H, "MagmaAmbient");
+  HH := H`MagmaSubGrp;
+  if Order(Core(GG,HH)) eq 1 then
+    if Index(GG,HH) gt 47 then
+      return None();
+    end if;
+    ca:=CosetImage(GG,HH);
+    t,n:=TransitiveGroupIdentification(ca);
+    return Sprintf("%oT%o", n, t);
+  else
+    return None();
+  end if;
+end intrinsic;
+
