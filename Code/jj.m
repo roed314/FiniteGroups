@@ -4,6 +4,12 @@ intrinsic name(G::LMFDBGrp) -> Any
   return GroupName(g);
 end intrinsic;
 
+intrinsic tex_name(G::LMFDBGrp) -> Any
+  {Returns Magma's name for the group.}
+  g:=G`MagmaGrp;
+  return GroupName(g: TeX:=true);
+end intrinsic;
+
 intrinsic socle(G::LMFDBGrp) -> Any
   {Returns the socle of a group.}
   g:=G`MagmaGrp;
