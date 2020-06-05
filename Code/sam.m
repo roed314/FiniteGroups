@@ -20,6 +20,9 @@ intrinsic ComputeAllSplittings(G::LMFDBGrp) -> Any
   return splittings;
 end intrinsic;
 
+/* Modified version of this function has been included in GrpAttributes.m 
+This should be deleted eventually.
+
 intrinsic schur_multiplier(G::LMFDBGrp) -> Any
   {}
   invs := [];
@@ -34,3 +37,4 @@ intrinsic schur_multiplier(G::LMFDBGrp) -> Any
   end for;
   return invs;
 end intrinsic;
+*/

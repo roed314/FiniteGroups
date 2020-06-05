@@ -32,7 +32,7 @@ intrinsic number_characteristic_subgroups(G::LMFDBGrp) -> Any
     H`Grp:=G;
     H`MagmaSubGrp:=s`subgroup;
     if Get(H,"characteristic") then
-      total+:=s`length;
+      total+:=1;
     end if;
   end for;
   return total;
@@ -45,7 +45,7 @@ end intrinsic;
 
 intrinsic number_subgroup_classes(G::LMFDBGrp) -> Any
   {Calculates the number of subgroups of the group, up to conjugation by G}
-  return #Subgroups(G`MagmaGrp);
+  return #Get(G,"Subgroups");
 end intrinsic;
 
 
@@ -56,10 +56,10 @@ end intrinsic;
 
 intrinsic number_subgroups(G::LMFDBGrp) -> Any
   {Calculates the number of subgroups of the group}
-  S:=Subgroups(G`MagmaGrp);
+  S:=Get(G,"Subgroups");
   total:=0;
   for s in S do //the AllSubgroups function is pretty slow, we try not to call it
-    total+:=s`length;
+    total+:=#Conjugates(G`MagmaGrp,s[2]);
   end for;
   return total;
 end intrinsic;
@@ -71,21 +71,106 @@ end intrinsic;
 
 intrinsic number_normal_subgroups(G::LMFDBGrp) -> Any
   {Calculates the number of normal subgroups of the group}
-  GG:=G`MagmaGrp;
-  S:=Subgroups(GG);
+  S:=Get(G,"Subgroups");
   total:=0;
   for s in S do
-    H:=New(LMFDBSubGrp);
-    H`MagmaSubGrp:=s`subgroup;
-    H`label := label(H`MagmaSubGrp) cat ".1";
-    H`Grp:=G;
-    H`ambient := G`label;
-    H`label := label(H`MagmaSubGrp) cat ".1";
-    H`subgroup_order := #H`MagmaSubGrp;
-    AssignBasicAttributes(H);
-    if Get(H,"normal") then
-      total+:=s`length;
+    if Get(s[1],"normal") then
+      total+:=1;
     end if;
   end for;
   return total;
+end intrinsic;
+
+
+
+
+
+
+
+
+
+intrinsic mobius_function(G::LMFDBGrp) -> Any
+  {Calculates the images of the Mobius subgroup function of the group on its subgroups}
+  if Get(G,"all_subgroups_known") then
+    S:=AllSubgroups(G`MagmaGrp); //sorry, future person who has to edit this code to make it more efficient
+    Reverse(~S); //we start from the top of the subgroup lattice
+    MobiusImages:=[[*S[1],1*]]; //μ_G(G) = 1
+    Exclude(~S,S[1]);
+
+    for s in S do //calculates the images
+      sum:=0;
+      for m in MobiusImages do
+        if s subset m[1] then
+          sum+:=m[2];
+        end if;
+      end for;
+      Append(~MobiusImages,[*s,-sum*]);
+    end for;
+
+    L:=Get(G,"Subgroups");
+
+    conj_mobii:=[];
+
+    for s in L do //converts the data to [<conjugacy class label, group>, mobius image] format
+      H:=s`MagmaSubGrp;
+      for m in MobiusImages do
+        if IsConjugate(G`MagmaGrp,H,m[1]) then
+          Append(~conj_mobii,[*s,m[2]*]);
+          break m;
+        end if;
+      end for;
+    end for;
+
+    return conj_mobii;
+  else
+    return None();
+  end if;
+end intrinsic;
+
+intrinsic eulerian_function(G::LMFDBGrp) -> Any
+  {Calculates the Eulerian function of G for n = rank(G)}
+  n:=Get(G,"rank");
+  sum:=0;
+  mobius_images:=Get(G,"mobius_function");
+  for m in mobius_images do
+    sum+:=(#m[1]`MagmaSubGrp)^n * m[2] * #Conjugates(G`MagmaGrp,m[1]`MagmaSubGrp);
+  end for;
+  return sum/#AutomorphismGroup(G`MagmaGrp);
+end intrinsic;
+
+
+
+intrinsic rank(G::LMFDBGrp) -> Any
+  {Calculates the rank of the group G}
+  if Get(G,"cyclic") then
+    return 1;
+  else
+    r:=2;
+    mobius_images:=Get(G,"mobius_function");
+    while r le #G`MagmaGrp+1 do
+      sum:=0;
+      for m in mobius_images do
+        sum+:=(#m[1]`MagmaSubGrp)^r * m[2];
+      end for;
+      if sum gt 0 then
+        return r;
+      end if;
+      r+:=1;
+    end while;
+    return -1; //this means something went wrong, maybe a real error should be thrown here instead?
+  end if;
+end intrinsic;
+
+
+
+
+
+intrinsic complements(H::LMFDBSubGrp) -> Any
+  {Returns the subgroups K of G such that H ∩ K = e and G=HK}
+  if not Get(H,"normal") then
+    return [];
+  else
+    return Complements(Get(H,"MagmaAmbient"),H`MagmaSubGrp);
+  end if;
+
 end intrinsic;

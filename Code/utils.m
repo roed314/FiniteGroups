@@ -18,7 +18,8 @@ end function;
 */
 
 intrinsic ReplaceString(s::MonStgElt, fs::MonStgElt, ts::MonStgElt) -> MonStgElt
-  {}
+  {Return a string obtained from the string s by replacing all occurences of fs with ts.}
+  assert fs ne ts;
   s:=CodeToString(255) cat Sprint(s) cat CodeToString(255);
   while Position(s,fs) ne 0 do
     p:=Position(s,fs);
@@ -30,8 +31,9 @@ intrinsic ReplaceString(s::MonStgElt, fs::MonStgElt, ts::MonStgElt) -> MonStgElt
 end intrinsic;
 
 intrinsic ReplaceString(s::MonStgElt, fs::[MonStgElt], ts::[MonStgElt]) -> MonStgElt
-  {}
+  {Return a string obtained from the string s by replacing all occurences of strings in fs with strings in ts.}
   for i:=1 to #fs do
+    assert not fs[i] in ts;
     s:=ReplaceString(s,fs[i],ts[i]);
   end for;
   return s;
@@ -39,12 +41,12 @@ end intrinsic;
 
 // procedure versions
 intrinsic ReplaceString(~s::MonStgElt, fs::MonStgElt, ts::MonStgElt)
-  {}
+  {In the string s, replace all occurences of fs with ts.}
   s := ReplaceString(s,fs,ts);
 end intrinsic;
 
 intrinsic ReplaceString(~s::MonStgElt, fs::[MonStgElt], ts::[MonStgElt])
-  {}
+  {In the string s, replace all occurences of strings in fs with strings in ts.}
   for i:=1 to #fs do
     ReplaceString(~s,fs[i],ts[i]);
   end for;

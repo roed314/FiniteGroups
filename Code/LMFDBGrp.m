@@ -34,6 +34,7 @@ declare attributes LMFDBGrp:
   hyperelementary,
   rank,
   eulerian_function,
+  mobius_function,
   MagmaCenter,
   center_label,
   central_quotient,
@@ -177,7 +178,7 @@ declare attributes LMFDBSubGrp:
 intrinsic Print(H::LMFDBSubGrp)
   {Print LMFDBGrp}
   printf "LMFDBSubGrp %o:\n", Get(H, "label");
-  printf "  Group label %o\n ", Get(H, "ambient");
+  printf "  Group label %o\n", Get(H, "ambient");
   printf "  Order %o\n", Get(H, "subgroup_order");
   printf "  Normal? %o", Get(H, "normal");
 end intrinsic;
