@@ -1,5 +1,5 @@
 /* list of attributes to compute.*/
- 
+
 intrinsic almost_simple(G::LMFDBGrp) -> Any
   {}
   // In order to be almost simple, we need a simple nonabelian normal subgroup with trivial centralizer
@@ -185,7 +185,7 @@ intrinsic monomial(G::LMFDBGrp) -> BoolElt
             return true;
         end if;
     end for;
-  end if;   
+  end if;
   return false;
 end intrinsic;
 
@@ -349,7 +349,7 @@ intrinsic MagmaSylowSubgroups(G::LMFDBGrp) -> Any
   GG := G`MagmaGrp;
   SS := AssociativeArray();
   F := FactoredOrder(GG);
-  for uu in F do 
+  for uu in F do
     p := uu[1];
     SS[p] := SylowSubgroup(GG, p);
   end for;
@@ -397,6 +397,60 @@ intrinsic perfect_core(G::LMFDBGrp) -> Any
     end if;
   end for;
   return DD[#DD];
+end intrinsic;
+
+intrinsic chevalley_letter(t::Tup) -> MonStgElt
+  {Given a tuple of integers corresponding to a finite simple group, as in output of CompositionFactors, return appropriate string for Chevalley group}
+  assert #t eq 3;
+  assert Type(t[1]) eq "RngIntElt";
+  return chevalley_letter(t[1]);
+end intrinsic;
+
+intrinsic chevalley_letter(f::RngIntElt) -> MonStgElt
+  {Given an integer corresponding to a finite simple group, as in output of CompositionFactors, return appropriate string for Chevalley group}
+  assert f in [1..16];
+  lets :=["A", "B", "C", "D", "G", "F", "E", "E", "E", "2A", "2B", "2D", "3D", "2G", "2F", "2E"];
+  return lets[f];
+  /*
+    taken from https://magma.maths.usyd.edu.au/magma/handbook/text/625#6962
+      1       A(d, q)
+      2       B(d, q)
+      3       C(d, q)
+      4       D(d, q)
+      5       G(2, q)
+      6       F(4, q)
+      7       E(6, q)
+      8       E(7, q)
+      9       E(8, q)
+     10       2A(d, q)
+     11       2B(2, q)
+     12       2D(d, q)
+     13       3D(4, q)
+     14       2G(2, q)
+     15       2F(4, q)
+     16       2E(6, q)
+  */
+end intrinsic;
+
+// TODO finish
+// https://magma.maths.usyd.edu.au/magma/handbook/text/743
+intrinsic composition_factor_decode(t::Tup) -> Grp
+  {Given a tuple <f,d,q>, in the format of the output of CompositionFactors, return the corresponding group.}
+  assert #t eq 3;
+  f,d,q := Explode(t);
+  if f in [1..16] then
+    chev := chevalley_letter(f);
+    return ChevalleyGroup(chev, d, q);
+  elif f eq 18 then
+    // sporadic
+    error "Not implemented yet! :(";
+  elif f eq 17 then
+    return Alt(d);
+  elif f eq 19 then
+    return CyclicGroup(q);
+  else
+    error "Invalid first entry";
+  end if;
 end intrinsic;
 
 intrinsic composition_factors(G::LMFDBGrp) -> Any
@@ -544,17 +598,17 @@ intrinsic order_stats(G::LMFDBGrp) -> Any
   C := Classes(GG);
   L := {c[1]: c in C};
   // MM :=[];
-  for l in L do 
+  for l in L do
     // M:=[];
     // Append(~M, l);
-    for c in C do 
+    for c in C do
       A[l] := &+[c[2] : c in C | c[1] eq l];
      // Append(~M, A[l]);
     end for;
     // Append(~MM, M)
   end for;
   return A;  // Instead of returning A, we can return list of lists.
-  // return MM; 
+  // return MM;
 end intrinsic;
 
 intrinsic semidirect_product(G::LMFDBGrp : direct := false) -> Any
@@ -596,7 +650,7 @@ intrinsic wreath_product(G::LMFDBGrp) -> Any
     return false;
   end if;
   return semidirect_product(G : direct := true);
-end intrinsic;  
+end intrinsic;
 
 intrinsic ConjugacyClasses(G::LMFDBGrp) ->  SeqEnum
 {The list of conjugacy classes for this group}
