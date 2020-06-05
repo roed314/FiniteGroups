@@ -124,10 +124,8 @@ intrinsic mobius_function(G::LMFDBGrp) -> Any
     return conj_mobii;
   else
     return None();
+  end if;
 end intrinsic;
-
-
-
 
 intrinsic eulerian_function(G::LMFDBGrp) -> Any
   {Calculates the Eulerian function of G for n = rank(G)}
