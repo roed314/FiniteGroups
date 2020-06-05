@@ -16,6 +16,7 @@ declare attributes LMFDBGrp:
   abelian,
   cyclic,
   solvable,
+  socle,
   supersolvable,
   nilpotent,
   metacyclic,
