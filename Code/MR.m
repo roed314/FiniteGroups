@@ -36,6 +36,25 @@ intrinsic split(H::LMFDBSubGrp) -> Any // Need to be subgroup attribute file
   return false;
 end intrinsic;
 
+intrinsic split(H::LMFDBSubGrp) -> Any // Need to be subgroup attribute file
+  {Returns whether this sequence with H splits or not, null when non-normal}
+  GG := H`MagmaAmbient;
+  HH := H`MagmaSubGrp;
+  S := Subgroups(GG); 
+  if not IsNormal(GG, HH) then
+    return None();
+  else 
+    comps := [el : el in S | el`order eq (Order(GG) div Order(HH))]; 
+    for s in comps do
+      K := s`subgroup;
+      if #(K meet HH) eq 1 then 
+        return true;
+      end if;
+    end for;
+  end if;
+  return false;
+end intrinsic;
+
 
 
 
