@@ -288,7 +288,7 @@ intrinsic faithful_reps(G::LMFDBGrp) -> Any
       A[v] +:= 1;
     end if;
   end for;
-  return Sort([[k[1], k[2], v] : k -> v in A]);
+  return Sort([[Integers() | k[1], k[2], v] : k -> v in A]);
 end intrinsic;
 
 intrinsic smallrep(G::LMFDBGrp) -> Any

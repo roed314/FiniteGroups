@@ -29,7 +29,10 @@ intrinsic LoadIntegerList(inp::MonStgElt) -> SeqEnum
 end intrinsic;
 intrinsic SaveIntegerList(out::SeqEnum) ->  MonStgElt
     {}
-    return "{" * Join([IntegerToString(o) : o in out], ",") * "}";
+    //return "{" * Join([IntegerToString(o) : o in out], ",") * "}";
+    out_str := Sprint(out);
+    ReplaceString(~out_str, ["[","]"],["{","}"]);
+    return out_str;
 end intrinsic;
 
 // For text lists, we don't currently support nesting because it's not needed
