@@ -16,5 +16,6 @@ for attr in test_attrs do
     Append(~errs, attr);
   end try;
 end for;
-//SaveLMFDBObject(G : attrs:=test_attrs, sep:="|");
 errs;
+//SaveLMFDBObject(G : attrs:=test_attrs, sep:="|");
+PrintData(G);
