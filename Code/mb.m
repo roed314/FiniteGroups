@@ -31,12 +31,33 @@ somewhere else in the loop. */
     return false;
 end intrinsic;
 
+
+/* Modified version of Sam's function in sam.m that will handle most (small) finite groups.*/
 intrinsic schur_multiplier(G::LMFDBGrp) -> Any
-  {Computes abelian invariants for Schur multiplier of G}
-  GG := Get(G, "MagmaGrp");
-  D,f := Darstellungsgruppe(FPGroup(GG));
-  return AQInvariants(Kernel(f));
+  {}
+  invs := [];
+  ps := factors_of_order(G);
+  GG := Get(G, "MagmaGrp"))); 
+  if Type(GG) ne GrpPerm then
+       // This conversion should make the pMultiplicator function calls further below work for all (small) finite groups.
+       GG := PermutationGroup(FPGroup(GG));
+  end if;
+  for p in ps do 
+    for el in pMultiplicator(GG,p) do 
+      if el gt 1 then
+        Append(~invs, el);
+      end if;
+    end for;
+  end for;
+  return AbelianInvariants(AbelianGroup(invs));
 end intrinsic;
 
+
+/* New version to replace version in sam.m */
+intrinsic wreath_product(G::LMFDBGrp) -> Any
+  {Returns true if G is a wreath product; otherwise returns false.}
+  GG := Get(G, "MagmaGrp");
+  return IsWreathProduct(PermutationGroup(FPGroup(GG)));
+end intrinsic;
 
 
