@@ -464,10 +464,11 @@ end intrinsic;
 
 intrinsic composition_length(G::LMFDBGrp) -> Any
   {Compute length of composition series.}
-  // TODO: change back once composition_factors is fixed
+  /*
   GG := Get(G, "MagmaGrp");
   return #CompositionFactors(GG);
-  //return #Get(G,"composition_factors"); // Correct if trivial group is labeled G_0
+  */
+  return #Get(G,"composition_factors"); // Correct if trivial group is labeled G_0
 end intrinsic;
 
 intrinsic aut_order(G::LMFDBGrp) -> RingIntElt
