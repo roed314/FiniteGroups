@@ -694,7 +694,7 @@ intrinsic Subgroups(G::LMFDBGrp) -> SeqEnum
     F:=FittingSubgroup(GG);
     Ph:=FrattiniSubgroup(GG);
     R:=Radical(GG);
-    So:=Socle(GG);
+    So:=Get(G,"socle");  /* run special routine in case matrix group */
 
     SpecialGrps:=[[* Z,".Z" *],[* D,".D" *],[* F,".F" *],[* Ph,".Phi" *],[* R,".R" *],[* So,".S" *]];
 
