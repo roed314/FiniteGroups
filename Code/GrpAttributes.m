@@ -385,6 +385,7 @@ intrinsic smith_abelian_invariants(G::LMFDBGrp) -> Any
   C := Get(G, "MagmaCommutator");
   GG := G`MagmaGrp;
   A := quo< GG | C>;
+  A := AbelianGroup(A);
   return InvariantFactors(A);
 end intrinsic;
 

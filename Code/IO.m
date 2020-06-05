@@ -178,7 +178,6 @@ intrinsic DefaultAttributes(c::Cat) -> SeqEnum
                       "primary_abelian_invariants",
                       "rank",
                       "schur_multiplier",
-                      "smith_abelian_invariants",
                       "tex_name",
 
                       // Subgroup attributes
