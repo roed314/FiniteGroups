@@ -3,3 +3,29 @@ intrinsic name(G::LMFDBGrp) -> Any
   g:=G`MagmaGrp;
   return GroupName(g);
 end intrinsic;
+
+intrinsic socle(G::LMFDBGrp) -> Any
+  {Returns the socle of a group.}
+  g:=G`MagmaGrp;
+  try
+    s:=Socle(g);
+    return s;
+  catch e  ;
+  end try;
+  nl:=NormalLattice(g);
+  mins:=[z : z in MinimalOvergroups(Bottom(nl))];
+  spot:= IntegerRing() ! mins[#mins];
+  // Can't believe there is no support of join of subgroups
+  while spot le #nl do
+    fail := false;
+    for j:=1 to #mins do
+      if not ((nl ! spot) ge (nl ! mins[j])) then
+        fail:=true;
+        break;
+      end if;
+    end for;
+    if fail then spot +:= 1; else break; end if;
+  end while;
+  assert spot le #nl;
+  return Group(nl! spot);
+end intrinsic;
