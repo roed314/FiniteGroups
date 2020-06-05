@@ -13,6 +13,7 @@
 * ~Make a list of attributes that can't be directly imported from the Magma group~
 * ~Port over implementations from generate.py for some of these~
 * Figure out how to compute others in Magma
+* Streamline Magma code that may redundantly call Magma functions which are now attributes.
 * Run timing tests to determine which attributes are slow (lattice of subgroups is; what else?)
 * Figure out how to reuse work between different groups for slow features (using a recursive algorithm for example)
 * Design a process for adding groups outside the small groups range and assigning labels: three steps
