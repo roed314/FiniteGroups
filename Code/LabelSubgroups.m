@@ -169,7 +169,7 @@ intrinsic Supergroups(G::Grp, L::SeqEnum, LI::SeqEnum, j::RngIntElt) -> SeqEnum
     return [i:i in [1..#L]|LI[i] lt n and IsDivisibleBy(n,LI[i]) and #[HH:HH in C|HH subset L[i]] gt 0];
 end intrinsic;
 
-intrinsic LabelSubgroups(G::Grp : phi:=ClassMap(G), max_index:=0) -> SeqEnum
+/* intrinsic LabelSubgroups(G::Grp : phi:=ClassMap(G), max_index:=0) -> SeqEnum
     {}
     S := Sort(Subgroups(G:IndexLimit:=max_index),func<a,b|b`order-a`order>); // reverse sort by order to sort by index
     L := [H`subgroup:H in S]; //`
@@ -210,6 +210,53 @@ intrinsic LabelSubgroups(G::Grp : phi:=ClassMap(G), max_index:=0) -> SeqEnum
     return Sort([<LL[i],L[i]>:i in [1..#L]],func<a,b| a[1] lt b[1] select -1 else a[1] gt b[1] select 1 else 0>);
 end intrinsic;
 
+*/
+
+
+/* JP version */
+intrinsic LabelSubgroups(G::Grp, S1::SeqEnum : phi:=ClassMap(G)) -> SeqEnum
+{pass in any record of subgroups}
+   
+    S := Sort(S1,func<a,b|b`order-a`order>); // reverse sort by order to sort by index
+    L := [H`subgroup:H in S]; //`
+    LI := [#G div H`order:H in S]; //`
+    LL := AssociativeArray();   // LL[i] will be set to the label of the subgroup L[i]
+    N := IndexFibers([1..#L], func<i|LI[i]>);
+    for n in Sort([n:n in Keys(N)]) do  // loop over indexes of subgroups (in increasing order)
+	    /* if max_index gt 0 and n gt max_index then break; end if;*/
+        if #N[n] eq 1 then LL[N[n][1]] := [n,1,1]; continue; end if;
+        C := IndexFibers(N[n], func<i | SubgroupClass(L[i], phi)>);
+        I := [C[c] : c in Sort([c : c in Keys(C)])];
+        for i:=1 to #I do
+            if #I[i] eq 1 then LL[I[i][1]] := [n,i,1]; continue; end if;
+            // printf "Labelling %o subgroups in Gassmann class %o.%o\n", #I[i], n, i;
+            O := IndexFibers(I[i],func<j|Sort([<LL[k],k>:k in Supergroups(G,L,LI,j)])>);
+            O := [[O[o],[x[2]:x in o]]: o in Sort([o:o in Keys(O)])];
+            j := 1;
+            for o in O do // loop over sorted list of supergroup labels
+                if #o[1] eq 1 then LL[o[1][1]] := [n,i,j]; j+:=1; continue; end if;
+                printf "Labelling %o subgroups in Gassmann class %o.%o with %o common overgroups\n", #o[1], n, i, #o[2];
+                // we may be repeating work here (and we should really let caller specify the class map)
+                psis := [ClassMap(L[k]):k in o[2]];
+                S := IndexFibers(o[1],
+                         func<k|[Sort([SubgroupClass(K,psi):K in ConjugatesInSubgroup(G,Domain(psi),L[k])]):psi in psis]>);
+                S := [S[s]:s in Sort([s:s in Keys(S)])];
+                for s in S do
+                    if #s eq 1 then LL[s[1]] := [n,i,j]; j+:=1; continue; end if;
+                    // last supergroup will have maximal index (and thus contain groups in s with minimal index)
+                    H := L[o[2][#o[2]]];
+                    printf "*** Computing signatures of %o index %o subgroups ***\n", #s, #H div #L[s[1]];
+                    t := Cputime();
+                    Z := Sort([<Sort([sig(H,K):K in ConjugatesInSubgroup(G,H,L[k])]),k> : k in s]);
+                    for z in Z do LL[z[2]] := [n,i,j]; j+:=1; end for;
+                end for;
+            end for;
+        end for;
+    end for;
+    return Sort([<LL[i],L[i]>:i in [1..#L]],func<a,b| a[1] lt b[1] select -1 else a[1] gt b[1] select 1 else 0>);
+end intrinsic;
+
+
 function testsig(m:index := 0)
     for n:= 4 to m do
         k := NumberOfSmallGroups(n);
@@ -231,6 +278,10 @@ function testsig(m:index := 0)
     end for;
     return true;
 end function;
+
+
+
+
 
 function test_small(m,f:max_index:=0,quiet:=true)
     for n:= 1 to m do
