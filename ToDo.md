@@ -4,6 +4,7 @@
 
 ### Planning
 * Choosing generators (solvable, permutation and matrix cases)
+* How to deal with "bad" generator lists from polycyclic
 * ~Labeling for conjugacy classes~
 * ~Labeling for subgroups~
 * Write more upload code (remaining issues are blacklist on io.m)
