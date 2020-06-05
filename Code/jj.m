@@ -33,7 +33,7 @@ intrinsic socle(G::LMFDBGrp) -> Any
     if fail then spot +:= 1; else break; end if;
   end while;
   assert spot le #nl;
-  return Group(nl! spot);
+  return nl! spot;
 end intrinsic;
 
 intrinsic coset_action_label(H::LMFDBSubGrp) -> Any
