@@ -397,6 +397,8 @@ intrinsic smith_abelian_invariants(G::LMFDBGrp) -> Any
   return InvariantFactors(A);
 end intrinsic;
 
+// TODO: needs to be rewritten to use special subgroup labels
+// currently on blacklist
 intrinsic perfect_core(G::LMFDBGrp) -> Any
   {Compute perfect core, the maximal perfect subgroup}
   DD := Get(G, "derived_series");
