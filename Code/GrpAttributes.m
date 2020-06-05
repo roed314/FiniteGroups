@@ -380,11 +380,20 @@ intrinsic Agroup(G::LMFDBGrp) -> Any
   return true;
 end intrinsic;
 
+intrinsic primary_abelian_invariants(G::LMFDBGrp) -> Any
+  {Compute primary abelian invariants of maximal abelian quotient}
+  C := Get(G, "MagmaCommutator");
+  GG := G`MagmaGrp;
+  A := quo< GG | C>;
+  return PrimaryAbelianInvariants(A);
+end intrinsic;
+
 intrinsic smith_abelian_invariants(G::LMFDBGrp) -> Any
   {Compute invariant factors of maximal abelian quotient}
   C := Get(G, "MagmaCommutator");
   GG := G`MagmaGrp;
   A := quo< GG | C>;
+  A := AbelianGroup(A);
   return InvariantFactors(A);
 end intrinsic;
 
