@@ -174,7 +174,6 @@ intrinsic DefaultAttributes(c::Cat) -> SeqEnum
                       "pc_code",
                       "perfect_core",
                       "rank",
-                      "schur_multiplier",
 
                       // Subgroup attributes
                       "alias_spot",
