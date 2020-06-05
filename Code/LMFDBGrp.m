@@ -87,9 +87,9 @@ declare attributes LMFDBGrp:
   composition_length;
 intrinsic Print(G::LMFDBGrp)
   {Print LMFDBGrp}
-  printf "LMFDBDGrp %o\n", G`label;
+  printf "LMFDBGrp %o:\n", G`label;
   //printf "  Name %o\n", G`name;
-  //printf "  Order %o", G`order;
+  printf "  Order %o", Get(G, "order");
 end intrinsic;
 
 declare verbose LMFDBGrpPerm, 1;
@@ -115,7 +115,7 @@ declare attributes LMFDBGrpPerm:
 
 intrinsic Print(G::LMFDBGrpPerm)
   {Print LMFDBGrpPerm}
-  printf "LMFDBDGrpPerm %o:\n", G`label;
+  printf "LMFDBGrpPerm %o:\n", G`label;
   printf "  Order %o", G`order;
 end intrinsic;
 
@@ -171,7 +171,7 @@ declare attributes LMFDBSubGrp:
 
 intrinsic Print(H::LMFDBSubGrp)
   {Print LMFDBGrp}
-  printf "LMFDBDSubGrp %o:\n", H`label;
+  printf "LMFDBSubGrp %o:\n", H`label;
   printf "  Group label%o\n ", H`ambient;
   printf "  Order %o\n", H`subgroup_order;
   printf "  Normal? %o", H`normal;
