@@ -810,14 +810,6 @@ intrinsic direct_product(G::LMFDBGrp) -> Any
   return semidirect_product(G : direct := true);
 end intrinsic;
 
-// TODO: finish this
-intrinsic wreath_product(G::LMFDBGrp) -> Any
-  {Returns true if G is a wreath product; otherwise returns false.}
-  if not Get(G, "semidirect_product") then
-    return false;
-  end if;
-  return semidirect_product(G : direct := true);
-end intrinsic;
 
 intrinsic ConjugacyClasses(G::LMFDBGrp) ->  SeqEnum
 {The list of conjugacy classes for this group}
@@ -850,3 +842,73 @@ intrinsic ConjugacyClasses(G::LMFDBGrp) ->  SeqEnum
   end for;
   return magccs;
 end intrinsic;
+
+
+intrinsic central_product(G::LMFDBGrp) -> BoolElt
+    {Checks if the group G is a central product.}
+    GG := G`MagmaGrp;
+    if IsAbelian(GG) then
+        /* G abelian will not be a central product <=> it is cyclic of prime power order (including trivial group).*/
+        if not (IsCyclic(GG) and #FactoredOrder(GG) in {0,1}) then
+            return true;
+        end if;
+    else
+        /* G is not abelian. We run through the proper nontrivial normal subgroups N and consider whethe$
+the centralizer C = C_G(N) together with N form a central product decomposition for G. We skip over N wh$
+central (C = G) since if a complement C' properly contained in C = G exists, then it cannot also be cent$
+is not abelian. Since C' must itself be normal (NC' = G), we will encounter C' (with centralizer smaller$
+somewhere else in the loop. */
+
+        normal_list := NormalSubgroups(GG);
+        for ent in normal_list do
+            N := ent`subgroup;
+            if (#N gt 1) and (#N lt #GG) then
+                C := Centralizer(GG,N);
+                if (#C lt #GG) then  /* C is a proper subgroup of G. */
+                    C_meet_N := C meet N;
+                    // |CN| = |C||N|/|C_meet_N|. We check if |CN| = |G| and return true if so.
+                    if #C*#N eq #C_meet_N*#GG then
+                        return true;
+                    end if;
+                end if;
+            end if;
+        end for;
+    end if;
+    return false;
+end intrinsic;
+
+intrinsic schur_multiplier(G::LMFDBGrp) -> Any
+  {Returns abelian invariants for Schur multiplier by computing prime compoments and then merging them.}
+  invs := [];
+  ps := factors_of_order(G);
+  GG := Get(G, "MagmaGrp"); 
+  // Need GrpPerm for pMultiplicator function calls below. Check and convert if not GrpPerm.
+  if Type(GG) ne GrpPerm then
+       // We find an efficient permutation representation. 
+       ts:=Get(G, "MagmaTransitiveSubgroup");
+       GG:=CosetImage(GG,ts); 
+  end if;
+  for p in ps do 
+    for el in pMultiplicator(GG,p) do 
+      if el gt 1 then
+        Append(~invs, el);
+      end if;
+    end for;
+  end for;
+  return AbelianInvariants(AbelianGroup(invs));
+end intrinsic;
+
+
+intrinsic wreath_product(G::LMFDBGrp) -> Any
+  {Returns true if G is a wreath product; otherwise returns false.}
+  GG := Get(G, "MagmaGrp");
+  // Need GrpPerm for IsWreathProduct function call below. Check and convert if not GrpPerm.
+  if Type(GG) ne GrpPerm then
+       // We find an efficient permutation representation. 
+       ts:=Get(G, "MagmaTransitiveSubgroup");
+       GG:=CosetImage(GG,ts); 
+  end if;
+  return IsWreathProduct(GG);
+end intrinsic;
+
+
