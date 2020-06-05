@@ -34,6 +34,7 @@ elementary        | integer  | If the direct product of a cyclic group and a p-g
 hyperelementary   | integer  | If the extension of a p-group by a cyclic group of order prime to p, gives the product of all possible p.  If not, 1.
 rank              | smallint | the minimal size of a generating system of `G`.  Usually the same as `ngens`, but `rank` might be `NULL` if not known, or `ngens` may be `NULL` if no presentation given.
 eulerian_function | numeric  | the ratio of the number of generating tuples with cardinality equal to the rank by the size of the automorphism group
+mobius_function	  | []       | the values of the mobius function of G wrt its subgroup lattice on its subgroups 
 center_label      | text     | Label for the isomoprhism class of the center Z
 central_quotient  | text     | Label for the isomorphism class of G/Z
 commutator_label  | text     | Label for the isomorphism class of the commutator subgroup
