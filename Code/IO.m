@@ -1,16 +1,19 @@
 TextCols := ["abelian_quotient", "acted", "actor", "ambient", "aut_group", "bravais_class", "c_class", "center_label", "central_quotient", "commutator_label", "coset_action_label", "crystal_symbol", "factor1", "factor2", "family", "frattini_label", "frattini_quotient", "group", "image", "knowl", "label", "magma_cmd", "name", "old_label", "outer_group", "product", "proj_label", "projective_image", "q_class", "quotient", "quotient_action_image", "subgroup", "tex_name", "trace_field"];
 
-IntegerCols := ["alias_spot", "ambient_order", "arith_equiv", "aut_counter", "aut_order", "auts", "cdim", "commutator_count", "composition_length", "conjugacy_class_count", "count", "counter", "counter_by_index", "cyc_order_mat", "cyc_order_traces", "degree", "derived_length", "diagram_x", "dim", "elementary", "elt_rep_type", "eulerian_function", "exponent", "extension_counter", "hall", "hyperelementary", "indicator", "multiplicity", "n", "ngens", "nilpotency_class", "number_characteristic_subgroups", "number_conjugacy_classes", "number_normal_subgroups", "number_subgroup_classes", "number_subgroups", "order", "outer_order", "parity", "pc_code", "pgroup", "priority", "q", "qdim", "quotient_action_kernel", "quotient_order", "quotients_complenetess", "rank", "rep", "representative", "schur_index", "sibling_completeness", "size", "smallrep", "subgroup_index_bound", "subgroup_order", "sylow", "t", "transitive_degree"];
+IntegerCols := ["alias_spot", "ambient_order", "arith_equiv", "aut_counter", "aut_order", "auts", "cdim", "commutator_count", "composition_length", "conjugacy_class_count", "count", "counter", "counter_by_index", "cyc_order_mat", "cyc_order_traces", "degree", "derived_length", "diagram_x", "dim", "elementary", "elt_rep_type", "eulerian_function", "exponent", "extension_counter", "hall", "hyperelementary", "indicator", "multiplicity", "n", "ngens", "nilpotency_class", "number_characteristic_subgroups", "number_conjugacy_classes", "number_normal_subgroups", "number_subgroup_classes", "number_subgroups", "order", "outer_order", "parity", "pc_code", "pgroup", "priority", "q", "qdim", "quotient_action_kernel", "quotient_order", "quotients_complenetess", "rank", "rep", "schur_index", "sibling_completeness", "size", "smallrep", "subgroup_index_bound", "subgroup_order", "sylow", "t", "transitive_degree"];
 
 TextListCols := ["composition_factors", "special_labels"];
 
-IntegerListCols := ["contained_in", "contains", "cycle_type", "denominators", "factors_of_aut_order", "factors_of_order", "faithful_reps", "generators", "gens", "order_stats", "powers", "primary_abelian_invariants", "schur_multiplier", "smith_abelian_invariants", "subgroup_fusion"];
+IntegerListCols := ["contained_in", "contains", "cycle_type", "denominators", "factors_of_aut_order", "factors_of_order", "faithful_reps", "gens", "order_stats", "powers", "primary_abelian_invariants", "schur_multiplier", "smith_abelian_invariants", "subgroup_fusion"];
 
 BoolCols := ["Agroup", "Zgroup", "abelian", "all_subgroups_known", "almost_simple", "central", "central_product", "characteristic", "cyclic", "direct", "direct_product", "faithful", "finite_matrix_group", "indecomposible", "irreducible", "maximal", "maximal_normal", "maximal_subgroups_known", "metabelian", "metacyclic", "minimal", "minimal_normal", "monomial", "nilpotent", "normal", "normal_subgroups_known", "outer_equivalence", "perfect", "prime", "primitive", "quasisimple", "rational", "semidirect_product", "simple", "solvable", "split", "stem", "subgroup_inclusions_known", "supersolvable", "sylow_subgroups_known", "wreath_product"];
 
 PermsCols := ["perm_gens"];
 SubgroupCols := ["centralizer", "kernel", "core", "center", "normal_closure", "normalizer", "sub1", "sub2"];
 SubgroupListCols := ["complements"];
+
+EltCols := ["representative"];
+EltListCols := ["generators"];
 
 intrinsic LoadBool(inp::MonStgElt) -> BoolElt
     {}
@@ -57,6 +60,12 @@ end intrinsic;
 intrinsic SavePerms(out::SeqEnum) -> MonStgElt
     {}
     return SaveIntegerList([EncodePerm(o) : o in out]);
+end intrinsic;
+
+intrinsic LoadElt(inp::MonStgElt, G::LMFDBGrp) -> Any
+    {}
+    gens := Generators(G`MagmaGrp);
+    return [];
 end intrinsic;
 
 intrinsic LoadSubgroupList(inp::MonStgElt, G::LMFDBGrp) -> SeqEnum
@@ -152,14 +161,14 @@ intrinsic LoadGrp(line::MonStgElt, attrs::SeqEnum: sep:="|") -> LMFDBGrp
         attr := attrs[i];
         G``attr := LoadAttr(attr, data[i], G);
     end for;
-    SetGrp(G); // set MagmaGrp based on stored attributes
+    SetGrp(G); // set MagmaGrp based on stored attributes.  Need to change the order: some attributes require presence of MagmaGrp.
     return G;
 end intrinsic;
 
 intrinsic DefaultAttributes(c::Cat) -> SeqEnum
     {List of attributes that should be saved to disc for postgres}
     if c eq LMFDBGrp then
-        defaults := ["Agroup", "Zgroup", "transitive_degree"]; // need transitive_degree early
+        defaults := ["Agroup", "Zgroup", "elt_rep_type", "transitive_degree"]; // need transitive_degree, elt_rep_type early
     else
         defaults := [];
     end if;
@@ -187,14 +196,12 @@ intrinsic DefaultAttributes(c::Cat) -> SeqEnum
                       "complements", // Just return the list of complements
                       "conjugacy_class_count",
                       "count", // should be set in Subgroups method
-                      "contained_in", // should be computed with SubgroupLattice
+                      "contained_in", // should be computed with SubgroupLattice - DR
                       "contains", // should be computed with SubgroupLattice
                       "coset_action_label",
-                      "counter",
-                      "counter_by_index",
                       "extension_counter",
                       "direct",
-                      "generators",
+                      "generators", // DR
                       "projective_image",
                       "quotient_action_image",
                       "quotient_action_kernel",
@@ -202,8 +209,11 @@ intrinsic DefaultAttributes(c::Cat) -> SeqEnum
                       "subgroup_fusion",
 
                       // Conjugacy class attributes
-                      "representative" // Need to be able to encode GrpPCElts
-                    ];
+                      "representative", // Need to be able to encode GrpPCElts - DR
+
+                      "derived_length",
+                      "perfect_core"
+                      ];
         if attr in blacklist then
             continue;
         end if;

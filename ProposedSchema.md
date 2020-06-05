@@ -60,7 +60,7 @@ number_characteristic_subgroups | integer | Number of characteristic subgroups
 derived_length    | smallint | The number of steps in the derived series (0 for a perfect group)
 primary_abelian_invariants | integer[] | Invariants of the maximal abelian quotient, as a sorted list of prime powers
 smith_abelian_invariants | integer[] | Invariants of the maximal abelian quotient, as a sorted list of integers, each dividing the next
-schur_multiplier  | integer[] | Primary invariants for the Schur multiplier (H_2(G, Z))
+schur_multiplier  | integer[] | Smith invariants for the Schur multiplier (H_2(G, Z))
 order_stats       | numeric[] | List of pairs `(o, m)` where `m` is the number of elements of order `o`.
 elt_rep_type      | smallint  | Code for the main way that elements are encoded in conjugacy class and subgroup tables.  0=generators+relations, -1=permutation rep, 1=integer matrices, q=matrices over GF(q)
 perm_gens     | numeric[] | encoded generators for a minimal permutation representation of this group (NULL if abelian or transitive degree too large)
@@ -169,8 +169,6 @@ Column            | Type      | Notes
 label             | text      | `N.i.m.g.j` where `N.i` is the label of `G`, `m` is the index`, `g` is a counter over Gassman equivalence classes and `j` is a counter within classes
 special_labels    | text[]    | Labels for normal subgroups, maximal subgroups and others (such as the center, Frattini...) that are below the index bound.
 outer_equivalence | boolean   | whether subgroups of `G` are considered up to outer equivalence (vs conjugacy)
-counter           | integer   | which subgroup (0 = whole group, 1=
-counter_by_index  | integer   | `j`, a numeric label for varying `H` within `G` (up to equivalence)
 aut_counter       | integer   | The minimum `j` equivalent to this under automorphism (`NULL` if `outer_equivalence` true)
 extension_counter | integer   | A numeric label for varying `G` among extensions with fixed `H`, `Q` and `split` (matching [groupnames](groupnames.org)?)
 subgroup          | text      | Label for `H` as an abstract group

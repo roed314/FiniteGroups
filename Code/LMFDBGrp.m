@@ -129,8 +129,6 @@ declare attributes LMFDBSubGrp:
   MagmaSubGrp, // input
   label, // process
   outer_equivalence, // input
-  counter,
-  counter_by_index,
   aut_counter,
   extension_counter,
   subgroup,
