@@ -573,6 +573,7 @@ end intrinsic;
 intrinsic Subgroups(G::LMFDBGrp) -> SeqEnum
     {The list of subgroups computed for this group}
     S := [];
+    GG:=G`MagmaGrp;
     by_index := AssociativeArray();
     if G`all_subgroups_known then
         max_index := 0;
@@ -580,54 +581,127 @@ intrinsic Subgroups(G::LMFDBGrp) -> SeqEnum
         max_index := G`subgroup_index_bound;
     end if;
     // Need to include the conjugacy class ordering 
-    SubLabels:= LabelSubgroups(G,Subgroups(G : IndexLimit:=max_index));
-    for tup in SubLabel do
+    SubLabels:= LabelSubgroups(GG:  max_index:=max_index);
+    for tup in SubLabels do
         H := New(LMFDBSubGrp);
-        H`Grp := G;
+        H`MagmaAmbient := GG;
         H`MagmaSubGrp := tup[2];
         H`label := tup[1];
         AssignBasicAttributes(H);
-        /* Add normal label to special_labels */
+       /* Add normal and maximal label to special_labels */
         if H`normal then
            if not assigned H`special_labels then
 	      H`special_labels:=[];
            end if;
-           Append(H`special_labels, H`label cat ".N");
+           Append(~H`special_labels, Get(G,"label") cat ".N");
 	end if;
+
+/* !! NEED MAXIMAL ATTRIBUTE ASSIGNED !! */
+        if H`maximal then
+           if not assigned H`special_labels then
+	      H`special_labels:=[];
+           end if;
+           Append(~H`special_labels, Get(G,"label") cat ".M");
+	end if;
+
         Append(~S, H);
     end for;
 
-   N:=NormalSubgroups(G);
-if max_index ne 0  then /* only unlabeled ones */
-      ordbd:=Integers()!(Get(G,"order")/max_index);
-      UnLabeled:=[n : n in N | n`order lt ordbd];
 
-      LabelsForUnLabeled:=LabelSubgroups(G,UnLabeled);
-      for tup in LabelsForUnLabeled do
-         H := New(LMFDBSubGrp);
-         H`MagmaAmbient := G`MagmaGrp;
-         H`MamgaSubGrp := tup[2];
-         H`label := tup[1];
-         AssignBasicAttributes(H);
-         if not assigned H`special_labels then
-	    H`special_labels:=[];
-         end if;
-         Append(H`special_labels, H`label cat ".N");
+/* assign the normal beyond index bound */
+    all_normal:=G`normal_subgroups_known;
+    if max_index ne 0 and all_normal then /*  unlabeled ones */
+        N:=NormalSubgroups(GG);
+
+        ordbd:=Integers()!(Get(G,"order")/max_index);
+        UnLabeled:=[n : n in N | n`order lt ordbd];
+        for tup in UnLabeled do
+            H := New(LMFDBSubGrp);
+            H`MagmaAmbient := GG;
+            H`MagmaSubGrp := tup`subgroup;
+            AssignBasicAttributes(H);
+            if not assigned H`special_labels then
+	        H`special_labels:=[];
+            end if;
+            Append(~H`special_labels, Get(G,"label") cat ".N");
        
-         Append(~S, H);
+           Append(~S,H);
+        end for;
+    end if;
+
+/* assign the maximal beyond index bound */
+    all_maximal:=G`maximal_subgroups_known; 
+    if max_index ne 0 and all_maximal then /*  unlabeled ones */
+       M:=MaximalSubgroups(GG);
+
+       ordbd:=Integers()!(Get(G,"order")/max_index);
+       UnLabeled:=[m : m in M | m`order lt ordbd];
+       for tup in UnLabeled do
+           if IsMaximal(GG,tup`subgroup) and all_normal then  /* need to match up to Normal special label */		 
+              for i in [1..#S] do
+		    s:=S[i];    
+                  if  Get(G,"label") cat ".N" in s`special_labels then
+		      if IsConjugate(GG,tup`subgroup,s`MagmaSubGrp) then
+		      Append(~(s`special_labels), Get(G,"label") cat ".M");
+                      end if;
+                  end if;
+	      end for;	      
+           else
+	      H := New(LMFDBSubGrp);
+              H`MagmaAmbient := GG;
+              H`MamgaSubGrp := tup`subgroup;
+              AssignBasicAttributes(H);
+              if not assigned H`special_labels then
+	          H`special_labels:=[];
+              end if;
+              Append(~H`special_labels, Get(G,"label") cat ".M");
+              Append(~S,H);
+           end if;
+       end for;
+    end if;
+
+/* special groups labeled */
+    Z:=Center(GG);
+    D:=CommutatorSubgroup(GG);
+    F:=FittingSubgroup(GG);
+    Ph:=FrattiniSubgroup(GG);
+    R:=Radical(GG);
+    So:=Socle(GG);
+
+    SpecialGrps:=[[* Z,".Z" *],[* D,".D" *],[* F,".F" *],[* Ph,".Phi" *],[* R,".R" *],[* So,".S" *]];
+
+    for i in [1..#S] do
+       s:=S[i];	    
+       for j in [1..#SpecialGrps] do
+	   tup:=SpecialGrps[j];	 
+           if IsConjugate(GG,tup[1],s`MagmaSubGrp) then
+               if not assigned s`special_labels then
+	           s`special_labels:=[];
+               end if;
+               Append(~s`special_labels, Get(G,"label") cat tup[2]);
+               Remove(~SpecialGrps,j); 
+               if #SpecialGrps eq 0 then /* done loop */
+	          break i;
+               end if;
+               break j;
+           end if;
+       end for;
     end for;
-end if;
 
-/* DO MAXIMAL  */
+/* anything left in SpecialGroups is not yet a subgroup */
+/* add the remaining subgroups as new */
 
-M:=MaximalSubgroups; /* ADD WHEN WE ADD MAXIMAL?? */
-
-
-/* DO SPECIAL CASES */
-
-
-    // Need to add special labels, and additional groups when max_index != 0
-
+    for tup in SpecialGrps do
+	H := New(LMFDBSubGrp);
+        H`MagmaAmbient := GG;
+        H`MagmaSubGrp := tup[1];
+        AssignBasicAttributes(H);
+        if not assigned H`special_labels then
+	    H`special_labels:=[];
+        end if;
+        Append(~H`special_labels, Get(G,"label") cat tup[2]);
+        Append(~S,H);
+    end for;
 
     return S;
 end intrinsic;
