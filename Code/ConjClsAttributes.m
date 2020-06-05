@@ -47,7 +47,7 @@ end intrinsic;
 // TODO
 intrinsic powers(C::LMFDBGrpConjCls) -> Any
   {}
-  return false;
+  return None();
 end intrinsic;
 
 intrinsic representative(C::LMFDBGrpConjCls) -> Any
@@ -55,3 +55,14 @@ intrinsic representative(C::LMFDBGrpConjCls) -> Any
   CC := Get(C, "MagmaConjCls");
   return CC[3]; // this may need to change depending on how elts are represented in ambient group
 end intrinsic;
+
+intrinsic GetGrp(C::LMFDBGrpConjCls) -> Grp
+    {This function is used by the file IO code to help idenify subgroups}
+    return C`Grp;
+end intrinsic;
+
+intrinsic GetGrp(C::LMFDBGrpPermConjCls) -> Grp
+    {This function is used by the file IO code to help identify subgroups}
+    return C`Grp;
+end intrinsic;
+

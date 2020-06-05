@@ -21,4 +21,5 @@
   LabelSubgroups.m
   orderCC.m
   mb.m
+  ConjClsAttributes.m
 }

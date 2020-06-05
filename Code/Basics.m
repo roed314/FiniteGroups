@@ -26,7 +26,7 @@ intrinsic GetBasicAttributesGrp() -> Any
     ];
 end intrinsic;
 
-intrinsic AssignBasicAttributes(G::LMFDBGrp) -> Any
+intrinsic AssignBasicAttributes(G::LMFDBGrp)
   {Assign basic attributes. G`MagmaGrp must already be assigned.}
   attrs := GetBasicAttributesGrp();
   GG := G`MagmaGrp;
@@ -37,7 +37,7 @@ intrinsic AssignBasicAttributes(G::LMFDBGrp) -> Any
     G``db_attr := eval eval_str;
   end for;
   //G`IsSuperSolvable := IsSupersoluble(GG); // thanks a lot Australia! :D; only for GrpPC...
-  return Sprintf("Basic attributes assigned to %o", G);
+  //return Sprintf("Basic attributes assigned to %o", G);
 end intrinsic;
 
 intrinsic GetBasicAttributesSubGrp(pair::BoolElt) -> Any
@@ -60,9 +60,9 @@ intrinsic GetBasicAttributesSubGrp(pair::BoolElt) -> Any
   end if;
 end intrinsic;
 
-intrinsic AssignBasicAttributes(H::LMFDBSubGrp) -> Any
+intrinsic AssignBasicAttributes(H::LMFDBSubGrp)
   {Assign basic attributes. H`MagmaSubGrp must already be assigned.}
-  GG := H`MagmaAmbient;
+  GG := Get(H, "MagmaAmbient");
   HH := H`MagmaSubGrp;
   attrs := GetBasicAttributesSubGrp(true);
   for attr in attrs do
@@ -78,5 +78,5 @@ intrinsic AssignBasicAttributes(H::LMFDBSubGrp) -> Any
     eval_str := Sprintf("return %o(HH)", mag_attr);
     H``db_attr := eval eval_str;
   end for;
-  return Sprintf("Basic attributes assigned to %o", H);
+  //return Sprintf("Basic attributes assigned to %o", H);
 end intrinsic;

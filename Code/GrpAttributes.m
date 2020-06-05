@@ -252,7 +252,7 @@ end intrinsic;
 intrinsic transitive_degree(G::LMFDBGrp) -> Any
   {Smallest transitive degree for a faithful permutation representation}
   ts:=Get(G, "MagmaTransitiveSubgroup");
-  return Get(G, "order")/Order(ts);
+  return Get(G, "order") div Order(ts);
 end intrinsic;
 
 intrinsic perm_gens(G::LMFDBGrp) -> Any
@@ -492,7 +492,7 @@ end intrinsic;
 intrinsic outer_group(G::LMFDBGrp) -> Any
    {returns OuterAutomorphism Group}
    aut:=Get(G, "MagmaAutGroup");
-   return OuterFPGroup(aut);
+   return label(OuterFPGroup(aut));
 end intrinsic;
 
 
@@ -582,8 +582,8 @@ intrinsic Subgroups(G::LMFDBGrp) -> SeqEnum
     // Need to include the conjugacy class ordering
     for tup in LabelSubgroups(G`MagmaGrp : max_index:=max_index) do
         H := New(LMFDBSubGrp);
-        H`MagmaAmbient := G`MagmaGrp;
-        H`MamgaSubGrp := tup[2];
+        H`Grp := G;
+        H`MagmaSubGrp := tup[2];
         H`label := tup[1];
         AssignBasicAttributes(H);
         Append(~S, H);
@@ -592,25 +592,46 @@ intrinsic Subgroups(G::LMFDBGrp) -> SeqEnum
     return S;
 end intrinsic;
 
+intrinsic LookupSubgroupLabel(G::LMFDBGrp, HH::Grp) -> Any
+    {Find a subgroup label for H, or return None if H is not labeled}
+    S := Get(G, "Subgroups");
+    GG := Get(G, "MagmaGrp");
+    for K in S do
+        KK := Get(K, "MagmaSubGrp");
+        if IsConjugate(GG, HH, KK) then
+            v := Get(K, "label");
+            if Type(v) eq NoneType then
+                v := Get(K, "special_label")[1];
+            end if;
+            return v;
+        end if;
+    end for;
+    return None();
+end intrinsic;
+
+intrinsic LookupSubgroup(G::LMFDBGrp, label::MonStgElt) -> Grp
+{Find a subgroup with a given label}
+    S := Get(G, "Subgroups");
+    for K in S do
+        if label eq Get(K, "label") or label in Get(K, "special_labels") then
+            return Get(K, "MagmaSubGrp");
+        end if;
+    end for;
+    error Sprintf("Subgroup with label %o not found", label);
+end intrinsic;
 
 intrinsic order_stats(G::LMFDBGrp) -> Any
-  {returns an associative array A where A[x] returns the number of element of order x.}
-  GG := G`MagmaGrp;
-  A := AssociativeArray();
-  C := Classes(GG);
-  L := {c[1]: c in C};
-  // MM :=[];
-  for l in L do
-    // M:=[];
-    // Append(~M, l);
+    {returns the list of pairs [o, m] where m is the number of elements of order o}
+    GG := G`MagmaGrp;
+    A := AssociativeArray();
+    C := Classes(GG);
     for c in C do
-      A[l] := &+[c[2] : c in C | c[1] eq l];
-     // Append(~M, A[l]);
+        if not IsDefined(A, c[1]) then
+            A[c[1]] := 0;
+        end if;
+        A[c[1]] +:= c[2];
     end for;
-    // Append(~MM, M)
-  end for;
-  return A;  // Instead of returning A, we can return list of lists.
-  // return MM;
+    return [[k, v] : k -> v in A];
 end intrinsic;
 
 intrinsic semidirect_product(G::LMFDBGrp : direct := false) -> Any
@@ -663,4 +684,5 @@ intrinsic ConjugacyClasses(G::LMFDBGrp) ->  SeqEnum
         cc`MagmaConjCls := mc;
         Append(~C, cc);
     end for;
+    return C;
 end intrinsic;

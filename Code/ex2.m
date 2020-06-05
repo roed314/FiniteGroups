@@ -11,7 +11,7 @@ H:=New(LMFDBSubGrp);
 H`MagmaSubGrp := Random(S)`subgroup;
 H`label := label(H`MagmaSubGrp) cat ".1";
 H`ambient := G`label;
-H`MagmaAmbient := GG;
+H`Grp := G;
 H`subgroup_order := #H`MagmaSubGrp;
 AssignBasicAttributes(H);
 
