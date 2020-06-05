@@ -21,3 +21,8 @@ harder:=["maximal","abelian","normal"];
 for j in harder do dummy:=Get(H,j); end for;
 
 
+G`all_subgroups_known:=false;
+G`subgroup_index_bound:=3;
+G`normal_subgroups_known:=true;
+G`maximal_subgroups_known:=true;
+
