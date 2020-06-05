@@ -124,6 +124,7 @@ intrinsic mobius_function(G::LMFDBGrp) -> Any
     return conj_mobii;
   else
     return None();
+  end if;
 end intrinsic;
 
 
