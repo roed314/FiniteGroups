@@ -64,8 +64,52 @@ end intrinsic;
 
 intrinsic LoadElt(inp::MonStgElt, G::LMFDBGrp) -> Any
     {}
-    gens := Generators(G`MagmaGrp);
-    return [];
+    // For PCGroups, we eventually want to use a nicer human-readable presentation,
+    // which will affect this code
+    GG := G`MagmaGrp;
+    if Type(GG) eq GrpPC then
+        n := StringToInteger(inp);
+        v := [];
+        Ps := PCPrimes(GG);
+        for p in Ps do
+            n, r := Quotrem(n, p);
+            Append(~v, r);
+        end for;
+        return GG!v;
+    elif Type(GG) eq GrpPerm then
+        n := Degree(GG);
+        return GG!DecodePerm(inp, n);
+    else
+        error "Other group types not yet supported";
+    end if;
+end intrinsic;
+intrinsic SaveElt(out::Any, G::LMFDBGrp) -> MonStgElt
+    {}
+    GG := G`MagmaGrp;
+    if Type(GG) eq GrpPC then
+        n := 0;
+        v := ElementToSequence(out);
+        Ps := Reverse(PCPrimes(GG));
+        for i in [1..#Ps] do
+            n *:= Ps[i];
+            n +:= v[i];
+        end for;
+        return IntegerToString(n);
+    elif Type(GG) eq GrpPerm then
+        return EncodePerm(out);
+    else
+        error "Other group types not yet supported";
+    end if;
+end intrinsic;
+
+intrinsic LoadEltList(inp::MonStgElt, G::LMFDBGrp) -> SeqEnum
+    {}
+    assert inp[1] eq "{" and inp[#inp] eq "}";
+    return [LoadElt(x, G) : x in Split(Substring(inp, 2, #inp-2), ",")];
+end intrinsic;
+intrinsic SaveEltList(out::SeqEnum, G::LMFDBGrp) -> MonStgElt
+    {}
+    return "{" * Join([SaveElt(x) : x in out], ",") * "}";
 end intrinsic;
 
 intrinsic LoadSubgroupList(inp::MonStgElt, G::LMFDBGrp) -> SeqEnum
@@ -95,6 +139,10 @@ intrinsic LoadAttr(attr::MonStgElt, inp::MonStgElt, obj::Any) -> Any
         return LoadTextList(inp);
     elif attr in PermsCols then
         return LoadPerms(inp, Get(obj, "transitive_degree"));
+    elif attr in EltCols then
+        return LoadElt(inp, GetGrp(obj));
+    elif attr in EltListCols then
+        return LoadEltList(inp, GetGrp(obj));
     elif attr in SubgroupCols then
         if attr eq "sub1" then
             G := Get(obj, "G1");
@@ -126,6 +174,10 @@ intrinsic SaveAttr(attr::MonStgElt, val::Any, obj::Any) -> MonStgElt
         return SaveTextList(val);
     elif attr in PermsCols then
         return SavePerms(val);
+    elif attr in EltCols then
+        return SaveElt(val, GetGrp(obj));
+    elif attr in EltListCols then
+        return SaveEltList(val, GetGrp(obj));
     elif attr in SubgroupCols then
         if attr eq "sub1" then
             G := Get(obj, "G1");
