@@ -49,7 +49,8 @@ intrinsic GetBasicAttributesSubGrp(pair::BoolElt) -> Any
      ["Normalizer" , "normalizer"],
      ["Centralizer" , "centralizer"],
      ["NormalClosure" , "normal_closure"],
-     ["IsCentral", "central"]
+     ["IsCentral", "central"],
+     ["IsMaximal","maximal"]			    
       ];
   else
     return [

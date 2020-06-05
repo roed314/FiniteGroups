@@ -128,6 +128,7 @@ declare attributes LMFDBSubGrp:
   MagmaAmbient, // derived from Grp
   MagmaSubGrp, // input
   label, // process
+  special_labels,
   outer_equivalence, // input
   counter,
   counter_by_index,
