@@ -169,16 +169,11 @@ intrinsic DefaultAttributes(c::Cat) -> SeqEnum
         // Blacklist attributes that aren't working
         blacklist := [
                       // Group attributes
-                      "elt_rep_type",
-                      "eulerian_function",
                       "finite_matrix_group",
-                      "name",
                       "old_label",
                       "pc_code",
                       "perfect_core",
                       "rank",
-                      "schur_multiplier",
-                      "tex_name",
 
                       // Subgroup attributes
                       "alias_spot",

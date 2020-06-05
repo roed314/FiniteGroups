@@ -612,18 +612,15 @@ intrinsic Subgroups(G::LMFDBGrp) -> SeqEnum
         H`MagmaSubGrp := tup[2];
         H`label := CreateLabel(G`label,tup[1]);
         AssignBasicAttributes(H);
+        H`special_labels:=[];
+        H`count:=tup[3];
        /* Add normal and maximal label to special_labels */
         if H`normal then
-           if not assigned H`special_labels then
-	      H`special_labels:=[];
-           end if;
+
            Append(~H`special_labels, Get(H,"label") cat ".N");
 	end if;
 
         if H`maximal then
-           if not assigned H`special_labels then
-	      H`special_labels:=[];
-           end if;
            Append(~H`special_labels, Get(H,"label") cat ".M");
 	end if;
 
@@ -645,11 +642,11 @@ intrinsic Subgroups(G::LMFDBGrp) -> SeqEnum
             H := New(LMFDBSubGrp);
             H`MagmaAmbient := GG;
             H`MagmaSubGrp := tup[2];
+            H`count:=tup[3];
             Hlabeltemp:=CreateLabel(G`label,tup[1]);
             AssignBasicAttributes(H);
-            if not assigned H`special_labels then
-	        H`special_labels:=[];
-            end if;
+            H`special_labels:=[];
+            H`label:=None();
             Append(~H`special_labels, Hlabeltemp cat ".N");
        
            Append(~S,H);
@@ -669,9 +666,7 @@ intrinsic Subgroups(G::LMFDBGrp) -> SeqEnum
               for i in [1..#S] do
 		  s:=S[i];    
 		  if IsConjugate(GG,tup[2],s`MagmaSubGrp) then
-     		     if not assigned s`special_labels then  /* likely don't need */
-	                 s`special_labels:=[];
-                     end if;
+		  
 		     Append(~(s`special_labels), Get(s,"label") cat ".M");
                   end if;
 	      end for;	      
@@ -679,11 +674,12 @@ intrinsic Subgroups(G::LMFDBGrp) -> SeqEnum
 	      H := New(LMFDBSubGrp);
               H`MagmaAmbient := GG;
               H`MamgaSubGrp := tup[2];
+              H`count:=tup[3];
               Hlabeltemp:=CreateLabel(G`label,tup[1]);
               AssignBasicAttributes(H);
-              if not assigned H`special_labels then
-	          H`special_labels:=[];
-              end if;
+              H`special_labels:=[];
+              H`label:=None();
+              
               Append(~H`special_labels,  Hlabeltemp cat ".M");
               Append(~S,H);
            end if;
@@ -700,37 +696,14 @@ intrinsic Subgroups(G::LMFDBGrp) -> SeqEnum
 
     SpecialGrps:=[[* Z,".Z" *],[* D,".D" *],[* F,".F" *],[* Ph,".Phi" *],[* R,".R" *],[* So,".S" *]];
 
-    for i in [1..#S] do
-       s:=S[i];	    
-       for j in [1..#SpecialGrps] do
-	   tup:=SpecialGrps[j];	 
-           if IsConjugate(GG,tup[1],s`MagmaSubGrp) then
-               if not assigned s`special_labels then
-	           s`special_labels:=[];
-               end if;
-               Append(~s`special_labels, Get(G,"label") cat tup[2]);
-               Remove(~SpecialGrps,j); 
-               if #SpecialGrps eq 0 then /* done loop */
-	          break i;
-               end if;
-               break j;
-           end if;
-       end for;
-    end for;
-
-/* anything left in SpecialGroups is not yet a subgroup */
-/* add the remaining subgroups as new */
-
-    for tup in SpecialGrps do
-	H := New(LMFDBSubGrp);
-        H`MagmaAmbient := GG;
-        H`MagmaSubGrp := tup[1];
-        AssignBasicAttributes(H);
-        if not assigned H`special_labels then
-	    H`special_labels:=[];
-        end if;
-        Append(~H`special_labels, Get(G,"label") cat tup[2]);
-        Append(~S,H);
+/* all of the special groups are normal so they already show up */  
+    for j in [1..#SpecialGrps] do
+	tup:=SpecialGrps[j];
+        for i in [1..#S] do
+            if IsConjugate(GG,tup[1],S[i]`MagmaSubGrp) then
+		Append(~S[i]`special_labels, Get(G,"label") cat tup[2]);
+            end if;
+        end for;
     end for;
 
     return S;
