@@ -168,26 +168,20 @@ intrinsic DefaultAttributes(c::Cat) -> SeqEnum
         if attr in defaults then continue; end if;
         // Blacklist attributes that aren't working
         blacklist := [
-                      "central_product",
-                      "all_subgroups_known",
+                      // Group attributes
                       "elt_rep_type",
                       "eulerian_function",
                       "finite_matrix_group",
-                      "maximal_subgroups_known",
                       "name",
-                      "normal_subgroups_known",
                       "old_label",
-                      "outer_equivalence",
                       "pc_code",
-                      "perfect_core",
                       "primary_abelian_invariants",
                       "rank",
                       "schur_multiplier",
                       "smith_abelian_invariants",
-                      "subgroup_inclusions_known",
-                      "subgroup_index_bound",
-                      "sylow_subgroups_known",
                       "tex_name",
+
+                      // Subgroup attributes
                       "alias_spot",
                       "aut_counter",
                       "complements", // Just return the list of complements
@@ -206,9 +200,8 @@ intrinsic DefaultAttributes(c::Cat) -> SeqEnum
                       "quotient_action_kernel",
                       "quotient_fusion",
                       "subgroup_fusion",
+
                       // Conjugacy class attributes
-                      "centralizer",
-                      "powers",
                       "representative" // Need to be able to encode GrpPCElts
                     ];
         if attr in blacklist then

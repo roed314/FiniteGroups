@@ -694,6 +694,7 @@ intrinsic ConjugacyClasses(G::LMFDBGrp) ->  SeqEnum
   //gord:=Get(G, 'Order');
   for j:=1 to #cc do
     ix:=perm[j];
+    magccs[j]`Grp := G;
     magccs[j]`MagmaConjCls := cc[ix];
     magccs[j]`label := labels[j];
     magccs[j]`size := cc[ix][2];
@@ -702,7 +703,6 @@ intrinsic ConjugacyClasses(G::LMFDBGrp) ->  SeqEnum
     // Not sure of which other powers are desired
     magccs[j]`powers := [perm[pm(ix,p)] : p in plist];
     magccs[j]`representative := cc[ix][3];
-    magccs[j]`group := "stub";
   end for;
   return magccs;
 end intrinsic;

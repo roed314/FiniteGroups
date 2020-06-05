@@ -2,6 +2,11 @@
 list of attributes to compute. DONE is either done here or in Basics.m
 see https://github.com/roed314/FiniteGroups/blob/master/ProposedSchema.md for description of attributes
 */
+intrinsic outer_equivalence(H::LMFDBSubGrp) -> BoolElt
+    {}
+    return H`Grp`outer_equivalence;
+end intrinsic;
+
 intrinsic maximal(H::LMFDBSubGrp) -> BoolElt // Need to be subgroup attribute file
   {Determine if a subgroup is maximal}
   GG := Get(H, "MagmaAmbient");

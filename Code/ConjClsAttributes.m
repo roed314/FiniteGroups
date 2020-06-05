@@ -8,9 +8,8 @@ intrinsic label(C::LMFDBGrpConjCls) -> MonStgElt
 end intrinsic;
 
 intrinsic group(C::LMFDBGrpConjCls) -> MonStgElt
-  {return label of ambient group of C}
-  CC := Get(C, "MagmaConjCls");
-  return label(Parent(CC[3]));
+    {return label of ambient group of C}
+    return label(C`Grp);
 end intrinsic;
 
 intrinsic size(C::LMFDBGrpConjCls) -> Any
