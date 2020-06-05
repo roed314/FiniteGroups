@@ -175,7 +175,6 @@ intrinsic DefaultAttributes(c::Cat) -> SeqEnum
                       "name",
                       "old_label",
                       "pc_code",
-                      "primary_abelian_invariants",
                       "rank",
                       "schur_multiplier",
                       "tex_name",
