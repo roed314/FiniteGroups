@@ -570,6 +570,19 @@ intrinsic pgroup(G::LMFDBGrp) -> RngInt
     end if;
 end intrinsic;
 
+
+/* turns G`label and output of LabelSubgroups into string */
+
+CreateLabel:=function(Glabel,Hlabel);
+   strng:=Glabel;
+   for i in [1..#Hlabel] do
+       strng cat:=".";  
+       strng cat:=IntegerToString(Hlabel[i]);
+   end for; 
+   return strng;
+end function;
+
+
 intrinsic Subgroups(G::LMFDBGrp) -> SeqEnum
     {The list of subgroups computed for this group}
     S := [];
@@ -581,27 +594,26 @@ intrinsic Subgroups(G::LMFDBGrp) -> SeqEnum
         max_index := G`subgroup_index_bound;
     end if;
     // Need to include the conjugacy class ordering 
-    SubLabels:= LabelSubgroups(GG:  max_index:=max_index);
+    SubLabels:= LabelSubgroups(GG, Subgroups(GG: IndexLimit:=max_index));
     for tup in SubLabels do
         H := New(LMFDBSubGrp);
         H`MagmaAmbient := GG;
         H`MagmaSubGrp := tup[2];
-        H`label := tup[1];
+        H`label := CreateLabel(G`label,tup[1]);
         AssignBasicAttributes(H);
        /* Add normal and maximal label to special_labels */
         if H`normal then
            if not assigned H`special_labels then
 	      H`special_labels:=[];
            end if;
-           Append(~H`special_labels, Get(G,"label") cat ".N");
+           Append(~H`special_labels, Get(H,"label") cat ".N");
 	end if;
 
-/* !! NEED MAXIMAL ATTRIBUTE ASSIGNED !! */
         if H`maximal then
            if not assigned H`special_labels then
 	      H`special_labels:=[];
            end if;
-           Append(~H`special_labels, Get(G,"label") cat ".M");
+           Append(~H`special_labels, Get(H,"label") cat ".M");
 	end if;
 
         Append(~S, H);
@@ -611,19 +623,23 @@ intrinsic Subgroups(G::LMFDBGrp) -> SeqEnum
 /* assign the normal beyond index bound */
     all_normal:=G`normal_subgroups_known;
     if max_index ne 0 and all_normal then /*  unlabeled ones */
+    
         N:=NormalSubgroups(GG);
 
         ordbd:=Integers()!(Get(G,"order")/max_index);
         UnLabeled:=[n : n in N | n`order lt ordbd];
-        for tup in UnLabeled do
+        SubLabels:= LabelSubgroups(GG, UnLabeled);
+			       
+        for tup in SubLabels do
             H := New(LMFDBSubGrp);
             H`MagmaAmbient := GG;
-            H`MagmaSubGrp := tup`subgroup;
+            H`MagmaSubGrp := tup[2];
+            Hlabeltemp:=CreateLabel(G`label,tup[1]);
             AssignBasicAttributes(H);
             if not assigned H`special_labels then
 	        H`special_labels:=[];
             end if;
-            Append(~H`special_labels, Get(G,"label") cat ".N");
+            Append(~H`special_labels, Hlabeltemp cat ".N");
        
            Append(~S,H);
         end for;
@@ -636,25 +652,28 @@ intrinsic Subgroups(G::LMFDBGrp) -> SeqEnum
 
        ordbd:=Integers()!(Get(G,"order")/max_index);
        UnLabeled:=[m : m in M | m`order lt ordbd];
-       for tup in UnLabeled do
+       SubLabels:= LabelSubgroups(GG, UnLabeled);
+       for tup in SubLabels do
            if IsMaximal(GG,tup`subgroup) and all_normal then  /* need to match up to Normal special label */		 
               for i in [1..#S] do
-		    s:=S[i];    
-                  if  Get(G,"label") cat ".N" in s`special_labels then
-		      if IsConjugate(GG,tup`subgroup,s`MagmaSubGrp) then
-		      Append(~(s`special_labels), Get(G,"label") cat ".M");
-                      end if;
+		  s:=S[i];    
+		  if IsConjugate(GG,tup[2],s`MagmaSubGrp) then
+     		     if not assigned s`special_labels then  /* likely don't need */
+	                 s`special_labels:=[];
+                     end if;
+		     Append(~(s`special_labels), Get(s,"label") cat ".M");
                   end if;
 	      end for;	      
            else
 	      H := New(LMFDBSubGrp);
               H`MagmaAmbient := GG;
-              H`MamgaSubGrp := tup`subgroup;
+              H`MamgaSubGrp := tup[2];
+              Hlabeltemp:=CreateLabel(G`label,tup[1]);
               AssignBasicAttributes(H);
               if not assigned H`special_labels then
 	          H`special_labels:=[];
               end if;
-              Append(~H`special_labels, Get(G,"label") cat ".M");
+              Append(~H`special_labels,  Hlabeltemp cat ".M");
               Append(~S,H);
            end if;
        end for;
