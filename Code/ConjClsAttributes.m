@@ -33,15 +33,13 @@ end intrinsic;
 
 // TODO
 // not sure how to do this...
-// supposed to return label for centralizer as subgroup of ambient group
+// Currently returns the subgroup rather than its label
 intrinsic centralizer(C::LMFDBGrpConjCls) -> Any
   {}
   gp_label := Get(C, "group");
   //G := LoadGrp(gp_label, );
   g := Get(C, "representative");
-  Z := Centralizer(g);
-  GG := Parent(g);
-  return Centralizer(g); // TODO: fix this
+  return Centralizer(Parent(g), g);
 end intrinsic;
 
 // TODO

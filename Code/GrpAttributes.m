@@ -656,11 +656,32 @@ end intrinsic;
 
 intrinsic ConjugacyClasses(G::LMFDBGrp) ->  SeqEnum
 {The list of conjugacy classes for this group}
-    C := [];
-    // Need to fix sorting, add labels and maybe other things here.
-    for mc in ConjugacyClasses(G`MagmaGrp) do
-        cc := New(LMFDBGrpConjCls);
-        cc`MagmaConjCls := mc;
-        Append(~C, cc);
-    end for;
+  g:=G`MagmaGrp;
+  cc:=ConjugacyClasses(g);
+  cm:=ClassMap(g);
+  pm:=PowerMap(g);
+  gens:=Generators(g); // Get this from the LMFDBGrp?
+  ordercc, _, labels := ordercc(g,cc,cm,pm,gens);
+  // perm will convert given index to the one out of ordercc
+  perm := [0 : j in [1..#cc]];
+  for j:=1 to #cc do
+    perm[cm(ordercc[j])] := j;
+  end for;
+  magccs:=[ New(LMFDBGrpConjCls) : j in cc];
+  gord:=Order(g);
+  plist:=[z[1] : z in Factorization(gord)];
+  //gord:=Get(G, 'Order');
+  for j:=1 to #cc do
+    ix:=perm[j];
+    magccs[j]`MagmaConjCls := cc[ix];
+    magccs[j]`label := labels[j];
+    magccs[j]`size := cc[ix][2];
+    magccs[j]`counter := j;
+    magccs[j]`order := cc[ix][1];
+    // Not sure of which other powers are desired
+    magccs[j]`powers := [perm[pm(ix,p)] : p in plist];
+    magccs[j]`representative := cc[ix][3];
+    magccs[j]`group := "stub";
+  end for;
+  return magccs;
 end intrinsic;
