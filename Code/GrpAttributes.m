@@ -409,10 +409,10 @@ end intrinsic;
 intrinsic chevalley_letter(f::RngIntElt) -> MonStgElt
   {Given an integer corresponding to a finite simple group, as in output of CompositionFactors, return appropriate string for Chevalley group}
   assert f in [1..16];
-  lets :=["A", "B", "C", "D", "G", "F", "E", "E", "E", "2A", "2B", "2D", "3D", "2G", "2F", "2E"];
+  lets := ["A", "B", "C", "D", "G", "F", "E", "E", "E", "2A", "2B", "2D", "3D", "2G", "2F", "2E"];
   return lets[f];
   /*
-    taken from https://magma.maths.usyd.edu.au/magma/handbook/text/625#6962
+    from https://magma.maths.usyd.edu.au/magma/handbook/text/625#6962
       1       A(d, q)
       2       B(d, q)
       3       C(d, q)
@@ -432,7 +432,6 @@ intrinsic chevalley_letter(f::RngIntElt) -> MonStgElt
   */
 end intrinsic;
 
-// TODO finish
 // https://magma.maths.usyd.edu.au/magma/handbook/text/743
 intrinsic composition_factor_decode(t::Tup) -> Grp
   {Given a tuple <f,d,q>, in the format of the output of CompositionFactors, return the corresponding group.}
@@ -442,8 +441,9 @@ intrinsic composition_factor_decode(t::Tup) -> Grp
     chev := chevalley_letter(f);
     return ChevalleyGroup(chev, d, q);
   elif f eq 18 then
+    // TODO
     // sporadic
-    error "Not implemented yet! :(";
+    error "Sporadic groups not implemented yet; sorry! :(";
   elif f eq 17 then
     return Alt(d);
   elif f eq 19 then
@@ -455,10 +455,11 @@ end intrinsic;
 
 intrinsic composition_factors(G::LMFDBGrp) -> Any
     {labels for composition factors}
-    // TODO
-    // Magma outputs a tuple of integers, so this breaks
     // see https://magma.maths.usyd.edu.au/magma/handbook/text/625#6962
-    return [label(H) : H in CompositionFactors(G`MagmaGrp)];
+    GG := G`MagmaGrp;
+    tups := CompositionFactors(GG);
+    facts := [composition_factor_decode(tup) : tup in tups];
+    return [label(H) : H in facts];
 end intrinsic;
 
 intrinsic composition_length(G::LMFDBGrp) -> Any
