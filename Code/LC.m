@@ -59,7 +59,7 @@ intrinsic number_subgroups(G::LMFDBGrp) -> Any
   S:=Get(G,"Subgroups");
   total:=0;
   for s in S do //the AllSubgroups function is pretty slow, we try not to call it
-    total+:=#Conjugates(G`MagmaGrp,s[2]);
+    total+:=#Conjugates(Get(G, "MagmaGrp"), Get(s, "MagmaSubGrp"));
   end for;
   return total;
 end intrinsic;
@@ -74,7 +74,7 @@ intrinsic number_normal_subgroups(G::LMFDBGrp) -> Any
   S:=Get(G,"Subgroups");
   total:=0;
   for s in S do
-    if Get(s[1],"normal") then
+    if Get(s,"normal") then
       total+:=1;
     end if;
   end for;
