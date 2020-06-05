@@ -28,7 +28,7 @@ Start := Floor((NumGroups-1) * Proc / NumProc);
 End := Floor((NumGroups-1) * (Proc + 1) / NumProc);
 
 function WriteSmallGroup(N, i)
-    print_data := MakeSmallGroup(N, i);
+    print_data := MakeSmallGroupData(N, i);
     for j in [1..3] do
         for line in print_data[j] do
             PrintFile(files[j], print_data[j]);

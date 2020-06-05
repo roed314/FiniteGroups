@@ -175,10 +175,9 @@ intrinsic DefaultAttributes(c::Cat) -> SeqEnum
                       "name",
                       "old_label",
                       "pc_code",
-                      "primary_abelian_invariants",
+                      "perfect_core",
                       "rank",
                       "schur_multiplier",
-                      "smith_abelian_invariants",
                       "tex_name",
 
                       // Subgroup attributes
@@ -189,7 +188,6 @@ intrinsic DefaultAttributes(c::Cat) -> SeqEnum
                       "count", // should be set in Subgroups method
                       "contained_in", // should be computed with SubgroupLattice
                       "contains", // should be computed with SubgroupLattice
-                      "coset_action_label",
                       "counter",
                       "counter_by_index",
                       "extension_counter",
