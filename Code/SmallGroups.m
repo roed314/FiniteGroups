@@ -7,12 +7,13 @@ intrinsic MakeSmallGroup(N::RngIntElt, i::RngIntElt) -> Tup
     G`label := Sprintf("%o.%o", N, i);
     // G`subgroup_index_bound := N;
     // For now we compute everything, so we don't set
-    // subgroup_index_bound
+    G`subgroup_index_bound := None();
     G`all_subgroups_known := true;
     G`normal_subgroups_known := true;
     G`maximal_subgroups_known := true;
     G`sylow_subgroups_known := true;
     G`outer_equivalence := false;
+    G`subgroup_inclusions_known := false; // TODO: change to true
     AssignBasicAttributes(G);
     return PrintData(G);
 end intrinsic;

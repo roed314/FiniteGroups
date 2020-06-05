@@ -3,6 +3,8 @@ declare verbose LMFDBGrp, 1;
 declare type LMFDBGrp;
 declare attributes LMFDBGrp:
   MagmaGrp,
+  Subgroups,
+  ConjugacyClasses,
   label,
   old_label,
   name,
@@ -87,9 +89,9 @@ declare attributes LMFDBGrp:
   composition_length;
 intrinsic Print(G::LMFDBGrp)
   {Print LMFDBGrp}
-  printf "LMFDBDGrp %o\n", G`label;
-  //printf "  Name %o\n", G`name;
-  //printf "  Order %o", G`order;
+  printf "LMFDBGrp %o:\n", Get(G, "label");
+  //printf "  Name %o\n", Get(G, "name");
+  printf "  Order %o", Get(G, "order");
 end intrinsic;
 
 declare verbose LMFDBGrpPerm, 1;
@@ -115,14 +117,15 @@ declare attributes LMFDBGrpPerm:
 
 intrinsic Print(G::LMFDBGrpPerm)
   {Print LMFDBGrpPerm}
-  printf "LMFDBDGrpPerm %o:\n", G`label;
-  printf "  Order %o", G`order;
+  printf "LMFDBGrpPerm %o:\n", Get(G, "label");
+  printf "  Order %o", Get(G, "order");
 end intrinsic;
 
 declare verbose LMFDBSubGrp, 1;
 declare type LMFDBSubGrp;
 declare attributes LMFDBSubGrp:
-  MagmaAmbient, // input
+  Grp, // input
+  MagmaAmbient, // derived from Grp
   MagmaSubGrp, // input
   label, // process
   outer_equivalence, // input
@@ -171,10 +174,10 @@ declare attributes LMFDBSubGrp:
 
 intrinsic Print(H::LMFDBSubGrp)
   {Print LMFDBGrp}
-  printf "LMFDBDSubGrp %o:\n", H`label;
-  printf "  Group label%o\n ", H`ambient;
-  printf "  Order %o\n", H`subgroup_order;
-  printf "  Normal? %o", H`normal;
+  printf "LMFDBSubGrp %o:\n", Get(H, "label");
+  printf "  Group label %o\n ", Get(H, "ambient");
+  printf "  Order %o\n", Get(H, "subgroup_order");
+  printf "  Normal? %o", Get(H, "normal");
 end intrinsic;
 
 declare verbose LMFDBCtrlProd, 1;
@@ -190,8 +193,8 @@ declare attributes LMFDBCtrlProd:
 
 intrinsic Print(P::LMFDBCtrlProd)
   {Print LMFDBCtrlProd}
-  printf "LMFDBCtrlProd %o:\n", P`label;
-  printf "  Central product of %o and %o", P`factor1, P`factor2;
+  printf "LMFDBCtrlProd %o:\n", Get(P, "label");
+  printf "  Central product of %o and %o", Get(P, "factor1"), Get(P, "factor2");
 end intrinsic;
 
 declare verbose LMFDBWrthProd, 1;
@@ -205,8 +208,8 @@ declare attributes LMFDBWrthProd:
 
 intrinsic Print(P::LMFDBWrthProd)
   {Print LMFDBWrthProd}
-  printf "LMFDBWrthProd %o:\n", P`label;
-  printf " Wreath product of %o by %o", P`acted, P`actor;
+  printf "LMFDBWrthProd %o:\n", Get(P, "label");
+  printf " Wreath product of %o by %o", Get(P, "acted"), Get(P, "actor");
 end intrinsic;
 
 declare verbose LMFDBRepQQ, 1;
@@ -222,10 +225,10 @@ declare attributes LMFDBRepQQ:
 
 intrinsic Print(Rho::LMFDBRepQQ)
   {Print LMFDBRepQQ}
-  printf "LMFDBRepQQ %o:\n", Rho`label;
-  printf "  Dimension %o:\n", Rho`dim;
-  printf "  Group %o:\n", Rho`group;
-  printf "  Irreducible? %o", Rho`irreducible;
+  printf "LMFDBRepQQ %o:\n", Get(Rho, "label");
+  printf "  Dimension %o:\n", Get(Rho, "dim");
+  printf "  Group %o:\n", Get(Rho, "group");
+  printf "  Irreducible? %o", Get(Rho, "irreducible");
 end intrinsic;
 
 declare verbose LMFDBRepZZ, 1;
@@ -246,10 +249,10 @@ declare attributes LMFDBRepZZ:
 
 intrinsic Print(Rho::LMFDBRepZZ)
   {Print LMFDBRepZZ}
-  printf "LMFDBRepZZ %o:\n", Rho`label;
-  printf "  Dimension %o:\n", Rho`dim;
-  printf "  Group %o:\n", Rho`group;
-  printf "  Irreducible? %o", Rho`irreducible;
+  printf "LMFDBRepZZ %o:\n", Get(Rho, "label");
+  printf "  Dimension %o:\n", Get(Rho, "dim");
+  printf "  Group %o:\n", Get(Rho, "group");
+  printf "  Irreducible? %o", Get(Rho, "irreducible");
 end intrinsic;
 
 declare verbose LMFDBRepCC, 1;
@@ -272,10 +275,10 @@ declare attributes LMFDBRepCC:
 
 intrinsic Print(Rho::LMFDBRepCC)
   {Print LMFDBRepCC}
-  printf "LMFDBRepCC %o:\n", Rho`label;
-  printf "  Dimension %o:\n", Rho`dim;
-  printf "  Group %o:\n", Rho`group;
-  printf "  Irreducible? %o", Rho`irreducible;
+  printf "LMFDBRepCC %o:\n", Get(Rho, "label");
+  printf "  Dimension %o:\n", Get(Rho, "dim");
+  printf "  Group %o:\n", Get(Rho, "group");
+  printf "  Irreducible? %o", Get(Rho, "irreducible");
 end intrinsic;
 
 declare verbose LMFDBRepP, 1;
@@ -293,9 +296,9 @@ declare attributes LMFDBRepP:
 
 intrinsic Print(Rho::LMFDBRepP)
   {Print LMFDBRepP}
-  printf "LMFDBRepP %o:\n", Rho`label;
-  printf "  Dimension %o:\n", Rho`dim;
-  printf "  Ambient %o:", Rho`ambient;
+  printf "LMFDBRepP %o:\n", Get(Rho, "label");
+  printf "  Dimension %o:\n", Get(Rho, "dim");
+  printf "  Ambient %o:", Get(Rho, "ambient");
 end intrinsic;
 
 declare verbose LMFDBRepPNames, 1;
@@ -310,14 +313,15 @@ declare attributes LMFDBRepPNames:
 
 intrinsic Print(s::LMFDBRepPNames)
   {Print LMFDBRepPNames}
-  printf "LMFDBRepPNames %o:\n", Rho`name;
-  printf "  Dimension %o:\n", Rho`dim;
-  printf "  Group %o:", Rho`group;
+  printf "LMFDBRepPNames %o:\n", Get(Rho, "name");
+  printf "  Dimension %o:\n", Get(Rho, "dim");
+  printf "  Group %o:", Get(Rho, "group");
 end intrinsic;
 
 declare verbose LMFDBGrpConjCls, 1;
 declare type LMFDBGrpConjCls;
 declare attributes LMFDBGrpConjCls:
+  Grp,
   MagmaConjCls,
   label,
   group,
@@ -330,15 +334,17 @@ declare attributes LMFDBGrpConjCls:
 
 intrinsic Print(C::LMFDBGrpConjCls)
   {Print LMFDBGrpConjCls}
-  printf "LMFDBGrpConjCls %o:\n", C`label;
-  printf "  Size %o:\n", C`size;
-  printf "  Representative %o", C`representative;
-  printf "  Group %o:\n", C`group;
+  printf "LMFDBGrpConjCls %o:\n", Get(C, "label");
+  printf "  Size %o:\n", Get(C, "size");
+  printf "  Representative %o", Get(C, "representative");
+  printf "  Group %o:\n", Get(C, "group");
 end intrinsic;
 
 declare verbose LMFDBGrpPermConjCls, 1;
 declare type LMFDBGrpPermConjCls;
 declare attributes LMFDBGrpPermConjCls:
+  Grp,
+  MagmaConjCls,
   label,
   group,
   degree,
@@ -351,15 +357,16 @@ declare attributes LMFDBGrpPermConjCls:
 
 intrinsic Print(C::LMFDBGrpPermConjCls)
   {Print LMFDBGrpConjCls}
-  printf "LMFDBGrpPermConjCls %o:\n", C`label;
-  printf "  Size %o:\n", C`size;
-  printf "  Representative %o", C`representative;
-  printf "  Group %o:\n", C`group;
+  printf "LMFDBGrpPermConjCls %o:\n", Get(C, "label");
+  printf "  Size %o:\n", Get(C, "size");
+  printf "  Representative %o", Get(C, "representative");
+  printf "  Group %o:\n", Get(C, "group");
 end intrinsic;
 
 declare verbose LMFDBGrpChtrCC, 1;
 declare type LMFDBGrpChtrCC;
 declare attributes LMFDBGrpChtrCC:
+  Grp,
   MagmaChtr,
   label,
   group,
@@ -372,9 +379,9 @@ declare attributes LMFDBGrpChtrCC:
 
 intrinsic Print(Chi::LMFDBGrpChtrCC)
   {Print LMFDBGrpChtrCC}
-  printf "LMFDBGrpChtrCC %o:\n", Chi`Llbel;
-  printf "  Dimension %o:\n", Chi`dim;
-  printf "  Group %o:", Chi`group;
+  printf "LMFDBGrpChtrCC %o:\n", Get(Chi, "label");
+  printf "  Dimension %o:\n", Get(Chi, "dim");
+  printf "  Group %o:", Get(Chi, "group");
 end intrinsic;
 
 declare verbose LMFDBGrpChtrQQ, 1;
@@ -390,9 +397,9 @@ declare attributes LMFDBGrpConjChtrQQ:
 
 intrinsic Print(Chi::LMFDBGrpChtrQQ)
   {Print LMFDBGrpChtrQQ}
-  printf "LMFDBGrpChtrQQ %o:\n", Chi`label;
-  printf "  Rational Dimension %o:\n", Chi`qdim;
-  printf "  Group %o:", Chi`group;
+  printf "LMFDBGrpChtrQQ %o:\n", Get(Chi, "label");
+  printf "  Rational Dimension %o:\n", Get(Chi, "qdim");
+  printf "  Group %o:", Get(Chi, "group");
 end intrinsic;
 
 // include hashing function? see https://magma.maths.usyd.edu.au/magma/handbook/text/27

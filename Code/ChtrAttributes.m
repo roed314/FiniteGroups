@@ -1,5 +1,5 @@
 // TODO
-intrinsic label(Chi::LMFDBGrpChrtCC) -> MonStgElt
+intrinsic label(Chi::LMFDBGrpChtrCC) -> MonStgElt
   {}
   // N.i.dcj
   // c is a lower-case letter code for the rational class of this character
@@ -9,48 +9,46 @@ intrinsic label(Chi::LMFDBGrpChrtCC) -> MonStgElt
   j := Get(Chi, "counter");
 end intrinsic;
 
-// TODO
-// Magma doesn't store group of character, as far as I can tell
-intrinsic group(Chi::LMFDBGrpChrtCC) -> Any
-  {}
+intrinsic group(Chi::LMFDBGrpChtrCC) -> Any
+    {}
+    return label(Get(Chi, "Grp"));
 end intrinsic;
 
-intrinsic dim(Chi::LMFDBGrpChrtCC) -> Any
+intrinsic dim(Chi::LMFDBGrpChtrCC) -> Any
   {Dimension of the representation associated to Chi}
   CChi := Chi`MagmaChtr;
   return CChi[1];
 end intrinsic;
 
 // TODO
-intrinsic counter(Chi::LMFDBGrpChrtCC) -> Any
+intrinsic counter(Chi::LMFDBGrpChtrCC) -> Any
   {}
 end intrinsic;
 
-intrinsic kernel(Chi::LMFDBGrpChrtCC) -> Any
+intrinsic kernel(Chi::LMFDBGrpChtrCC) -> Any
   {}
-  CChi := Get(Chi, "MagmaChtr");
-  KK := Kernel(CChi);
-  // need to get subgroup label for kernel
+  return Kernel(Get(Chi, "MagmaChtr"));
 end intrinsic;
 
-// TODO
-intrinsic center(Chi::LMFDBGrpChrtCC) -> Any
+intrinsic center(Chi::LMFDBGrpChtrCC) -> Any
   {}
-  CChi := Get(Chi, "MagmaChtr");
-  Z := Center(CChi);
-  // need to get subgroup label for center
+  return Center(Get(Chi, "MagmaChtr"));
 end intrinsic;
 
-intrinsic faithful(Chi::LMFDBGrpChrtCC) -> BoolElt
+intrinsic faithful(Chi::LMFDBGrpChtrCC) -> BoolElt
   {}
-  CChi := Get(Chi, "MagmaChtr");
-  return IsFaithful(CChi);
+  return IsFaithful(Get(Chi, "MagmaChtr"));
 end intrinsic;
 
 // TODO
 // want image as subgroup of GL_n(CC)
 // can get abstract image using G/kernel
-intrinsic image(Chi::LMFDBGrpChrtCC) -> Any
+intrinsic image(Chi::LMFDBGrpChtrCC) -> Any
   {}
   // probably need to use associated LMFDBRepCC...
+end intrinsic;
+
+intrinsic GetGrp(C::LMFDBGrpChtrCC) -> Grp
+    {This function is used by the file IO code to help identify subgroups}
+    return C`Grp;
 end intrinsic;

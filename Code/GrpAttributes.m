@@ -1,5 +1,5 @@
 /* list of attributes to compute.*/
- 
+
 intrinsic almost_simple(G::LMFDBGrp) -> Any
   {}
   // In order to be almost simple, we need a simple nonabelian normal subgroup with trivial centralizer
@@ -185,7 +185,7 @@ intrinsic monomial(G::LMFDBGrp) -> BoolElt
             return true;
         end if;
     end for;
-  end if;   
+  end if;
   return false;
 end intrinsic;
 
@@ -252,7 +252,7 @@ end intrinsic;
 intrinsic transitive_degree(G::LMFDBGrp) -> Any
   {Smallest transitive degree for a faithful permutation representation}
   ts:=Get(G, "MagmaTransitiveSubgroup");
-  return Get(G, "order")/Order(ts);
+  return Get(G, "order") div Order(ts);
 end intrinsic;
 
 intrinsic perm_gens(G::LMFDBGrp) -> Any
@@ -288,7 +288,7 @@ intrinsic faithful_reps(G::LMFDBGrp) -> Any
       A[v] +:= 1;
     end if;
   end for;
-  return Sort([[k[1], k[2], v] : k -> v in A]);
+  return Sort([[Integers() | k[1], k[2], v] : k -> v in A]);
 end intrinsic;
 
 intrinsic smallrep(G::LMFDBGrp) -> Any
@@ -349,7 +349,7 @@ intrinsic MagmaSylowSubgroups(G::LMFDBGrp) -> Any
   GG := G`MagmaGrp;
   SS := AssociativeArray();
   F := FactoredOrder(GG);
-  for uu in F do 
+  for uu in F do
     p := uu[1];
     SS[p] := SylowSubgroup(GG, p);
   end for;
@@ -399,13 +399,75 @@ intrinsic perfect_core(G::LMFDBGrp) -> Any
   return DD[#DD];
 end intrinsic;
 
+intrinsic chevalley_letter(t::Tup) -> MonStgElt
+  {Given a tuple of integers corresponding to a finite simple group, as in output of CompositionFactors, return appropriate string for Chevalley group}
+  assert #t eq 3;
+  assert Type(t[1]) eq "RngIntElt";
+  return chevalley_letter(t[1]);
+end intrinsic;
+
+intrinsic chevalley_letter(f::RngIntElt) -> MonStgElt
+  {Given an integer corresponding to a finite simple group, as in output of CompositionFactors, return appropriate string for Chevalley group}
+  assert f in [1..16];
+  lets := ["A", "B", "C", "D", "G", "F", "E", "E", "E", "2A", "2B", "2D", "3D", "2G", "2F", "2E"];
+  return lets[f];
+  /*
+    from https://magma.maths.usyd.edu.au/magma/handbook/text/625#6962
+      1       A(d, q)
+      2       B(d, q)
+      3       C(d, q)
+      4       D(d, q)
+      5       G(2, q)
+      6       F(4, q)
+      7       E(6, q)
+      8       E(7, q)
+      9       E(8, q)
+     10       2A(d, q)
+     11       2B(2, q)
+     12       2D(d, q)
+     13       3D(4, q)
+     14       2G(2, q)
+     15       2F(4, q)
+     16       2E(6, q)
+  */
+end intrinsic;
+
+// https://magma.maths.usyd.edu.au/magma/handbook/text/743
+intrinsic composition_factor_decode(t::Tup) -> Grp
+  {Given a tuple <f,d,q>, in the format of the output of CompositionFactors, return the corresponding group.}
+  assert #t eq 3;
+  f,d,q := Explode(t);
+  if f in [1..16] then
+    chev := chevalley_letter(f);
+    return ChevalleyGroup(chev, d, q);
+  elif f eq 18 then
+    // TODO
+    // sporadic
+    error "Sporadic groups not implemented yet; sorry! :(";
+  elif f eq 17 then
+    return Alt(d);
+  elif f eq 19 then
+    return CyclicGroup(q);
+  else
+    error "Invalid first entry";
+  end if;
+end intrinsic;
+
 intrinsic composition_factors(G::LMFDBGrp) -> Any
     {labels for composition factors}
-    return [label(H) : H in CompositionFactors(G`MagmaGrp)];
+    // see https://magma.maths.usyd.edu.au/magma/handbook/text/625#6962
+    GG := G`MagmaGrp;
+    tups := CompositionFactors(GG);
+    facts := [composition_factor_decode(tup) : tup in tups];
+    return [label(H) : H in facts];
 end intrinsic;
 
 intrinsic composition_length(G::LMFDBGrp) -> Any
   {Compute length of composition series.}
+  /*
+  GG := Get(G, "MagmaGrp");
+  return #CompositionFactors(GG);
+  */
   return #Get(G,"composition_factors"); // Correct if trivial group is labeled G_0
 end intrinsic;
 
@@ -430,7 +492,7 @@ end intrinsic;
 intrinsic outer_group(G::LMFDBGrp) -> Any
    {returns OuterAutomorphism Group}
    aut:=Get(G, "MagmaAutGroup");
-   return OuterFPGroup(aut);
+   return label(OuterFPGroup(aut));
 end intrinsic;
 
 
@@ -521,8 +583,8 @@ intrinsic Subgroups(G::LMFDBGrp) -> SeqEnum
     SubLabels:= LabelSubgroups(G,Subgroups(G : IndexLimit:=max_index));
     for tup in SubLabel do
         H := New(LMFDBSubGrp);
-        H`MagmaAmbient := G`MagmaGrp;
-        H`MamgaSubGrp := tup[2];
+        H`Grp := G;
+        H`MagmaSubGrp := tup[2];
         H`label := tup[1];
         AssignBasicAttributes(H);
         /* Add normal label to special_labels */
@@ -570,13 +632,117 @@ M:=MaximalSubgroups; /* ADD WHEN WE ADD MAXIMAL?? */
     return S;
 end intrinsic;
 
+intrinsic LookupSubgroupLabel(G::LMFDBGrp, HH::Grp) -> Any
+    {Find a subgroup label for H, or return None if H is not labeled}
+    S := Get(G, "Subgroups");
+    GG := Get(G, "MagmaGrp");
+    for K in S do
+        KK := Get(K, "MagmaSubGrp");
+        if IsConjugate(GG, HH, KK) then
+            v := Get(K, "label");
+            if Type(v) eq NoneType then
+                v := Get(K, "special_label")[1];
+            end if;
+            return v;
+        end if;
+    end for;
+    return None();
+end intrinsic;
+
+intrinsic LookupSubgroup(G::LMFDBGrp, label::MonStgElt) -> Grp
+{Find a subgroup with a given label}
+    S := Get(G, "Subgroups");
+    for K in S do
+        if label eq Get(K, "label") or label in Get(K, "special_labels") then
+            return Get(K, "MagmaSubGrp");
+        end if;
+    end for;
+    error Sprintf("Subgroup with label %o not found", label);
+end intrinsic;
+
+intrinsic order_stats(G::LMFDBGrp) -> Any
+    {returns the list of pairs [o, m] where m is the number of elements of order o}
+    GG := G`MagmaGrp;
+    A := AssociativeArray();
+    C := Classes(GG);
+    for c in C do
+        if not IsDefined(A, c[1]) then
+            A[c[1]] := 0;
+        end if;
+        A[c[1]] +:= c[2];
+    end for;
+    return [[k, v] : k -> v in A];
+end intrinsic;
+
+intrinsic semidirect_product(G::LMFDBGrp : direct := false) -> Any
+  {Returns true if G is a nontrivial semidirect product; otherwise returns false.}
+  dirbool := false;
+  GG := Get(G, "MagmaGrp");
+  ordG := Get(G, "order");
+  Ns := NormalSubgroups(GG); // TODO: this should be changed to call on subgroup database when it exists
+  Remove(~Ns,#Ns); // remove full group;
+  Remove(~Ns,1); // remove trivial group;
+  if direct then
+    Ks := Ns;
+  else
+    Ks := Subgroups(GG); // this should be changed to call on subgroup database when it exists
+  end if;
+  for r in Ns do
+    N := r`subgroup;
+    comps := [el : el in Ks | el`order eq (ordG div Order(N))];
+    for s in comps do
+      K := s`subgroup;
+      if #(N meet K) eq 1 then
+        return true;
+        //print N, K;
+      end if;
+    end for;
+  end for;
+  return dirbool;
+end intrinsic;
+
+intrinsic direct_product(G::LMFDBGrp) -> Any
+  {Returns true if G is a nontrivial direct product; otherwise returns false.}
+  return semidirect_product(G : direct := true);
+end intrinsic;
+
+// TODO: finish this
+intrinsic wreath_product(G::LMFDBGrp) -> Any
+  {Returns true if G is a wreath product; otherwise returns false.}
+  if not Get(G, "semidirect_product") then
+    return false;
+  end if;
+  return semidirect_product(G : direct := true);
+end intrinsic;
+
 intrinsic ConjugacyClasses(G::LMFDBGrp) ->  SeqEnum
 {The list of conjugacy classes for this group}
-    C := [];
-    // Need to fix sorting, add labels and maybe other things here.
-    for mc in ConjugacyClasses(G`MagmaGrp) do
-        cc := New(LMFDBGrpConjCls);
-        cc`MagmaConjCls := mc;
-        Append(~C, cc);
-    end for;
+  g:=G`MagmaGrp;
+  cc:=ConjugacyClasses(g);
+  cm:=ClassMap(g);
+  pm:=PowerMap(g);
+  gens:=Generators(g); // Get this from the LMFDBGrp?
+  ordercc, _, labels := ordercc(g,cc,cm,pm,gens);
+  // perm will convert given index to the one out of ordercc
+  perm := [0 : j in [1..#cc]];
+  for j:=1 to #cc do
+    perm[cm(ordercc[j])] := j;
+  end for;
+  magccs:=[ New(LMFDBGrpConjCls) : j in cc];
+  gord:=Order(g);
+  plist:=[z[1] : z in Factorization(gord)];
+  //gord:=Get(G, 'Order');
+  for j:=1 to #cc do
+    ix:=perm[j];
+    magccs[j]`Grp := G;
+    magccs[j]`MagmaConjCls := cc[ix];
+    magccs[j]`label := labels[j];
+    magccs[j]`size := cc[ix][2];
+    magccs[j]`counter := j;
+    magccs[j]`order := cc[ix][1];
+    // Not sure of which other powers are desired
+    magccs[j]`powers := [perm[pm(ix,p)] : p in plist];
+    magccs[j]`representative := cc[ix][3];
+  end for;
+  return magccs;
 end intrinsic;

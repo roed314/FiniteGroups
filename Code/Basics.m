@@ -1,3 +1,11 @@
+intrinsic NewLMFDBGrp(GG::Grp, lab::MonStgElt) -> LMFDBGrp
+  {Create a new LMFDBGrp object G with G`MagmaGrp := magma_gp and G`label := lab}
+  G := New(LMFDBGrp);
+  G`MagmaGrp := GG;
+  G`label := lab;
+  return G;
+end intrinsic;
+
 intrinsic GetBasicAttributesGrp() -> Any
   {Outputs SeqEnum of basic attributes}
   return [
@@ -18,7 +26,7 @@ intrinsic GetBasicAttributesGrp() -> Any
     ];
 end intrinsic;
 
-intrinsic AssignBasicAttributes(G::LMFDBGrp) -> Any
+intrinsic AssignBasicAttributes(G::LMFDBGrp)
   {Assign basic attributes. G`MagmaGrp must already be assigned.}
   attrs := GetBasicAttributesGrp();
   GG := G`MagmaGrp;
@@ -28,8 +36,8 @@ intrinsic AssignBasicAttributes(G::LMFDBGrp) -> Any
     eval_str := Sprintf("return %o(GG);", mag_attr);
     G``db_attr := eval eval_str;
   end for;
-  //G`IsSuperSolvable := IsSupersoluble(GG); // thanks a lot Australia! :D; only for GrpPC... 
-  return Sprintf("Basic attributes assigned to %o", G);
+  //G`IsSuperSolvable := IsSupersoluble(GG); // thanks a lot Australia! :D; only for GrpPC...
+  //return Sprintf("Basic attributes assigned to %o", G);
 end intrinsic;
 
 intrinsic GetBasicAttributesSubGrp(pair::BoolElt) -> Any
@@ -52,9 +60,9 @@ intrinsic GetBasicAttributesSubGrp(pair::BoolElt) -> Any
   end if;
 end intrinsic;
 
-intrinsic AssignBasicAttributes(H::LMFDBSubGrp) -> Any
+intrinsic AssignBasicAttributes(H::LMFDBSubGrp)
   {Assign basic attributes. H`MagmaSubGrp must already be assigned.}
-  GG := H`MagmaAmbient;
+  GG := Get(H, "MagmaAmbient");
   HH := H`MagmaSubGrp;
   attrs := GetBasicAttributesSubGrp(true);
   for attr in attrs do
@@ -66,9 +74,9 @@ intrinsic AssignBasicAttributes(H::LMFDBSubGrp) -> Any
   attrs := GetBasicAttributesSubGrp(false);
   for attr in attrs do
     mag_attr:=attr[1];
-    db_attr:=attr[2];	     
+    db_attr:=attr[2];
     eval_str := Sprintf("return %o(HH)", mag_attr);
     H``db_attr := eval eval_str;
   end for;
-  return Sprintf("Basic attributes assigned to %o", H);
+  //return Sprintf("Basic attributes assigned to %o", H);
 end intrinsic;

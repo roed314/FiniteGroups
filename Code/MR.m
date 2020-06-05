@@ -1,26 +1,25 @@
 
 intrinsic minimal_normal(H::LMFDBSubGrp) -> BoolElt // Need to be subgroup attribute file
   {Determine if a subgroup is minimal normal subgroup}
-  GG := H`MagmaAmbient;
+  GG := Get(H, "MagmaAmbient");
   HH := H`MagmaSubGrp;
   if not IsNormal(GG, HH) then 
     return false;
   else
     for r in NormalSubgroups(GG) do
       N := r`subgroup;
-      if #(N meet HH) gt 2 then
+      if (N subset HH) and (N ne HH) and (Order(N) ne 1) then
         return false;
-      else 
-        return true;
       end if;
     end for;
+    return true;
   end if;
 end intrinsic;
 
 
 intrinsic split(H::LMFDBSubGrp) -> Any // Need to be subgroup attribute file
   {Returns whether this sequence with H splits or not, null when non-normal}
-  GG := H`MagmaAmbient;
+  GG := Get(H, "MagmaAmbient");
   HH := H`MagmaSubGrp;
   S := Subgroups(GG); 
   if not IsNormal(GG, HH) then
@@ -36,4 +35,9 @@ intrinsic split(H::LMFDBSubGrp) -> Any // Need to be subgroup attribute file
   end if;
   return false;
 end intrinsic;
+
+
+
+
+
 
