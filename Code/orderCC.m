@@ -204,34 +204,12 @@ intrinsic ordercc(g::Any,cc::Any,cm::Any,pm::Any,gens::Any) -> Any
   return cc,finalkeys, labels;
 end intrinsic;
 
-intrinsic initCCs(G::LMFDBGrp)->Any
-  {Take an LMFDB group and fill in conj class information}
-  g:=G`MagmaGrp;
+intrinsic testCCs(g::Any)->Any
+  {}
   cc:=ConjugacyClasses(g);
   cm:=ClassMap(g);
   pm:=PowerMap(g);
   gens:=Generators(g); // Get this from the LMFDBGrp?
-  ordercc, _, labels := ordercc(g,cc,cm,pm,gens);
-  // perm will convert current index to the one out of ordercc
-  perm := [0 : j in [1..#cc]];
-  for j:=1 to #cc do
-    perm[cm(ordercc[j])] := j;
-  end for;
-  magccs:=[ New(LMFDBGrpConjCls) : j in cc];
-  gord:=Order(g);
-  plist:=[z[1] : z in Factorization(gord)];
-  //gord:=Get(G, 'Order');
-  for j:=1 to #cc do
-    ix:=perm[j];
-    magccs[j]`MagmaConjCls := cc[ix];
-    magccs[j]`label := labels[j];
-    magccs[j]`size := cc[ix][2];
-    magccs[j]`counter := j;
-    magccs[j]`order := cc[ix][1];
-    magccs[j]`powers := [perm[pm(ix,p)] : p in plist];
-    magccs[j]`representative := cc[ix][3];
-    magccs[j]`group := "stub";
-  end for;
-  return magccs;
+  return ordercc(g,cc,cm,pm,gens);
 end intrinsic;
 
