@@ -31,4 +31,12 @@ somewhere else in the loop. */
     return false;
 end intrinsic;
 
+intrinsic schur_multiplier(G::LMFDBGrp) -> Any
+  {Computes abelian invariants for Schur multiplier of G}
+  GG := Get(G, "MagmaGrp");
+  D,f := Darstellungsgruppe(FPGroup(GG));
+  return AQInvariants(Kernel(f));
+end intrinsic;
+
+
 
