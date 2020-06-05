@@ -20,11 +20,10 @@ intrinsic ComputeAllSplittings(G::LMFDBGrp) -> Any
   return splittings;
 end intrinsic;
 
-
-intrinsic SchurMultiplier(G::LMFDBGrp) -> Any
+intrinsic schur_multiplier(G::LMFDBGrp) -> Any
   {}
   invs := [];
-  ps := FactorsOfOrder(G);
+  ps := factors_of_order(G);
   GG := Get(G, "MagmaGrp");
   for p in ps do
     for el in pMultiplicator(GG,p) do // handbook claims pMultiplicator works for GrpFin, but in Magma only for GrpPerm...

@@ -8,9 +8,8 @@ intrinsic label(C::LMFDBGrpConjCls) -> MonStgElt
 end intrinsic;
 
 intrinsic group(C::LMFDBGrpConjCls) -> MonStgElt
-  {return label of ambient group of C}
-  CC := Get(C, "MagmaConjCls");
-  return label(Parent(CC[3]));
+    {return label of ambient group of C}
+    return label(C`Grp);
 end intrinsic;
 
 intrinsic size(C::LMFDBGrpConjCls) -> Any
@@ -33,21 +32,19 @@ end intrinsic;
 
 // TODO
 // not sure how to do this...
-// supposed to return label for centralizer as subgroup of ambient group
+// Currently returns the subgroup rather than its label
 intrinsic centralizer(C::LMFDBGrpConjCls) -> Any
   {}
   gp_label := Get(C, "group");
   //G := LoadGrp(gp_label, );
   g := Get(C, "representative");
-  Z := Centralizer(g);
-  GG := Parent(g);
-  return Centralizer(g); // TODO: fix this
+  return Centralizer(Parent(g), g);
 end intrinsic;
 
 // TODO
 intrinsic powers(C::LMFDBGrpConjCls) -> Any
   {}
-  return false;
+  return None();
 end intrinsic;
 
 intrinsic representative(C::LMFDBGrpConjCls) -> Any
@@ -55,3 +52,14 @@ intrinsic representative(C::LMFDBGrpConjCls) -> Any
   CC := Get(C, "MagmaConjCls");
   return CC[3]; // this may need to change depending on how elts are represented in ambient group
 end intrinsic;
+
+intrinsic GetGrp(C::LMFDBGrpConjCls) -> Grp
+    {This function is used by the file IO code to help idenify subgroups}
+    return C`Grp;
+end intrinsic;
+
+intrinsic GetGrp(C::LMFDBGrpPermConjCls) -> Grp
+    {This function is used by the file IO code to help identify subgroups}
+    return C`Grp;
+end intrinsic;
+

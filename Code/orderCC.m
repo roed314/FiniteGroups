@@ -10,17 +10,11 @@ intrinsic num2letters(n::RngIntElt) -> MonStgElt
   return s;
 end intrinsic;
 
-intrinsic ordercc(G::Any) -> Any
+/* Pass in the group data */
+intrinsic ordercc(g::Any,cc::Any,cm::Any,pm::Any,gens::Any) -> Any
   {}
-  g:=G;
-  if Type(G) eq LMFDBGrp then
-    g:=G`MagmaGrp;
-  end if;
-  cc:=ConjugacyClasses(g);
   ncc:=#cc;
-  cm:=ClassMap(g);
-  pm:=PowerMap(g);
-gens:=[h : h in Generators(g)];
+  gens:=[z : z in gens];
   step1:=AssociativeArray();
   for j:=1 to ncc do
     c:=cc[j];
@@ -206,5 +200,16 @@ gens:=[h : h in Generators(g)];
     end if;
   end for;
 
+  cc:=[c[3] : c in cc];
   return cc,finalkeys, labels;
 end intrinsic;
+
+intrinsic testCCs(g::Any)->Any
+  {}
+  cc:=ConjugacyClasses(g);
+  cm:=ClassMap(g);
+  pm:=PowerMap(g);
+  gens:=Generators(g); // Get this from the LMFDBGrp?
+  return ordercc(g,cc,cm,pm,gens);
+end intrinsic;
+

@@ -9,10 +9,9 @@ intrinsic label(Chi::LMFDBGrpChtrCC) -> MonStgElt
   j := Get(Chi, "counter");
 end intrinsic;
 
-// TODO
-// Magma doesn't store group of character, as far as I can tell
 intrinsic group(Chi::LMFDBGrpChtrCC) -> Any
-  {}
+    {}
+    return label(Get(Chi, "Grp"));
 end intrinsic;
 
 intrinsic dim(Chi::LMFDBGrpChtrCC) -> Any
@@ -28,23 +27,17 @@ end intrinsic;
 
 intrinsic kernel(Chi::LMFDBGrpChtrCC) -> Any
   {}
-  CChi := Get(Chi, "MagmaChtr");
-  KK := Kernel(CChi);
-  // need to get subgroup label for kernel
+  return Kernel(Get(Chi, "MagmaChtr"));
 end intrinsic;
 
-// TODO
 intrinsic center(Chi::LMFDBGrpChtrCC) -> Any
   {}
-  CChi := Get(Chi, "MagmaChtr");
-  Z := Center(CChi);
-  // need to get subgroup label for center
+  return Center(Get(Chi, "MagmaChtr"));
 end intrinsic;
 
 intrinsic faithful(Chi::LMFDBGrpChtrCC) -> BoolElt
   {}
-  CChi := Get(Chi, "MagmaChtr");
-  return IsFaithful(CChi);
+  return IsFaithful(Get(Chi, "MagmaChtr"));
 end intrinsic;
 
 // TODO
@@ -53,4 +46,9 @@ end intrinsic;
 intrinsic image(Chi::LMFDBGrpChtrCC) -> Any
   {}
   // probably need to use associated LMFDBRepCC...
+end intrinsic;
+
+intrinsic GetGrp(C::LMFDBGrpChtrCC) -> Grp
+    {This function is used by the file IO code to help identify subgroups}
+    return C`Grp;
 end intrinsic;

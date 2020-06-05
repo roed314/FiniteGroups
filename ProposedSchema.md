@@ -58,7 +58,6 @@ number_subgroups  | integer  | Number of subgroups
 number_normal_subgroups  | integer | Number of normal subgroups
 number_characteristic_subgroups | integer | Number of characteristic subgroups
 derived_length    | smallint | The number of steps in the derived series (0 for a perfect group)
-perfect_core      | integer  | The subgroup label for the end of the derived series
 primary_abelian_invariants | integer[] | Invariants of the maximal abelian quotient, as a sorted list of prime powers
 smith_abelian_invariants | integer[] | Invariants of the maximal abelian quotient, as a sorted list of integers, each dividing the next
 schur_multiplier  | integer[] | Primary invariants for the Schur multiplier (H_2(G, Z))
@@ -152,6 +151,7 @@ We aim to have (up to equivalence)
 
 Subgroups can have two kinds of labels.  The normal label is computed in the subgroup_labels.m file, and includes the index and Gassman equivalence classes.  For groups where we only compute subgroups up to a certain index bound, we also provide special labels for subgroups we want to store that lie outside that index range.  These special labels are as follows.  In each case we start with the label of the abstract group.
 * The center is labeled Z.
+* The perfect_core (the end of the derived series) is labeled C
 * The commutator/derived subgroup is labeled D.
 * The Fitting subgroup is labeled F.
 * The Frattini subgroup is labeled Phi.
@@ -191,16 +191,16 @@ maximal_normal    | boolean   | whether `H` is a maximal NORMAL subgroup of `G` 
 minimal           | boolean   | whether `H` is a minimal subgroup of `G`
 minimal_normal    | boolean   | whether `H` is a minimal NORMAL subgroup of `G` (may not be minimal)
 split             | boolean   | whether this sequence is split (null for non-normal)
-complements       | integer[] | a list of subgroups `K` (up to equivalence) that intersect trivially with `H` and so that `G = HK`
+complements       | text[]    | a list of subgroups `K` (up to equivalence) that intersect trivially with `H` and so that `G = HK`
 direct            | boolean   | whether this sequence is a direct product (`NULL` for non-normal)
 central           | boolean   | whether `H` is contained in the center of `G`
 stem              | boolean   | whether `H` is contained in both the center and commutator subgroups of `G`
 count             | numeric   | The number of subgroups of `G` equivalent to `H`
 conjugacy_class_count | numeric   | The number of conjugacy classes of subgroups in this equivalence class (`NULL` if `outer_equivalence` is false)
-core              | integer   | the label for the core: the intersection of all conjugates of `H`
+core              | text     | the subgroup label for the core: the intersection of all conjugates of `H`
 coset_action_label| text      | when `H` has trivial core `C` and the size of `Q` is at most 31 (GAP)/47 (Magma), gives the transitive group label for `G` as a permutation representation on `G/H`; `NULL` otherwise
 normalizer        | integer   | the label of the normalizer of `H` in `G`
-centralizer       | integer   | the label of the centralizer of `H` in `G`
+centralizer       | text      | the label of the centralizer of `H` in `G`
 normal_closure    | integer   | the label of the smallest normal subgroup of `G` containing `H`
 quotient_action_kernel | integer   | the subgroup label of the kernel of the map from `Q` to `A` (`NULL` if `H` is not normal).  Here `A = Aut(H)` when the sequence is split or `H` is abliean, and `A = Out(H)` otherwise
 quotient_action_image | text  | the label for `Q/K` as an abstract group, where `K` is the quotient action kernel (NULL if `H` is not normal)
@@ -227,8 +227,8 @@ Column         | Type      | Notes
 ---------------|-----------|------
 factor1        | text      | label for `G_1`, lexicographically smaller (ie, smaller order or same order and smaller `i`
 factor2        | text      | label for `G_2`, lexicographically larger
-sub1           | integer   | subgroup label for `U < G_1`
-sub2           | integer   | subgroup label for `U < G_2`
+sub1           | text      | subgroup label for `U < G_1`
+sub2           | text      | subgroup label for `U < G_2`
 product        | text      | label for the product
 alias_spot     | smallint  | Which position this alias should appear in the list of aliases for the product.  0 indicates that it's the main name
 
@@ -360,7 +360,7 @@ group         | text       | Label for the ambient group
 size          | integer    | Number of elements in this conjugacy class/orbit
 counter       | integer    | 1-based ordering of classes (agree with GAP/Magma?).  Sorted by order of representative, then size of the class, then group power classes together.  We choose a smallest representative for each power class
 order         | integer    | Order of an element in this class
-centralizer   | integer    | Label for the centralizer of an element in this class, as a subgroup
+centralizer   | text       | Label for the centralizer of an element in this class, as a subgroup
 powers        | integer[]  | which `counter` conjugacy class for the image of the pth power map, for p dividing the order of the group or the Euler phi function of the exponent of the group
 representative | numeric    | An encoded representative for this conjugacy class, using the group's elt_rep_type
 
@@ -378,7 +378,7 @@ degree        | smallint   | the degree of the group (`n` from `S_n`)
 counter         | smallint?  | 1-based ordering of conjugacy classes (agree with GAP/Magma?)
 size          | numeric    | Number of elements in this conjugacy class
 order         | smallint   | Order of an element in this conjugacy class
-centralizer   | integer    | Label for the isomorphism class of the centralizer of an element in this conjugacy class
+centralizer   | text       | Label for the isomorphism class of the centralizer of an element in this conjugacy class
 cycle_type    | smallint[] | sizes of the cycles in a permutation in this class, in descending order and omitting 1s
 rep           | numeric    | a representative element, as the index in the lexicographic ordering of `S_n`.  This is computed by Sage's `Permutations(n).rank(sigma)` function, with inverse `Permutations(n).unrank(rep)` (using Lehmer codes)
 

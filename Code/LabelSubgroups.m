@@ -169,6 +169,10 @@ intrinsic Supergroups(G::Grp, L::SeqEnum, LI::SeqEnum, j::RngIntElt) -> SeqEnum
     return [i:i in [1..#L]|LI[i] lt n and IsDivisibleBy(n,LI[i]) and #[HH:HH in C|HH subset L[i]] gt 0];
 end intrinsic;
 
+function _make_label(G, triple)
+    return label(G) * Sprintf(".%o.%o.%o", triple[1], triple[2], triple[3]);
+end function;
+
 intrinsic LabelSubgroups(G::Grp : phi:=ClassMap(G), max_index:=0) -> SeqEnum
     {}
     S := Sort(Subgroups(G:IndexLimit:=max_index),func<a,b|b`order-a`order>); // reverse sort by order to sort by index
@@ -207,7 +211,8 @@ intrinsic LabelSubgroups(G::Grp : phi:=ClassMap(G), max_index:=0) -> SeqEnum
             end for;
         end for;
     end for;
-    return Sort([<LL[i],L[i]>:i in [1..#L]],func<a,b| a[1] lt b[1] select -1 else a[1] gt b[1] select 1 else 0>);
+    ret := Sort([<LL[i],L[i]>:i in [1..#L]],func<a,b| a[1] lt b[1] select -1 else a[1] gt b[1] select 1 else 0>);
+    return [<_make_label(G, tup[1]), tup[2]> : tup in ret];
 end intrinsic;
 
 function testsig(m:index := 0)
