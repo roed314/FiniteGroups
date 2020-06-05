@@ -26,9 +26,9 @@ intrinsic maximal_normal(H::LMFDBSubGrp) -> BoolElt // Need to be subgroup attri
   {Determine if a subgroup is maximal normal subgroup}
   GG := H`MagmaAmbient;
   HH := H`MagmaSubGrp;
-  if not IsNormal(GG, HH) then 
-  end if;
-  if IsNormal(GG, HH) then
+  if not IsNormal(GG, HH) then
+    return false;
+  else
     Q := quo< GG | HH >;
     if IsSimple(Q) then 
       return true;

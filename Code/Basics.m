@@ -1,5 +1,5 @@
 intrinsic NewLMFDBGrp(GG::Grp, lab::MonStgElt) -> LMFDBGrp
-  {Create a new LMFDBGrp object G with G`MagmaGrp := magma_gp and G`label := label}
+  {Create a new LMFDBGrp object G with G`MagmaGrp := magma_gp and G`label := lab}
   G := New(LMFDBGrp);
   G`MagmaGrp := GG;
   G`label := lab;
