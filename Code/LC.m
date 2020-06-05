@@ -168,12 +168,11 @@ end intrinsic;
 
 
 
-intrinsic complements(H::LMFDBSubGrp) -> Any
-  {Returns the subgroups K of G such that H ∩ K = e and G=HK}
-  if not Get(H,"normal") then
-    return [];
-  else
-    return Complements(Get(H,"MagmaAmbient"),H`MagmaSubGrp);
-  end if;
-
-end intrinsic;
+//intrinsic complements(H::LMFDBSubGrp) -> Any
+  //{Returns the subgroups K of G such that H ∩ K = e and G=HK}
+  //if not Get(H,"normal") then
+    //return [];
+  //else
+    //return Complements(Get(H,"MagmaAmbient"),H`MagmaSubGrp);
+  //end if;
+//end intrinsic;
