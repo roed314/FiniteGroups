@@ -605,7 +605,20 @@ intrinsic Subgroups(G::LMFDBGrp) -> SeqEnum
         max_index := G`subgroup_index_bound;
     end if;
     // Need to include the conjugacy class ordering 
-    SubLabels:= LabelSubgroups(GG, Subgroups(GG: IndexLimit:=max_index));
+    lmfdbcc:=ConjugacyClasses(G);
+    cccounters:=[c`counter : c in lmfdbcc];
+    ccreps:=[c`representative : c in lmfdbcc];
+    ParallelSort(~cccounters, ~ccreps);
+    cm:=ClassMap(GG);
+    perm:={};
+    for j:=1 to #ccreps do
+      res:=cm(ccreps[j]);
+      Include(~perm, <res, j>);
+    end for;
+    sset:={j : j in cccounters};
+    perm:=map<sset->sset | perm>;
+    newphi:= cm*perm; // Magma does composition backwards!
+    SubLabels:= LabelSubgroups(GG, Subgroups(GG: IndexLimit:=max_index) : phi:=newphi);
     for tup in SubLabels do
         H := New(LMFDBSubGrp);
         H`MagmaAmbient := GG;
