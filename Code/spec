@@ -22,4 +22,5 @@
   orderCC.m
   mb.m
   ConjClsAttributes.m
+  makereps.m
 }
