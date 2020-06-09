@@ -179,3 +179,43 @@ intrinsic projective_image(H::LMFDBSubGrp) -> Any // Need to be subgroup attribu
   return label(quo<GG|HH meet Center(GG)>);
 end intrinsic;
 
+intrinsic complements(H::LMFDBSubGrp) -> Any
+  {Returns the subgroups K of G such that H ∩ K = e and G=HK in a list}
+  GG := Get(H, "MagmaAmbient");
+  HH := H`MagmaSubGrp;
+  S:= Subgroups(GG);
+  if not Get(H,"normal") then
+    return [];
+  else
+    comps := [el : el in S | el`order eq (Order(GG) div Order(HH))];
+    M := [];
+    for s in comps do
+      K := s`subgroup;
+      if #(K meet HH) eq 1 then 
+        Append(~M, K);
+      end if;
+    end for;
+    return M;
+  end if;
+end intrinsic;
+
+
+intrinsic direct(H::LMFDBSubGrp) -> Any // Need to be subgroup attribute file
+  {Returns whether this sequence with H direct or not, null when non-normal}
+  GG := H`MagmaAmbient;
+  HH := H`MagmaSubGrp; 
+  if not IsNormal(GG, HH) then
+    return None();
+  else
+    comps := complements(H);
+    for K in comps do
+      if #(K meet HH) eq 1 and IsNormal(GG, K) then
+        return true;
+      end if;
+    end for;
+    return false;
+  end if;
+end intrinsic;
+
+
+

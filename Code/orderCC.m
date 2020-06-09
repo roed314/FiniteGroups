@@ -10,11 +10,41 @@ intrinsic num2letters(n::RngIntElt) -> MonStgElt
   return s;
 end intrinsic;
 
-/* Pass in the group data */
+intrinsic initRandomGroupElement(gens::Any) -> Any
+  {Initialize our random element of group thing.  The state for it
+   is rlist}
+  // Initialize the random number generator first
+  rlist:=[gener : gener in gens];
+  // A paper says to add 5 extra entries for better results
+  rlist:= rlist cat [gens[1] : z in [1..5]];
+  for rl in [1..20] do
+    ii:=ourrand(#rlist)+1;
+    jj:=ourrand(#rlist)+1;
+    if ii ne jj then rlist[ii] *:= rlist[jj]; end if;
+  end for;
+  return rlist;
+end intrinsic;
+
+
+intrinsic randomG(~rlist::Any,~result::Any)
+  {Produce the next random group element updating rlist in the process}
+  ii:=0;jj:=0;
+  while ii eq jj do
+    ii:=ourrand(#rlist)+1;
+    jj:=ourrand(#rlist)+1;
+  end while;
+  rlist[ii] *:= rlist[jj];
+  result := rlist[ii];
+end intrinsic;
+
+// Pass in the group data 
 intrinsic ordercc(g::Any,cc::Any,cm::Any,pm::Any,gens::Any) -> Any
-  {}
+  {Take a Magma group, the conjugacy class, class map, power map, and 
+   generators, and return ordered classes and labels.}
   ncc:=#cc;
   gens:=[z : z in gens];
+  // Step 1 partitions the classes based on the order of a generator
+  // and the size of the class
   step1:=AssociativeArray();
   for j:=1 to ncc do
     c:=cc[j];
@@ -24,6 +54,7 @@ intrinsic ordercc(g::Any,cc::Any,cm::Any,pm::Any,gens::Any) -> Any
       step1[[c[1],c[2]]] := {j};
     end if;
   end for;
+  // List indicating which classes are maximal w.r.t. powering
   ismax:=[true : z in cc];
   for j:=1 to ncc do
     dlist := Divisors(cc[j][1]);
@@ -34,6 +65,9 @@ intrinsic ordercc(g::Any,cc::Any,cm::Any,pm::Any,gens::Any) -> Any
     if j eq 1 then ismax[pm(1, cc[1][1])] := false; end if;
   end for;
 
+  // Separate a set of classes into divisions
+  // The order of a rep is cc[r][1].  This could be more efficient
+  // if we used generators for (Z/nZ)^* where n=cc[r][1]
   makedivs := function(li)
     if #li eq 1 then return [li]; end if;
     divs:=[];
@@ -59,7 +93,7 @@ intrinsic ordercc(g::Any,cc::Any,cm::Any,pm::Any,gens::Any) -> Any
     step1[k] := makedivs(step1[k]);
   end for;
 
-  // Break based on [order of rep, size of class, size of divisions]
+  // Step2 partitions based on [order of rep, size of class, size of divisions]
   step2:=AssociativeArray();
   revmap := [* 0 : z in cc *];
   for k->v in step1 do
@@ -76,28 +110,18 @@ intrinsic ordercc(g::Any,cc::Any,cm::Any,pm::Any,gens::Any) -> Any
     end for;
   end for;
 
-  /* Do initialization first */
+  // Initialization for random group elements 
   ResetRandomSeed();
-  rlist:=[gener : gener in gens];
-  rlist:= rlist cat [gens[1] : z in [1..5]];
-  for rl in [1..20] do
-    ii:=ourrand(#rlist)+1;
-    jj:=ourrand(#rlist)+1;
-    if ii ne jj then rlist[ii] *:= rlist[jj]; end if;
-  end for;
-  randelt := function(rlist)
-    ii:=0;jj:=0;
-    while ii eq jj do
-      ii:=ourrand(#rlist)+1;
-      jj:=ourrand(#rlist)+1;
-    end while;
-    rlist[ii] *:= rlist[jj];
-    return rlist, rlist[ii];
-  end function;
+  rlist := initRandomGroupElement(gens);
 
+  // Within a division, or between divisions which are as yet
+  // unordered, we break ties via the priority, which is essentially
+  // the order they appear in the random generation phase 
   priorities:= [ncc + 1 : z in cc];
   cnt:=1;
+  // We track the expos for labels within a division
   expos := [0:z in cc];
+  // Just the key to step 2 plus the priority
   finalkeys:= [[0,0,0,0] : z in cc];
 
   kys:=Sort([z : z in Keys(step2)]);
@@ -129,21 +153,21 @@ intrinsic ordercc(g::Any,cc::Any,cm::Any,pm::Any,gens::Any) -> Any
 
   for k in kys do
     if #step2[k] eq 1 and #Rep(step2[k]) eq 1 then
-      ; /* nothing to do */
+      ; // nothing to do 
     else
-      /* random group elements until we hit a class we need */
+      // random group elements until we hit a class we need 
       needmoregens:=true;
       while needmoregens do
         needmoregens:=false;
         for divi in step2[k] do
           if priorities[Rep(divi)] gt ncc then
             needmoregens:=true;
-//"Want", Rep(divi);
             break;
           end if;
         end for;
         if needmoregens then
-          rlist, ggcl:=randelt(rlist);
+          ggcl:=rlist[1];
+          randomG(~rlist, ~ggcl);
           gcl:=cm(ggcl);
           if ismax[gcl] and priorities[gcl] gt ncc then
             mydivkey:=revmap[gcl];
@@ -174,10 +198,9 @@ intrinsic ordercc(g::Any,cc::Any,cm::Any,pm::Any,gens::Any) -> Any
         finalkeys[aclass] := [k[1],k[2],k[3], priorities[aclass],expos[aclass]];
       end for;
     end for;
-  end for; /* End of keys loop */
+  end for; // End of keys loop 
   ParallelSort(~finalkeys,~cc);
-  labels:=["" : z in cc];
-  divcnt:=0;
+  labels:=["" : z in cc]; divcnt:=0;
   oord:=0;
   divcntdown:=0;
   // if a new order, reset order and division
@@ -209,7 +232,8 @@ intrinsic testCCs(g::Any)->Any
   cc:=ConjugacyClasses(g);
   cm:=ClassMap(g);
   pm:=PowerMap(g);
-  gens:=Generators(g); // Get this from the LMFDBGrp?
+  ngens:=#Generators(g);
+  gens:=[g . j : j in [1..ngens]]; // Get this from the LMFDBGrp?
   return ordercc(g,cc,cm,pm,gens);
 end intrinsic;
 

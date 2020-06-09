@@ -59,7 +59,7 @@ intrinsic number_subgroups(G::LMFDBGrp) -> Any
   S:=Get(G,"Subgroups");
   total:=0;
   for s in S do //the AllSubgroups function is pretty slow, we try not to call it
-    total+:=#Conjugates(G`MagmaGrp,s[2]);
+    total+:=#Conjugates(Get(G, "MagmaGrp"), Get(s, "MagmaSubGrp"));
   end for;
   return total;
 end intrinsic;
@@ -74,7 +74,7 @@ intrinsic number_normal_subgroups(G::LMFDBGrp) -> Any
   S:=Get(G,"Subgroups");
   total:=0;
   for s in S do
-    if Get(s[1],"normal") then
+    if Get(s,"normal") then
       total+:=1;
     end if;
   end for;
@@ -124,10 +124,8 @@ intrinsic mobius_function(G::LMFDBGrp) -> Any
     return conj_mobii;
   else
     return None();
+  end if;
 end intrinsic;
-
-
-
 
 intrinsic eulerian_function(G::LMFDBGrp) -> Any
   {Calculates the Eulerian function of G for n = rank(G)}
@@ -167,12 +165,11 @@ end intrinsic;
 
 
 
-intrinsic complements(H::LMFDBSubGrp) -> Any
-  {Returns the subgroups K of G such that H ∩ K = e and G=HK}
-  if not Get(H,"normal") then
-    return [];
-  else
-    return Complements(Get(H,"MagmaAmbient"),H`MagmaSubGrp);
-  end if;
-
-end intrinsic;
+//intrinsic complements(H::LMFDBSubGrp) -> Any
+  //{Returns the subgroups K of G such that H ∩ K = e and G=HK}
+  //if not Get(H,"normal") then
+    //return [];
+  //else
+    //return Complements(Get(H,"MagmaAmbient"),H`MagmaSubGrp);
+  //end if;
+//end intrinsic;

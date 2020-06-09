@@ -4,15 +4,17 @@
 
 ### Planning
 * Choosing generators (solvable, permutation and matrix cases)
-* Labeling for conjugacy classes
-* Labeling for subgroups
-* Write more upload code
+* How to deal with "bad" generator lists from polycyclic
+* ~Labeling for conjugacy classes~
+* ~Labeling for subgroups~
+* Write more upload code (remaining issues are blacklist on io.m)
 
 ### Uploading data
-* Create framework for computing LmfdbGroup attributes from a Magma group with a few small examples
-* Make a list of attributes that can't be directly imported from the Magma group
-* Port over implementations from generate.py for some of these
+* ~Create framework for computing LmfdbGroup attributes from a Magma group with a few small examples~
+* ~Make a list of attributes that can't be directly imported from the Magma group~
+* ~Port over implementations from generate.py for some of these~
 * Figure out how to compute others in Magma
+* Streamline Magma code that may redundantly call Magma functions which are now attributes.
 * Run timing tests to determine which attributes are slow (lattice of subgroups is; what else?)
 * Figure out how to reuse work between different groups for slow features (using a recursive algorithm for example)
 * Design a process for adding groups outside the small groups range and assigning labels: three steps
@@ -20,7 +22,7 @@
   - for each order and hash value, split the records up into isomorphism classes, determine whether each isomorphism class has already been added.  If not yet added, assign a label.  We may want to ensure that some common group families get simple labels (e.g. cyclic group is always .a)
   - With label in hand, go pass control back to the process that computes all relevant quantities about a group.  This may recurse to adding subgroups.
 * Figure out criterion/heuristic for when to compute difficult/space-intensive things (lattice of subgroups, etc).
-* Implement hash for determining isomorphism classes (David)
+* ~Implement hash for determining isomorphism classes (David)~
 * Run hash on all groups of order 512, 1536, and other orders that can't be IDed.
 * Add generator and relations template to families
 * Add Magma coded number for families from series
@@ -64,8 +66,8 @@
 
 ## Knowls
 
-* Series knowls
-* Radical subgroup
+* ~Series knowls~
+* ~Radical subgroup~
 * rename agroup and zgroup to a_group and z_group in code, same with rational versus rational_group
 * Rename Meow Wolf to Tim
 * RCS knowls

@@ -605,25 +605,35 @@ intrinsic Subgroups(G::LMFDBGrp) -> SeqEnum
         max_index := G`subgroup_index_bound;
     end if;
     // Need to include the conjugacy class ordering 
-    SubLabels:= LabelSubgroups(GG, Subgroups(GG: IndexLimit:=max_index));
+    lmfdbcc:=ConjugacyClasses(G);
+    cccounters:=[c`counter : c in lmfdbcc];
+    ccreps:=[c`representative : c in lmfdbcc];
+    ParallelSort(~cccounters, ~ccreps);
+    cm:=ClassMap(GG);
+    perm:={};
+    for j:=1 to #ccreps do
+      res:=cm(ccreps[j]);
+      Include(~perm, <res, j>);
+    end for;
+    sset:={j : j in cccounters};
+    perm:=map<sset->sset | perm>;
+    newphi:= cm*perm; // Magma does composition backwards!
+    SubLabels:= LabelSubgroups(GG, Subgroups(GG: IndexLimit:=max_index) : phi:=newphi);
     for tup in SubLabels do
         H := New(LMFDBSubGrp);
         H`MagmaAmbient := GG;
         H`MagmaSubGrp := tup[2];
         H`label := CreateLabel(G`label,tup[1]);
         AssignBasicAttributes(H);
+        H`special_labels:=[];
+        H`count:=tup[3];
        /* Add normal and maximal label to special_labels */
         if H`normal then
-           if not assigned H`special_labels then
-	      H`special_labels:=[];
-           end if;
+
            Append(~H`special_labels, Get(H,"label") cat ".N");
 	end if;
 
         if H`maximal then
-           if not assigned H`special_labels then
-	      H`special_labels:=[];
-           end if;
            Append(~H`special_labels, Get(H,"label") cat ".M");
 	end if;
 
@@ -645,11 +655,11 @@ intrinsic Subgroups(G::LMFDBGrp) -> SeqEnum
             H := New(LMFDBSubGrp);
             H`MagmaAmbient := GG;
             H`MagmaSubGrp := tup[2];
+            H`count:=tup[3];
             Hlabeltemp:=CreateLabel(G`label,tup[1]);
             AssignBasicAttributes(H);
-            if not assigned H`special_labels then
-	        H`special_labels:=[];
-            end if;
+            H`special_labels:=[];
+            H`label:=None();
             Append(~H`special_labels, Hlabeltemp cat ".N");
        
            Append(~S,H);
@@ -669,9 +679,7 @@ intrinsic Subgroups(G::LMFDBGrp) -> SeqEnum
               for i in [1..#S] do
 		  s:=S[i];    
 		  if IsConjugate(GG,tup[2],s`MagmaSubGrp) then
-     		     if not assigned s`special_labels then  /* likely don't need */
-	                 s`special_labels:=[];
-                     end if;
+		  
 		     Append(~(s`special_labels), Get(s,"label") cat ".M");
                   end if;
 	      end for;	      
@@ -679,11 +687,12 @@ intrinsic Subgroups(G::LMFDBGrp) -> SeqEnum
 	      H := New(LMFDBSubGrp);
               H`MagmaAmbient := GG;
               H`MamgaSubGrp := tup[2];
+              H`count:=tup[3];
               Hlabeltemp:=CreateLabel(G`label,tup[1]);
               AssignBasicAttributes(H);
-              if not assigned H`special_labels then
-	          H`special_labels:=[];
-              end if;
+              H`special_labels:=[];
+              H`label:=None();
+              
               Append(~H`special_labels,  Hlabeltemp cat ".M");
               Append(~S,H);
            end if;
@@ -700,37 +709,14 @@ intrinsic Subgroups(G::LMFDBGrp) -> SeqEnum
 
     SpecialGrps:=[[* Z,".Z" *],[* D,".D" *],[* F,".F" *],[* Ph,".Phi" *],[* R,".R" *],[* So,".S" *]];
 
-    for i in [1..#S] do
-       s:=S[i];	    
-       for j in [1..#SpecialGrps] do
-	   tup:=SpecialGrps[j];	 
-           if IsConjugate(GG,tup[1],s`MagmaSubGrp) then
-               if not assigned s`special_labels then
-	           s`special_labels:=[];
-               end if;
-               Append(~s`special_labels, Get(G,"label") cat tup[2]);
-               Remove(~SpecialGrps,j); 
-               if #SpecialGrps eq 0 then /* done loop */
-	          break i;
-               end if;
-               break j;
-           end if;
-       end for;
-    end for;
-
-/* anything left in SpecialGroups is not yet a subgroup */
-/* add the remaining subgroups as new */
-
-    for tup in SpecialGrps do
-	H := New(LMFDBSubGrp);
-        H`MagmaAmbient := GG;
-        H`MagmaSubGrp := tup[1];
-        AssignBasicAttributes(H);
-        if not assigned H`special_labels then
-	    H`special_labels:=[];
-        end if;
-        Append(~H`special_labels, Get(G,"label") cat tup[2]);
-        Append(~S,H);
+/* all of the special groups are normal so they already show up */  
+    for j in [1..#SpecialGrps] do
+	tup:=SpecialGrps[j];
+        for i in [1..#S] do
+            if IsConjugate(GG,tup[1],S[i]`MagmaSubGrp) then
+		Append(~S[i]`special_labels, Get(G,"label") cat tup[2]);
+            end if;
+        end for;
     end for;
 
     return S;
@@ -810,14 +796,6 @@ intrinsic direct_product(G::LMFDBGrp) -> Any
   return semidirect_product(G : direct := true);
 end intrinsic;
 
-// TODO: finish this
-intrinsic wreath_product(G::LMFDBGrp) -> Any
-  {Returns true if G is a wreath product; otherwise returns false.}
-  if not Get(G, "semidirect_product") then
-    return false;
-  end if;
-  return semidirect_product(G : direct := true);
-end intrinsic;
 
 intrinsic ConjugacyClasses(G::LMFDBGrp) ->  SeqEnum
 {The list of conjugacy classes for this group}
@@ -825,7 +803,8 @@ intrinsic ConjugacyClasses(G::LMFDBGrp) ->  SeqEnum
   cc:=ConjugacyClasses(g);
   cm:=ClassMap(g);
   pm:=PowerMap(g);
-  gens:=Generators(g); // Get this from the LMFDBGrp?
+  ngens:=#Generators(g); // Get this from the LMFDBGrp?
+  gens:= [g . j : j in [1..ngens]];
   ordercc, _, labels := ordercc(g,cc,cm,pm,gens);
   // perm will convert given index to the one out of ordercc
   perm := [0 : j in [1..#cc]];
@@ -850,3 +829,73 @@ intrinsic ConjugacyClasses(G::LMFDBGrp) ->  SeqEnum
   end for;
   return magccs;
 end intrinsic;
+
+
+intrinsic central_product(G::LMFDBGrp) -> BoolElt
+    {Checks if the group G is a central product.}
+    GG := G`MagmaGrp;
+    if IsAbelian(GG) then
+        /* G abelian will not be a central product <=> it is cyclic of prime power order (including trivial group).*/
+        if not (IsCyclic(GG) and #FactoredOrder(GG) in {0,1}) then
+            return true;
+        end if;
+    else
+        /* G is not abelian. We run through the proper nontrivial normal subgroups N and consider whethe$
+the centralizer C = C_G(N) together with N form a central product decomposition for G. We skip over N wh$
+central (C = G) since if a complement C' properly contained in C = G exists, then it cannot also be cent$
+is not abelian. Since C' must itself be normal (NC' = G), we will encounter C' (with centralizer smaller$
+somewhere else in the loop. */
+
+        normal_list := NormalSubgroups(GG);
+        for ent in normal_list do
+            N := ent`subgroup;
+            if (#N gt 1) and (#N lt #GG) then
+                C := Centralizer(GG,N);
+                if (#C lt #GG) then  /* C is a proper subgroup of G. */
+                    C_meet_N := C meet N;
+                    // |CN| = |C||N|/|C_meet_N|. We check if |CN| = |G| and return true if so.
+                    if #C*#N eq #C_meet_N*#GG then
+                        return true;
+                    end if;
+                end if;
+            end if;
+        end for;
+    end if;
+    return false;
+end intrinsic;
+
+intrinsic schur_multiplier(G::LMFDBGrp) -> Any
+  {Returns abelian invariants for Schur multiplier by computing prime compoments and then merging them.}
+  invs := [];
+  ps := factors_of_order(G);
+  GG := Get(G, "MagmaGrp"); 
+  // Need GrpPerm for pMultiplicator function calls below. Check and convert if not GrpPerm.
+  if Type(GG) ne GrpPerm then
+       // We find an efficient permutation representation. 
+       ts:=Get(G, "MagmaTransitiveSubgroup");
+       GG:=CosetImage(GG,ts); 
+  end if;
+  for p in ps do 
+    for el in pMultiplicator(GG,p) do 
+      if el gt 1 then
+        Append(~invs, el);
+      end if;
+    end for;
+  end for;
+  return AbelianInvariants(AbelianGroup(invs));
+end intrinsic;
+
+
+intrinsic wreath_product(G::LMFDBGrp) -> Any
+  {Returns true if G is a wreath product; otherwise returns false.}
+  GG := Get(G, "MagmaGrp");
+  // Need GrpPerm for IsWreathProduct function call below. Check and convert if not GrpPerm.
+  if Type(GG) ne GrpPerm then
+       // We find an efficient permutation representation. 
+       ts:=Get(G, "MagmaTransitiveSubgroup");
+       GG:=CosetImage(GG,ts); 
+  end if;
+  return IsWreathProduct(GG);
+end intrinsic;
+
+
