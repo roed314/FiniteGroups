@@ -89,7 +89,6 @@ intrinsic getirrreps(g::Any)->Any
     end for;
     assert Type(res[j]) ne RngIntElt;
   end for;
-  /* Lost the connection between characters and the representations! */
   return <z : z in res>;
 end intrinsic;
 
@@ -139,20 +138,18 @@ intrinsic getirrrepsold(g::Any)->Any
   return [z : z in im];
 end intrinsic;
 
-intrinsic getrepsold(g::Any)->Any
+/* Returns a list of trips 
+   <character, minimal <n,t>, list of generators and images> 
+ */
+intrinsic getreps(g::Any)->Any
   {Get irreducible matrix representations}
-  im:=getirrrepsold(g);
+  im:=getirrreps(g);
   result:=<>;
   for rep in im do
-    nag:=Nagens(rep);
-    data:= <<g . j, ActionGenerator(rep, j)> : j in [1..nag]>;
-    Append(~result, data);
+    nag:=Nagens(rep[2]);
+    data:= <<g . j, ActionGenerator(rep[2], j)> : j in [1..nag]>;
+    Append(~result, <rep[1], rep[3], data>);
   end for;
   return result;
 end intrinsic;
 
-/*
-
-
-
-*/
