@@ -232,7 +232,8 @@ intrinsic testCCs(g::Any)->Any
   cc:=ConjugacyClasses(g);
   cm:=ClassMap(g);
   pm:=PowerMap(g);
-  gens:=Generators(g); // Get this from the LMFDBGrp?
+  ngens:=#Generators(g);
+  gens:=[g . j : j in [1..ngens]]; // Get this from the LMFDBGrp?
   return ordercc(g,cc,cm,pm,gens);
 end intrinsic;
 

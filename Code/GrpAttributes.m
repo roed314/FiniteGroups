@@ -803,7 +803,8 @@ intrinsic ConjugacyClasses(G::LMFDBGrp) ->  SeqEnum
   cc:=ConjugacyClasses(g);
   cm:=ClassMap(g);
   pm:=PowerMap(g);
-  gens:=Generators(g); // Get this from the LMFDBGrp?
+  ngens:=#Generators(g); // Get this from the LMFDBGrp?
+  gens:= [g . j : j in [1..ngens]];
   ordercc, _, labels := ordercc(g,cc,cm,pm,gens);
   // perm will convert given index to the one out of ordercc
   perm := [0 : j in [1..#cc]];
