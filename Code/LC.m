@@ -135,7 +135,9 @@ intrinsic eulerian_function(G::LMFDBGrp) -> Any
   for m in mobius_images do
     sum+:=(#m[1]`MagmaSubGrp)^n * m[2] * #Conjugates(G`MagmaGrp,m[1]`MagmaSubGrp);
   end for;
-  return sum/#AutomorphismGroup(G`MagmaGrp);
+  aut := #AutomorphismGroup(G`MagmaGrp);
+  assert sum mod aut eq 0;
+  return sum div aut;
 end intrinsic;
 
 
