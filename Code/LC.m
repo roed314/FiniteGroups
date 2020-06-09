@@ -110,17 +110,21 @@ intrinsic mobius_function(G::LMFDBGrp) -> Any
     L:=Get(G,"Subgroups");
 
     conj_mobii:=[];
-
+    subgps_new := [];
     for s in L do //converts the data to [<conjugacy class label, group>, mobius image] format
-      H:=s`MagmaSubGrp;
+      s_new := s;
+      H:=s_new`MagmaSubGrp;
       for m in MobiusImages do
         if IsConjugate(G`MagmaGrp,H,m[1]) then
           Append(~conj_mobii,[*s,m[2]*]);
+          s_new`mobius_function := m[2];
+          Append(~subgps_new,s_new);
           break m;
         end if;
       end for;
     end for;
-
+    G`Subgroups := subgps_new;
+    printf "Mobius function values assigned to subgroups of %o\n", G;
     return conj_mobii;
   else
     return None();
