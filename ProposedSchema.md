@@ -389,7 +389,8 @@ rep           | numeric    | a representative element, as the index in the lexic
 
 The actual values are determined using the `traces` column of `gps_crep` and the `quotient_fusion` column of `gps_subgroups`
 
-JJ: I think we should consider including nTj (the classification of the smallest permutation representation containing the given representation) in the label for a character, both complex and rational.  It is mathematically meaningful and distinguishes some cases for relatively small groups (e.g., S_5 and C_3^2:D_4).
+JJ: I think we should consider including nTj (the classification of the smallest permutation representation containing the given representation) in the label for a character, both complex and rational.  It is mathematically meaningful and distinguishes some cases for relatively small groups (e.g., S_5 and C_3^2:D_4).  This is used in labelling Artin representations, which is another (_the_ other?) place complex representations appear in the LMFDB.
+
 The conjugacy class document from Roberts also recommended putting characters which differ by complex conjugation next to each other, just as we put conjugacy classes next to their inverses.
 
 TODO: Should we also support just counting the characters with a given kernel and image, as is done for [C2xC88](https://people.maths.bris.ac.uk/~matyd/GroupNames/163/C2xC88.html) for example?  This might be done by having an option to specify the isomorphism type of the kernel and a count of such characters rather than giving the actual subgroup.
