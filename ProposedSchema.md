@@ -63,7 +63,7 @@ primary_abelian_invariants | integer[] | Invariants of the maximal abelian quoti
 smith_abelian_invariants | integer[] | Invariants of the maximal abelian quotient, as a sorted list of integers, each dividing the next
 schur_multiplier  | integer[] | Smith invariants for the Schur multiplier (H_2(G, Z))
 order_stats       | numeric[] | List of pairs `(o, m)` where `m` is the number of elements of order `o`.
-elt_rep_type      | smallint  | Code for the main way that elements are encoded in conjugacy class and subgroup tables.  0=generators+relations, -1=permutation rep, 1=integer matrices, q=matrices over GF(q)
+elt_rep_type      | smallint  | Code for the main way that elements are encoded in conjugacy class and subgroup tables.  0=generators+relations, -n=permutation rep of degree n, 1=integer matrices, q=matrices over GF(q)
 perm_gens     | numeric[] | encoded generators for a minimal permutation representation of this group (NULL if abelian or transitive degree too large)
 all_subgroups_known   | boolean   | Whether we store all subgroups of this group
 normal_subgroups_known | boolean   | Whether we store all normal subgroups of this group
@@ -152,7 +152,7 @@ We aim to have (up to equivalence)
 
 Subgroups can have two kinds of labels.  The normal label is computed in the subgroup_labels.m file, and includes the index and Gassman equivalence classes.  For groups where we only compute subgroups up to a certain index bound, we also provide special labels for subgroups we want to store that lie outside that index range.  These special labels are as follows.  In each case we start with the label of the abstract group.
 * The center is labeled Z.
-* The perfect_core (the end of the derived series) is labeled C
+* The perfect core (the end of the derived series) is labeled PC
 * The commutator/derived subgroup is labeled D.
 * The Fitting subgroup is labeled F.
 * The Frattini subgroup is labeled Phi.
@@ -346,7 +346,6 @@ The number of non-central conjugacy classes for groups of order up to 15 (26), 3
 The number of non-central conjugacy classes for groups of order not a power of 2: up to 15 (20), 31 (214), 63 (1795), 127 (15180), 255 (144996).
 
 Big contributors above 10, up to 255 (fraction of count so far): 128 (77%), 64 (67%), 16 (66%), 32 (64%), 12 (50%), 24 (42%), 48 (37%), 96 (35%), 192 (34%), 18 (17%), 14 (15%), 20 (15%), 40 (13%), 36 (11%), 80 (11%), 30 (10%), 72 (10%), 54 (9%), 160 (8%), 56 (8%).
-
 Number of central elements up to           15 (173), 31 (907), 63 (4292), 127 (21255), 255 (115353)
 Number of elements in abelian groups up to 15 (161), 31 (794), 63 (3469), 127 (15249), 255 (64885), 511 (268613), 1023 (1106900), 2047 (4531226)
 

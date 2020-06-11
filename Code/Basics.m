@@ -33,8 +33,10 @@ intrinsic AssignBasicAttributes(G::LMFDBGrp)
   for attr in attrs do
     mag_attr:=attr[1];
     db_attr:=attr[2];
-    eval_str := Sprintf("return %o(GG);", mag_attr);
-    G``db_attr := eval eval_str;
+    if not HasAttribute(G, db_attr) then
+      eval_str := Sprintf("return %o(GG);", mag_attr);
+      G``db_attr := eval eval_str;
+    end if;
   end for;
   //G`IsSuperSolvable := IsSupersoluble(GG); // thanks a lot Australia! :D; only for GrpPC...
   //return Sprintf("Basic attributes assigned to %o", G);
@@ -50,7 +52,7 @@ intrinsic GetBasicAttributesSubGrp(pair::BoolElt) -> Any
      ["Centralizer" , "centralizer"],
      ["NormalClosure" , "normal_closure"],
      ["IsCentral", "central"],
-     ["IsMaximal","maximal"]			    
+     ["IsMaximal","maximal"]
       ];
   else
     return [
@@ -69,15 +71,19 @@ intrinsic AssignBasicAttributes(H::LMFDBSubGrp)
   for attr in attrs do
     mag_attr:=attr[1];
     db_attr:=attr[2];
-    eval_str := Sprintf("return %o(GG, HH)", mag_attr);
-    H``db_attr := eval eval_str;
+    if not HasAttribute(H, db_attr) then
+      eval_str := Sprintf("return %o(GG, HH)", mag_attr);
+      H``db_attr := eval eval_str;
+    end if;
   end for;
   attrs := GetBasicAttributesSubGrp(false);
   for attr in attrs do
     mag_attr:=attr[1];
     db_attr:=attr[2];
-    eval_str := Sprintf("return %o(HH)", mag_attr);
-    H``db_attr := eval eval_str;
+    if not HasAttribute(H, db_attr) then
+      eval_str := Sprintf("return %o(HH)", mag_attr);
+      H``db_attr := eval eval_str;
+    end if;
   end for;
   //return Sprintf("Basic attributes assigned to %o", H);
 end intrinsic;

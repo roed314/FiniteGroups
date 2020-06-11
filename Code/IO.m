@@ -233,7 +233,6 @@ intrinsic DefaultAttributes(c::Cat) -> SeqEnum
                       "finite_matrix_group",
                       "old_label",
                       "pc_code",
-                      "perfect_core",
                       "rank",
 
                       // Subgroup attributes
@@ -242,8 +241,6 @@ intrinsic DefaultAttributes(c::Cat) -> SeqEnum
                       "complements", // Just return the list of complements
                       "conjugacy_class_count",
                       "count", // should be set in Subgroups method
-                      "contained_in", // should be computed with SubgroupLattice - DR
-                      "contains", // should be computed with SubgroupLattice
                       "extension_counter",
                       "direct",
                       "generators", // DR
@@ -254,10 +251,7 @@ intrinsic DefaultAttributes(c::Cat) -> SeqEnum
                       "subgroup_fusion",
 
                       // Conjugacy class attributes
-                      "representative", // Need to be able to encode GrpPCElts - DR
-
-                      "derived_length",
-                      "perfect_core"
+                      "representative" // Need to be able to encode GrpPCElts - DR
                       ];
         if attr in blacklist then
             continue;

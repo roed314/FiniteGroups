@@ -65,13 +65,13 @@ intrinsic minSn(Sn::GrpPerm, g::GrpPermElt) -> GrpPermElt
     return h;
 end intrinsic;
 
-intrinsic ccmp(a::SeqEnum, b::SeqEnum) -> RngIntElt
-    {When sorting cycles we put larger cycles fist so we can drop singletons off the end}
+function ccmp(a, b)
+    // When sorting cycles we put larger cycles fist so we can drop singletons off the end
     if #a gt #b then return -1; end if;
     if #a lt #b then return 1; end if;
     if a lt b then return -1; end if;
     if a gt b then return 1; end if;
-end intrinsic;
+end function;
 
 intrinsic cyc(g::GrpPermElt) -> SeqEnum
     {Given perm g return its standard cycle rep (largest cycles first, cycles start with min, equal length cycles lex order)
@@ -222,21 +222,21 @@ end intrinsic;
 /* JP version */
 intrinsic LabelSubgroups(G::Grp, S1::SeqEnum : phi:=ClassMap(G)) -> SeqEnum
 {pass in any record of subgroups}
-   
-    S := Sort(S1,func<a,b|b`order-a`order>); // reverse sort by order to sort by index
-L := [[* H`subgroup, H`length *]:H in S]; //`
-    LI := [#G div H`order:H in S]; //`
+    S := [<S1[i], i> : i in [1..#S1]]; // record the original order so additional information can be recovered from the record or lattice
+    Sort(~S, func<a,b|b[1]`order-a[1]`order>); // reverse sort by order to sort by index
+    L := [H[1]`subgroup : H in S]; //`
+    LI := [#G div H[1]`order : H in S]; //`
     LL := AssociativeArray();   // LL[i] will be set to the label of the subgroup L[i]
     N := IndexFibers([1..#L], func<i|LI[i]>);
     for n in Sort([n:n in Keys(N)]) do  // loop over indexes of subgroups (in increasing order)
 	    /* if max_index gt 0 and n gt max_index then break; end if;*/
         if #N[n] eq 1 then LL[N[n][1]] := [n,1,1]; continue; end if;
-        C := IndexFibers(N[n], func<i | SubgroupClass(L[i][1], phi)>);
+        C := IndexFibers(N[n], func<i | SubgroupClass(L[i], phi)>);
         I := [C[c] : c in Sort([c : c in Keys(C)])];
         for i:=1 to #I do
             if #I[i] eq 1 then LL[I[i][1]] := [n,i,1]; continue; end if;
             // printf "Labelling %o subgroups in Gassmann class %o.%o\n", #I[i], n, i;
-            LSpecial:=[L[i,1]: i in [1..#L]];
+            LSpecial:=[L[i]: i in [1..#L]];
             O := IndexFibers(I[i],func<j|Sort([<LL[k],k>:k in Supergroups(G,LSpecial,LI,j)])>);
             O := [[O[o],[x[2]:x in o]]: o in Sort([o:o in Keys(O)])];
             j := 1;
@@ -244,15 +244,15 @@ L := [[* H`subgroup, H`length *]:H in S]; //`
                 if #o[1] eq 1 then LL[o[1][1]] := [n,i,j]; j+:=1; continue; end if;
                 printf "Labelling %o subgroups in Gassmann class %o.%o with %o common overgroups\n", #o[1], n, i, #o[2];
                 // we may be repeating work here (and we should really let caller specify the class map)
-                psis := [ClassMap(L[k][1]):k in o[2]];
-                S := IndexFibers(o[1],
-                         func<k|[Sort([SubgroupClass(K,psi):K in ConjugatesInSubgroup(G,Domain(psi),L[k][1])]):psi in psis]>);
-                S := [S[s]:s in Sort([s:s in Keys(S)])];
-                for s in S do
+                psis := [ClassMap(L[k]):k in o[2]];
+                InFi := IndexFibers(o[1],
+                         func<k|[Sort([SubgroupClass(K,psi):K in ConjugatesInSubgroup(G,Domain(psi),L[k])]):psi in psis]>);
+                InFi := [InFi[s]: s in Sort([s:s in Keys(InFi)])];
+                for s in InFi do
                     if #s eq 1 then LL[s[1]] := [n,i,j]; j+:=1; continue; end if;
                     // last supergroup will have maximal index (and thus contain groups in s with minimal index)
-                    H := L[o[2][#o[2]]][1];
-                    printf "*** Computing signatures of %o index %o subgroups ***\n", #s, #H div #L[s[1]][1];
+                    H := L[o[2][#o[2]]];
+                    printf "*** Computing signatures of %o index %o subgroups ***\n", #s, #H div #L[s[1]];
                     t := Cputime();
                     Z := Sort([<Sort([sig(H,K):K in ConjugatesInSubgroup(G,H,L[k])]),k> : k in s]);
                     for z in Z do LL[z[2]] := [n,i,j]; j+:=1; end for;
@@ -260,7 +260,7 @@ L := [[* H`subgroup, H`length *]:H in S]; //`
             end for;
         end for;
     end for;
-return Sort([<LL[i],L[i][1],L[i][2]>:i in [1..#L]],func<a,b| a[1] lt b[1] select -1 else a[1] gt b[1] select 1 else 0>);
+return Sort([<LL[i], L[i], S[i][2]> : i in [1..#L]],func<a,b| a[1] lt b[1] select -1 else a[1] gt b[1] select 1 else 0>);
 /*  return [<_make_label(G, tup[1]), tup[2]> : tup in ret];  */
 end intrinsic;
 

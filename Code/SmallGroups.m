@@ -9,7 +9,7 @@ intrinsic MakeSmallGroup(N::RngIntElt, i::RngIntElt) -> Tup
     G`maximal_subgroups_known := true;
     G`sylow_subgroups_known := true;
     G`outer_equivalence := false;
-    G`subgroup_inclusions_known := false; // TODO: change to true
+    G`subgroup_inclusions_known := true;
     AssignBasicAttributes(G);
     return G;
 end intrinsic;
