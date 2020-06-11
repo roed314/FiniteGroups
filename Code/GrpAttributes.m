@@ -928,6 +928,46 @@ intrinsic ConjugacyClasses(G::LMFDBGrp) ->  SeqEnum
   return magccs;
 end intrinsic;
 
+intrinsic FrobeniusSchur(ch::Any) -> Any
+  {Frobenius Schur indicator of a Magma character}
+  assert IsIrreducible(ch);
+  if IsOrthogonalCharacter(ch) then
+    return 1;
+  elif IsSymplecticCharacter(ch) then
+    return -1;
+  end if;
+  return 0;
+end intrinsic;
+
+intrinsic Characters(G::LMFDBGrp) ->  Tup
+  {Initialize characters of an LMFDB group and return a list of complex characters and a list of rational characters}
+  g:=G`MagmaGrp;
+  ct:=CharacterTable(g);
+  rct,matching:=RationalCharacterTable(g);
+  //cc:=Classes(g);
+  cchars:=[New(LMFDBGrpChtrCC) : c in ct];
+  rchars:=[New(LMFDBGrpChtrQQ) : c in rct];
+  for j:=1 to #cchars do
+    cchars[j]`Grp:=G;
+    cchars[j]`dim:=Degree(ct[j]);
+    cchars[j]`faithful:=IsFaithful(ct[j]);
+    //cchars[j]`indicator:=FrobeniusSchur(ct[j]); // Not in schema, but should be?
+    cchars[j]`label:="placeholder";
+  end for;
+  for j:=1 to #rchars do
+    //rchars[j]`Grp:=G; // These don't have a group?
+    rchars[j]`schur_index:=SchurIndex(ct[matching[j][1]]);
+    rchars[j]`multiplicity:=#matching[j];
+    rchars[j]`qdim:=Integers()! Degree(rct[j]);
+    rchars[j]`cdim:=(Integers()! Degree(rct[j])) div #matching[j];
+    // Character may not be irreducible, so value might not be in 1,0,-2
+    rchars[j]`indicator:=FrobeniusSchur(ct[matching[j][1]])*rchars[j]`multiplicity;
+    rchars[j]`label:="placeholder";
+  end for;
+  /* This still needs labels and ordering for both types */
+
+  return <cchars, rchars>;
+end intrinsic;
 
 intrinsic central_product(G::LMFDBGrp) -> BoolElt
     {Checks if the group G is a central product.}

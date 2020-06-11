@@ -234,6 +234,8 @@ intrinsic DefaultAttributes(c::Cat) -> SeqEnum
                       "old_label",
                       "pc_code",
                       "rank",
+                      "mobius_function", // needs subgroup table
+                      "socle",
 
                       // Subgroup attributes
                       "alias_spot",

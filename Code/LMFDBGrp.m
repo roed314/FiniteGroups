@@ -33,8 +33,8 @@ declare attributes LMFDBGrp:
   elementary,
   hyperelementary,
   rank,
-  eulerian_function,
   mobius_function,
+  eulerian_function,
   MagmaCenter,
   center_label,
   central_quotient,
@@ -151,6 +151,7 @@ declare attributes LMFDBSubGrp:
   maximal_normal,
   minimal,
   minimal_normal,
+  mobius_function,
   split,
   complements,
   direct,
@@ -382,12 +383,12 @@ intrinsic Print(Chi::LMFDBGrpChtrCC)
   {Print LMFDBGrpChtrCC}
   printf "LMFDBGrpChtrCC %o:\n", Get(Chi, "label");
   printf "  Dimension %o:\n", Get(Chi, "dim");
-  printf "  Group %o:", Get(Chi, "group");
+  printf "  Group %o:", GetGrp(Chi);
 end intrinsic;
 
 declare verbose LMFDBGrpChtrQQ, 1;
-declare type LMFDBGrpConjChtrQQ;
-declare attributes LMFDBGrpConjChtrQQ:
+declare type LMFDBGrpChtrQQ;
+declare attributes LMFDBGrpChtrQQ:
   label,
   group,
   cdim,
@@ -400,7 +401,7 @@ intrinsic Print(Chi::LMFDBGrpChtrQQ)
   {Print LMFDBGrpChtrQQ}
   printf "LMFDBGrpChtrQQ %o:\n", Get(Chi, "label");
   printf "  Rational Dimension %o:\n", Get(Chi, "qdim");
-  printf "  Group %o:", Get(Chi, "group");
+//  printf "  Group %o:", Get(Chi, "group"); // Chi does not have a group defined
 end intrinsic;
 
 // include hashing function? see https://magma.maths.usyd.edu.au/magma/handbook/text/27

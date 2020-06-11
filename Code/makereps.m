@@ -1,3 +1,8 @@
+/* Main function is getreps.  If g is a magma group,
+   getreps(g) for complex representations or
+   getreps(g:FieldType:="Rationals")
+   for rational representations
+*/
 
 intrinsic firstip(chr::Any, pc::Any) -> Any
   {}
@@ -55,11 +60,16 @@ intrinsic getgoodsubs(g::Any,ct::Any)->Any
   return <subs, tvals>;
 end intrinsic;
 
-intrinsic getirrreps(g::Any)->Any
+intrinsic getirrreps(g::Any: FieldType:="Complex")->Any
   {}
-  e:=Exponent(g);
-  K:=CyclotomicField(e);
-  ct:=CharacterTable(g);
+  if FieldType eq "Complex" then
+      e:=Exponent(g);
+      K:=CyclotomicField(e);
+      ct:=CharacterTable(g);
+  else
+    K:=Rationals();
+    ct:=RationalCharacterTable(g);
+  end if;
   gs:=getgoodsubs(g, ct);
   subs:=gs[1];
   tvals:=gs[2];
@@ -89,7 +99,6 @@ intrinsic getirrreps(g::Any)->Any
     end for;
     assert Type(res[j]) ne RngIntElt;
   end for;
-  /* Lost the connection between characters and the representations! */
   return <z : z in res>;
 end intrinsic;
 
@@ -139,20 +148,18 @@ intrinsic getirrrepsold(g::Any)->Any
   return [z : z in im];
 end intrinsic;
 
-intrinsic getrepsold(g::Any)->Any
+/* Returns a list of trips 
+   <character, minimal <n,t>, list of generators and images> 
+ */
+intrinsic getreps(g::Any: FieldType:="Complex")->Any
   {Get irreducible matrix representations}
-  im:=getirrrepsold(g);
+  im:=getirrreps(g: FieldType:=FieldType);
   result:=<>;
   for rep in im do
-    nag:=Nagens(rep);
-    data:= <<g . j, ActionGenerator(rep, j)> : j in [1..nag]>;
-    Append(~result, data);
+    nag:=Nagens(rep[2]);
+    data:= <<g . j, ActionGenerator(rep[2], j)> : j in [1..nag]>;
+    Append(~result, <rep[1], rep[3], data>);
   end for;
   return result;
 end intrinsic;
 
-/*
-
-
-
-*/
