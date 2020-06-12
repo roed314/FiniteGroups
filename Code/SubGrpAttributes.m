@@ -138,12 +138,13 @@ end intrinsic;
 intrinsic minimal_normal(H::LMFDBSubGrp) -> BoolElt // Need to be subgroup attribute file
   {Determine whether a subgroup is minimal normal or not}
   GG := Get(H, "MagmaAmbient");
+  G := Get(H, "Grp");
   HH := H`MagmaSubGrp;
   if not IsNormal(GG, HH) then 
     return false;
   else
-    for r in NormalSubgroups(GG) do
-      N := r`subgroup;
+    for r in Get(G, "NormalSubgroups") do
+      N := r`MagmaSubGrp;
       if (N subset HH) and (N ne HH) and (Order(N) ne 1) then
         return false;
       end if;
@@ -153,17 +154,18 @@ intrinsic minimal_normal(H::LMFDBSubGrp) -> BoolElt // Need to be subgroup attri
 end intrinsic;
 
 
-intrinsic split(H::LMFDBSubGrp) -> Any // Need to be subgroup attribute file
+intrinsic split(H::LMFDBSubGrp) -> Any 
   {Returns whether this sequence with H splits or not, null when non-normal}
   GG := Get(H, "MagmaAmbient");
   HH := H`MagmaSubGrp;
-  S := Subgroups(GG); 
+  G := Get(H, "Grp");
+  S := Get(G, "Subgroups"); 
   if not IsNormal(GG, HH) then
     return None();
   else 
-    comps := [el : el in S | el`order eq (Order(GG) div Order(HH))]; 
+    comps := [el : el in S | Order(el`MagmaSubGrp) eq (Order(GG) div Order(HH))]; 
     for s in comps do
-      K := s`subgroup;
+      K := s`MagmaSubGrp;
       if #(K meet HH) eq 1 then 
         return true;
       end if;
@@ -183,14 +185,15 @@ intrinsic complements(H::LMFDBSubGrp) -> Any
   {Returns the subgroups K of G such that H ∩ K = e and G=HK in a list}
   GG := Get(H, "MagmaAmbient");
   HH := H`MagmaSubGrp;
-  S:= Subgroups(GG);
+  G := Get(H, "Grp");
+  S:= Get(G, "Subgroups");
   if not Get(H, "normal") then
     return [];
   else
-    comps := [el : el in S | el`order eq (Order(GG) div Order(HH))];
+    comps := [el : el in S | Order(el`MagmaSubGrp) eq (Order(GG) div Order(HH))];
     M := [];
     for s in comps do
-      K := s`subgroup;
+      K := s`MagmaSubGrp;
       if #(K meet HH) eq 1 then
         Append(~M, K);
       end if;
