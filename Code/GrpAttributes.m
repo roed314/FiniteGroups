@@ -1057,3 +1057,7 @@ intrinsic wreath_product(G::LMFDBGrp) -> Any
 end intrinsic;
 
 
+intrinsic old_label(G::LMFDBGrp) -> Any
+    {Currently just returns None, since this is used when we compute labels all groups of a given order where we didn't have a label before}
+    return None();
+end intrinsic;

@@ -231,7 +231,6 @@ intrinsic DefaultAttributes(c::Cat) -> SeqEnum
         blacklist := [
                       // Group attributes
                       "finite_matrix_group",
-                      "old_label",
                       "pc_code",
                       "rank",
                       "mobius_function", // needs subgroup table
@@ -241,7 +240,7 @@ intrinsic DefaultAttributes(c::Cat) -> SeqEnum
                       "aut_counter",
                       "complements", // Just return the list of complements
                       "conjugacy_class_count",
-                      "count", // should be set in Subgroups method
+                      //"count", // should be set in Subgroups method
                       "extension_counter",
                       "direct",
                       "generators", // DR
