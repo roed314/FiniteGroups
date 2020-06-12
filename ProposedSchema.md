@@ -407,6 +407,8 @@ image          | text       | The label for the image as a subgroup of GL_n(C)
 
 `gps_qchar`: Irreducible rational characters of groups
 
+Should we include `group`, `faithful`, and `image` (along with `[n,t]`)?
+
 Column         | Type       | Notes
 ---------------|------------|------
 label          | text       | `N.i.dc.e` where `N.i` is the label for the group, `d` is the complex dimension of a character in this orbit, `c` is a lower-case letter code enumerating classes with the same dimension (sorted lexicographically by values on the power classes), and `e` is the number of complex characters in this rational class
