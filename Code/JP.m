@@ -53,8 +53,23 @@ end intrinsic;
 
 
 intrinsic elt_rep_type(G:LMFDBGrp) -> Any
-{type of an element of the group}
-  return Type(Random(G`MagmaGrp));
+    {type of an element of the group}
+    if Type(G`MagmaGrp) eq GrpPC then
+        return 0;
+    elif Type(G`MagmaGrp) eq GrpPerm then
+        return -Degree(G`MagmaGrp);
+    elif Type(G`MagmaGrp) eq GrpMat then
+        R := CoefficientRing(G);
+        if R eq Integers() then
+            return 1;
+        elif Type(R) eq FldFin then
+            return #R;
+        else
+            error Sprintf("Unsupported ring %o", R);
+        end if;
+    else
+        error Sprintf("Unsupported group type %o", Type(G`MagmaGrp));
+    end if;
 end intrinsic;
 
 

@@ -155,7 +155,7 @@ intrinsic LoadAttr(attr::MonStgElt, inp::MonStgElt, obj::Any) -> Any
     elif attr in SubgroupListCols then
         return LoadSubgroupList(GetGrp(obj), inp);
     else
-        error "Unknown attribute type";
+        error Sprintf("Unknown attribute %o", attr);
     end if;
 end intrinsic;
 intrinsic SaveAttr(attr::MonStgElt, val::Any, obj::Any) -> MonStgElt
@@ -190,7 +190,7 @@ intrinsic SaveAttr(attr::MonStgElt, val::Any, obj::Any) -> MonStgElt
     elif attr in SubgroupListCols then
         return SaveSubgroupList(GetGrp(obj), val);
     else
-        error "Unknown attribute type";
+        error Sprintf("Unknown attribute %o", attr);
     end if;
 end intrinsic;
 
@@ -235,7 +235,6 @@ intrinsic DefaultAttributes(c::Cat) -> SeqEnum
                       "pc_code",
                       "rank",
                       "mobius_function", // needs subgroup table
-                      "socle",
 
                       // Subgroup attributes
                       "alias_spot",

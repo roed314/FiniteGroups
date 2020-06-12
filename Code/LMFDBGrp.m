@@ -4,6 +4,7 @@ declare type LMFDBGrp;
 declare attributes LMFDBGrp:
   MagmaGrp,
   Subgroups,
+  NormalSubgroups,
   ConjugacyClasses,
   label,
   old_label,
@@ -16,7 +17,6 @@ declare attributes LMFDBGrp:
   abelian,
   cyclic,
   solvable,
-  socle,
   supersolvable,
   nilpotent,
   metacyclic,
@@ -64,7 +64,6 @@ declare attributes LMFDBGrp:
   number_normal_subgroups,
   number_characteristic_subgroups,
   derived_length,
-  perfect_core,
   primary_abelian_invariants,
   smith_abelian_invariants,
   schur_multiplier,

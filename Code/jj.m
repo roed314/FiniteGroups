@@ -10,7 +10,7 @@ intrinsic tex_name(G::LMFDBGrp) -> Any
   return GroupName(g: TeX:=true);
 end intrinsic;
 
-intrinsic socle(G::LMFDBGrp) -> Any
+intrinsic Socle(G::LMFDBGrp) -> Any
   {Returns the socle of a group.}
   g:=G`MagmaGrp;
   try

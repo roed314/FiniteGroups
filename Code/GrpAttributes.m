@@ -1,192 +1,191 @@
 /* list of attributes to compute.*/
 
 intrinsic almost_simple(G::LMFDBGrp) -> Any
-  {}
-  // In order to be almost simple, we need a simple nonabelian normal subgroup with trivial centralizer
-  GG := G`MagmaGrp;
-  if G`abelian or G`solvable then
-    return false;
-  end if;
-  // will we have the normal subgroups stored to G?
-  for N in NormalSubgroups(GG) do
-    if IsSimple(N) and (Order(Centralizer(GG,N)) eq 1) then
-      return true;
+    {}
+    // In order to be almost simple, we need a simple nonabelian normal subgroup with trivial centralizer
+    if G`abelian or G`solvable then
+        return false;
     end if;
-  end for;
-  return false;
+
+    if not G`normal_subgroups_known then
+        return None();
+    end if;
+    GG := G`MagmaGrp;
+    for N in Get(G, "NormalSubgroups") do
+        if IsSimple(N`MagmaSubGrp) and not IsAbelian(N`MagmaSubGrp) and (Order(Centralizer(GG, N`MagmaSubGrp)) eq 1) then
+            return true;
+        end if;
+    end for;
+    return false;
 end intrinsic;
 
 intrinsic number_conjugacy_classes(G::LMFDBGrp) -> Any
-  {Number of conjugacy classes in a group}
-  return Nclasses(G`MagmaGrp);
-end intrinsic;
-
-intrinsic commutator(G::LMFDBGrp) -> Any
-  {Compute commutator subgroup}
-  return CommutatorSubgroup(G`MagmaGrp);
+    {Number of conjugacy classes in a group}
+    return Nclasses(G`MagmaGrp);
 end intrinsic;
 
 intrinsic primary_abelian_invariants(G::LMFDBGrp) -> Any
-  {If G is abelian, return the PrimaryAbelianInvariants.}
-  if G`IsAbelian then
-    GG := G`MagmaGrp;
-    return PrimaryAbelianInvariants(GG);
-  end if;
-  // TODO: This should return the invariants of the maximal abelian quotient
+    {If G is abelian, return the PrimaryAbelianInvariants.}
+    if G`IsAbelian then
+        A := G`MagmaGrp;
+    else
+        A := G`MagmaGrp / Get(G, "MagmaCommutator");
+    end if;
+    return PrimaryAbelianInvariants(A);
 end intrinsic;
 
 intrinsic quasisimple(G::LMFDBGrp) -> BoolElt
-{}
-  GG := Get(G, "MagmaGrp");
-  Q := quo< GG | Get(G, "MagmaCenter")>; // will center be stored?
-  return (Get(G, "perfect") and IsSimple(Q));
+    {}
+    Q := G`MagmaGrp / Get(G, "MagmaCenter");
+    return (Get(G, "perfect") and IsSimple(Q));
 end intrinsic;
 
 intrinsic supersolvable(G::LMFDBGrp) -> BoolElt
-  {Check if LMFDBGrp is supersolvable}
-  GG := G`MagmaGrp;
-  if not IsSolvable(GG) then
-    return false;
-  end if;
-  if IsNilpotent(GG) then
-    return true;
-  end if;
-  C := [Order(H) : H in ChiefSeries(GG)];
-  for i := 1 to #C-1 do
-    if not IsPrime(C[i] div C[i+1]) then
-      return false;
+    {Check if LMFDBGrp is supersolvable}
+    if not Get(G, "solvable") then
+        return false;
     end if;
-  end for;
-  return true;
+    if Get(G, "nilpotent") then
+        return true;
+    end if;
+    GG := G`MagmaGrp;
+    C := [Order(H) : H in ChiefSeries(GG)];
+    for i := 1 to #C-1 do
+        if not IsPrime(C[i] div C[i+1]) then
+            return false;
+        end if;
+    end for;
+    return true;
 end intrinsic;
 
 // for LMFDBGrp
 // Next 3 intrinsics are helpers for metacyclic
 intrinsic EasyIsMetacyclic(G::LMFDBGrp) -> BoolElt
-  {Easy checks for possibly being metacyclic}
-  if IsSquarefree(Get(G, "order")) or Get(G, "cyclic") then
-    return true;
-  end if;
-  if not Get(G, "solvable") then
-    return false;
-  end if;
-  if Get(G, "abelian") then
-    if #Get(G, "smith_abelian_invariants") gt 2 then // take Smith invariants (Invariant Factors), check if length <= 2
-      return false;
+    {Easy checks for possibly being metacyclic}
+    if IsSquarefree(Get(G, "order")) or Get(G, "cyclic") then
+        return true;
     end if;
-    return true;
-  end if;
-  return 0;
+    if not Get(G, "solvable") then
+        return false;
+    end if;
+    if Get(G, "abelian") then
+        if #Get(G, "smith_abelian_invariants") gt 2 then // take Smith invariants (Invariant Factors), check if length <= 2
+            return false;
+        end if;
+        return true;
+    end if;
+    return 0;
 end intrinsic;
 
 // for groups in Magma
 intrinsic EasyIsMetacyclicMagma(G::Grp) -> BoolElt
-  {Easy checks for possibly being metacyclic}
-  if IsSquarefree(Order(G)) or IsCyclic(G) then
-    return true;
-  end if;
-  if not IsSolvable(G) then
-    return false;
-  end if;
-  if IsAbelian(G) then
-    if #InvariantFactors(G) gt 2 then // take Smith invariants (Invariant Factors), check if length <= 2
-      return false;
+    {Easy checks for possibly being metacyclic}
+    if IsSquarefree(Order(G)) or IsCyclic(G) then
+        return true;
     end if;
-    return true;
-  end if;
-  return 0;
+    if not IsSolvable(G) then
+        return false;
+    end if;
+    if IsAbelian(G) then
+        if #InvariantFactors(G) gt 2 then // take Smith invariants (Invariant Factors), check if length <= 2
+            return false;
+        end if;
+        return true;
+    end if;
+    return 0;
 end intrinsic;
 
 intrinsic CyclicSubgroups(G::GrpAb) -> SeqEnum
-  {Compute the cyclic subgroups of the abelian group G}
-  cycs := [];
-  for rec in Subgroups(G) do
-    H := rec`subgroup;
-    if IsCyclic(H) then // naive...
-      Append(~cycs, H);
-    end if;
-  end for;
-  return cycs;
+    {Compute the cyclic subgroups of the abelian group G}
+    cycs := [];
+    seen := {};
+    for g in G do
+        if g in seen then continue; end if;
+        H := sub<G | g>;
+        m := Order(g);
+        for k in [2..m-1] do
+            if Gcd(k, m) eq 1 then
+                Include(~seen, k*g);
+            end if;
+        end for;
+        Append(~cycs, H);
+    end for;
+    return cycs;
 end intrinsic;
 
 intrinsic metacyclic(G::LMFDBGrp) -> BoolElt
-  {Check if LMFDBGrp is metacyclic}
-  easy := EasyIsMetacyclic(G);
-  if not easy cmpeq 0 then
-    return easy;
-  end if;
-  GG := G`MagmaGrp;
-  if Get(G, "pgroup") ne 0 then
-    return IsMetacyclicPGroup(GG);
-  // IsMetacyclicPGroup doesn't work for abelian groups...
-  end if;
-  D := DerivedSubgroup(GG);
-  if not IsCyclic(D) then
-    return false;
-  end if;
-  Q := quo< GG | D>;
-  if not EasyIsMetacyclicMagma(Q) then
-    return false;
-  end if;
-  for H in CyclicSubgroups(GG) do
-    if D subset H then
-      Q2 := quo<GG | H>;
-      if IsCyclic(Q2) then
-        return true;
-      end if;
+    {Check if LMFDBGrp is metacyclic}
+    easy := EasyIsMetacyclic(G);
+    if not easy cmpeq 0 then
+        return easy;
     end if;
-  end for;
-  return false;
+    GG := G`MagmaGrp;
+    if Get(G, "pgroup") ne 0 then
+        return IsMetacyclicPGroup(GG);
+    // IsMetacyclicPGroup doesn't work for abelian groups...
+    end if;
+    D := DerivedSubgroup(GG);
+    if not IsCyclic(D) then
+        return false;
+    end if;
+    Q := quo< GG | D>;
+    if not EasyIsMetacyclicMagma(Q) then
+        return false;
+    end if;
+    for H in CyclicSubgroups(GG) do
+        if D subset H then
+            Q2 := quo<GG | H>;
+            if IsCyclic(Q2) then
+                return true;
+            end if;
+        end if;
+    end for;
+    return false;
 end intrinsic;
 
 
 intrinsic factors_of_order(G::LMFDBGrp) -> Any
-  {Prime factors of the order of the group}
-  gord:=Get(G,"order");
-  return [z[1] : z in Factorization(gord)];
+    {Prime factors of the order of the group}
+    gord:=Get(G,"order");
+    return [z[1] : z in Factorization(gord)];
 end intrinsic;
 
 intrinsic metabelian(G::LMFDBGrp) -> BoolElt
-  {Determine if a group is metabelian}
-  g:=G`MagmaGrp;
-  return IsAbelian(DerivedSubgroup(g));
+    {Determine if a group is metabelian}
+    g:=G`MagmaGrp;
+    return IsAbelian(DerivedSubgroup(g));
 end intrinsic;
 
 intrinsic monomial(G::LMFDBGrp) -> BoolElt
-  {Determine if a group is monomial}
-  g:=G`MagmaGrp;
-  if not IsSolvable(g) then
-    return false;
-  elif Get(G, "supersolvable") then
-    return true;
-  elif Get(G,"solvable") and Get(G,"Agroup") then
-    return true;
-  else
-    ct:=CharacterTable(g);
-    maxd := Integers() ! Degree(ct[#ct]); // Crazy that coercion is needed
-    stat:=[false : c in ct];
-    ls:= LowIndexSubgroups(g, maxd); // Different return types depending on input
-    lst := Type(ls[1]);
-    if lst eq GrpPC or lst eq GrpPerm or lst eq GrpMat then
-      hh:= ls;
+    {Determine if a group is monomial}
+    g:=G`MagmaGrp;
+    if not IsSolvable(g) then
+        return false;
+    elif Get(G, "supersolvable") then
+        return true;
+    elif Get(G,"solvable") and Get(G,"Agroup") then
+        return true;
     else
-      hh:=<z`subgroup : z in LowIndexSubgroups(g, maxd)>;
-    end if;
-    for h in hh do
-        lc := LinearCharacters(h);
-        indc := <Induction(z,g) : z in lc>;
-        for c1 in indc do
-            p := Position(ct, c1);
-            if p gt 0 then
-                Remove(~ct, p);
+        ct:=CharacterTable(g);
+        maxd := Integers() ! Degree(ct[#ct]); // Crazy that coercion is needed
+        stat:=[false : c in ct];
+        ls:= LowIndexSubgroups(G, maxd);
+        hh:=<z`MagmaSubGrp : z in ls>;
+        for h in hh do
+            lc := LinearCharacters(h);
+            indc := <Induction(z,g) : z in lc>;
+            for c1 in indc do
+                p := Position(ct, c1);
+                if p gt 0 then
+                    Remove(~ct, p);
+                end if;
+            end for;
+            if #ct eq 0 then
+                return true;
             end if;
         end for;
-        if #ct eq 0 then
-            return true;
-        end if;
-    end for;
-  end if;
-  return false;
+    end if;
+    return false;
 end intrinsic;
 
 intrinsic rational(G::LMFDBGrp) -> BoolElt
@@ -238,28 +237,33 @@ end intrinsic;
 
 
 intrinsic MagmaTransitiveSubgroup(G::LMFDBGrp) -> Any
-  {Subgroup producing a minimal degree transitive faithful permutation representation}
-  g:=G`MagmaGrp;
-  ss:=Subgroups(g);
-  tg:=ss[1]`subgroup;
-  for j:=#ss to 1 by -1 do
-    if Core(g,ss[j]`subgroup) eq tg then
-      return ss[j]`subgroup;
-    end if;
-  end for;
+    {Subgroup producing a minimal degree transitive faithful permutation representation}
+    g := G`MagmaGrp;
+    S := Get(G, "Subgroups");
+    m := G`subgroup_index_bound;
+    for j in [1..#S] do
+        if m ne 0 and Get(S[j], "quotient_order") gt m then
+            return None();
+        end if;
+        if #Core(g, S[j]`MagmaSubGrp) eq 1 then
+            return S[j]`MagmaSubGrp;
+        end if;
+    end for;
+    return None();
 end intrinsic;
 
 intrinsic transitive_degree(G::LMFDBGrp) -> Any
-  {Smallest transitive degree for a faithful permutation representation}
-  ts:=Get(G, "MagmaTransitiveSubgroup");
-  return Get(G, "order") div Order(ts);
+    {Smallest transitive degree for a faithful permutation representation}
+    ts:=Get(G, "MagmaTransitiveSubgroup");
+    if Type(ts) eq NoneType then return None(); end if;
+    return Get(G, "order") div Order(ts);
 end intrinsic;
 
 intrinsic perm_gens(G::LMFDBGrp) -> Any
   {Generators of a minimal degree transitive faithful permutation representation}
-  ts:=Get(G, "MagmaTransitiveSubgroup");
-  g:=G`MagmaGrp;
-  gg:=CosetImage(g,ts);
+  ts := Get(G, "MagmaTransitiveSubgroup");
+  g := G`MagmaGrp;
+  gg := CosetImage(g,ts);
   return [z : z in Generators(gg)];
 end intrinsic;
 
@@ -395,19 +399,6 @@ intrinsic smith_abelian_invariants(G::LMFDBGrp) -> Any
   A := quo< GG | C>;
   A := AbelianGroup(A);
   return InvariantFactors(A);
-end intrinsic;
-
-// TODO: needs to be rewritten to use special subgroup labels
-// currently on blacklist
-intrinsic perfect_core(G::LMFDBGrp) -> Any
-  {Compute perfect core, the maximal perfect subgroup}
-  DD := Get(G, "derived_series");
-  for i := 1 to #DD-1 do
-    if DD[i] eq DD[i+1] then
-      return DD[i];
-    end if;
-  end for;
-  return DD[#DD];
 end intrinsic;
 
 intrinsic chevalley_letter(t::Tup) -> MonStgElt
@@ -695,26 +686,24 @@ intrinsic Subgroups(G::LMFDBGrp) -> SeqEnum
         end for;
         return S;
     end function;
-    if G`all_subgroups_known then
-        max_index := 0;
-    else
-        max_index := G`subgroup_index_bound;
-        ordbd:=Get(G,"order") div max_index;
+    max_index := G`subgroup_index_bound;
+    if max_index ne 0 then
+        ordbd := Get(G,"order") div max_index;
     end if;
     // Need to include the conjugacy class ordering
-    lmfdbcc:=ConjugacyClasses(G);
-    cccounters:=[c`counter : c in lmfdbcc];
-    ccreps:=[c`representative : c in lmfdbcc];
+    lmfdbcc := ConjugacyClasses(G);
+    cccounters := [c`counter : c in lmfdbcc];
+    ccreps := [c`representative : c in lmfdbcc];
     ParallelSort(~cccounters, ~ccreps);
     cm:=ClassMap(GG);
-    perm:={};
-    for j:=1 to #ccreps do
+    perm := {};
+    for j := 1 to #ccreps do
         res:=cm(ccreps[j]);
         Include(~perm, <res, j>);
     end for;
-    sset:={j : j in cccounters};
-    perm:=map<sset->sset | perm>;
-    newphi:= cm*perm; // Magma does composition backwards!
+    sset := {j : j in cccounters};
+    perm := map<sset->sset | perm>;
+    newphi := cm*perm; // Magma does composition backwards!
     if G`subgroup_inclusions_known and max_index eq 0 then
         Orig := SubgroupLattice(GG : Centralizers := true, Normalizers := true);
         RF := recformat< subgroup : Grp, order : Integers() >;
@@ -770,7 +759,7 @@ intrinsic Subgroups(G::LMFDBGrp) -> SeqEnum
     F := FittingSubgroup(GG);
     Ph := FrattiniSubgroup(GG);
     R := Radical(GG);
-    So := Get(G,"socle");  /* run special routine in case matrix group */
+    So := Socle(G);  /* run special routine in case matrix group */
 
     // Add series
     Un := Reverse(UpperCentralSeries(GG));
@@ -813,9 +802,44 @@ intrinsic Subgroups(G::LMFDBGrp) -> SeqEnum
     return S;
 end intrinsic;
 
-intrinsic LookupSubgroupLabel(G::LMFDBGrp, HH::Grp) -> Any
+intrinsic NormalSubgroups(G::LMFDBGrp) -> Any
+    {List of normal LMFDBSubGrps, or None if not computed}
+    if not G`normal_subgroups_known then
+        return None();
+    end if;
+    return [H : H in Get(G, "Subgroups") | H`normal];
+end intrinsic;
+
+intrinsic LowIndexSubgroups(G::LMFDBGrp, d::RngIntElt) -> SeqEnum
+    {List of low index LMFDBSubGrps, or None if not computed}
+    m := G`subgroup_index_bound;
+    if d eq 0 then
+        if m eq 0 then
+            return Get(G, "Subgroups");
+        else
+            return None();
+        end if;
+    end if;
+    if m eq 0 or d le m then
+        LIS := [];
+        ordbd := Get(G, "order") div d;
+        for H in Get(G, "Subgroups") do
+            if Get(H, "subgroup_order") gt ordbd then
+                Append(~LIS, H);
+            end if;
+        end for;
+        return LIS;
+    else;
+        return None();
+    end if;
+end intrinsic;
+
+intrinsic LookupSubgroupLabel(G::LMFDBGrp, HH::Any) -> Any
     {Find a subgroup label for H, or return None if H is not labeled}
-    if Type(HH) eq Grp then
+    if Type(HH) eq MonStgElt then
+        // already labeled
+        return HH;
+    else
         S := Get(G, "Subgroups");
         GG := Get(G, "MagmaGrp");
         for K in S do
@@ -829,11 +853,6 @@ intrinsic LookupSubgroupLabel(G::LMFDBGrp, HH::Grp) -> Any
             end if;
         end for;
         return None();
-    elif Type(HH) eq MonStgElt then
-        // already labeled
-        return HH;
-    else
-        error Sprintf("Invalid subgroup type %o", Type(HH));
     end if;
 end intrinsic;
 
@@ -867,7 +886,8 @@ intrinsic semidirect_product(G::LMFDBGrp : direct := false) -> Any
   dirbool := false;
   GG := Get(G, "MagmaGrp");
   ordG := Get(G, "order");
-  Ns := NormalSubgroups(GG); // TODO: this should be changed to call on subgroup database when it exists
+  Ns := Get(G, "NormalSubgroups");
+  if Type(Ns) eq NoneType then return None(); end if;
   Remove(~Ns,#Ns); // remove full group;
   Remove(~Ns,1); // remove trivial group;
   if direct then

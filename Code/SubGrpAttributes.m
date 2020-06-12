@@ -184,14 +184,14 @@ intrinsic complements(H::LMFDBSubGrp) -> Any
   GG := Get(H, "MagmaAmbient");
   HH := H`MagmaSubGrp;
   S:= Subgroups(GG);
-  if not Get(H,"normal") then
+  if not Get(H, "normal") then
     return [];
   else
     comps := [el : el in S | el`order eq (Order(GG) div Order(HH))];
     M := [];
     for s in comps do
       K := s`subgroup;
-      if #(K meet HH) eq 1 then 
+      if #(K meet HH) eq 1 then
         Append(~M, K);
       end if;
     end for;

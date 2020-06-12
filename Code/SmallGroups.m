@@ -3,7 +3,7 @@ intrinsic MakeSmallGroup(N::RngIntElt, i::RngIntElt) -> Tup
     G := NewLMFDBGrp(SmallGroup(N, i), Sprintf("%o.%o", N, i));
     // G`subgroup_index_bound := N;
     // For now we compute everything, so we don't set
-    G`subgroup_index_bound := None();
+    G`subgroup_index_bound := 0;
     G`all_subgroups_known := true;
     G`normal_subgroups_known := true;
     G`maximal_subgroups_known := true;
