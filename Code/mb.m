@@ -7,15 +7,14 @@ non-abelian groups.
 */
 
 
-// locates H_aut in subgrp_list upto conjugacy.
+// locates H in subgrp_list upto conjugacy.
 // Assumes G is abelian. Edit comments below to get general version for non-abelian groups.
-get_index := function(subgrp_list, H_aut)
+get_index := function(subgrp_list, H)
      index := -1;
      for k in [1..#subgrp_list] do
-        K := subgrp_list[k];
-     // if IsConjugate(G,H_aut,K`subgroup) then
-     // Can use "eq" rather than "IsConjugate" if group is abelian.
-     if (H_aut eq K`subgroup) then  
+        K := subgrp_list[k]`subgroup;
+        // if IsConjugate(G,H,K) then
+        if (H eq K) then   // Can use "eq" rather than "IsConjugate" if group is abelian.
             index := k;
             break k;
         end if;
@@ -62,9 +61,10 @@ end function;
 
 
 // Computes action of Aut(G) on subgroups.
-// Splits subgroup/conjugacy list up into smaller lists containing subgroups of the same order.
-// Makes construction permutation slightly more complicated at the end.
-// Note: Small speed up, but not by much on the small number of examples considered.
+// We split  subgroup/conjugacy list up into smaller lists containing subgroups of the same order.
+// For each generator of Aut(G). we compute the permutation action on each of the smaller lists. 
+// These are then combined into one permuation on the full list at the end. 
+// Note: This results in a small speed up, but not by much on the small number of examples considered.
 find_aut_action_v2 := function(G)
    A := AutomorphismGroup(G);
 
@@ -94,6 +94,7 @@ find_aut_action_v2 := function(G)
 end function;
 
 
+/*
 SAMPLE INPUT/OUTPUT
 -------------------
 
