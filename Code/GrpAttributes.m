@@ -156,40 +156,6 @@ intrinsic metabelian(G::LMFDBGrp) -> BoolElt
     return IsAbelian(DerivedSubgroup(g));
 end intrinsic;
 
-/*
-intrinsic monomial(G::LMFDBGrp) -> BoolElt
-    {Determine if a group is monomial}
-    g:=G`MagmaGrp;
-    if not IsSovable(G) then
-        return false;
-    elif Get(G, "supersolvable") then
-        return true;
-    elif Get(G,"solvable") and Get(G,"Agroup") then
-        return true;
-    else
-        ct:=CharacterTable(g);
-        maxd := Integers() ! Degree(ct[#ct]); // Crazy that coercion is needed
-        stat:=[false : c in ct];
-        ls:= LowIndexSubgroups(G, maxd);
-        hh:=<z`MagmaSubGrp : z in ls>;
-        for h in hh do
-            lc := LinearCharacters(h);
-            indc := <Induction(z,g) : z in lc>;
-            for c1 in indc do
-                p := Position(ct, c1);
-                if p gt 0 then
-                    Remove(~ct, p);
-                end if;
-            end for;
-            if #ct eq 0 then
-                return true;
-            end if;
-        end for;
-    end if;
-    return false;
-end intrinsic;
-*/
-
 intrinsic monomial(G::LMFDBGrp) -> BoolElt
     {Determine if a group is monomial}
     g:=G`MagmaGrp;
@@ -222,7 +188,7 @@ intrinsic monomial(G::LMFDBGrp) -> BoolElt
               end if;
           end for;
         end if;
-    end if;  
+    end if;
     return false;
 end intrinsic;
 
