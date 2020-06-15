@@ -156,10 +156,11 @@ intrinsic metabelian(G::LMFDBGrp) -> BoolElt
     return IsAbelian(DerivedSubgroup(g));
 end intrinsic;
 
+/*
 intrinsic monomial(G::LMFDBGrp) -> BoolElt
     {Determine if a group is monomial}
     g:=G`MagmaGrp;
-    if not IsSolvable(g) then
+    if not IsSovable(G) then
         return false;
     elif Get(G, "supersolvable") then
         return true;
@@ -187,6 +188,46 @@ intrinsic monomial(G::LMFDBGrp) -> BoolElt
     end if;
     return false;
 end intrinsic;
+*/
+
+intrinsic monomial(G::LMFDBGrp) -> BoolElt
+    {Determine if a group is monomial}
+    g:=G`MagmaGrp;
+    if not Get(G,"solvable") then
+        return false;
+    elif Get(G, "supersolvable") then
+        return true;
+    elif Get(G,"solvable") and Get(G,"Agroup") then
+        return true;
+    else
+        ct:=CharacterTable(g);
+        maxd := Integers() ! Degree(ct[#ct]); // Crazy that coercion is needed
+        stat:=[false : c in ct];
+        ls:= LowIndexSubgroups(G, maxd);
+        if Type(ls) eq NoneType then
+          return None();
+        else
+          hh:=<z`MagmaSubGrp : z in ls>;
+          for h in hh do
+              lc := LinearCharacters(h);
+              indc := <Induction(z,g) : z in lc>;
+              for c1 in indc do
+                  p := Position(ct, c1);
+                  if p gt 0 then
+                      Remove(~ct, p);
+                  end if;
+              end for;
+              if #ct eq 0 then
+                  return true;
+              end if;
+          end for;
+        end if;
+    end if;  
+    return false;
+end intrinsic;
+
+
+
 
 intrinsic rational(G::LMFDBGrp) -> BoolElt
   {Determine if a group is rational, i.e., all characters are rational}
@@ -893,7 +934,7 @@ intrinsic semidirect_product(G::LMFDBGrp : direct := false) -> Any
   if direct then
     Ks := Ns;
   else
-    Ks := Subgroups(GG); // this should be changed to call on subgroup database when it exists
+    Ks := Get(G, "Subgroups"); // this should be changed to call on subgroup database when it exists
   end if;
   for r in Ns do
     N := r`subgroup;
@@ -992,9 +1033,9 @@ end intrinsic;
 intrinsic central_product(G::LMFDBGrp) -> BoolElt
     {Checks if the group G is a central product.}
     GG := G`MagmaGrp;
-    if IsAbelian(GG) then
+    if Get(G, "abelian") then
         /* G abelian will not be a central product <=> it is cyclic of prime power order (including trivial group).*/
-        if not (IsCyclic(GG) and #FactoredOrder(GG) in {0,1}) then
+        if not (Get(G, "cyclic") and #factors_of_order(G) in {0,1}) then /* changed FactoredOrder(GG) by factors_of_order(G).*/
             return true;
         end if;
     else
@@ -1004,9 +1045,9 @@ central (C = G) since if a complement C' properly contained in C = G exists, the
 is not abelian. Since C' must itself be normal (NC' = G), we will encounter C' (with centralizer smaller$
 somewhere else in the loop. */
 
-        normal_list := NormalSubgroups(GG);
+        normal_list := Get(G, "NormalSubgroups");
         for ent in normal_list do
-            N := ent`subgroup;
+            N := ent`MagmaSubGrp;
             if (#N gt 1) and (#N lt #GG) then
                 C := Centralizer(GG,N);
                 if (#C lt #GG) then  /* C is a proper subgroup of G. */
