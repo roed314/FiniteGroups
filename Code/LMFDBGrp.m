@@ -174,7 +174,7 @@ declare attributes LMFDBSubGrp:
   projective_image;
 
 intrinsic Print(H::LMFDBSubGrp)
-  {Print LMFDBGrp}
+  {Print LMFDBSubGrp}
   printf "LMFDBSubGrp %o:\n", Get(H, "label");
   printf "  Group label %o\n", Get(H, "ambient");
   printf "  Order %o\n", Get(H, "subgroup_order");
