@@ -482,6 +482,16 @@ intrinsic composition_length(G::LMFDBGrp) -> Any
   return #Get(G,"composition_factors"); // Correct if trivial group is labeled G_0
 end intrinsic;
 
+intrinsic aut_group(G::LMFDBGrp) -> MonStgElt
+    {returns label of automorphism group}
+    aut:=Get(G, "MagmaAutGroup");
+    try
+        return label(aut);
+    catch e;
+        return None();
+    end try;
+end intrinsic;
+
 intrinsic aut_order(G::LMFDBGrp) -> RingIntElt
    {returns order of automorphism group}
    aut:=Get(G, "MagmaAutGroup");
@@ -495,15 +505,20 @@ intrinsic factors_of_aut_order(G::LMFDBGrp) -> SeqEnum
 end intrinsic;
 
 intrinsic outer_order(G::LMFDBGrp) -> RingIntElt
-   {returns order of OuterAutomorphisms }
+    {returns order of OuterAutomorphisms }
     aut:=Get(G, "MagmaAutGroup");
-   return OuterOrder(aut);
+    return OuterOrder(aut);
 end intrinsic;
 
 intrinsic outer_group(G::LMFDBGrp) -> Any
-   {returns OuterAutomorphism Group}
-   aut:=Get(G, "MagmaAutGroup");
-   return label(OuterFPGroup(aut));
+    {returns OuterAutomorphism Group}
+    aut:=Get(G, "MagmaAutGroup");
+    try
+        return label(OuterFPGroup(aut));
+    catch e;
+        print "outer_group", e;
+        return None();
+    end try;
 end intrinsic;
 
 

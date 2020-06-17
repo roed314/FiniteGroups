@@ -5,7 +5,7 @@ intrinsic label(G::Grp) -> Any
       label:= Sprintf("%o.%o", id[1], id[2]);
       return label;
    else
-      error "Can't Identify This Group Order!";
+      error Sprintf("Can't Identify Groups of Order %o!", #G);
    end if;
 end intrinsic;
 

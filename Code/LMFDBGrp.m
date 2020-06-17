@@ -49,6 +49,7 @@ declare attributes LMFDBGrp:
   transitive_degree,
   MagmaTransitiveSubgroup,
   faithful_reps,
+  aut_group,
   aut_order,
   MagmaAutGroup,
   outer_order,
