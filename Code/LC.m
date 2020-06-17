@@ -89,7 +89,7 @@ end intrinsic;
 
 
 
-intrinsic mobius_function(G::LMFDBGrp) -> Any
+intrinsic MobiusFunction(G::LMFDBGrp) -> Any
   {Calculates the images of the Mobius subgroup function of the group on its subgroups}
   if Get(G,"all_subgroups_known") then
     S:=AllSubgroups(G`MagmaGrp); //sorry, future person who has to edit this code to make it more efficient
@@ -135,7 +135,7 @@ intrinsic eulerian_function(G::LMFDBGrp) -> Any
   {Calculates the Eulerian function of G for n = rank(G)}
   n:=Get(G,"rank");
   sum:=0;
-  mobius_images:=Get(G,"mobius_function");
+  mobius_images:= MobiusFunction(G);
   for m in mobius_images do
     sum+:=(#m[1]`MagmaSubGrp)^n * m[2] * #Conjugates(G`MagmaGrp,m[1]`MagmaSubGrp);
   end for;
@@ -152,7 +152,7 @@ intrinsic rank(G::LMFDBGrp) -> Any
     return 1;
   else
     r:=2;
-    mobius_images:=Get(G,"mobius_function");
+    mobius_images:= MobiusFunction(G);
     while r le #G`MagmaGrp+1 do
       sum:=0;
       for m in mobius_images do
