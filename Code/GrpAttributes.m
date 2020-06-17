@@ -890,7 +890,6 @@ end intrinsic;
 
 intrinsic semidirect_product(G::LMFDBGrp : direct := false) -> Any
   {Returns true if G is a nontrivial semidirect product; otherwise returns false.}
-  dirbool := false;
   GG := Get(G, "MagmaGrp");
   ordG := Get(G, "order");
   Ns := Get(G, "NormalSubgroups");
@@ -899,21 +898,21 @@ intrinsic semidirect_product(G::LMFDBGrp : direct := false) -> Any
   Remove(~Ns,1); // remove trivial group;
   if direct then
     Ks := Ns;
-  else
-    Ks := Get(G, "Subgroups"); // this should be changed to call on subgroup database when it exists
+  else // semidirect
+    Ks := Get(G, "Subgroups");
   end if;
-  for r in Ns do
-    N := r`subgroup;
-    comps := [el : el in Ks | el`order eq (ordG div Order(N))];
-    for s in comps do
-      K := s`subgroup;
-      if #(N meet K) eq 1 then
+  for N in Ns do
+    NN := Get(N, "MagmaSubGrp");
+    comps := [el : el in Ks | Get(el, "subgroup_order") eq (ordG div Get(N, "subgroup_order"))];
+    for K in comps do
+      KK := Get(K, "MagmaSubGrp");
+      if #(NN meet KK) eq 1 then
         return true;
         //print N, K;
       end if;
     end for;
   end for;
-  return dirbool;
+  return false;
 end intrinsic;
 
 intrinsic direct_product(G::LMFDBGrp) -> Any
