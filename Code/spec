@@ -24,4 +24,5 @@
   ConjClsAttributes.m
   ChtrAttributes.m
   makereps.m
+  ProfileSmallGroups.m
 }
