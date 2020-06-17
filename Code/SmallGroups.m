@@ -1,5 +1,5 @@
-intrinsic MakeSmallGroup(N::RngIntElt, i::RngIntElt) -> Tup
-    {Create the information for saving a small group to several files.  Returns a triple (one for each file) of lists of strings (one for each entry to be saved)}
+intrinsic MakeSmallGroup(N::RngIntElt, i::RngIntElt) -> Any
+    {Create an LMFDBGrp object for SmallGroup(N,i) and compute attributes}
     G := NewLMFDBGrp(SmallGroup(N, i), Sprintf("%o.%o", N, i));
     // G`subgroup_index_bound := N;
     // For now we compute everything, so we don't set
@@ -15,7 +15,7 @@ intrinsic MakeSmallGroup(N::RngIntElt, i::RngIntElt) -> Tup
 end intrinsic;
 
 intrinsic MakeSmallGroupData(N::RngIntElt, i::RngIntElt) -> Tup
-  {}
+  {Create the information for saving a small group to several files.  Returns a triple (one for each file) of lists of strings (one for each entry to be saved)}
   G := MakeSmallGroup(N,i);
   return PrintData(G);
 end intrinsic;

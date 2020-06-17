@@ -233,7 +233,6 @@ intrinsic DefaultAttributes(c::Cat) -> SeqEnum
                       "finite_matrix_group",
                       "old_label",
                       "pc_code",
-                      "rank",
                       "mobius_function", // needs subgroup table
 
                       // Subgroup attributes

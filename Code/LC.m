@@ -124,7 +124,7 @@ intrinsic mobius_function(G::LMFDBGrp) -> Any
       end for;
     end for;
     G`Subgroups := subgps_new;
-    printf "Mobius function values assigned to subgroups of %o\n", G;
+    //printf "Mobius function values assigned to subgroups of %o\n", G;
     return conj_mobii;
   else
     return None();
