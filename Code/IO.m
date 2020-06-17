@@ -188,7 +188,8 @@ intrinsic SaveAttr(attr::MonStgElt, val::Any, obj::Any) -> MonStgElt
         end if;
         return LookupSubgroupLabel(G, val);
     elif attr in SubgroupListCols then
-        return SaveSubgroupList(GetGrp(obj), val);
+    /*        return SaveSubgroupList(GetGrp(obj), val); */
+    return SaveSubgroupList(val,GetGrp(obj)); 
     else
         error Sprintf("Unknown attribute %o", attr);
     end if;
