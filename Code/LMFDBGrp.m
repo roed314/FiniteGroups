@@ -33,7 +33,6 @@ declare attributes LMFDBGrp:
   elementary,
   hyperelementary,
   rank,
-  mobius_function,
   eulerian_function,
   MagmaCenter,
   center_label,
