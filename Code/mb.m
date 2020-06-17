@@ -25,18 +25,18 @@ end function;
 // Computes action of aut on subgrp_list (= conjugacy classes).
 // Uses indices as labels for subgroups/classes and returns sequence of permuted indices.
 get_index_perm_seq := function(aut, subgrp_list)
-     index_perm_seq := []; // records how aut acts on the subgroups using indices as labels
-     for j in [1..#subgrp_list] do
-       H_aut := (subgrp_list[j]`subgroup)@aut;
-       // We now search for H_aut in subgrp_list (upto conjugacy).
-       index := get_index(subgrp_list,H_aut);
-       if index eq -1 then
-         print "Error: H_aut has not been found in subgroup list (upto conjugacy).";
-       else
-         Append(~index_perm_seq, index);
-       end if;
-     end for;
-     return(index_perm_seq);
+    index_perm_seq := []; // records how aut acts on the subgroups using indices as labels
+    for j in [1..#subgrp_list] do
+        H_aut := (subgrp_list[j]`subgroup)@aut;
+        // We now search for H_aut in subgrp_list (upto conjugacy).
+        index := get_index(subgrp_list,H_aut);
+        if index eq -1 then
+            print "Error: H_aut has not been found in subgroup list (upto conjugacy).";
+        else
+            Append(~index_perm_seq, index);
+        end if;
+    end for;
+    return(index_perm_seq);
 end function;
 
 
