@@ -87,7 +87,8 @@ intrinsic EasyIsMetacyclicMagma(G::Grp) -> BoolElt
         return false;
     end if;
     if IsAbelian(G) then
-        if #InvariantFactors(G) gt 2 then // take Smith invariants (Invariant Factors), check if length <= 2
+        if #InvariantFactors(AbelianGroup(G)) gt 2 then  //take Smith invariants (Invariant Factors), check if length <= 2
+			/* Needs to be an abelian group type for Invariant Factor */
             return false;
         end if;
         return true;
@@ -132,7 +133,8 @@ intrinsic metacyclic(G::LMFDBGrp) -> BoolElt
     if not EasyIsMetacyclicMagma(Q) then
         return false;
     end if;
-    for H in CyclicSubgroups(GG) do
+    for HH in CyclicSubgroups(GG) do
+	H:=HH`subgroup;    
         if D subset H then
             Q2 := quo<GG | H>;
             if IsCyclic(Q2) then
