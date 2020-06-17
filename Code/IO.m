@@ -236,7 +236,6 @@ intrinsic DefaultAttributes(c::Cat) -> SeqEnum
                       // Subgroup attributes
                       "alias_spot",
                       "aut_counter",
-                      "complements", // Just return the list of complements
                       "conjugacy_class_count",
                       //"count", // should be set in Subgroups method
                       "extension_counter",
