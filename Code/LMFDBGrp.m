@@ -222,6 +222,7 @@ declare attributes LMFDBRepQQ:
   group,
   c_class,
   irreducible,
+  group,
   decomposition;
 
 intrinsic Print(Rho::LMFDBRepQQ)
@@ -272,6 +273,7 @@ declare attributes LMFDBRepCC:
   cyc_order_traces,
   denominators,
   gens,
+  q_character,
   traces;
 
 intrinsic Print(Rho::LMFDBRepCC)

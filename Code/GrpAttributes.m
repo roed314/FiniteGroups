@@ -998,12 +998,12 @@ intrinsic Characters(G::LMFDBGrp) ->  Tup
     cchars[j]`label:="placeholder";
   end for;
   for j:=1 to #rchars do
-    //rchars[j]`Grp:=G; // These don't have a group?
+    rchars[j]`Grp:=G; // These don't have a group?
     rchars[j]`schur_index:=SchurIndex(ct[matching[j][1]]);
     rchars[j]`multiplicity:=#matching[j];
     rchars[j]`qdim:=Integers()! Degree(rct[j]);
     rchars[j]`cdim:=(Integers()! Degree(rct[j])) div #matching[j];
-    // Character may not be irreducible, so value might not be in 1,0,-2
+    // Character may not be irreducible, so value might not be in 1,0,-1
     rchars[j]`indicator:=FrobeniusSchur(ct[matching[j][1]])*rchars[j]`multiplicity;
     rchars[j]`label:="placeholder";
   end for;

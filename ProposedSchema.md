@@ -401,6 +401,7 @@ counter        | smallint   | `j`, a 1-based ordering of characters of this grou
 kernel         | integer    | The subgroup label for the kernel of this character
 center         | integer    | The subgroup label for the subgroup that this character maps into the diagonal matrices
 faithful       | boolean    | Whether the corresponding homomorphism is injective
+q_character    | text       | Label of the corresponding Q-character
 image          | text       | The label for the image as a subgroup of GL_n(C)
 
 ## Q-characters
@@ -412,6 +413,7 @@ Should we include `group`, `faithful`, and `image` (along with `[n,t]`)?
 Column         | Type       | Notes
 ---------------|------------|------
 label          | text       | `N.i.dc.e` where `N.i` is the label for the group, `d` is the complex dimension of a character in this orbit, `c` is a lower-case letter code enumerating classes with the same dimension (sorted lexicographically by values on the power classes), and `e` is the number of complex characters in this rational class
+group          | text       | LMFDB label `N.i` for the group (domain of the homomorphism to GL_n(Q))
 cdim           | smallint   | the complex dimension of a character in this rational orbit
 qdim           | smallint   | the rational dimension (value at 1), equal to `cdim*multiplicity`
 multiplicity   | smallint   | the number of complex characters in this rational orbit

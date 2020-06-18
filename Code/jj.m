@@ -52,3 +52,39 @@ intrinsic coset_action_label(H::LMFDBSubGrp) -> Any
   end if;
 end intrinsic;
 
+intrinsic character_labels(G::LMFDBGrp, ct::Any, rct::Any, matching::Any) -> Any
+  {Order characters and make labels for them.  This does complex and rational
+   characters together since the ordering and labelling are connected.}
+  g:=G`MagmaGrp;
+  // Need outer sort for rct, and then an inner sort for ct
+  goodsubs:=getgoodsubs(g, ct); // gives <subs, tvals>
+  ntlist:= goodsubs[2];
+  // Want sort list to be <degree, n, t, lex info, counter ...>
+  // Priorities by lex sort
+  forlexsort:=<Flat(<<Round(10^29*Real(ct[j,k])), Round(10^29*Imaginary(ct[j,k]))> : k in [1..#ct]>) : j in [1..#ct]>;
+  sortme:=<<Degree(ct[j]), ntlist[j][1], ntlist[j][2]> cat forlexsort[j] cat <0,0> : j in [1..#ct]>;
+  for j:=1 to #ct do 
+    sortme[j][#sortme[j]] := j; 
+  end for;
+  for j:=1 to #matching do
+    for k:=1 to #matching[j] do
+      sortme[ matching[j][k] ][#sortme[j]-1] := j;
+    end for;
+  end for;
+  // To use index on to find complex conj's
+  allvals := [[ct[j][k] : k in [1..#ct]] : j in [1..#ct]];
+  //Last entry is the old index
+  //Second to last is the rat character
+  sortme:= [[a : a in b] : b in sortme];
+  Sort(~sortme);
+  ctlabels:=<"" : z in [1..#ct]>;
+  rctlabels:=<"" : z in [1..#rct]>;
+  // Now step through to figure out the order
+  done:={};
+  for j:=1 to #ct do
+    ;
+  end for;
+  
+  return <<Degree(ct[j]), ntlist[j]> : j in [1..#ct]>;
+end intrinsic;
+
