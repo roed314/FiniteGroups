@@ -131,7 +131,7 @@ intrinsic characters_add_sort_and_labels(G::LMFDBGrp, cchars::Any, rchars::Any) 
   // We add three fields at the end. The last is old index, before sorting.
   // Before that is the old index in the rational table
   // Before that is the old index of its complex conjugate
-  sortme:=<<Degree(ct[j]), ntlist[j][1], ntlist[j][2], #matching[comp2rat[j]]> cat forlexsortrat
+  sortme:=<<Degree(ct[j]), #matching[comp2rat[j]], ntlist[j][1], ntlist[j][2]> cat forlexsortrat
      cat forlexsort[j] cat <0,0,0> : j in [1..#ct]>;
   len:=#sortme[1];
   for j:=1 to #ct do 
@@ -170,7 +170,7 @@ intrinsic characters_add_sort_and_labels(G::LMFDBGrp, cchars::Any, rchars::Any) 
         Include(~doneq, dat[len-1]);
         rindex:=Integers()!dat[len-1];
         rchars[rindex]`counter :=rtotalcnt;
-        rchars[rindex]`label:=Sprintf("%o.%o%o.%o",glabel,dat[1],rcode,dat[4]);
+        rchars[rindex]`label:=Sprintf("%o.%o%o.%o",glabel,dat[1],rcode,dat[2]);
         rchars[rindex]`nt:=[dat[2],dat[3]];
       end if;
       ccnt+:=1;
@@ -179,7 +179,7 @@ intrinsic characters_add_sort_and_labels(G::LMFDBGrp, cchars::Any, rchars::Any) 
       cindex:=Integers()!dat[len];
       cchars[cindex]`counter:=ctotalcnt;
       cchars[cindex]`nt:=[dat[2],dat[3]];
-      cextra:= (dat[4] eq 1) select "" else Sprintf("%o", ccnt);
+      cextra:= (dat[2] eq 1) select "" else Sprintf("%o", ccnt);
       cchars[cindex]`label:=Sprintf("%o.%o%o", glabel, dat[1],rcode)*cextra;
       if dat[len-2] notin donec then
         ccnt+:=1;
@@ -188,7 +188,7 @@ intrinsic characters_add_sort_and_labels(G::LMFDBGrp, cchars::Any, rchars::Any) 
         Include(~donec, dat[len-2]);
         cchars[cindex]`counter:=ctotalcnt;
         cchars[cindex]`nt:=[dat[2],dat[3]];
-        cextra:= (dat[4] eq 1) select "" else Sprintf("%o", ccnt);
+        cextra:= (dat[2] eq 1) select "" else Sprintf("%o", ccnt);
         cchars[cindex]`label:=Sprintf("%o.%o%o", glabel, dat[1],rcode)*cextra;
       end if;
     end if;
