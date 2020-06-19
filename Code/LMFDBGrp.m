@@ -6,6 +6,18 @@ declare attributes LMFDBGrp:
   Subgroups,
   NormalSubgroups,
   ConjugacyClasses,
+  GeneratorsSequence,
+  MagmaGenerators,
+  MagmaConjugacyClasses,
+  MagmaClassMap,
+  MagmaPowerMap,
+  MagmaCharacterTable,
+  MagmaRationalCharacterTable,
+  MagmaCharacterMatching,
+  CCpermutation,
+  CCpermutationInv,
+  CCCharacters,
+  QQCharacters,
   label,
   old_label,
   name,
@@ -378,6 +390,8 @@ declare attributes LMFDBGrpChtrCC:
   kernel,
   center,
   faithful,
+  counter,
+  nt,
   image;
 
 intrinsic Print(Chi::LMFDBGrpChtrCC)
@@ -390,13 +404,16 @@ end intrinsic;
 declare verbose LMFDBGrpChtrQQ, 1;
 declare type LMFDBGrpChtrQQ;
 declare attributes LMFDBGrpChtrQQ:
+  Grp,
   label,
   group,
   cdim,
   qdim,
   multiplicity,
   indicator,
-  schur_index;
+  schur_index,
+  counter,
+  nt;
 
 intrinsic Print(Chi::LMFDBGrpChtrQQ)
   {Print LMFDBGrpChtrQQ}

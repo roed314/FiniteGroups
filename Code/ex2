@@ -1,23 +1,23 @@
 load "Samples.m";
 
-harder:=["maximal"];
+//harder:=["maximal"];
 
 
-function initg(g,nm)
+function initg(g)
   G:=New(LMFDBGrp);
-  G`Label:=nm;
+  G`label:=GroupName(g);
   G`MagmaGrp:=g;
   AssignBasicAttributes(G);
-  for j in harder do dummy:=Get(G,j); end for;
+  //for j in harder do dummy:=Get(G,j); end for;
   return(G);
 end function;
 
-for k->v in samples do
-  samples[k] := [initg(z, GroupName(z)) : z in v];
-end for;
+//for k->v in samples do
+//  samples[k] := [initg(z, GroupName(z)) : z in v];
+//end for;
 
 G := New(LMFDBGrp);
-G`Label := "whateva";
+G`label := "whateva";
 G`MagmaGrp := Alt(9);
 AssignBasicAttributes(G);
 

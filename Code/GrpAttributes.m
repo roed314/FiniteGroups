@@ -719,7 +719,7 @@ intrinsic Subgroups(G::LMFDBGrp) -> SeqEnum
     cccounters := [c`counter : c in lmfdbcc];
     ccreps := [c`representative : c in lmfdbcc];
     ParallelSort(~cccounters, ~ccreps);
-    cm:=ClassMap(GG);
+    cm:=Get(G, "MagmaClassMap");
     perm := {};
     for j := 1 to #ccreps do
         res:=cm(ccreps[j]);
@@ -937,21 +937,36 @@ intrinsic direct_product(G::LMFDBGrp) -> Any
   return semidirect_product(G : direct := true);
 end intrinsic;
 
+intrinsic CCpermutation(G::LMFDBGrp) -> SeqEnum
+  {Get the permutation p which takes Magma's CC indeces and returns ours.}
+   ccs:=Get(G, "ConjugacyClasses");
+   return G`CCpermutation; // Set as a side effect
+end intrinsic;
+
+intrinsic CCpermutationInv(G::LMFDBGrp) -> SeqEnum
+  {Get the permutation p which takes our CC index and returns Magma's.}
+   ccs:=Get(G, "ConjugacyClasses");
+   return G`CCpermutationInv; // Set as a side effect
+end intrinsic;
 
 intrinsic ConjugacyClasses(G::LMFDBGrp) ->  SeqEnum
-{The list of conjugacy classes for this group}
+  {The list of conjugacy classes for this group}
   g:=G`MagmaGrp;
-  cc:=ConjugacyClasses(g);
-  cm:=ClassMap(g);
-  pm:=PowerMap(g);
-  ngens:=#Generators(g); // Get this from the LMFDBGrp?
-  gens:= [g . j : j in [1..ngens]];
+  cc:=Get(G, "MagmaConjugacyClasses");
+  cm:=Get(G, "MagmaClassMap");
+  pm:=Get(G, "MagmaPowerMap");
+  gens:=Get(G, "MagmaGenerators");
   ordercc, _, labels := ordercc(g,cc,cm,pm,gens);
   // perm will convert given index to the one out of ordercc
+  // perm2 is its inverse
   perm := [0 : j in [1..#cc]];
+  perminv := [0 : j in [1..#cc]];
   for j:=1 to #cc do
     perm[cm(ordercc[j])] := j;
+    perminv[j] := cm(ordercc[j]);
   end for;
+  G`CCpermutation:=perm;
+  G`CCpermutationInv:=perminv;
   magccs:=[ New(LMFDBGrpConjCls) : j in cc];
   gord:=Order(g);
   plist:=[z[1] : z in Factorization(gord)];
@@ -985,8 +1000,9 @@ end intrinsic;
 intrinsic Characters(G::LMFDBGrp) ->  Tup
   {Initialize characters of an LMFDB group and return a list of complex characters and a list of rational characters}
   g:=G`MagmaGrp;
-  ct:=CharacterTable(g);
-  rct,matching:=RationalCharacterTable(g);
+  ct:=Get(G,"MagmaCharacterTable");
+  rct:=Get(G,"MagmaRationalCharacterTable");
+  matching:=Get(G,"MagmaCharacterMatching");
   //cc:=Classes(g);
   cchars:=[New(LMFDBGrpChtrCC) : c in ct];
   rchars:=[New(LMFDBGrpChtrQQ) : c in rct];
@@ -1008,6 +1024,7 @@ intrinsic Characters(G::LMFDBGrp) ->  Tup
     rchars[j]`label:="placeholder";
   end for;
   /* This still needs labels and ordering for both types */
+  sortdata:=characters_add_sort_and_labels(G, cchars, rchars);
 
   return <cchars, rchars>;
 end intrinsic;
