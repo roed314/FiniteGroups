@@ -405,6 +405,7 @@ declare verbose LMFDBGrpChtrQQ, 1;
 declare type LMFDBGrpChtrQQ;
 declare attributes LMFDBGrpChtrQQ:
   Grp,
+  MagmaChtr,
   label,
   group,
   cdim,

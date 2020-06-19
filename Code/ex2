@@ -5,7 +5,7 @@ load "Samples.m";
 
 function initg(g)
   G:=New(LMFDBGrp);
-  G`label:=GroupName(g);
+//  G`label:=GroupName(g);
   G`MagmaGrp:=g;
   AssignBasicAttributes(G);
   //for j in harder do dummy:=Get(G,j); end for;

@@ -1008,13 +1008,16 @@ intrinsic Characters(G::LMFDBGrp) ->  Tup
   rchars:=[New(LMFDBGrpChtrQQ) : c in rct];
   for j:=1 to #cchars do
     cchars[j]`Grp:=G;
+    cchars[j]`MagmaChtr:=cchars[j];
     cchars[j]`dim:=Degree(ct[j]);
+    rchars[j]`MagmaChtr:=rchars[j];
     cchars[j]`faithful:=IsFaithful(ct[j]);
     //cchars[j]`indicator:=FrobeniusSchur(ct[j]); // Not in schema, but should be?
     cchars[j]`label:="placeholder";
   end for;
   for j:=1 to #rchars do
     rchars[j]`Grp:=G; // These don't have a group?
+    rchars[j]`MagmaChtr:=rchars[j];
     rchars[j]`schur_index:=SchurIndex(ct[matching[j][1]]);
     rchars[j]`multiplicity:=#matching[j];
     rchars[j]`qdim:=Integers()! Degree(rct[j]);
