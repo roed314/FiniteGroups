@@ -1010,7 +1010,7 @@ intrinsic Characters(G::LMFDBGrp) ->  Tup
     cchars[j]`Grp:=G;
     cchars[j]`MagmaChtr:=cchars[j];
     cchars[j]`dim:=Degree(ct[j]);
-    rchars[j]`MagmaChtr:=rchars[j];
+    cchars[j]`MagmaChtr:=cchars[j];
     cchars[j]`faithful:=IsFaithful(ct[j]);
     //cchars[j]`indicator:=FrobeniusSchur(ct[j]); // Not in schema, but should be?
     cchars[j]`label:="placeholder";

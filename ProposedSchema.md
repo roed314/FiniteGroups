@@ -252,7 +252,7 @@ so we use the `gps_zrep` table to store actual matrices.
 Column         | Type      | Notes
 ---------------|-----------|------
 label          | text      | `n.i`, where `n` is the dimension, `i` is an index for the Q-class as in the CARAT GAP package (see Hoshi-Yamasaki, Rationality Problem for Algebraic Tori for examples)
-dim            | smallint
+dim            | smallint  | Dimension `n`
 order          | numeric   | The size of the group
 group          | text      | The LMFDB id for the abstract group
 c_class        | text      | The LFMDB id for the subgroup class in `GL_n(C)`

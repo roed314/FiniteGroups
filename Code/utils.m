@@ -51,3 +51,13 @@ intrinsic ReplaceString(~s::MonStgElt, fs::[MonStgElt], ts::[MonStgElt])
     ReplaceString(~s,fs[i],ts[i]);
   end for;
 end intrinsic;
+
+// More code from Tim
+intrinsic PrintRelExtElement(r::Any) -> Any
+  {For storing character values as lists}
+  K:=Parent(r);
+  QQ:=Rationals();
+  return K eq BaseRing(K)
+    select QQ!r
+    else   [PrintRelExtElement(u): u in Eltseq(r)];
+end intrinsic;
