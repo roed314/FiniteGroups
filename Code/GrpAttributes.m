@@ -1012,16 +1012,20 @@ intrinsic Characters(G::LMFDBGrp) ->  Tup
     cchars[j]`dim:=Degree(ct[j]);
     cchars[j]`MagmaChtr:=cchars[j];
     cchars[j]`faithful:=IsFaithful(ct[j]);
+    cchars[j]`group:=Get(G,"label");
+    cchars[j]`Image_object:=New(LMFDBRepCC);
     //cchars[j]`indicator:=FrobeniusSchur(ct[j]); // Not in schema, but should be?
     cchars[j]`label:="placeholder";
   end for;
   for j:=1 to #rchars do
     rchars[j]`Grp:=G; // These don't have a group?
     rchars[j]`MagmaChtr:=rchars[j];
+    rchars[j]`group:=Get(G,"label");
     rchars[j]`schur_index:=SchurIndex(ct[matching[j][1]]);
     rchars[j]`multiplicity:=#matching[j];
     rchars[j]`qdim:=Integers()! Degree(rct[j]);
     rchars[j]`cdim:=(Integers()! Degree(rct[j])) div #matching[j];
+    rchars[j]`Image_object:=New(LMFDBRepQQ);
     // Character may not be irreducible, so value might not be in 1,0,-1
     rchars[j]`indicator:=FrobeniusSchur(ct[matching[j][1]])*rchars[j]`multiplicity;
     rchars[j]`label:="placeholder";

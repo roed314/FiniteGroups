@@ -385,6 +385,7 @@ declare attributes LMFDBGrpChtrCC:
   MagmaChtr,
   Cyclotomic_n,
   Values,
+  Image_object,
   label,
   group,
   dim,
@@ -409,6 +410,7 @@ declare attributes LMFDBGrpChtrQQ:
   Grp,
   MagmaChtr,
   Values,
+  Image_object,
   label,
   group,
   cdim,
@@ -416,6 +418,7 @@ declare attributes LMFDBGrpChtrQQ:
   multiplicity,
   indicator,
   schur_index,
+  image,
   counter,
   nt;
 
