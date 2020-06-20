@@ -416,6 +416,7 @@ declare attributes LMFDBGrpChtrQQ:
   cdim,
   qdim,
   multiplicity,
+  faithful,
   indicator,
   schur_index,
   image,

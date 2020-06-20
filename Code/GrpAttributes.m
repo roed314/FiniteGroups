@@ -1026,6 +1026,7 @@ intrinsic Characters(G::LMFDBGrp) ->  Tup
     rchars[j]`qdim:=Integers()! Degree(rct[j]);
     rchars[j]`cdim:=(Integers()! Degree(rct[j])) div #matching[j];
     rchars[j]`Image_object:=New(LMFDBRepQQ);
+    rchars[j]`faithful:=IsFaithful(rct[j]);
     // Character may not be irreducible, so value might not be in 1,0,-1
     rchars[j]`indicator:=FrobeniusSchur(ct[matching[j][1]])*rchars[j]`multiplicity;
     rchars[j]`label:="placeholder";
