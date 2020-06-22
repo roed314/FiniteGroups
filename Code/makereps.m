@@ -90,8 +90,9 @@ intrinsic getirrreps(g::Any: FieldType:="Complex")->Any
   end for;
   res:=[*0 : z in ct*];
   for j:=1 to #ct do
+    mult:= FieldType eq "Complex" select 1 else SchurIndex(ct[j]);
     for rep in im do
-      if Character(rep) eq ct[j] then
+      if Character(rep) eq ct[j]*mult then
         res[j]:=<ct[j], rep, tvals[j]>;
         Exclude(~im, rep);
         break;
@@ -150,6 +151,10 @@ end intrinsic;
 
 /* Returns a list of trips 
    <character, minimal <n,t>, list of generators and images> 
+
+   Beware, if the field type is Rational, then some reps have
+   characters which are multiples of the values in the rational
+   character table.
  */
 intrinsic getreps(g::Any: FieldType:="Complex")->Any
   {Get irreducible matrix representations}
