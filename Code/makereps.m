@@ -68,7 +68,8 @@ intrinsic getirrreps(g::Any: FieldType:="Complex")->Any
       ct:=CharacterTable(g);
   else
     K:=Rationals();
-    ct:=RationalCharacterTable(g);
+    comp_ct:=CharacterTable(g);
+    ct,matching:=RationalCharacterTable(g);
   end if;
   gs:=getgoodsubs(g, ct);
   subs:=gs[1];
@@ -90,7 +91,7 @@ intrinsic getirrreps(g::Any: FieldType:="Complex")->Any
   end for;
   res:=[*0 : z in ct*];
   for j:=1 to #ct do
-    mult:= FieldType eq "Complex" select 1 else SchurIndex(ct[j]);
+    mult:= FieldType eq "Complex" select 1 else SchurIndex(comp_ct[matching[j][1]]);
     for rep in im do
       if Character(rep) eq ct[j]*mult then
         res[j]:=<ct[j], rep, tvals[j]>;
@@ -101,52 +102,6 @@ intrinsic getirrreps(g::Any: FieldType:="Complex")->Any
     assert Type(res[j]) ne RngIntElt;
   end for;
   return <z : z in res>;
-end intrinsic;
-
-intrinsic getirrrepsold(g::Any)->Any
-  {}
-  e:=Exponent(g);
-  K:=CyclotomicField(e);
-  try
-    im:=IrreducibleModules(g,K);
-    return im;
-  catch e ;
-  end try;
-  /* Step through low index subgroups capturing
-     irreducible reps when they occur in permutation
-     representations.
-
-     This could be a little more efficient if we kept
-     track of characters and only decomposed a rep
-     if a character computation showed that a new rep
-     was in it */
-  nirr:=#Classes(g);
-  im:=<>;
-  ind:=1;
-  ordg:=Order(g);
-  while #im lt nirr do
-    ind+:=1;
-"Index ", ind, "length", #im;
-    if (ordg mod ind) eq 0 then
-      sg:=Subgroups(g: OrderEqual:= ordg div ind);
-      sg:=[z`subgroup : z in sg];
-      cands:= [PermutationModule(g,h,K) : h in sg];
-      for cand in cands do
-        ds:=DirectSumDecomposition(cand);
-        for newim in ds do
-          skip:=false;
-          for old in im do
-            if IsIsomorphic(old, newim) then
-              skip:=true;
-              break;
-            end if;
-          end for;
-          if not skip then Append(~im, newim); end if;
-        end for;
-      end for;
-    end if;
-  end while;
-  return [z : z in im];
 end intrinsic;
 
 /* Returns a list of trips 
@@ -168,3 +123,7 @@ intrinsic getreps(g::Any: FieldType:="Complex")->Any
   return result;
 end intrinsic;
 
+/* Useful commands to lower a representation to a smaller field:
+   u:= AbsoluteModuleOverMinimalField(gmodule);
+   DefiningPolynomial(CoefficientRing(u));
+*/

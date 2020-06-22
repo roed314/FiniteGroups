@@ -61,3 +61,38 @@ intrinsic PrintRelExtElement(r::Any) -> Any
     select QQ!r
     else   [PrintRelExtElement(u): u in Eltseq(r)];
 end intrinsic;
+
+intrinsic write(filename::MonStgElt,str::MonStgElt: con:=true, rewrite:=false)
+  {Write str to file filename}
+  if con then str; end if;
+  F:=Open(filename,rewrite select "w" else "a");
+  WriteBytes(F,[StringToCode(c): c in Eltseq(Sprint(str)*"\n")]);
+  Flush(F);
+end intrinsic;
+
+intrinsic DelSpaces(s::MonStgElt) ->MonStgElt
+  {Delete spaces from a string s}
+  return &cat([x: x in Eltseq(Sprint(s)) | (x ne " ") and (x ne "\n")]);
+end intrinsic;
+
+intrinsic Polredabs(f::Any) -> Any
+  {Have gp compute polredabs}
+  R<x>:=PolynomialRing(Rationals());
+  out := Sprintf("/tmp/polredabs%o.out", Random(10^30));
+  txt := Sprintf("/tmp/polredabs%o.txt", Random(10^30));
+  //f:=R!f * Denominator(VectorContent(Coefficients(f)));
+  // Avoid hardwiring gp path
+  write(txt,Sprintf("polredabs(%o)",f): con:=false, rewrite:=true);
+  System("which gp>"*out);
+  gppath:= DelSpaces(Read(out));
+  System("rm "* out);
+  System(gppath*" -f -q  <"*txt*">"*out);
+  //try
+  f:=eval DelSpaces(Read(out));
+  //catch e;
+  //end try;
+  System("rm "* out);
+  System("rm "* txt);
+  return f;
+end intrinsic;
+

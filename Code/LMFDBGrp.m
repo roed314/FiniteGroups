@@ -396,6 +396,7 @@ declare attributes LMFDBGrpChtrCC:
   faithful,
   counter,
   nt,
+  field,
   image;
 
 intrinsic Print(Chi::LMFDBGrpChtrCC)
