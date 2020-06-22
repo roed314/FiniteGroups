@@ -272,7 +272,7 @@ end intrinsic;
 declare verbose LMFDBRepCC, 1;
 declare type LMFDBRepCC;
 declare attributes LMFDBRepCC:
-  MagmaRep,
+  MagmaRep, // Magma GModule
   label,
   dim,
   order,
