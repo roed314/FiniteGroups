@@ -123,7 +123,7 @@ intrinsic characters_add_sort_and_labels(G::LMFDBGrp, cchars::Any, rchars::Any) 
       comp2rat[matching[j][k]]:=j;
     end for;
   end for;
-  // Want sort list to be <degree, n, t, lex info, counter ...>
+  // Want sort list to be <degree, size of Gal orbit, n, t, lex info, ...>
   // We give rational character values first, then complex
   // Priorities by lex sort
   forlexsortrat:=Flat(<<rct[comp2rat[j]][perm[k]] : j in [1..#rct]> : k in [1..#ct]>);
@@ -172,6 +172,7 @@ intrinsic characters_add_sort_and_labels(G::LMFDBGrp, cchars::Any, rchars::Any) 
         rchars[rindex]`counter :=rtotalcnt;
         rchars[rindex]`label:=Sprintf("%o.%o%o.%o",glabel,dat[1],rcode,dat[2]);
         rchars[rindex]`nt:=[dat[2],dat[3]];
+        rchars[rindex]`Values:=[Integers()! dat[j+4] : j in [1..#ct]];
       end if;
       ccnt+:=1;
       ctotalcnt+:=1;
@@ -181,6 +182,13 @@ intrinsic characters_add_sort_and_labels(G::LMFDBGrp, cchars::Any, rchars::Any) 
       cchars[cindex]`nt:=[dat[2],dat[3]];
       cextra:= (dat[2] eq 1) select "" else Sprintf("%o", ccnt);
       cchars[cindex]`label:=Sprintf("%o.%o%o", glabel, dat[1],rcode)*cextra;
+      // Encode values
+      thischar:=ct[cindex];
+      basef:=BaseRing(thischar);
+      cyclon:=CyclotomicOrder(basef);
+      Kn:=CyclotomicField(cyclon);
+      cchars[cindex]`Cyclotomic_n:=cyclon;
+      cchars[cindex]`Values:=[PrintRelExtElement(Kn!thischar[perm[z]]) : z in [1..#thischar]];
       if dat[len-2] notin donec then
         ccnt+:=1;
         ctotalcnt+:=1;
@@ -190,6 +198,12 @@ intrinsic characters_add_sort_and_labels(G::LMFDBGrp, cchars::Any, rchars::Any) 
         cchars[cindex]`nt:=[dat[2],dat[3]];
         cextra:= (dat[2] eq 1) select "" else Sprintf("%o", ccnt);
         cchars[cindex]`label:=Sprintf("%o.%o%o", glabel, dat[1],rcode)*cextra;
+        thischar:=ct[cindex];
+        basef:=BaseRing(thischar);
+        cyclon:=CyclotomicOrder(basef);
+        Kn:=CyclotomicField(cyclon);
+        cchars[cindex]`Cyclotomic_n:=cyclon;
+        cchars[cindex]`Values:=[PrintRelExtElement(Kn!thischar[perm[z]]) : z in [1..#thischar]];
       end if;
     end if;
   end for;
