@@ -89,7 +89,7 @@ intrinsic order(C::LMFDBGrpPermConjCls) -> RingIntElt
   return CC[1];// For a magma class CC, CC[1] gives the order of an element
 end intrinsic;
 
-intrinsic representative(C::LMFDBGrpPermConjCls) -> Any
+intrinsic Representative(C::LMFDBGrpPermConjCls) -> Any
   {}
   CC := Get(C, "MagmaConjCls");
   return CC[3];
