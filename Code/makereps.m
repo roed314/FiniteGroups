@@ -22,7 +22,7 @@ intrinsic myti(g::Any,sub::Any) -> Any
 end intrinsic;
 
 intrinsic getgoodsubs(g::Any,ct::Any)->Any
-  {Get optimal subgroups s.t. the permutation representations contian the irreducible representations.  Also capture the t-numbers of the permutation representations.}
+  {Get optimal subgroups s.t. the permutation representations contain the irreducible representations.  Also capture the t-numbers of the permutation representations.}
   subs:=[* 0 : z in ct *];
   tvals :=[ [0,0] : z in ct ];
   notdone := {z : z in [1..#ct]};
