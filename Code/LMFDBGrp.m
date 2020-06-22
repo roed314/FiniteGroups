@@ -228,6 +228,7 @@ end intrinsic;
 declare verbose LMFDBRepQQ, 1;
 declare type LMFDBRepQQ;
 declare attributes LMFDBRepQQ:
+  MagmaGrp,
   label,
   dim,
   order,
