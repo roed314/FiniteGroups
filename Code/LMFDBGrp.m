@@ -273,6 +273,7 @@ declare verbose LMFDBRepCC, 1;
 declare type LMFDBRepCC;
 declare attributes LMFDBRepCC:
   MagmaRep, // Magma GModule
+  MagmaGrp, // Magma matrix group
   label,
   dim,
   order,

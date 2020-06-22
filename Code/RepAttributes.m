@@ -1,6 +1,11 @@
+intrinsic order(M::LMFDBRepCC) -> FldRatElt
+  {Return order of the group}
+  return (M`MagmaGrp)`order;
+end intrinsic;
+
 intrinsic indicator(M::LMFDBRepCC) -> FldRatElt
   {Computes the Frobenius-Schur indicator}
-  Mat := MatrixGroup(M`MagmaRep);
+  Mat := M`MagmaGrp;
   ind := 0;
   for g in Mat do
     ind +:= Trace(g^2);
@@ -22,4 +27,13 @@ intrinsic schur_index(M::LMFDBRepCC) -> RngIntElt
   n := Get(M, "cyc_order_traces");
   assert m mod n eq 0;
   return m div n;
+end intrinsic;
+
+intrinsic AbsoluteModuleOverMinimalField(~M::LMFDBRepCC)
+  {Return the absolutely irreducible module M over the smallest possible field without increasing the dimension of the module.}
+  MM := M`MagmaRep;
+  MMmin := AbsoluteModuleOverMinimalField(MM);
+  M`MagmaRep := MMmin;
+  M`MagmaGrp := MatrixGroup(MMmin);
+  print "Module over minimal field computed and assigned";
 end intrinsic;
