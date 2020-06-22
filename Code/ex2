@@ -21,3 +21,5 @@ G`label := "whateva";
 G`MagmaGrp := Alt(9);
 AssignBasicAttributes(G);
 
+a6:=initg(Alt(6));
+c7:=initg(SmallGroup(7,1));
