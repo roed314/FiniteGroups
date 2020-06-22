@@ -383,8 +383,8 @@ declare type LMFDBGrpChtrCC;
 declare attributes LMFDBGrpChtrCC:
   Grp,
   MagmaChtr,
-  Cyclotomic_n,
-  Values,
+  cyclotomic_n,
+  values,
   Image_object,
   label,
   group,
@@ -409,7 +409,7 @@ declare type LMFDBGrpChtrQQ;
 declare attributes LMFDBGrpChtrQQ:
   Grp,
   MagmaChtr,
-  Values,
+  values,
   Image_object,
   label,
   group,
