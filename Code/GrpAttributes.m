@@ -1014,7 +1014,7 @@ intrinsic Characters(G::LMFDBGrp) ->  Tup
     cchars[j]`faithful:=IsFaithful(ct[j]);
     cchars[j]`group:=Get(G,"label");
     thepoly:=DefiningPolynomial(CharacterField(ct[j]));
-    // Sometimes 
+    // Sometimes the type is Cyclotomic field, in which case thepoly is a different type
     if Type(thepoly) eq SeqEnum then thepoly:=thepoly[1]; end if;
     thepoly:=Polredabs(thepoly);
     cchars[j]`field:=Coefficients(thepoly);
