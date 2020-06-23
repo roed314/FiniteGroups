@@ -15,7 +15,6 @@ end intrinsic;
 
 intrinsic cyc_order_mat(M::LMFDBRepCC) -> RngIntElt
   {an integer m so that the entries in the gens column lie in CyclotomicField(m)}
-  //u:= AbsoluteModuleOverMinimalField(gmodule);    DefiningPolynomial(CoefficientRing(u));
   MM := M`MagmaRep;
   MMmin := AbsoluteModuleOverMinimalField(MM);
   return Conductor(CoefficientRing(MMmin));
@@ -30,7 +29,7 @@ intrinsic schur_index(M::LMFDBRepCC) -> RngIntElt
 end intrinsic;
 
 intrinsic AbsoluteModuleOverMinimalField(~M::LMFDBRepCC)
-  {Return the absolutely irreducible module M over the smallest possible field without increasing the dimension of the module.}
+  {Assign to M`MagmaRep the absolutely irreducible module M over the smallest possible field without increasing the dimension of the module. Also assign M`MagmaGrp to be the corresponding group.}
   MM := M`MagmaRep;
   MMmin := AbsoluteModuleOverMinimalField(MM);
   M`MagmaRep := MMmin;
