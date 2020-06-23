@@ -1013,6 +1013,11 @@ intrinsic Characters(G::LMFDBGrp) ->  Tup
     cchars[j]`MagmaChtr:=cchars[j];
     cchars[j]`faithful:=IsFaithful(ct[j]);
     cchars[j]`group:=Get(G,"label");
+    thepoly:=DefiningPolynomial(CharacterField(ct[j]));
+    // Sometimes the type is Cyclotomic field, in which case thepoly is a different type
+    if Type(thepoly) eq SeqEnum then thepoly:=thepoly[1]; end if;
+    thepoly:=Polredabs(thepoly);
+    cchars[j]`field:=Coefficients(thepoly);
     cchars[j]`Image_object:=New(LMFDBRepCC);
     //cchars[j]`indicator:=FrobeniusSchur(ct[j]); // Not in schema, but should be?
     cchars[j]`label:="placeholder";

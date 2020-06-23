@@ -228,6 +228,7 @@ end intrinsic;
 declare verbose LMFDBRepQQ, 1;
 declare type LMFDBRepQQ;
 declare attributes LMFDBRepQQ:
+  MagmaGrp,
   label,
   dim,
   order,
@@ -272,6 +273,8 @@ end intrinsic;
 declare verbose LMFDBRepCC, 1;
 declare type LMFDBRepCC;
 declare attributes LMFDBRepCC:
+  MagmaRep, // Magma GModule
+  MagmaGrp, // Magma matrix group
   label,
   dim,
   order,
@@ -383,8 +386,8 @@ declare type LMFDBGrpChtrCC;
 declare attributes LMFDBGrpChtrCC:
   Grp,
   MagmaChtr,
-  Cyclotomic_n,
-  Values,
+  cyclotomic_n,
+  values,
   Image_object,
   label,
   group,
@@ -395,6 +398,7 @@ declare attributes LMFDBGrpChtrCC:
   faithful,
   counter,
   nt,
+  field,
   image;
 
 intrinsic Print(Chi::LMFDBGrpChtrCC)
@@ -409,7 +413,7 @@ declare type LMFDBGrpChtrQQ;
 declare attributes LMFDBGrpChtrQQ:
   Grp,
   MagmaChtr,
-  Values,
+  values,
   Image_object,
   label,
   group,

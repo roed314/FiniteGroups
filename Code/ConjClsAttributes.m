@@ -88,3 +88,32 @@ intrinsic order(C::LMFDBGrpPermConjCls) -> RingIntElt
   CC := Get(C, "MagmaConjCls");
   return CC[1];// For a magma class CC, CC[1] gives the order of an element
 end intrinsic;
+
+intrinsic Representative(C::LMFDBGrpPermConjCls) -> Any
+  {}
+  CC := Get(C, "MagmaConjCls");
+  return CC[3];
+end intrinsic; 
+
+intrinsic rep(C::LMFDBGrpPermConjCls) -> Any
+  {a representative element, as the index in the lexicographic ordering of S_n}
+  g := Get(C, "representative");
+  return EncodePerm(g); 
+end intrinsic;
+
+
+intrinsic cycle_type(C::LMFDBGrpPermConjCls) -> Any
+  {A list of sizes of the cycles in a permutation in this class, in descending order and omitting 1s}
+  CC := Get(C, "MagmaConjCls");
+  s:=CycleStructure(CC[3]);
+  L:=[];
+  for i in [1..#s] do
+    for j in [1..s[i][2]] do
+      if s[i][1] ne 1 then
+        Append(~L, s[i][1]);
+      end if;
+    end for;
+  end for;
+  return L;      
+end intrinsic;
+
