@@ -69,7 +69,7 @@ intrinsic SaveJsonb(out::List) ->  MonStgElt
 	    if Type(out[i]) eq MonStgElt then
         	out[i]:="'" cat out[i] cat "'";
             end if;
-	else	//need to add ' ' around strings
+	else	//need to add the ' ' around strings
             if Type(out[i,1]) eq MonStgElt then
 	        newout:=["'" cat out[i,j] cat "'" : j in [1..#out[i]]];
                 out[i]:=newout;
