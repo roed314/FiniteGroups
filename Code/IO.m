@@ -279,7 +279,7 @@ intrinsic DefaultAttributes(c::Cat) -> SeqEnum
                       "representative" // Need to be able to encode GrpPCElts - DR
                       ];
 
-greylist := [
+        greylist := [
 	     // Attributes which return none and need to be worked on later
 
                      // Group attributes
