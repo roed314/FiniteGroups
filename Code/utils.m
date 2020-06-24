@@ -32,7 +32,7 @@ end intrinsic;
 
 intrinsic ReplaceString(s::MonStgElt, fs::[MonStgElt], ts::[MonStgElt]) -> MonStgElt
   {Return a string obtained from the string s by replacing all occurences of strings in fs with strings in ts.}
-  assert not Set(fs) ne Set(ts);
+  //assert fs ne ts;
   for i:=1 to #fs do
     s:=ReplaceString(s,fs[i],ts[i]);
   end for;
