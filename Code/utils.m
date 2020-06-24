@@ -52,31 +52,6 @@ intrinsic ReplaceString(~s::MonStgElt, fs::[MonStgElt], ts::[MonStgElt])
   end for;
 end intrinsic;
 
-intrinsic WriteCyclotomicElement(u::FldCycElt) -> SeqEnum
-  {Given an element u of a cyclotomic field with primitive root zeta_m, return a SeqEnum of pairs [c,e] such that
-  u is the sum of c*zeta_m^e}
-  K<z> := CyclotomicField(Conductor(Parent(u)) : Sparse := false);
-  u_seq := Eltseq(K!u);
-  cs := [];
-  for i := 1 to #u_seq do
-    if u_seq[i] ne 0 then
-      Append(~cs, [u_seq[i], i-1]);
-    end if;
-  end for;
-  return cs;
-end intrinsic;
-
-intrinsic ReadCyclotomicElement(cs::SeqEnum, m::RngIntElt) -> FldCycElt
-  {Given a SeqEnum of pairs representing a cyclotomic field element as in the output of WriteCyclotomicElement, construct the corresponding cyclotomic field element.}
-  K<z> := CyclotomicField(m : Sparse := false);
-  u := K!0;
-  for pair in cs do
-    e := Integers()!pair[2];
-    u +:= pair[1]*z^e;
-  end for;
-  return u, K;
-end intrinsic;
-
 // More code from Tim
 intrinsic PrintRelExtElement(r::Any) -> Any
   {For storing character values as lists}
