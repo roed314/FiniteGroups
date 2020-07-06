@@ -316,6 +316,17 @@ intrinsic SaveLMFDBObject(G::Any : attrs:=[], sep:="|") -> MonStgElt
     return Join([SaveAttr(attr, Get(G, attr), G) : attr in attrs], sep);
 end intrinsic;
 
+intrinsic WriteLMFDBObject(G::Any, filename::MonStgElt : attrs:=[], sep:="|")
+  {Write an LMFDB object to a file}
+    if attrs eq [] then
+        attrs := DefaultAttributes(Type(G));
+    end if;
+    for attr in attrs do
+        assert Type(SaveAttr(attr, Get(G, attr), G)) eq MonStgElt;
+    end for;
+    write(filename, Join([SaveAttr(attr, Get(G, attr), G) : attr in attrs], sep));
+end intrinsic;
+
 intrinsic PrintData(G::LMFDBGrp: sep:="|") -> Tup
     {}
     return <[SaveLMFDBObject(G: sep:=sep)],

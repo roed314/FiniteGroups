@@ -60,6 +60,7 @@ intrinsic getgoodsubs(g::Any,ct::Any)->Any
   return <subs, tvals>;
 end intrinsic;
 
+// Any other field type produces rationals
 intrinsic getirrreps(g::Any: FieldType:="Complex")->Any
   {}
   if FieldType eq "Complex" then

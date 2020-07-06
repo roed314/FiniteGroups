@@ -32,7 +32,7 @@ end intrinsic;
 
 intrinsic ReplaceString(s::MonStgElt, fs::[MonStgElt], ts::[MonStgElt]) -> MonStgElt
   {Return a string obtained from the string s by replacing all occurences of strings in fs with strings in ts.}
-  assert not Set(fs) ne Set(ts);
+  //assert fs ne ts;
   for i:=1 to #fs do
     s:=ReplaceString(s,fs[i],ts[i]);
   end for;
@@ -62,14 +62,6 @@ intrinsic PrintRelExtElement(r::Any) -> Any
     else   [PrintRelExtElement(u): u in Eltseq(r)];
 end intrinsic;
 
-intrinsic write(filename::MonStgElt,str::MonStgElt: con:=true, rewrite:=false)
-  {Write str to file filename}
-  if con then str; end if;
-  F:=Open(filename,rewrite select "w" else "a");
-  WriteBytes(F,[StringToCode(c): c in Eltseq(Sprint(str)*"\n")]);
-  Flush(F);
-end intrinsic;
-
 intrinsic DelSpaces(s::MonStgElt) ->MonStgElt
   {Delete spaces from a string s}
   return &cat([x: x in Eltseq(Sprint(s)) | (x ne " ") and (x ne "\n")]);
@@ -82,7 +74,7 @@ intrinsic Polredabs(f::Any) -> Any
   txt := Sprintf("/tmp/polredabs%o.txt", Random(10^30));
   //f:=R!f * Denominator(VectorContent(Coefficients(f)));
   // Avoid hardwiring gp path
-  write(txt,Sprintf("polredabs(%o)",f): con:=false, rewrite:=true);
+  write(txt,Sprintf("polredabs(%o)",f): rewrite:=true);
   System("which gp>"*out);
   gppath:= DelSpaces(Read(out));
   System("rm "* out);
@@ -94,5 +86,18 @@ intrinsic Polredabs(f::Any) -> Any
   System("rm "* out);
   System("rm "* txt);
   return f;
+end intrinsic;
+
+intrinsic write(filename::MonStgElt,str::MonStgElt: console:=false, rewrite:=false)
+  {Write str to file filename as a line
+   rewrite:= true means we overwrite the file, default is to append to it
+   console:= true means we echo the string as well.
+   If the filename is the empty string, don't write it.}
+  if console then str; end if;
+  if filename ne "" then
+    F:=Open(filename,rewrite select "w" else "a");
+    WriteBytes(F,[StringToCode(c): c in Eltseq(Sprint(str)*"\n")]);
+    Flush(F);
+  end if;
 end intrinsic;
 
