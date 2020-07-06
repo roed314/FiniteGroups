@@ -3,8 +3,11 @@ declare verbose LMFDBGrp, 1;
 declare type LMFDBGrp;
 declare attributes LMFDBGrp:
   MagmaGrp,
+  MagmaOptimized,
+  OptimizedIso,
   Subgroups,
   NormalSubgroups,
+  SubGrpLat,
   ConjugacyClasses,
   GeneratorsSequence,
   MagmaGenerators,

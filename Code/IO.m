@@ -8,6 +8,8 @@ IntegerListCols := ["contained_in", "contains", "cycle_type", "denominators", "f
 
 BoolCols := ["Agroup", "Zgroup", "abelian", "all_subgroups_known", "almost_simple", "central", "central_product", "characteristic", "cyclic", "direct", "direct_product", "faithful", "finite_matrix_group", "indecomposible", "irreducible", "maximal", "maximal_normal", "maximal_subgroups_known", "metabelian", "metacyclic", "minimal", "minimal_normal", "monomial", "nilpotent", "normal", "normal_subgroups_known", "outer_equivalence", "perfect", "prime", "primitive", "quasisimple", "rational", "semidirect_product", "simple", "solvable", "split", "stem", "subgroup_inclusions_known", "supersolvable", "sylow_subgroups_known", "wreath_product"];
 
+JsonbCols := ["quotient_fusion"];
+
 PermsCols := ["perm_gens"];
 SubgroupCols := ["centralizer", "kernel", "core", "center", "normal_closure", "normalizer", "sub1", "sub2"];
 SubgroupListCols := ["complements"];
@@ -53,6 +55,33 @@ intrinsic SaveTextList(out::SeqEnum) ->  MonStgElt
     return "{" * Join(out, ",") * "}";
 end intrinsic;
 
+
+intrinsic LoadJsonb(inp::MonStgElt) -> List
+    {assuming lists of strings or integers only}
+    assert inp[1] eq "{" and inp[#inp] eq "}";
+    ReplaceString(~inp,["{","}","'"],["[","]","\""]);
+    return eval inp;
+end intrinsic;
+intrinsic SaveJsonb(out::List) ->  MonStgElt
+    {assuming list of strings or integers only}
+    for i in [1..#out] do
+	if Type(out[i]) ne SeqEnum then   //special case when a solo element
+	    if Type(out[i]) eq MonStgElt then
+        	out[i]:="'" cat out[i] cat "'";
+            end if;
+	else	//need to add the ' ' around strings
+            if Type(out[i,1]) eq MonStgElt then
+	        newout:=["'" cat out[i,j] cat "'" : j in [1..#out[i]]];
+                out[i]:=newout;
+            end if;
+        end if;
+    end for;
+    out_str := Sprint(out);
+    ReplaceString(~out_str, ["[","]"," ","\n"],["{","}","", ""]);
+    return out_str;
+end intrinsic;
+
+
 intrinsic LoadPerms(inp::MonStgElt, n::RngInt) -> SeqEnum
     {}
     return [DecodePerm(elt, n) : elt in LoadIntegerList(inp)];
@@ -64,8 +93,8 @@ end intrinsic;
 
 intrinsic LoadElt(inp::MonStgElt, G::LMFDBGrp) -> Any
     {}
-    // For PCGroups, we eventually want to use a nicer human-readable presentation,
-    // which will affect this code
+    // For PCGroups, we have loaded the group from its pc_code, so we don't need
+    // to invert the OptimizedIso
     GG := G`MagmaGrp;
     if Type(GG) eq GrpPC then
         n := StringToInteger(inp);
@@ -87,8 +116,10 @@ intrinsic SaveElt(out::Any, G::LMFDBGrp) -> MonStgElt
     {}
     GG := G`MagmaGrp;
     if Type(GG) eq GrpPC then
+        // We first apply the isomorphism to a group with a nicer human-readable presentation
+        opt := G`OptimizedIso(out);
         n := 0;
-        v := ElementToSequence(out);
+        v := ElementToSequence(opt);
         Ps := Reverse(PCPrimes(GG));
         for i in [1..#Ps] do
             n *:= Ps[i];
@@ -133,6 +164,8 @@ intrinsic LoadAttr(attr::MonStgElt, inp::MonStgElt, obj::Any) -> Any
         return StringToInteger(inp);
     elif attr in BoolCols then
         return LoadBool(inp);
+    elif attr in JsonbCols then
+        return LoadJsonb(inp);
     elif attr in IntegerListCols then
         return LoadIntegerList(inp);
     elif attr in TextListCols then
@@ -168,6 +201,8 @@ intrinsic SaveAttr(attr::MonStgElt, val::Any, obj::Any) -> MonStgElt
         return IntegerToString(val);
     elif attr in BoolCols then
         return SaveBool(val);
+    elif attr in JsonbCols then
+        return SaveJsonb(val);
     elif attr in IntegerListCols then
         return SaveIntegerList(val);
     elif attr in TextListCols then
@@ -230,26 +265,36 @@ intrinsic DefaultAttributes(c::Cat) -> SeqEnum
         // Blacklist attributes that aren't working
         blacklist := [
                       // Group attributes
-                      "finite_matrix_group",
                       "pc_code",
 
                       // Subgroup attributes
                       "alias_spot",
                       "aut_counter",
-                      "conjugacy_class_count",
+   
                       //"count", // should be set in Subgroups method
                       "extension_counter",
-                      "direct",
+	             // "direct", DONE BY MR
                       "generators", // DR
-                      "projective_image",
-                      "quotient_action_image",
-                      "quotient_action_kernel",
-                      "quotient_fusion",
-                      "subgroup_fusion",
-
+	              // "projective_image", DONE BY MR
+                   
                       // Conjugacy class attributes
                       "representative" // Need to be able to encode GrpPCElts - DR
                       ];
+
+        greylist := [
+	     // Attributes which return none and need to be worked on later
+
+                     // Group attributes
+                      "finite_matrix_group",
+	     
+	         // Subgroup attributes
+                      "conjugacy_class_count",
+		      "quotient_action_image",
+                      "quotient_action_kernel",
+                      "quotient_fusion",
+                      "subgroup_fusion"
+
+	     ];
         if attr in blacklist then
             continue;
         end if;

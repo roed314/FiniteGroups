@@ -376,7 +376,7 @@ degree        | smallint   | the degree of the group (`n` from `S_n`)
 counter         | smallint?  | 1-based ordering of conjugacy classes (agree with GAP/Magma?)
 size          | numeric    | Number of elements in this conjugacy class
 order         | smallint   | Order of an element in this conjugacy class
-centralizer   | text       | Label for the isomorphism class of the centralizer of an element in this conjugacy class
+centralizer   | text       | Label for the centralizer of an element in this conjugacy class, as a subgroup of the group
 cycle_type    | smallint[] | sizes of the cycles in a permutation in this class, in descending order and omitting 1s
 rep           | numeric    | a representative element, as the index in the lexicographic ordering of `S_n`.  This is computed by Sage's `Permutations(n).rank(sigma)` function, with inverse `Permutations(n).unrank(rep)` (using Lehmer codes)
 
