@@ -1,10 +1,11 @@
 
-intrinsic num2letters(n::RngIntElt) -> MonStgElt
+intrinsic num2letters(n::RngIntElt: Case:="upper") -> MonStgElt
   {Convert a positive integer into a string of letters as a counter}
   s := "";
+  base:= Case eq "upper" select 65 else 97;
   while n gt 0 do
     r := (n-1) mod 26;
-    s := CodeToString(r+65)*s;
+    s := CodeToString(r+base)*s;
     n := (n-1) div 26;
   end while;
   return s;
@@ -232,8 +233,8 @@ intrinsic testCCs(g::Any)->Any
   cc:=ConjugacyClasses(g);
   cm:=ClassMap(g);
   pm:=PowerMap(g);
-  ngens:=#Generators(g);
-  gens:=[g . j : j in [1..ngens]]; // Get this from the LMFDBGrp?
+  ngens:=NumberOfGenerators(g);
+  gens:=[g . j : j in [1..ngens]];
   return ordercc(g,cc,cm,pm,gens);
 end intrinsic;
 

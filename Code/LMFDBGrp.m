@@ -9,6 +9,18 @@ declare attributes LMFDBGrp:
   NormalSubgroups,
   SubGrpLat,
   ConjugacyClasses,
+  GeneratorsSequence,
+  MagmaGenerators,
+  MagmaConjugacyClasses,
+  MagmaClassMap,
+  MagmaPowerMap,
+  MagmaCharacterTable,
+  MagmaRationalCharacterTable,
+  MagmaCharacterMatching,
+  CCpermutation,
+  CCpermutationInv,
+  CCCharacters,
+  QQCharacters,
   label,
   old_label,
   name,
@@ -219,12 +231,14 @@ end intrinsic;
 declare verbose LMFDBRepQQ, 1;
 declare type LMFDBRepQQ;
 declare attributes LMFDBRepQQ:
+  MagmaGrp,
   label,
   dim,
   order,
   group,
   c_class,
   irreducible,
+  group,
   decomposition;
 
 intrinsic Print(Rho::LMFDBRepQQ)
@@ -262,6 +276,8 @@ end intrinsic;
 declare verbose LMFDBRepCC, 1;
 declare type LMFDBRepCC;
 declare attributes LMFDBRepCC:
+  MagmaRep, // Magma GModule
+  MagmaGrp, // Magma matrix group
   label,
   dim,
   order,
@@ -275,6 +291,7 @@ declare attributes LMFDBRepCC:
   cyc_order_traces,
   denominators,
   gens,
+  q_character,
   traces;
 
 intrinsic Print(Rho::LMFDBRepCC)
@@ -372,6 +389,9 @@ declare type LMFDBGrpChtrCC;
 declare attributes LMFDBGrpChtrCC:
   Grp,
   MagmaChtr,
+  cyclotomic_n,
+  values,
+  Image_object,
   label,
   group,
   dim,
@@ -379,6 +399,9 @@ declare attributes LMFDBGrpChtrCC:
   kernel,
   center,
   faithful,
+  counter,
+  nt,
+  field,
   image;
 
 intrinsic Print(Chi::LMFDBGrpChtrCC)
@@ -391,13 +414,21 @@ end intrinsic;
 declare verbose LMFDBGrpChtrQQ, 1;
 declare type LMFDBGrpChtrQQ;
 declare attributes LMFDBGrpChtrQQ:
+  Grp,
+  MagmaChtr,
+  values,
+  Image_object,
   label,
   group,
   cdim,
   qdim,
   multiplicity,
+  faithful,
   indicator,
-  schur_index;
+  schur_index,
+  image,
+  counter,
+  nt;
 
 intrinsic Print(Chi::LMFDBGrpChtrQQ)
   {Print LMFDBGrpChtrQQ}

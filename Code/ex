@@ -7,8 +7,6 @@ function initg(g,nm)
   G:=New(LMFDBGrp);
   G`label:=nm;
   G`MagmaGrp:=g;
-  AssignBasicAttributes(G);
-  for j in harder do dummy:=Get(G,j); end for;
   return(G);
 end function;
 
@@ -17,7 +15,6 @@ for k->v in samples do
 end for;
 
 G := New(LMFDBGrp);
-G`Label := "whateva";
+G`label := "whateva";
 G`MagmaGrp := Alt(9);
-AssignBasicAttributes(G);
 
