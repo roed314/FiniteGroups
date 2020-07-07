@@ -3,8 +3,11 @@ declare verbose LMFDBGrp, 1;
 declare type LMFDBGrp;
 declare attributes LMFDBGrp:
   MagmaGrp,
+  MagmaOptimized,
+  OptimizedIso,
   Subgroups,
   NormalSubgroups,
+  SubGrpLat,
   ConjugacyClasses,
   GeneratorsSequence,
   MagmaGenerators,
@@ -230,12 +233,14 @@ declare type LMFDBRepQQ;
 declare attributes LMFDBRepQQ:
   MagmaGrp,
   label,
+  carat_label,
   dim,
   order,
   group,
   c_class,
   irreducible,
   group,
+  gens,
   decomposition;
 
 intrinsic Print(Rho::LMFDBRepQQ)

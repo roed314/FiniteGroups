@@ -488,6 +488,7 @@ intrinsic aut_group(G::LMFDBGrp) -> MonStgElt
     try
         return label(aut);
     catch e;
+        print "aut_group", e;
         return None();
     end try;
 end intrinsic;
@@ -612,7 +613,7 @@ intrinsic Subgroups(G::LMFDBGrp) -> SeqEnum
     {The list of subgroups computed for this group}
     S := [];
     GG := G`MagmaGrp;
-    function MakeSubgroups(SubLabels, orig: suffixes := "")
+    function MakeSubgroups(SubLabels, GG, orig: suffixes := "")
         // SubLabels is a SeqEnum of triples (label, subgroup, index in orig)
         // orig may be a SubGrpLat or a SeqEnum of records
         S := [];
@@ -730,15 +731,24 @@ intrinsic Subgroups(G::LMFDBGrp) -> SeqEnum
     newphi := cm*perm; // Magma does composition backwards!
     if G`subgroup_inclusions_known and max_index eq 0 then
         Orig := SubgroupLattice(GG : Centralizers := true, Normalizers := true);
+        // the following sets PresentationIso and GeneratorIndexes
+        if IsSolvable(GG) then
+            RePresentLat(G, Orig);
+        end if;
+        G`SubGrpLat := Orig;
         RF := recformat< subgroup : Grp, order : Integers() >;
         Subs := [rec< RF | subgroup := Orig[i], order := Order(Orig!i) > : i in [1..#Orig]];
         SubLabels := LabelSubgroups(GG, Subs : phi:=newphi);
     else
         Orig := Subgroups(GG: IndexLimit:=max_index);
+        // the following sets PresentationIso and GeneratorIndexes
+        if IsSolvable(GG) then
+            RePresent(G);
+        end if;
         SubLabels:= LabelSubgroups(GG, Orig : phi:=newphi);
     end if;
 
-    S := MakeSubgroups(SubLabels, Orig);
+    S := MakeSubgroups(SubLabels, GG, Orig);
     /* assign the normal beyond index bound */
     all_normal:=G`normal_subgroups_known;
     if max_index ne 0 and all_normal then /* some unlabeled */
@@ -747,7 +757,7 @@ intrinsic Subgroups(G::LMFDBGrp) -> SeqEnum
 
         UnLabeled := [n : n in N | n`order lt ordbd];
         SubLabels := LabelSubgroups(GG, UnLabeled : phi:=newphi);
-        S cat:= MakeSubgroups(SubLabels, Orig : suffixes := ".N");
+        S cat:= MakeSubgroups(SubLabels, GG, Orig : suffixes := ".N");
     end if;
 
     /* assign the maximal beyond index bound */
@@ -774,7 +784,7 @@ intrinsic Subgroups(G::LMFDBGrp) -> SeqEnum
               Append(~NewSubLabels, tup);
            end if;
        end for;
-       S cat:= MakeSubgroups(NewSubLabels, Orig : suffixes := ".M");
+       S cat:= MakeSubgroups(NewSubLabels, GG, Orig : suffixes := ".M");
     end if;
 
     /* special groups labeled */
@@ -821,7 +831,7 @@ intrinsic Subgroups(G::LMFDBGrp) -> SeqEnum
             Append(~NewSuffixes, "."*tup[2]);
         end if;
     end for;
-    S cat:= MakeSubgroups(NewSubLabels, Orig : suffixes := NewSuffixes);
+    S cat:= MakeSubgroups(NewSubLabels, GG, Orig : suffixes := NewSuffixes);
 
     return S;
 end intrinsic;

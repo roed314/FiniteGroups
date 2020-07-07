@@ -251,12 +251,14 @@ so we use the `gps_zrep` table to store actual matrices.
 
 Column         | Type      | Notes
 ---------------|-----------|------
-label          | text      | `n.i`, where `n` is the dimension, `i` is an index for the Q-class as in the CARAT GAP package (see Hoshi-Yamasaki, Rationality Problem for Algebraic Tori for examples)
+label          | text      | label of the "first" character giving this subgroup as its image
+carat_label    | text      | `n.i`, where `n` is the dimension, `i` is an index for the Q-class as in the CARAT GAP package (see Hoshi-Yamasaki, Rationality Problem for Algebraic Tori for examples)
 dim            | smallint  | Dimension `n`
 order          | numeric   | The size of the group
 group          | text      | The LMFDB id for the abstract group
 c_class        | text      | The LFMDB id for the subgroup class in `GL_n(C)`
 irreducible    | boolean
+gens           | integer[][] | List of matrices generating group, matching the generators in the `gps_groups` table
 decomposition  | jsonb     | List of pairs `(label, m)` giving the decomposition as a direct sum of irreducible Q[G]-modules.  `label` is the label for the corresponding `GL_n(Q)`-class, and `m` the multiplicity
 
 ## Subgroups of `GLnZ`
@@ -290,7 +292,7 @@ Question: Should we only include irreducible representations?
 
 Column         | Type      | Notes
 ---------------|-----------|------
-label          | text      | `n.N.i.j` where `n` is the dimension, `N.i` is the label of the abstract group, and `j` is determined by sorting the faithful representations lexicographically using the conjugacy class ordering (note that there may be some reducible ones)
+label          | text      | label of the first character having this group as its image
 dim            | smallint  | 
 order          | numeric   | The size of the group
 group          | text      | The label for the abstract group
@@ -376,7 +378,7 @@ degree        | smallint   | the degree of the group (`n` from `S_n`)
 counter         | smallint?  | 1-based ordering of conjugacy classes (agree with GAP/Magma?)
 size          | numeric    | Number of elements in this conjugacy class
 order         | smallint   | Order of an element in this conjugacy class
-centralizer   | text       | Label for the isomorphism class of the centralizer of an element in this conjugacy class
+centralizer   | text       | Label for the centralizer of an element in this conjugacy class, as a subgroup of the group
 cycle_type    | smallint[] | sizes of the cycles in a permutation in this class, in descending order and omitting 1s
 rep           | numeric    | a representative element, as the index in the lexicographic ordering of `S_n`.  This is computed by Sage's `Permutations(n).rank(sigma)` function, with inverse `Permutations(n).unrank(rep)` (using Lehmer codes)
 

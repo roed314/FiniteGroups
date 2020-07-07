@@ -1,6 +1,16 @@
 intrinsic order(M::LMFDBRepCC) -> FldRatElt
   {Return order of the group}
-  return (M`MagmaGrp)`order;
+  return Order(M`MagmaGrp);
+end intrinsic;
+
+intrinsic dim(M::LMFDBRepCC) -> FldRatElt
+  {Return the dimension of the representation}
+  return Dimension(M`MagmaRep);
+end intrinsic;
+
+intrinsic irreducible(M::LMFDBRepCC) -> FldRatElt
+  {Return true if the representation is irreducible; false otherwise.}
+  return IsIrreducible(M`MagmaRep);
 end intrinsic;
 
 intrinsic indicator(M::LMFDBRepCC) -> FldRatElt
@@ -62,8 +72,26 @@ intrinsic ReadCyclotomicElement(cs::SeqEnum, m::RngIntElt) -> FldCycElt
   return u, K;
 end intrinsic;
 
+intrinsic CyclotomizeMatrixGroup(M::GrpMat) -> Any
+  {Given a matrix group over an abelian number field, change the universe to a containing cyclotomic field}
+  e := Exponent(M);
+  K<z> := CyclotomicField(e : Sparse := false);
+  return ChangeRing(M,K);
+end intrinsic;
+
+intrinsic IntegralizeMatrix(M::AlgMatElt) -> Any
+  {Given a matrix return a matrix with integral entries, along with a common denominator}
+  d := 1;
+  for i := 1 to Nrows(M) do
+    for j := 1 to Ncols(M) do
+      d := Lcm(d, Denominator(M[i,j]));
+    end for;
+  end for;
+  return d*M, d;
+end intrinsic;
+
 intrinsic WriteCyclotomicMatrix(M::AlgMatElt) -> SeqEnum
-  {Write a matrix over a cyclotomic field as a SeqEnum whose entries are of the form given by WriteCyclotomicElement}
+  {Given a matrix over a cyclotomic field, return a SeqEnum whose entries are integral and of the form given by WriteCyclotomicElement.}
   M_seq := [];
   for row in Rows(M) do
     Append(~M_seq, [WriteCyclotomicElement(el) : el in Eltseq(row)]);
@@ -79,4 +107,10 @@ intrinsic ReadCyclotomicMatrix(cs::SeqEnum, m::RngIntElt) -> AlgMatElt
     Append(~rows, [ReadCyclotomicElement(el,m) : el in r]);
   end for;
   return Matrix(K,rows);
+end intrinsic;
+
+intrinsic carat_label(G::LMFDBRepQQ) -> Any
+  {Return the CARAT label for a repn of dimension < 7.  Will be computed by
+   other software.}
+  return None();
 end intrinsic;
