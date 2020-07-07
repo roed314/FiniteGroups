@@ -233,12 +233,14 @@ declare type LMFDBRepQQ;
 declare attributes LMFDBRepQQ:
   MagmaGrp,
   label,
+  carat_label,
   dim,
   order,
   group,
   c_class,
   irreducible,
   group,
+  gens,
   decomposition;
 
 intrinsic Print(Rho::LMFDBRepQQ)
