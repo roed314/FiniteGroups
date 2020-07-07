@@ -258,7 +258,7 @@ order          | numeric   | The size of the group
 group          | text      | The LMFDB id for the abstract group
 c_class        | text      | The LFMDB id for the subgroup class in `GL_n(C)`
 irreducible    | boolean
-gens           | integer[] | List of matrices generating group, matching the generators in the `gps_groups` table
+gens           | integer[][] | List of matrices generating group, matching the generators in the `gps_groups` table
 decomposition  | jsonb     | List of pairs `(label, m)` giving the decomposition as a direct sum of irreducible Q[G]-modules.  `label` is the label for the corresponding `GL_n(Q)`-class, and `m` the multiplicity
 
 ## Subgroups of `GLnZ`
