@@ -248,6 +248,7 @@ end intrinsic;
 intrinsic MagmaTransitiveSubgroup(G::LMFDBGrp) -> Any
     {Subgroup producing a minimal degree transitive faithful permutation representation}
     g := G`MagmaGrp;
+    if Get(G, "order") eq 1 then return g; end if;
     S := Get(G, "Subgroups");
     m := G`subgroup_index_bound;
     for j in [1..#S] do
@@ -919,6 +920,7 @@ intrinsic semidirect_product(G::LMFDBGrp : direct := false) -> Any
   {Returns true if G is a nontrivial semidirect product; otherwise returns false.}
   GG := Get(G, "MagmaGrp");
   ordG := Get(G, "order");
+  if ordG eq 1 then return false; end if;
   Ns := Get(G, "NormalSubgroups");
   if Type(Ns) eq NoneType then return None(); end if;
   Remove(~Ns,#Ns); // remove full group;

@@ -193,6 +193,7 @@ intrinsic LoadAttr(attr::MonStgElt, inp::MonStgElt, obj::Any) -> Any
 end intrinsic;
 intrinsic SaveAttr(attr::MonStgElt, val::Any, obj::Any) -> MonStgElt
     {Save a single attribute}
+"Save",attr, val, obj;
     if Type(val) eq NoneType then
         return "\\N";
     elif attr in TextCols then
@@ -311,10 +312,12 @@ intrinsic SaveLMFDBObject(G::Any : attrs:=[], sep:="|") -> MonStgElt
         attrs := DefaultAttributes(Type(G));
     end if;
     for attr in attrs do
+"Attr", attr;
         if Type(SaveAttr(attr, Get(G, attr), G)) ne MonStgElt then
             print attr, Type(SaveAttr(attr, Get(G, attr), G));
         end if;
     end for;
+"Saving";
     return Join([SaveAttr(attr, Get(G, attr), G) : attr in attrs], sep);
 end intrinsic;
 
