@@ -1020,9 +1020,8 @@ intrinsic Characters(G::LMFDBGrp) ->  Tup
   rchars:=[New(LMFDBGrpChtrQQ) : c in rct];
   for j:=1 to #cchars do
     cchars[j]`Grp:=G;
-    cchars[j]`MagmaChtr:=cchars[j];
-    cchars[j]`dim:=Degree(ct[j]);
-    cchars[j]`MagmaChtr:=cchars[j];
+    cchars[j]`MagmaChtr:=ct[j];
+    cchars[j]`dim:= Integers() ! Degree(ct[j]);
     cchars[j]`faithful:=IsFaithful(ct[j]);
     cchars[j]`group:=Get(G,"label");
     thepoly:=DefiningPolynomial(CharacterField(ct[j]));
@@ -1036,7 +1035,7 @@ intrinsic Characters(G::LMFDBGrp) ->  Tup
   end for;
   for j:=1 to #rchars do
     rchars[j]`Grp:=G; // These don't have a group?
-    rchars[j]`MagmaChtr:=rchars[j];
+    rchars[j]`MagmaChtr:=ct[matching[j][1]];
     rchars[j]`group:=Get(G,"label");
     rchars[j]`schur_index:=SchurIndex(ct[matching[j][1]]);
     rchars[j]`multiplicity:=#matching[j];

@@ -226,7 +226,7 @@ intrinsic LoadAttr(attr::MonStgElt, inp::MonStgElt, obj::Any) -> Any
 end intrinsic;
 intrinsic SaveAttr(attr::MonStgElt, val::Any, obj::Any) -> MonStgElt
     {Save a single attribute}
-"Save",attr, val, obj;
+//"Save",attr, val, obj;
     if Type(val) eq NoneType then
         return "\\N";
     elif attr in TextCols then
@@ -345,12 +345,12 @@ intrinsic SaveLMFDBObject(G::Any : attrs:=[], sep:="|") -> MonStgElt
         attrs := DefaultAttributes(Type(G));
     end if;
     for attr in attrs do
-"Attr", attr;
+//"Attr", attr;
         if Type(SaveAttr(attr, Get(G, attr), G)) ne MonStgElt then
             print attr, Type(SaveAttr(attr, Get(G, attr), G));
         end if;
     end for;
-"Saving";
+//"Saving";
     return Join([SaveAttr(attr, Get(G, attr), G) : attr in attrs], sep);
 end intrinsic;
 
@@ -369,5 +369,7 @@ intrinsic PrintData(G::LMFDBGrp: sep:="|") -> Tup
     {}
     return <[SaveLMFDBObject(G: sep:=sep)],
             [SaveLMFDBObject(H: sep:=sep) : H in Get(G, "Subgroups")],
-            [SaveLMFDBObject(cc: sep:=sep) : cc in Get(G, "ConjugacyClasses")]>;
+            [SaveLMFDBObject(cc: sep:=sep) : cc in Get(G, "ConjugacyClasses")],
+            [SaveLMFDBObject(cr: sep:=sep) : cr in Get(G, "CCCharacters")],
+            [SaveLMFDBObject(cr: sep:=sep) : cr in Get(G, "QQCharacters")]>;
 end intrinsic;

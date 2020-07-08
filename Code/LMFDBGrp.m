@@ -21,6 +21,7 @@ declare attributes LMFDBGrp:
   CCpermutationInv,
   CCCharacters,
   QQCharacters,
+  Characters,
   label,
   old_label,
   name,

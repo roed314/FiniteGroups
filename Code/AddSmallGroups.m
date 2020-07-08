@@ -19,7 +19,9 @@ end if;
 
 files := [Folder * "groups/" * Proc * ".txt",
           Folder * "subgroups/" * Proc * ".txt",
-          Folder * "groups_cc/" * Proc * ".txt"];
+          Folder * "groups_cc/" * Proc * ".txt",
+          Folder * "characters_cc/" * Proc * ".txt",
+          Folder * "characters_qq/" * Proc * ".txt"];
 
 for f in ["groups", "subgroups", "groups_cc"] do
   System("mkdir -p "* Folder * f);
@@ -39,7 +41,7 @@ End := Floor((NumGroups-1) * (Proc + 1) / NumProc);
 procedure WriteSmallGroup(N, i)
     "Small group", N, i;
     print_data := MakeSmallGroupData(N, i);
-    for j in [1..3] do
+    for j in [1..5] do
         for line in print_data[j] do
             PrintFile(files[j], line);
         end for;
