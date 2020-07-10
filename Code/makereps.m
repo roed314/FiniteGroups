@@ -1,18 +1,20 @@
 /* Main function is getreps.  If g is a magma group,
    getreps(g) for complex representations or
-   getreps(g:FieldType:="Rationals")
+   getreps(g:Field:="Q")
    for rational representations
 */
 
+/* Not used
 intrinsic firstip(chr::Any, pc::Any) -> Any
-  {}
+  {First permutation character containing chr from the list pc}
   cnt:=1;
   while InnerProduct(chr, pc[cnt]) eq 0 do cnt:=cnt+1; end while;
   return cnt;
 end intrinsic;
+*/
 
 intrinsic myti(g::Any,sub::Any) -> Any
-  {}
+  {Transitive group identification for sub, a subgroup of g}
   inn := Index(g,sub);
   if inn gt 47 then
     return [Index(g,sub),0];
@@ -21,6 +23,7 @@ intrinsic myti(g::Any,sub::Any) -> Any
   return [b,a];
 end intrinsic;
 
+/* g is a magma group, ct is its character table */
 intrinsic getgoodsubs(g::Any,ct::Any)->Any
   {Get optimal subgroups s.t. the permutation representations contain the irreducible representations.  Also capture the t-numbers of the permutation representations.}
   subs:=[* 0 : z in ct *];
@@ -61,16 +64,18 @@ intrinsic getgoodsubs(g::Any,ct::Any)->Any
 end intrinsic;
 
 // Any other field type produces rationals
-intrinsic getirrreps(g::Any: FieldType:="Complex")->Any
+intrinsic getirrreps(G::LMFDBGrp: Field:="C")->Any
   {}
-  if FieldType eq "Complex" then
+  g:=G`MagmaGrp;
+  if Field eq "C" then
       e:=Exponent(g);
       K:=CyclotomicField(e);
-      ct:=CharacterTable(g);
+      ct:=Get(G, "MagmaCharacterTable");
   else
     K:=Rationals();
     comp_ct:=CharacterTable(g);
-    ct,matching:=RationalCharacterTable(g);
+    ct:=Get(G, "MagmaRationalCharacterTable");
+    matching:=Get(G, "MagmaCharacterMatching");
   end if;
   gs:=getgoodsubs(g, ct);
   subs:=gs[1];
@@ -92,7 +97,7 @@ intrinsic getirrreps(g::Any: FieldType:="Complex")->Any
   end for;
   res:=[*0 : z in ct*];
   for j:=1 to #ct do
-    mult:= FieldType eq "Complex" select 1 else SchurIndex(comp_ct[matching[j][1]]);
+    mult:= Field eq "C" select 1 else SchurIndex(comp_ct[matching[j][1]]);
     for rep in im do
       if Character(rep) eq ct[j]*mult then
         res[j]:=<ct[j], rep, tvals[j]>;
@@ -112,9 +117,10 @@ end intrinsic;
    characters which are multiples of the values in the rational
    character table.
  */
-intrinsic getreps(g::Any: FieldType:="Complex")->Any
+intrinsic getreps(G::LMFDBGrp: Field:="C")->Any
   {Get irreducible matrix representations}
-  im:=getirrreps(g: FieldType:=FieldType);
+  im:=getirrreps(G: Field:=Field);
+  g:=G`MagmaGrp;
   result:=<>;
   for rep in im do
     nag:=Nagens(rep[2]);
