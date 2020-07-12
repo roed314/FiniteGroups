@@ -1035,7 +1035,8 @@ intrinsic Characters(G::LMFDBGrp) ->  Tup
   end for;
   for j:=1 to #rchars do
     rchars[j]`Grp:=G; // These don't have a group?
-    rchars[j]`MagmaChtr:=ct[matching[j][1]];
+    //rchars[j]`MagmaChtr:=ct[matching[j][1]];
+    rchars[j]`MagmaChtr:=rct[j];
     rchars[j]`group:=Get(G,"label");
     rchars[j]`schur_index:=SchurIndex(ct[matching[j][1]]);
     rchars[j]`multiplicity:=#matching[j];

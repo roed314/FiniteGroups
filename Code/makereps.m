@@ -70,12 +70,15 @@ intrinsic getirrreps(G::LMFDBGrp: Field:="C")->Any
   if Field eq "C" then
       e:=Exponent(g);
       K:=CyclotomicField(e);
-      ct:=Get(G, "MagmaCharacterTable");
+      cct:=Get(G, "CCCharacters");
+      ct:=<c`MagmaChtr : c in cct>;
   else
     K:=Rationals();
     comp_ct:=CharacterTable(g);
-    ct:=Get(G, "MagmaRationalCharacterTable");
-    matching:=Get(G, "MagmaCharacterMatching");
+    cct:=Get(G, "QQCharacters");
+    ct:=<c`MagmaChtr : c in cct>;
+    //ct:=Get(G, "MagmaRationalCharacterTable");
+    //matching:=Get(G, "MagmaCharacterMatching");
   end if;
   gs:=getgoodsubs(g, ct);
   subs:=gs[1];
@@ -97,7 +100,8 @@ intrinsic getirrreps(G::LMFDBGrp: Field:="C")->Any
   end for;
   res:=[*0 : z in ct*];
   for j:=1 to #ct do
-    mult:= Field eq "C" select 1 else SchurIndex(comp_ct[matching[j][1]]);
+    //mult:= Field eq "C" select 1 else SchurIndex(comp_ct[matching[j][1]]);
+    mult:= Field eq "C" select 1 else Get(cct[j], "schur_index");
     for rep in im do
       if Character(rep) eq ct[j]*mult then
         res[j]:=<ct[j], rep, tvals[j]>;
@@ -124,10 +128,25 @@ intrinsic getreps(G::LMFDBGrp: Field:="C")->Any
   result:=<>;
   for rep in im do
     nag:=Nagens(rep[2]);
-    data:= <<g . j, ActionGenerator(rep[2], j)> : j in [1..nag]>;
+    data:= <<g . j, castZ(ActionGenerator(rep[2], j), Field)> : j in [1..nag]>;
     Append(~result, <rep[1], rep[3], data>);
   end for;
   return result;
+end intrinsic;
+
+intrinsic castZ(m::Any, Field::Any) -> Any
+  {Take a matrix with entries in Q and cast them to Z.  They should already
+   be integers.  If Field is not "Q", do nothing.}
+  if Field ne "Q" then return m; end if;
+  r:=NumberOfRows(m);
+  c:=NumberOfColumns(m);
+  ZZ:=Integers();
+  for i:= 1 to r do
+    for j:= 1 to c do
+      assert m[i,j] in ZZ;
+    end for;
+  end for;
+  return Matrix(ZZ,r,c,[[ZZ!m[i,j]: j in [1..c]]:i in [1..r]]);
 end intrinsic;
 
 /* Useful commands to lower a representation to a smaller field:
