@@ -133,6 +133,7 @@ end intrinsic;
 
 intrinsic eulerian_function(G::LMFDBGrp) -> Any
   {Calculates the Eulerian function of G for n = rank(G)}
+  if Get(G, "order") eq 1 then return 1; end if;
   n:=Get(G,"rank");
   sum:=0;
   mobius_images:= MobiusFunction(G);
@@ -148,6 +149,7 @@ end intrinsic;
 
 intrinsic rank(G::LMFDBGrp) -> Any
   {Calculates the rank of the group G}
+  if Get(G, "order") eq 1 then return 0; end if;
   if Get(G,"cyclic") then
     return 1;
   else

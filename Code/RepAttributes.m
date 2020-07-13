@@ -119,3 +119,9 @@ intrinsic ReadCyclotomicMatrix(cs::SeqEnum, m::RngIntElt) -> GrpMatElt
   end for;
   return Matrix(K,rows);
 end intrinsic;
+
+intrinsic carat_label(G::LMFDBRepQQ) -> Any
+  {Return the CARAT label for a repn of dimension < 7.  Will be computed by
+   other software.}
+  return None();
+end intrinsic;

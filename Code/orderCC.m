@@ -44,6 +44,9 @@ intrinsic ordercc(g::Any,cc::Any,cm::Any,pm::Any,gens::Any) -> Any
    generators, and return ordered classes and labels.}
   ncc:=#cc;
   gens:=[z : z in gens];
+  if gens eq [] then
+    gens := [Id(g)];
+  end if;
   // Step 1 partitions the classes based on the order of a generator
   // and the size of the class
   step1:=AssociativeArray();

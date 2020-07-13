@@ -56,29 +56,62 @@ intrinsic SaveTextList(out::SeqEnum) ->  MonStgElt
 end intrinsic;
 
 
+strgsave:=function(strg);
+   if Type(strg) eq MonStgElt then
+      return "\"" cat strg cat "\"";
+   else
+      return strg;
+   end if;
+end function;
+
+listprocess:=function(L);
+   newout:="[ ";
+   for i in [1..#L] do
+      subL:=L[i];
+      if Type(subL) eq SeqEnum or Type(subL) eq List then
+         out_piece:=$$(subL);   
+      else 
+         out_piece:=Sprint(strgsave(subL));  
+      end if;
+      if i ne #L then
+         out_piece:=out_piece cat ", ";
+      end if;
+      newout:=newout cat out_piece;
+   end for;
+   newout  := newout cat " ]";
+   return newout;
+end function;
+
+
+removestars:=function(L);
+   for i in [1..#L] do
+      if Type(L[i]) eq List then
+          L[i]:=$$(L[i]);
+      end if;
+   end for;
+   typeL:={Type(L[i]) : i in [1..#L]};
+   if #typeL eq 1 then
+      newL:=[L[i] : i in [1..#L]];
+   else 
+      newL:=L;
+   end if;
+   return newL;
+end function;
+
 intrinsic LoadJsonb(inp::MonStgElt) -> List
     {assuming lists of strings or integers only}
-    assert inp[1] eq "{" and inp[#inp] eq "}";
-    ReplaceString(~inp,["{","}","'"],["[","]","\""]);
-    return eval inp;
+    assert inp[1] eq "[" and inp[#inp] eq "]";
+    ReplaceString(~inp,["[","]"],["[*","*]"]);
+    magma_inp:=eval inp;
+    return removestars(magma_inp);
 end intrinsic;
 intrinsic SaveJsonb(out::List) ->  MonStgElt
-    {assuming list of strings or integers only}
-    for i in [1..#out] do
-	if Type(out[i]) ne SeqEnum then   //special case when a solo element
-	    if Type(out[i]) eq MonStgElt then
-        	out[i]:="'" cat out[i] cat "'";
-            end if;
-	else	//need to add the ' ' around strings
-            if Type(out[i,1]) eq MonStgElt then
-	        newout:=["'" cat out[i,j] cat "'" : j in [1..#out[i]]];
-                out[i]:=newout;
-            end if;
-        end if;
-    end for;
-    out_str := Sprint(out);
-    ReplaceString(~out_str, ["[","]"," ","\n"],["{","}","", ""]);
-    return out_str;
+{assuming list of strings or integers (or embedded lists of these) only}
+    return listprocess(out);
+end intrinsic;
+intrinsic SaveJsonb(out::SeqEnum[List]) ->  MonStgElt
+{assuming list of strings or integers (or embedded lists of these) only}
+    return listprocess(out);
 end intrinsic;
 
 
@@ -193,6 +226,7 @@ intrinsic LoadAttr(attr::MonStgElt, inp::MonStgElt, obj::Any) -> Any
 end intrinsic;
 intrinsic SaveAttr(attr::MonStgElt, val::Any, obj::Any) -> MonStgElt
     {Save a single attribute}
+//"Save",attr, val, obj;
     if Type(val) eq NoneType then
         return "\\N";
     elif attr in TextCols then
@@ -311,10 +345,12 @@ intrinsic SaveLMFDBObject(G::Any : attrs:=[], sep:="|") -> MonStgElt
         attrs := DefaultAttributes(Type(G));
     end if;
     for attr in attrs do
+//"Attr", attr;
         if Type(SaveAttr(attr, Get(G, attr), G)) ne MonStgElt then
             print attr, Type(SaveAttr(attr, Get(G, attr), G));
         end if;
     end for;
+//"Saving";
     return Join([SaveAttr(attr, Get(G, attr), G) : attr in attrs], sep);
 end intrinsic;
 
@@ -333,5 +369,7 @@ intrinsic PrintData(G::LMFDBGrp: sep:="|") -> Tup
     {}
     return <[SaveLMFDBObject(G: sep:=sep)],
             [SaveLMFDBObject(H: sep:=sep) : H in Get(G, "Subgroups")],
-            [SaveLMFDBObject(cc: sep:=sep) : cc in Get(G, "ConjugacyClasses")]>;
+            [SaveLMFDBObject(cc: sep:=sep) : cc in Get(G, "ConjugacyClasses")],
+            [SaveLMFDBObject(cr: sep:=sep) : cr in Get(G, "CCCharacters")],
+            [SaveLMFDBObject(cr: sep:=sep) : cr in Get(G, "QQCharacters")]>;
 end intrinsic;

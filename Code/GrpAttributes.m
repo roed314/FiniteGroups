@@ -248,6 +248,7 @@ end intrinsic;
 intrinsic MagmaTransitiveSubgroup(G::LMFDBGrp) -> Any
     {Subgroup producing a minimal degree transitive faithful permutation representation}
     g := G`MagmaGrp;
+    if Get(G, "order") eq 1 then return g; end if;
     S := Get(G, "Subgroups");
     m := G`subgroup_index_bound;
     for j in [1..#S] do
@@ -919,6 +920,7 @@ intrinsic semidirect_product(G::LMFDBGrp : direct := false) -> Any
   {Returns true if G is a nontrivial semidirect product; otherwise returns false.}
   GG := Get(G, "MagmaGrp");
   ordG := Get(G, "order");
+  if ordG eq 1 then return false; end if;
   Ns := Get(G, "NormalSubgroups");
   if Type(Ns) eq NoneType then return None(); end if;
   Remove(~Ns,#Ns); // remove full group;
@@ -1018,9 +1020,8 @@ intrinsic Characters(G::LMFDBGrp) ->  Tup
   rchars:=[New(LMFDBGrpChtrQQ) : c in rct];
   for j:=1 to #cchars do
     cchars[j]`Grp:=G;
-    cchars[j]`MagmaChtr:=cchars[j];
-    cchars[j]`dim:=Degree(ct[j]);
-    cchars[j]`MagmaChtr:=cchars[j];
+    cchars[j]`MagmaChtr:=ct[j];
+    cchars[j]`dim:= Integers() ! Degree(ct[j]);
     cchars[j]`faithful:=IsFaithful(ct[j]);
     cchars[j]`group:=Get(G,"label");
     thepoly:=DefiningPolynomial(CharacterField(ct[j]));
@@ -1034,7 +1035,8 @@ intrinsic Characters(G::LMFDBGrp) ->  Tup
   end for;
   for j:=1 to #rchars do
     rchars[j]`Grp:=G; // These don't have a group?
-    rchars[j]`MagmaChtr:=rchars[j];
+    //rchars[j]`MagmaChtr:=ct[matching[j][1]];
+    rchars[j]`MagmaChtr:=rct[j];
     rchars[j]`group:=Get(G,"label");
     rchars[j]`schur_index:=SchurIndex(ct[matching[j][1]]);
     rchars[j]`multiplicity:=#matching[j];

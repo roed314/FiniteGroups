@@ -104,6 +104,18 @@ intrinsic complexconjindex(ct::Any, gorb::Any, achar::Any) -> Any
   return gorb[myind];
 end intrinsic;
 
+intrinsic QQCharacters(G::LMFDBGrp) -> Any
+  { Compute and return Q characters }
+  dummy := Get(G, "Characters");
+  return G`QQCharacters;
+end intrinsic;
+
+intrinsic CCCharacters(G::LMFDBGrp) -> Any
+  { Compute and return Q characters }
+  dummy := Get(G, "Characters");
+  return G`CCCharacters;
+end intrinsic;
+
 intrinsic characters_add_sort_and_labels(G::LMFDBGrp, cchars::Any, rchars::Any) -> Any
   {Order characters and make labels for them.  This does complex and rational
    characters together since the ordering and labelling are connected.}
@@ -207,6 +219,8 @@ intrinsic characters_add_sort_and_labels(G::LMFDBGrp, cchars::Any, rchars::Any) 
       end if;
     end if;
   end for;
+  G`QQCharacters := rchars;
+  G`CCCharacters := cchars;
   
   return <cchars, rchars>;
 end intrinsic;
