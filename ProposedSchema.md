@@ -71,7 +71,7 @@ sylow_subgroups_known | boolean  | Whether we store all sylow subgroups of this 
 subgroup_inclusions_known | boolean | Whether we store inclusion relationships among subgroups of this group
 outer_equivalence | boolean   | Whether subgroups are stored up to automorphism (as opposed to up to conjugacy)
 subgroup_index_bound | smallint  | If not `NULL`, we store all (equivalence classes of) subgroups of index up to this bound.  Additional subgroups may also be stored (for example, normal subgroups, maximal subgroups, or subgroups of small order)
-moddecompuniq | jsonb    | ???? Not added to db yet.  See Galois groups data eg: 3T2
+moddecompuniq | jsonb    | &#x1F534; &#x1F534;  Not added to db yet.  See Galois groups data eg: 3T2  
 wreath_product | boolean | whether this group is a wreath product
 central_product | boolean | whether this group is a central product
 finite_matrix_group | boolean | whether this group shows up in `gps_prep_names`
@@ -111,9 +111,8 @@ There are 4952 transitive groups up to n=23.
 
 Note that we can recover siblings by doing another search for transitive groups with the same abstract group label.
 
-```diff
--This doesn't match transitive database currently. Since transitive is in production we should update ours first to match before modifying.
-```
+
+&#x1F534; &#x1F534; This doesn't match transitive database currently. Since transitive is in production we should update the schema here first to match, before modifying database.
 
 Column        | Type     | Notes
 --------------|----------|------
@@ -226,6 +225,9 @@ If `Z(G_1)` and `Z(G_2)` contain a common nontrivial subgroup `U` then the quoti
 
 If there are multiple choices of U that yield isomorphic central products, we choose the lowest numbered subgroup label in `G_1`, then the lowest numbered subgroup label in `G_2`.
 
+&#x1F534; &#x1F534; Table not yet in database.
+
+
 Column         | Type      | Notes
 ---------------|-----------|------
 factor1        | text      | label for `G_1`, lexicographically smaller (ie, smaller order or same order and smaller `i`
@@ -238,6 +240,9 @@ alias_spot     | smallint  | Which position this alias should appear in the list
 `gps_wreath_products`: Wreath products of groups
 
 The wreath product of an abstract group `G` and a permutation group `P` of degree `n` is the semidirect product of `G^n` with `P`, where `P` acts by permuting the copies of `G`.
+
+
+&#x1F534; &#x1F534; Table not yet in database.
 
 Column         | Type      | Notes
 ---------------|-----------|------
@@ -253,7 +258,8 @@ alias_spot     | smallint  | Which position this alias should appear in the list
 Note that every finite subgroup of GL_n(Q) is conjugate to one within GL_n(Z),
 so we use the `gps_zrep` table to store actual matrices.
 
-Table doesn't exist yet in DB.
+
+&#x1F534; &#x1F534; Table not yet in database.
 
 Column         | Type      | Notes
 ---------------|-----------|------
@@ -294,7 +300,8 @@ gens           | integer[] | List of matrices generating group, matching the gen
 
 `gps_crep`: Finite subgroups of GL_n(C), up to GL_n(C) conjugacy
 
-Question: Should we only include irreducible representations?
+
+&#x1F534; &#x1F534; Question: Should we only include irreducible representations?
 
 Column         | Type      | Notes
 ---------------|-----------|------
@@ -319,7 +326,9 @@ traces         | jsonb | The traces of the conjugacy classes (in the order of `g
 
 Initially this table would contain subgroups of `GL_n(F_q)`, but it can easily incorporate subgroups of other groups such as `SL_n`, `Sp_n`, `GSp_n`, and `SO_n`.  Since the main point of this table is to give generators as matrices, it doesn't make sense to extend to exceptional groups of Lie type.
 
-Table doesn't exist in database yet.
+
+&#x1F534; &#x1F534; Table not yet in database.
+
 
 Column         | Type       | Notes
 ---------------|------------|------
@@ -335,6 +344,9 @@ proj_label | text | The label `N.i.j` of the image of the group in the quotient 
 
 `gps_prep_names`: Names for classical groups with a specified `n` and `q`
 
+
+&#x1F534; &#x1F534; Table not yet in database.
+
 Column         | Type       | Notes
 ---------------|------------|------
 group          | text       | label of abstract group
@@ -344,7 +356,7 @@ family         | text       | For example `GL` or `Spin`
 name           | text       |
 tex_name       | text       |
 
-Table doesn't exist in database yet.
+
 
 # Conjugacy classes
 
@@ -378,6 +390,8 @@ representative | numeric    | An encoded representative for this conjugacy class
 `gps_transitive_cc`: Conjugacy classes in transitive permutation groups
 
 Up to degree 23, there are 291985 non-central classes, 9283 central elements.
+
+&#x1F534; &#x1F534; Table not yet in database.
 
 Column        | Type       | Notes
 --------------|------------|------
