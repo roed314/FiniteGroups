@@ -110,7 +110,10 @@ parameters    | jsonb    | To be used in formatting
 There are 4952 transitive groups up to n=23.
 
 Note that we can recover siblings by doing another search for transitive groups with the same abstract group label.
-JP: Note this doesn't match transitive database currently. Will go back and fix later.
+
+```diff
+-This doesn't match transitive database currently. Since transitive is in production we should update ours first to match before modifying.
+```
 
 Column        | Type     | Notes
 --------------|----------|------
