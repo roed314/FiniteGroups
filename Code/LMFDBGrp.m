@@ -237,7 +237,6 @@ declare attributes LMFDBRepQQ:
   carat_label,
   dim,
   order,
-  group,
   c_class,
   irreducible,
   group,

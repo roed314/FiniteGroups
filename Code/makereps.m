@@ -74,11 +74,8 @@ intrinsic getirrreps(G::LMFDBGrp: Field:="C")->Any
       ct:=<c`MagmaChtr : c in cct>;
   else
     K:=Rationals();
-    comp_ct:=CharacterTable(g);
     cct:=Get(G, "QQCharacters");
     ct:=<c`MagmaChtr : c in cct>;
-    //ct:=Get(G, "MagmaRationalCharacterTable");
-    //matching:=Get(G, "MagmaCharacterMatching");
   end if;
   gs:=getgoodsubs(g, ct);
   subs:=gs[1];
@@ -100,11 +97,10 @@ intrinsic getirrreps(G::LMFDBGrp: Field:="C")->Any
   end for;
   res:=[*0 : z in ct*];
   for j:=1 to #ct do
-    //mult:= Field eq "C" select 1 else SchurIndex(comp_ct[matching[j][1]]);
     mult:= Field eq "C" select 1 else Get(cct[j], "schur_index");
     for rep in im do
       if Character(rep) eq ct[j]*mult then
-        res[j]:=<ct[j], rep, tvals[j]>;
+        res[j]:=<cct[j], rep, tvals[j]>;
         Exclude(~im, rep);
         break;
       end if;
@@ -120,33 +116,122 @@ end intrinsic;
    Beware, if the field type is Rational, then some reps have
    characters which are multiples of the values in the rational
    character table.
+
+   Field is "Q" or "C"
  */
-intrinsic getreps(G::LMFDBGrp: Field:="C")->Any
+intrinsic getreps(G::LMFDBGrp, Field::MonStgElt)->Any
   {Get irreducible matrix representations}
   im:=getirrreps(G: Field:=Field);
+  cct:=Get(G, "QQCharacters");
   g:=G`MagmaGrp;
   result:=<>;
   for rep in im do
     nag:=Nagens(rep[2]);
-    data:= <<g . j, castZ(ActionGenerator(rep[2], j), Field)> : j in [1..nag]>;
+    data:= <<g . j, ActionGenerator(rep[2], j)> : j in [1..nag]>;
     Append(~result, <rep[1], rep[3], data>);
+  end for;
+
+  /* myimages contains faithful images for this group stored as
+     label -> <dimension, generator list>
+  */
+  myimages:=AssociativeArray(); 
+  System("mkdir -p Qreps");
+  for rep in result do
+    replabel:= rep_label(rep[1], [z[2] : z in rep[3]], myimages);
+    r3 := [z[2] : z in rep[3]];
+    if replabel eq Get(rep[1], "label") then
+      r := New(LMFDBRepQQ);
+      r`group := Get(G, "label");
+      r`gens := [castZ(geninfo, "Q") : geninfo in r3];
+      r`dim := Degree(Get(rep[1], "MagmaChtr"));
+      r`carat_label := None();
+      r`c_class := None();
+      r`irreducible:= true;
+      r`decomposition:= [<r`label, 1>];
+      r`order := Get(G, "order");
+      r`label := replabel;
+      myimages[replabel] := <r`dim, r3>;
+      saverep(r);
+    else
+      ; // Set the label for the lmfdb character
+    end if;
   end for;
   return result;
 end intrinsic;
 
+intrinsic rep_label(C::LMFDBGrpChtrQQ, r::Any, A::Assoc)->MonStgElt
+ {Return the label for the image of a representation.  It might come from
+  a quotient group, or from the current group but already seen, or it might
+  be new.}
+  qdim := Get(C, "qdim")*Get(C, "schur_index");
+  bigg := GL(qdim, Integers());
+  K:=sub<bigg| { g : g in r}>;
+  if Get(C, "faithful") then // this group
+    for k in Keys(A) do
+      if A[k][1] eq qdim then
+        H:=sub<bigg| A[k][2]>;
+        if IsGLQConjugate(H,K) then
+          return k;
+        end if;
+      end if;
+    end for;
+    return Get(C, "label");
+  else // need quotient group, read from file
+    try
+      ker:=Kernel(Get(C,"MagmaChtr"));
+      quot:=Get(C,"Grp")`MagmaGrp/ker;
+      idquot:=IdentifyGroup(quot);
+      oldreps:=Split(Read(Sprintf("%o/%o.%o", "Qreps", idquot[1], idquot[2])));
+      for orep in oldreps do
+        dat := Split(orep, " ");
+        lab := dat[1];
+        dm := eval(dat[2]);
+        elts := eval(dat[3]);
+        elts := [Matrix(qdim,qdim, z): z in elts];
+        H := sub<bigg|elts>;
+        if IsGLQConjugate(H,K) then
+          return lab;
+        end if;
+      end for;
+    catch e
+      "Error reading old reps for ", idquot;
+      return "";
+    end try;
+    assert false;
+    return ""; // Should not get here
+  end if;
+end intrinsic;
+
 intrinsic castZ(m::Any, Field::Any) -> Any
   {Take a matrix with entries in Q and cast them to Z.  They should already
-   be integers.  If Field is not "Q", do nothing.}
-  if Field ne "Q" then return m; end if;
+   be integers.  If Field is not "Q", do nothing to entries.
+   Output is a list of lists rather than a matrix.}
   r:=NumberOfRows(m);
   c:=NumberOfColumns(m);
-  ZZ:=Integers();
-  for i:= 1 to r do
-    for j:= 1 to c do
-      assert m[i,j] in ZZ;
+  if Field eq "Q" then
+    ZZ:=Integers();
+    for i:= 1 to r do
+      for j:= 1 to c do
+        assert m[i,j] in ZZ;
+      end for;
     end for;
-  end for;
-  return Matrix(ZZ,r,c,[[ZZ!m[i,j]: j in [1..c]]:i in [1..r]]);
+    m:= Matrix(ZZ,r,c,[[ZZ!m[i,j]: j in [1..r]]:i in [1..c]]);
+  end if;
+  return [[m[i,j]: i in [1..c]]: j in [1..r]];
+end intrinsic;
+
+/* Write a representation to a file 
+   We append to the file, so make sure it is new
+*/
+intrinsic saverep(r::LMFDBRepQQ)
+  {}
+  mm:=Get(r, "gens");
+  mm:=[castZ(geninfo, "Q") : geninfo in mm];
+  mystr:=Sprintf("%o$%o$%o",Get(r, "label"), Get(r, "dim"), mm);
+  mystr:=DelSpaces(mystr);
+  mystr:=ReplaceString(mystr, "$", " ");
+mystr;
+  write("Qreps/"*Get(r, "group"), mystr);
 end intrinsic;
 
 /* Useful commands to lower a representation to a smaller field:
