@@ -256,10 +256,8 @@ alias_spot     | smallint  | Which position this alias should appear in the list
 `gps_qrep`: Finite subgroups of GL_n(Z), up to GL_n(Q) conjugacy
 
 Note that every finite subgroup of GL_n(Q) is conjugate to one within GL_n(Z),
-so we use the `gps_zrep` table to store actual matrices.
+so we use the `gps_zrep` table to store actual matrices.  (Actually, the entry gens will hold a copy for now.)
 
-
-&#x1F534; &#x1F534; Table not yet in database.
 
 Column         | Type      | Notes
 ---------------|-----------|------
@@ -270,7 +268,7 @@ order          | numeric   | The size of the group
 group          | text      | The LMFDB id for the abstract group
 c_class        | text      | The LFMDB id for the subgroup class in `GL_n(C)`
 irreducible    | boolean
-gens           | integer[][] | List of matrices generating group, matching the generators in the `gps_groups` table
+gens           | jsonb     | List of matrices generating group, matching the generators in the `gps_groups` table
 decomposition  | jsonb     | List of pairs `(label, m)` giving the decomposition as a direct sum of irreducible Q[G]-modules.  `label` is the label for the corresponding `GL_n(Q)`-class, and `m` the multiplicity
 
 ## Subgroups of `GLnZ`
