@@ -81,7 +81,7 @@ intrinsic Polredabs(f::Any) -> Any
   System("which gp>"*out);
   gppath:= DelSpaces(Read(out));
   System("rm "* out);
-  System(gppath*" -f -q  <"*txt*">"*out);
+  System(gppath*" -f -q --default parisizemax=1G <"*txt*">"*out);
   //try
   f:=eval DelSpaces(Read(out));
   //catch e;

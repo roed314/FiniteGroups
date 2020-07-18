@@ -119,7 +119,7 @@ end intrinsic;
 
    Field is "Q" or "C"
  */
-intrinsic getreps(G::LMFDBGrp, Field::MonStgElt)->Any
+intrinsic getreps(G::LMFDBGrp, Field::MonStgElt: dosave:=false)->Any
   {Get irreducible matrix representations}
   im:=getirrreps(G: Field:=Field);
   cct:=Get(G, "QQCharacters");
@@ -136,6 +136,7 @@ intrinsic getreps(G::LMFDBGrp, Field::MonStgElt)->Any
   */
   myimages:=AssociativeArray(); 
   System("mkdir -p Qreps");
+  result2:=<>;
   for rep in result do
     replabel:= rep_label(rep[1], [z[2] : z in rep[3]], myimages);
     r3 := [z[2] : z in rep[3]];
@@ -143,20 +144,24 @@ intrinsic getreps(G::LMFDBGrp, Field::MonStgElt)->Any
       r := New(LMFDBRepQQ);
       r`group := Get(G, "label");
       r`gens := [castZ(geninfo, "Q") : geninfo in r3];
-      r`dim := Degree(Get(rep[1], "MagmaChtr"));
+      r`dim := Integers() ! Degree(Get(rep[1], "MagmaChtr"));
       r`carat_label := None();
       r`c_class := None();
       r`irreducible:= true;
+      r`label := replabel;
       r`decomposition:= [<r`label, 1>];
       r`order := Get(G, "order");
-      r`label := replabel;
       myimages[replabel] := <r`dim, r3>;
       saverep(r);
-    else
-      ; // Set the label for the lmfdb character
+      Append(~result2, r);
+      if dosave then
+        Write("JJ-test/reps_qq/"*Get(G,"label"),SaveLMFDBObject(r));
+      end if;
     end if;
+    // Write to a file to track character label -> rep label
+    write("QQchars2reps", Get(rep[1], "label") * " " *replabel);
   end for;
-  return result;
+  return result2;
 end intrinsic;
 
 intrinsic rep_label(C::LMFDBGrpChtrQQ, r::Any, A::Assoc)->MonStgElt
@@ -206,18 +211,24 @@ intrinsic castZ(m::Any, Field::Any) -> Any
   {Take a matrix with entries in Q and cast them to Z.  They should already
    be integers.  If Field is not "Q", do nothing to entries.
    Output is a list of lists rather than a matrix.}
-  r:=NumberOfRows(m);
-  c:=NumberOfColumns(m);
+  if Type(m) eq AlgMatElt then
+    r:=NumberOfRows(m);
+    c:=NumberOfColumns(m);
+    m := [[m[i,j] : i in [1..c]] : j in [1..r]];
+  else
+    r:= #m;
+    c:= #m[1];
+  end if;
   if Field eq "Q" then
     ZZ:=Integers();
     for i:= 1 to r do
       for j:= 1 to c do
-        assert m[i,j] in ZZ;
+        assert m[i][j] in ZZ;
       end for;
     end for;
-    m:= Matrix(ZZ,r,c,[[ZZ!m[i,j]: j in [1..r]]:i in [1..c]]);
+    m:= [[ZZ!m[i][j]: i in [1..c]]: j in [1..r]];
   end if;
-  return [[m[i,j]: i in [1..c]]: j in [1..r]];
+  return m;
 end intrinsic;
 
 /* Write a representation to a file 
