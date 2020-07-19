@@ -119,7 +119,7 @@ end intrinsic;
 
    Field is "Q" or "C"
  */
-intrinsic getreps(G::LMFDBGrp, Field::MonStgElt: dosave:=false)->Any
+intrinsic getreps(G::LMFDBGrp, Field::MonStgElt)->Any
   {Get irreducible matrix representations}
   im:=getirrreps(G: Field:=Field);
   cct:=Get(G, "QQCharacters");
@@ -130,6 +130,7 @@ intrinsic getreps(G::LMFDBGrp, Field::MonStgElt: dosave:=false)->Any
     data:= <<g . j, ActionGenerator(rep[2], j)> : j in [1..nag]>;
     Append(~result, <rep[1], rep[3], data>);
   end for;
+return result;
 
   /* myimages contains faithful images for this group stored as
      label -> <dimension, generator list>
@@ -154,9 +155,6 @@ intrinsic getreps(G::LMFDBGrp, Field::MonStgElt: dosave:=false)->Any
       myimages[replabel] := <r`dim, r3>;
       saverep(r);
       Append(~result2, r);
-      if dosave then
-        Write("JJ-test/reps_qq/"*Get(G,"label"),SaveLMFDBObject(r));
-      end if;
     end if;
     // Write to a file to track character label -> rep label
     write("QQchars2reps", Get(rep[1], "label") * " " *replabel);

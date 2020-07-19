@@ -27,8 +27,10 @@ end intrinsic;
 
 intrinsic NextWord(w::SeqEnum, gen_seq::SeqEnum, ord_seq::SeqEnum) -> SeqEnum
   {Returns the next valid word after w using lexicographic ordering induced by ordering in gen_seq. A word is valid if the number of consecutive occurrences of any element from gen_seq is always strictly smaller than the corresponding order specified in ord_seq.}
-  first_gen := gen_seq[1];
-  last_gen := gen_seq[#gen_seq];
+ // Infinite loop with the return inside to avoid recursion
+ first_gen := gen_seq[1];
+ last_gen := gen_seq[#gen_seq];
+ while true do
 
   // We find the rightmost position i in w not containing last_gen. 
   // If last_gen does not appear, then i = 0.
@@ -55,8 +57,9 @@ intrinsic NextWord(w::SeqEnum, gen_seq::SeqEnum, ord_seq::SeqEnum) -> SeqEnum
   if IsValidWord(w_next,gen_seq,ord_seq) then 
     return w_next;
   else
-    return(NextWord(w_next,gen_seq,ord_seq));
+    w:=w_next;
   end if;
+ end while;
 end intrinsic;
 
 /* SAMPLE INPUT/OUTPUT
