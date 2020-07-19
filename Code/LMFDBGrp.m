@@ -21,6 +21,8 @@ declare attributes LMFDBGrp:
   CCpermutationInv,
   CCCharacters,
   QQCharacters,
+  QQReps,
+  CCReps,
   Characters,
   label,
   old_label,
@@ -280,6 +282,7 @@ declare type LMFDBRepCC;
 declare attributes LMFDBRepCC:
   MagmaRep, // Magma GModule
   MagmaGrp, // Magma matrix group
+  E, // Exponent of the group.  Initially, reps are in Q(zeta_E)
   label,
   dim,
   order,
@@ -293,7 +296,6 @@ declare attributes LMFDBRepCC:
   cyc_order_traces,
   denominators,
   gens,
-  q_character,
   traces;
 
 intrinsic Print(Rho::LMFDBRepCC)

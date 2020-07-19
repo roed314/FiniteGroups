@@ -72,8 +72,7 @@ end intrinsic;
 intrinsic ReadCyclotomicElement(cs::SeqEnum, m::RngIntElt) -> FldCycElt
   {Given a SeqEnum of pairs representing a cyclotomic field element as in the output of WriteCyclotomicElement, construct t    he corresponding cyclotomic field element.}
   K<z> := CyclotomicField(m : Sparse := false);
-  u := K!0;
-  for pair in cs do
+  u := K!0; for pair in cs do
     e := Integers()!pair[2];
     u +:= pair[1]*z^e;
   end for;
@@ -101,7 +100,8 @@ intrinsic IntegralizeMatrix(M::AlgMatElt) -> Any
   return d*M, d;
 end intrinsic;
 
-intrinsic WriteCyclotomicMatrix(M::GrpMatElt) -> SeqEnum
+//intrinsic WriteCyclotomicMatrix(M::GrpMatElt) -> SeqEnum
+intrinsic WriteCyclotomicMatrix(M::Any) -> SeqEnum
   {Given a matrix over a cyclotomic field, return a SeqEnum whose entries are integral and of the form given by WriteCyclotomicElement.}
   M_seq := [];
   for row in Rows(M) do
@@ -119,6 +119,17 @@ intrinsic ReadCyclotomicMatrix(cs::SeqEnum, m::RngIntElt) -> GrpMatElt
   end for;
   return Matrix(K,rows);
 end intrinsic;
+
+intrinsic WriteIntegralMatrix(M::Any) -> SeqEnum
+  {Given a matrix over a Z, return a SeqEnum.}
+  return [ [el : el in Eltseq(row)] : row in Rows(M)];
+end intrinsic;
+
+intrinsic ReadIntegralMatrix(cs::SeqEnum) -> Any
+  {Read a matrix over a Z, as a SeqEnum of rows}
+  return Matrix(Integers(), cs);
+end intrinsic;
+
 
 intrinsic carat_label(G::LMFDBRepQQ) -> Any
   {Return the CARAT label for a repn of dimension < 7.  Will be computed by
