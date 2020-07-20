@@ -1123,6 +1123,48 @@ end intrinsic;
 
 
 intrinsic old_label(G::LMFDBGrp) -> Any
-    {Currently just returns None, since this is used when we compute labels all groups of a given order where we didn't have a label before}
+    {Currently just returns None, since this is used when we compute labels all groups of a given order where we did not have a label before}
     return None();
 end intrinsic;
+
+
+intrinsic counter(G::LMFDBGrp) -> RngIntElt
+{Second entry in label}
+   lab:= Get(G,"label");
+   spl:=Split(lab,".");
+   return eval spl[2];
+end intrinsic;
+
+intrinsic elt_rep_type(G:LMFDBGrp) -> Any
+    {type of an element of the group}
+    if Type(G`MagmaGrp) eq GrpPC then
+        return 0;
+    elif Type(G`MagmaGrp) eq GrpPerm then
+        return -Degree(G`MagmaGrp);
+    elif Type(G`MagmaGrp) eq GrpMat then
+        R := CoefficientRing(G);
+        if R eq Integers() then
+            return 1;
+        elif Type(R) eq FldFin then
+            return #R;
+        else
+            error Sprintf("Unsupported ring %o", R);
+        end if;
+    else
+        error Sprintf("Unsupported group type %o", Type(G`MagmaGrp));
+    end if;
+end intrinsic;
+
+/* should be improved when matrix groups are added */
+intrinsic finite_matrix_group(G:LMFDBGrp)-> Any
+{determines whether finite matrix group}
+  return None();
+end intrinsic;
+
+/* placeholder for when larger groups get added */
+intrinsic old_label(G:LMFDBGrp)-> Any
+{graveyard for labels when they are no longer needed}  
+  return None();
+end intrinsic;
+
+
