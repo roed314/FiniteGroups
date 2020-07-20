@@ -249,6 +249,7 @@ end intrinsic;
 declare verbose LMFDBRepZZ, 1;
 declare type LMFDBRepZZ;
 declare attributes LMFDBRepZZ:
+  MagmaGrp,
   label,
   dim,
   order,
