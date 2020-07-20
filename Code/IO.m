@@ -308,10 +308,14 @@ intrinsic DefaultAttributes(c::Cat) -> SeqEnum
         blacklist := [
                       // Group attributes
                       //"pc_code",
+                      "eulerian_function",
+                      "rank",
+                      "mobius_function_known",
 
                       // Subgroup attributes
                       "alias_spot",
                       "aut_counter",
+                      "mobius_function",
 
                       //"count", // should be set in Subgroups method
                       "extension_counter"

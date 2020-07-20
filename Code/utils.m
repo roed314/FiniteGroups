@@ -78,10 +78,10 @@ intrinsic Polredabs(f::Any) -> Any
   //f:=R!f * Denominator(VectorContent(Coefficients(f)));
   // Avoid hardwiring gp path
   write(txt,Sprintf("polredabs(%o)",f): rewrite:=true);
-  System("which gp>"*out);
+  System("which sage>"*out);
   gppath:= DelSpaces(Read(out));
   System("rm "* out);
-  System(gppath*" -f -q --default parisizemax=1G <"*txt*">"*out);
+  System(gppath*" -gp -f -q --default parisizemax=1G <"*txt*">"*out);
   //try
   f:=eval DelSpaces(Read(out));
   //catch e;
