@@ -23,7 +23,7 @@ files := [Folder * "groups/" * Proc * ".txt",
           Folder * "characters_cc/" * Proc * ".txt",
           Folder * "characters_qq/" * Proc * ".txt"];
 
-for f in ["groups", "subgroups", "groups_cc"] do
+for f in ["groups", "subgroups", "groups_cc", "characters_cc", "characters_qq"] do
   System("mkdir -p "* Folder * f);
 end for;
 

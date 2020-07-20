@@ -203,8 +203,11 @@ intrinsic RePresentLat(G::LMFDBGrp, L::SubGrpLat)
 
     // Now we build a new PC group with an isomorphism to our given one.
     // We have to fill in powers of our chosen generators since magma wants prime relative orders
+    // We keep track of which generators are actually needed; other generators are powers of these
     filled := [];
     H := sub<GG|>;
+    gens_used := [];
+    used_tracker := -1;
     for tup in best do
         g := tup[1];
         r := tup[2];
@@ -216,11 +219,14 @@ intrinsic RePresentLat(G::LMFDBGrp, L::SubGrpLat)
                 g := g^p;
             end for;
         end for;
+        used_tracker +:= #segment;
+        Append(~gens_used, used_tracker);
         filled cat:= Reverse(segment);
         H := tup[3];
     end for;
     // Magma has a descending filtration, so we switch to that here.
     Reverse(~filled);
+    gens_used := [#filled - i : i in gens_used];
     //print "filled", [<tup[1], tup[2], #tup[3]> : tup in filled];
     F := FreeGroup(#filled);
     rels := {};
@@ -245,13 +251,19 @@ intrinsic RePresentLat(G::LMFDBGrp, L::SubGrpLat)
         return fvec;
     end function;
 
+    //print "Allrels";
+    //for i in [1..#filled] do
+    //    for j in [i+1..#filled] do
+    //        print "i,j,gj^gi", i, j, gens[j]^gens[i];
+    //    end for;
+    //end for;
     for i in [1..#filled] do
         //print "i", i;
         p := filled[i][2];
         Include(~rels, F.i^p = translate_to_F(gens[i]^p, i+1));
         for j in [i+1..#filled] do
             //print "j", j;
-            fvec := translate_to_F(gens[j]^gens[i], j);
+            fvec := translate_to_F(gens[j]^gens[i], i+1);
             if fvec ne F.j then
                 Include(~rels, F.j^F.i = fvec);
             end if;
@@ -262,6 +274,7 @@ intrinsic RePresentLat(G::LMFDBGrp, L::SubGrpLat)
     f := hom< H -> G`MagmaGrp | gens >;
     G`MagmaOptimized := H;
     G`OptimizedIso := f^-1;
+    G`gens_used := gens_used;
 end intrinsic;
 
 intrinsic RePresent(G::LMFDBGrp)

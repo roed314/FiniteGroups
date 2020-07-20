@@ -8,6 +8,15 @@ intrinsic outer_equivalence(H::LMFDBSubGrp) -> BoolElt
 end intrinsic;
 
 
+intrinsic generators(H::LMFDBSubGrp) -> SeqEnum
+    {}
+    // We need to match up the generators with the list of generators of this subgroup as an abstract group
+    // TODO: actually give this isomorphism
+    //if HasAttribute(H, "standard_generators") and H`standard_generators then
+    GG := H`MagmaAmbient;
+    return [GG!h : h in Generators(H`MagmaSubGrp)];
+end intrinsic;
+
 /* moved to Basic */
 /* intrinsic maximal(H::LMFDBSubGrp) -> BoolElt */// Need to be subgroup attribute file
 /*  {Determine if a subgroup is maximal}
@@ -37,12 +46,12 @@ intrinsic maximal_normal(H::LMFDBSubGrp) -> BoolElt // Need to be subgroup attri
     return false;
   else
     Q := quo< GG | HH >;
-    if IsSimple(Q) then 
+    if IsSimple(Q) then
       return true;
-    else 
+    else
       return false;
     end if;
-  end if;    
+  end if;
 end intrinsic;
 
 
@@ -100,14 +109,25 @@ intrinsic ambient_order(H::LMFDBSubGrp) -> RngIntElt // Need to be subgroup attr
   return Order(GG);
 end intrinsic;
 
+/*
+intrinsic Quotient(H::LMFDBSubGrp) -> LMFDBGrp
+    {returns the quotient as an abstract group and sets QuotientMap}
+    GG := Get(H, "MagmaAmbient");
+    HH := Get(H, "MagmaSubGrp");
+    if not Get(H, "normal") then
+        error "Subgroup is not normal";
+    end if;
+    Q := quo< GG | HH >;
+*/
+
 intrinsic quotient(H::LMFDBSubGrp) -> Any // Need to be together with all the labels
 {Determine label of the quotient group}
   GG := Get(H, "MagmaAmbient");
   HH := H`MagmaSubGrp;
-  Q := quo< GG | HH >;
   if not IsNormal(GG, HH) then
     return None();
   else
+    Q := quo< GG | HH >;
     return label(Q);
   end if;
 end intrinsic;

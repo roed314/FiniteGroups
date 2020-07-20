@@ -64,6 +64,7 @@ schur_multiplier  | integer[] | Smith invariants for the Schur multiplier (H_2(G
 order_stats       | numeric[] | List of pairs `(o, m)` where `m` is the number of elements of order `o`.
 elt_rep_type      | smallint  | Code for the main way that elements are encoded in conjugacy class and subgroup tables.  0=generators+relations, -n=permutation rep of degree n, 1=integer matrices, q=matrices over GF(q)
 perm_gens     | numeric[] | encoded generators for a minimal permutation representation of this group (NULL if abelian or transitive degree too large)
+gens_used     | smallint[] | Sorted list of generators used (1-based indexing going from larger to smaller in the filtration; other generators are powers of these; NULL if not solvable)
 all_subgroups_known   | boolean   | Whether we store all subgroups of this group
 normal_subgroups_known | boolean   | Whether we store all normal subgroups of this group
 maximal_subgroups_known | boolean  | Whether we store all maximal subgroups of this group
@@ -212,6 +213,8 @@ quotient_fusion   | jsonb     | A list of lists: for each conjugacy class of `Q`
 subgroup_fusion   | integer[] | A list: for each conjugacy class of `H`, gives the conjugacy class of `G` in which it's contained
 alias_spot        | smallint  | Which position this alias should appear in the list of aliases for the group.  0 indicates that it's the main name; `NULL` if not normal (or if it shouldn't be displayed; we only want to display one of the two orders for a direct product)
 generators        | numeric[] | Encoded elements that generate `H` together.  Elements are encoded according to the groups `elt_rep_type` attribute
+generator_images  | numeric[] | If the subgroup is normal, the images of the generators as encoded elements of the quotient group.  May also be null if the quotient group is large enough that we don't find an isomorphism
+standard_generators| boolean  | Whether the given generators are the same as the generators for the abstract group associated to this subgroup (and thus define an inclusion homomorphism)
 projective_image  | text      | label for the quotient by the center of the ambient group
 diagram_x         | integer   | integer from 1 to 10000 indicating the x-coordinate for plotting the subgroup in the lattice, 0 if not computed
 

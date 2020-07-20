@@ -4,9 +4,9 @@ IntegerCols := ["alias_spot", "ambient_order", "arith_equiv", "aut_counter", "au
 
 TextListCols := ["composition_factors", "special_labels"];
 
-IntegerListCols := ["contained_in", "contains", "cycle_type", "denominators", "factors_of_aut_order", "factors_of_order", "faithful_reps", "gens", "order_stats", "powers", "primary_abelian_invariants", "schur_multiplier", "smith_abelian_invariants", "subgroup_fusion", "nt","values","field"];
+IntegerListCols := ["contained_in", "contains", "cycle_type", "denominators", "factors_of_aut_order", "factors_of_order", "faithful_reps", "gens", "order_stats", "powers", "primary_abelian_invariants", "schur_multiplier", "smith_abelian_invariants", "subgroup_fusion", "nt","values","field","gens_used"];
 
-BoolCols := ["Agroup", "Zgroup", "abelian", "all_subgroups_known", "almost_simple", "central", "central_product", "characteristic", "cyclic", "direct", "direct_product", "faithful", "finite_matrix_group", "indecomposible", "irreducible", "maximal", "maximal_normal", "maximal_subgroups_known", "metabelian", "metacyclic", "minimal", "minimal_normal", "monomial", "nilpotent", "normal", "normal_subgroups_known", "outer_equivalence", "perfect", "prime", "primitive", "quasisimple", "rational", "semidirect_product", "simple", "solvable", "split", "stem", "subgroup_inclusions_known", "supersolvable", "sylow_subgroups_known", "wreath_product"];
+BoolCols := ["Agroup", "Zgroup", "abelian", "all_subgroups_known", "almost_simple", "central", "central_product", "characteristic", "cyclic", "direct", "direct_product", "faithful", "finite_matrix_group", "indecomposible", "irreducible", "maximal", "maximal_normal", "maximal_subgroups_known", "metabelian", "metacyclic", "minimal", "minimal_normal", "monomial", "nilpotent", "normal", "normal_subgroups_known", "outer_equivalence", "perfect", "prime", "primitive", "quasisimple", "rational", "semidirect_product", "simple", "solvable", "split", "stem", "subgroup_inclusions_known", "supersolvable", "sylow_subgroups_known", "wreath_product", "standard_generators"];
 
 // creps has a gens which is not integer[]
 JsonbCols := ["quotient_fusion","decomposition"]; // , "gens"];
@@ -17,6 +17,7 @@ SubgroupListCols := ["complements"];
 
 EltCols := ["representative"];
 EltListCols := ["generators"];
+//QuotListCols := ["generator_images"];
 
 intrinsic LoadBool(inp::MonStgElt) -> BoolElt
     {}
@@ -178,7 +179,7 @@ intrinsic LoadEltList(inp::MonStgElt, G::LMFDBGrp) -> SeqEnum
 end intrinsic;
 intrinsic SaveEltList(out::SeqEnum, G::LMFDBGrp) -> MonStgElt
     {}
-    return "{" * Join([SaveElt(x) : x in out], ",") * "}";
+    return "{" * Join([SaveElt(x, G) : x in out], ",") * "}";
 end intrinsic;
 
 intrinsic LoadSubgroupList(inp::MonStgElt, G::LMFDBGrp) -> SeqEnum
@@ -214,6 +215,8 @@ intrinsic LoadAttr(attr::MonStgElt, inp::MonStgElt, obj::Any) -> Any
         return LoadElt(inp, GetGrp(obj));
     elif attr in EltListCols then
         return LoadEltList(inp, GetGrp(obj));
+    //elif attr in QuotListCols then
+    //    return LoadEltList(inp, GetQuot(obj));
     elif attr in SubgroupCols then
         if attr eq "sub1" then
             G := Get(obj, "G1");
@@ -304,34 +307,39 @@ intrinsic DefaultAttributes(c::Cat) -> SeqEnum
         // Blacklist attributes that aren't working
         blacklist := [
                       // Group attributes
-                      "pc_code",
+                      //"pc_code",
+                      "eulerian_function",
+                      "rank",
+                      "mobius_function_known",
 
                       // Subgroup attributes
                       "alias_spot",
                       "aut_counter",
-   
+                      "mobius_function",
+
                       //"count", // should be set in Subgroups method
-                      "extension_counter",
+                      "extension_counter"
 	             // "direct", DONE BY MR
-                      "generators", // DR
+                      //"generators", // DR
 	              // "projective_image", DONE BY MR
-                   
+
                       // Conjugacy class attributes
-                      "representative" // Need to be able to encode GrpPCElts - DR
+                      //"representative" // Need to be able to encode GrpPCElts - DR
                       ];
 
         greylist := [
 	     // Attributes which return none and need to be worked on later
 
                      // Group attributes
-                      "finite_matrix_group",
-	     
-	         // Subgroup attributes
-                      "conjugacy_class_count",
-		      "quotient_action_image",
-                      "quotient_action_kernel",
-                      "quotient_fusion",
-                      "subgroup_fusion"
+                     "finite_matrix_group",
+
+                     // Subgroup attributes
+                     "conjugacy_class_count",
+                     "quotient_action_image",
+                     "quotient_action_kernel",
+                     "quotient_fusion",
+                     "subgroup_fusion",
+                     "generator_images"
 
 	     ];
         if attr in blacklist then
