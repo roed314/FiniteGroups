@@ -89,50 +89,60 @@ end intrinsic;
 
 
 
-intrinsic MobiusFunction(G::LMFDBGrp) -> Any
-  {Calculates the images of the Mobius subgroup function of the group on its subgroups}
-  if Get(G,"all_subgroups_known") then
-    S:=AllSubgroups(G`MagmaGrp); //sorry, future person who has to edit this code to make it more efficient
-    Reverse(~S); //we start from the top of the subgroup lattice
-    MobiusImages:=[[*S[1],1*]]; //μ_G(G) = 1
-    Exclude(~S,S[1]);
+MobiusFunction:=function(G) 
 
-    for s in S do //calculates the images
-      sum:=0;
-      for m in MobiusImages do
-        if s subset m[1] then
-          sum+:=m[2];
-        end if;
-      end for;
-      Append(~MobiusImages,[*s,-sum*]);
+  if Get(G,"mobius_function_known") then //checks if we already have it
+    S:=Get(G,"Subgroups");
+    mobius_images:=[];
+    for s in S do
+      Append(~mobius_images,[*s,s`mobius_function*]);
     end for;
-
-    L:=Get(G,"Subgroups");
-
-    conj_mobii:=[];
-    subgps_new := [];
-    for s in L do //converts the data to [<conjugacy class label, group>, mobius image] format
-      s_new := s;
-      H:=s_new`MagmaSubGrp;
-      for m in MobiusImages do
-        if IsConjugate(G`MagmaGrp,H,m[1]) then
-          Append(~conj_mobii,[*s,m[2]*]);
-          s_new`mobius_function := m[2];
-          Append(~subgps_new,s_new);
-          break m;
-        end if;
-      end for;
-    end for;
-    G`Subgroups := subgps_new;
-    //printf "Mobius function values assigned to subgroups of %o\n", G;
-    return conj_mobii;
+    return mobius_images;
   else
-    return None();
+    if Get(G,"all_subgroups_known") then
+      L:=SubgroupLattice(G`MagmaGrp);
+      MobiusImages:=[[#L,1]]; //μ_G(G) = 1
+
+      for i in [1..#L-1] do
+        sum:=0;
+        for m in MobiusImages do
+          if L!(#L-i) subset L!m[1] then
+            sum+:=Length(L!m[1])* NumberOfInclusions(L!(#L-i),L!m[1]) * m[2] / Length(L!(#L-i)); //counts inclusions
+          end if;
+        end for;
+        Append(~MobiusImages,[(#L-i),-sum]);
+      end for;
+
+      S:=Get(G,"Subgroups");
+
+      conj_mobii:=[];
+      subgps_new := [];
+      for s in S do //converts the data to [<conjugacy class label, group>, mobius image] format
+        s_new := s;
+        H:=s_new`MagmaSubGrp;
+        for m in MobiusImages do
+          if IsConjugate(G`MagmaGrp,H,L[m[1]]) then
+            Append(~conj_mobii,[*s,m[2]*]);
+            s_new`mobius_function := m[2];
+            Append(~subgps_new,s_new);
+            break m;
+          end if;
+        end for;
+      end for;
+      G`Subgroups := subgps_new;
+      //printf "Mobius function values assigned to subgroups of %o\n", G;
+      return conj_mobii;
+    else
+      return None();
+    end if;
   end if;
-end intrinsic;
+end function;
+
+
 
 intrinsic eulerian_function(G::LMFDBGrp) -> Any
   {Calculates the Eulerian function of G for n = rank(G)}
+  if Get(G, "order") eq 1 then return 1; end if;
   n:=Get(G,"rank");
   sum:=0;
   mobius_images:= MobiusFunction(G);
@@ -148,6 +158,7 @@ end intrinsic;
 
 intrinsic rank(G::LMFDBGrp) -> Any
   {Calculates the rank of the group G}
+  if Get(G, "order") eq 1 then return 0; end if;
   if Get(G,"cyclic") then
     return 1;
   else

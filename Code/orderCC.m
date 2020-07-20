@@ -38,12 +38,24 @@ intrinsic randomG(~rlist::Any,~result::Any)
   result := rlist[ii];
 end intrinsic;
 
+intrinsic nonrandomG(~state::Any, gen_seq::SeqEnum, ord_seq::SeqEnum, ~result::Any)
+  {Produce the next group element in a lexicalgraphic way.}
+  state:= NextWord(state, gen_seq, ord_seq);
+  result:=state[1];
+  for j:=1 to #state do
+    result *:= state[j];
+  end for;
+end intrinsic;
+
 // Pass in the group data 
-intrinsic ordercc(g::Any,cc::Any,cm::Any,pm::Any,gens::Any) -> Any
+intrinsic ordercc(g::Any,cc::Any,cm::Any,pm::Any,gens::Any: dorandom:=true) -> Any
   {Take a Magma group, the conjugacy class, class map, power map, and 
    generators, and return ordered classes and labels.}
   ncc:=#cc;
   gens:=[z : z in gens];
+  if gens eq [] then
+    gens := [Id(g)];
+  end if;
   // Step 1 partitions the classes based on the order of a generator
   // and the size of the class
   step1:=AssociativeArray();
@@ -112,8 +124,13 @@ intrinsic ordercc(g::Any,cc::Any,cm::Any,pm::Any,gens::Any) -> Any
   end for;
 
   // Initialization for random group elements 
-  ResetRandomSeed();
-  rlist := initRandomGroupElement(gens);
+  if dorandom then
+    ResetRandomSeed();
+    rlist := initRandomGroupElement(gens);
+  else
+    order_seq := [Order(z) : z in gens];
+    state := [];
+  end if;
 
   // Within a division, or between divisions which are as yet
   // unordered, we break ties via the priority, which is essentially
@@ -167,8 +184,13 @@ intrinsic ordercc(g::Any,cc::Any,cm::Any,pm::Any,gens::Any) -> Any
           end if;
         end for;
         if needmoregens then
-          ggcl:=rlist[1];
-          randomG(~rlist, ~ggcl);
+          if dorandom then
+            ggcl:=rlist[1];
+            randomG(~rlist, ~ggcl);
+          else
+            ggcl:=Id(g);
+            nonrandomG(~state, gens, order_seq, ~ggcl);
+          end if;
           gcl:=cm(ggcl);
           if ismax[gcl] and priorities[gcl] gt ncc then
             mydivkey:=revmap[gcl];
@@ -228,13 +250,13 @@ intrinsic ordercc(g::Any,cc::Any,cm::Any,pm::Any,gens::Any) -> Any
   return cc,finalkeys, labels;
 end intrinsic;
 
-intrinsic testCCs(g::Any)->Any
+intrinsic testCCs(g::Any:dorandom:=true)->Any
   {}
   cc:=ConjugacyClasses(g);
   cm:=ClassMap(g);
   pm:=PowerMap(g);
   ngens:=NumberOfGenerators(g);
   gens:=[g . j : j in [1..ngens]];
-  return ordercc(g,cc,cm,pm,gens);
+  return ordercc(g,cc,cm,pm,gens: dorandom:=dorandom);
 end intrinsic;
 

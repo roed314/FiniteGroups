@@ -45,7 +45,14 @@ end intrinsic;
 // can get abstract image using G/kernel
 intrinsic image(Chi::LMFDBGrpChtrCC) -> Any
   {}
-  // probably need to use associated LMFDBRepCC...
+  return None();
+  // need to use associated LMFDBRepCC...
+end intrinsic;
+
+intrinsic image(Chi::LMFDBGrpChtrQQ) -> Any
+  {}
+  return None();
+  // need to use associated LMFDBRepCC...
 end intrinsic;
 
 intrinsic GetGrp(C::LMFDBGrpChtrCC) -> Grp

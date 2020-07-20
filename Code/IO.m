@@ -1,4 +1,4 @@
-TextCols := ["abelian_quotient", "acted", "actor", "ambient", "aut_group", "bravais_class", "c_class", "center_label", "central_quotient", "commutator_label", "coset_action_label", "crystal_symbol", "factor1", "factor2", "family", "frattini_label", "frattini_quotient", "group", "image", "knowl", "label", "magma_cmd", "name", "old_label", "outer_group", "product", "proj_label", "projective_image", "q_class", "quotient", "quotient_action_image", "subgroup", "tex_name", "trace_field", "q_character"];
+TextCols := ["abelian_quotient", "acted", "actor", "ambient", "aut_group", "bravais_class", "c_class", "center_label", "central_quotient", "commutator_label", "coset_action_label", "crystal_symbol", "factor1", "factor2", "family", "frattini_label", "frattini_quotient", "group", "image", "knowl", "label", "magma_cmd", "name", "old_label", "outer_group", "product", "proj_label", "projective_image", "q_class", "quotient", "quotient_action_image", "subgroup", "tex_name", "trace_field", "q_character","carat_label"];
 
 IntegerCols := ["alias_spot", "ambient_order", "arith_equiv", "aut_counter", "aut_order", "auts", "cdim", "commutator_count", "composition_length", "conjugacy_class_count", "count", "counter", "counter_by_index", "cyc_order_mat", "cyc_order_traces", "cyclotomic_n", "degree", "derived_length", "diagram_x", "dim", "elementary", "elt_rep_type", "eulerian_function", "exponent", "extension_counter", "hall", "hyperelementary", "indicator", "mobius_function", "multiplicity", "n", "ngens", "nilpotency_class", "number_characteristic_subgroups", "number_conjugacy_classes", "number_normal_subgroups", "number_subgroup_classes", "number_subgroups", "order", "outer_order", "parity", "pc_code", "pgroup", "priority", "q", "qdim", "quotient_action_kernel", "quotient_order", "quotients_complenetess", "rank", "rep", "schur_index", "sibling_completeness", "size", "smallrep", "subgroup_index_bound", "subgroup_order", "sylow", "t", "transitive_degree"];
 
@@ -8,7 +8,8 @@ IntegerListCols := ["contained_in", "contains", "cycle_type", "denominators", "f
 
 BoolCols := ["Agroup", "Zgroup", "abelian", "all_subgroups_known", "almost_simple", "central", "central_product", "characteristic", "cyclic", "direct", "direct_product", "faithful", "finite_matrix_group", "indecomposible", "irreducible", "maximal", "maximal_normal", "maximal_subgroups_known", "metabelian", "metacyclic", "minimal", "minimal_normal", "monomial", "nilpotent", "normal", "normal_subgroups_known", "outer_equivalence", "perfect", "prime", "primitive", "quasisimple", "rational", "semidirect_product", "simple", "solvable", "split", "stem", "subgroup_inclusions_known", "supersolvable", "sylow_subgroups_known", "wreath_product", "standard_generators"];
 
-JsonbCols := ["quotient_fusion"];
+// creps has a gens which is not integer[]
+JsonbCols := ["quotient_fusion","decomposition"]; // , "gens"];
 
 PermsCols := ["perm_gens"];
 SubgroupCols := ["centralizer", "kernel", "core", "center", "normal_closure", "normalizer", "sub1", "sub2"];
@@ -57,29 +58,66 @@ intrinsic SaveTextList(out::SeqEnum) ->  MonStgElt
 end intrinsic;
 
 
+strgsave:=function(strg);
+   if Type(strg) eq MonStgElt then
+      return "\"" cat strg cat "\"";
+   else
+      return strg;
+   end if;
+end function;
+
+listprocess:=function(L);
+   newout:="[ ";
+   for i in [1..#L] do
+      subL:=L[i];
+      if Type(subL) eq SeqEnum or Type(subL) eq List or Type(subL) eq Tup then
+         out_piece:=$$(subL);   
+      else 
+         out_piece:=Sprint(strgsave(subL));  
+      end if;
+      if i ne #L then
+         out_piece:=out_piece cat ", ";
+      end if;
+      newout:=newout cat out_piece;
+   end for;
+   newout  := newout cat " ]";
+   return newout;
+end function;
+
+
+removestars:=function(L);
+   for i in [1..#L] do
+      if Type(L[i]) eq List then
+          L[i]:=$$(L[i]);
+      end if;
+   end for;
+   typeL:={Type(L[i]) : i in [1..#L]};
+   if #typeL eq 1 then
+      newL:=[L[i] : i in [1..#L]];
+   else 
+      newL:=L;
+   end if;
+   return newL;
+end function;
+
 intrinsic LoadJsonb(inp::MonStgElt) -> List
     {assuming lists of strings or integers only}
-    assert inp[1] eq "{" and inp[#inp] eq "}";
-    ReplaceString(~inp,["{","}","'"],["[","]","\""]);
-    return eval inp;
+    assert inp[1] eq "[" and inp[#inp] eq "]";
+    ReplaceString(~inp,["[","]"],["[*","*]"]);
+    magma_inp:=eval inp;
+    return removestars(magma_inp);
 end intrinsic;
 intrinsic SaveJsonb(out::List) ->  MonStgElt
-    {assuming list of strings or integers only}
-    for i in [1..#out] do
-	if Type(out[i]) ne SeqEnum then   //special case when a solo element
-	    if Type(out[i]) eq MonStgElt then
-        	out[i]:="'" cat out[i] cat "'";
-            end if;
-	else	//need to add the ' ' around strings
-            if Type(out[i,1]) eq MonStgElt then
-	        newout:=["'" cat out[i,j] cat "'" : j in [1..#out[i]]];
-                out[i]:=newout;
-            end if;
-        end if;
-    end for;
-    out_str := Sprint(out);
-    ReplaceString(~out_str, ["[","]"," ","\n"],["{","}","", ""]);
-    return out_str;
+{assuming list of strings or integers (or embedded lists of these) only}
+    return listprocess(out);
+end intrinsic;
+intrinsic SaveJsonb(out::SeqEnum[List]) ->  MonStgElt
+{assuming list of strings or integers (or embedded lists of these) only}
+    return listprocess(out);
+end intrinsic;
+intrinsic SaveJsonb(out::SeqEnum) ->  MonStgElt
+{assuming list of strings or integers (or embedded lists of these) only}
+    return listprocess(out);
 end intrinsic;
 
 
@@ -196,6 +234,7 @@ intrinsic LoadAttr(attr::MonStgElt, inp::MonStgElt, obj::Any) -> Any
 end intrinsic;
 intrinsic SaveAttr(attr::MonStgElt, val::Any, obj::Any) -> MonStgElt
     {Save a single attribute}
+//"Save",attr, val, obj;
     if Type(val) eq NoneType then
         return "\\N";
     elif attr in TextCols then
@@ -315,12 +354,58 @@ intrinsic SaveLMFDBObject(G::Any : attrs:=[], sep:="|") -> MonStgElt
         attrs := DefaultAttributes(Type(G));
     end if;
     for attr in attrs do
+//"Attr", attr;
         if Type(SaveAttr(attr, Get(G, attr), G)) ne MonStgElt then
             print attr, Type(SaveAttr(attr, Get(G, attr), G));
         end if;
     end for;
+//"Saving";
     return Join([SaveAttr(attr, Get(G, attr), G) : attr in attrs], sep);
 end intrinsic;
+
+intrinsic AttrType(attr::MonStgElt) -> MonStgElt
+    {Type of a single attribute}
+//"Save",attr, val, obj;
+    if attr in TextCols then
+        return "text";
+    elif attr in IntegerCols then
+        return "integer";
+    elif attr in BoolCols then
+        return "boolean";
+    elif attr in JsonbCols then
+        return "jsonb";
+    elif attr in IntegerListCols then
+        return "integer[]";
+    elif attr in TextListCols then
+        return "text[]";
+    elif attr in PermsCols then
+        return "integer[]";
+    elif attr in EltCols then
+        return "numeric";
+    elif attr in EltListCols then
+        return "numeric[]";
+    elif attr in SubgroupCols then
+        return "text";
+    elif attr in SubgroupListCols then
+        return "text[]";
+    else
+        error Sprintf("Unknown attribute %o", attr);
+    end if;
+end intrinsic;
+
+intrinsic WriteHeaders(typ::Any : attrs:=[], sep:="|", filename:="")
+{Write a file with headers for one of our types}
+    if attrs eq [] then
+        attrs := DefaultAttributes(typ);
+    end if;
+    if filename eq "" then
+      filename:=Sprintf("%o.header", typ);
+    end if;
+    s1:=Join([attr  : attr in attrs], sep);
+    s2:=Join([AttrType(attr)  : attr in attrs], sep);
+    write(filename, s1 * "\n"*s2*"\n": rewrite:=true);
+end intrinsic;
+
 
 intrinsic WriteLMFDBObject(G::Any, filename::MonStgElt : attrs:=[], sep:="|")
   {Write an LMFDB object to a file}
@@ -337,5 +422,7 @@ intrinsic PrintData(G::LMFDBGrp: sep:="|") -> Tup
     {}
     return <[SaveLMFDBObject(G: sep:=sep)],
             [SaveLMFDBObject(H: sep:=sep) : H in Get(G, "Subgroups")],
-            [SaveLMFDBObject(cc: sep:=sep) : cc in Get(G, "ConjugacyClasses")]>;
+            [SaveLMFDBObject(cc: sep:=sep) : cc in Get(G, "ConjugacyClasses")],
+            [SaveLMFDBObject(cr: sep:=sep) : cr in Get(G, "CCCharacters")],
+            [SaveLMFDBObject(cr: sep:=sep) : cr in Get(G, "QQCharacters")]>;
 end intrinsic;

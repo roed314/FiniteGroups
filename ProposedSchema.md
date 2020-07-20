@@ -72,7 +72,7 @@ sylow_subgroups_known | boolean  | Whether we store all sylow subgroups of this 
 subgroup_inclusions_known | boolean | Whether we store inclusion relationships among subgroups of this group
 outer_equivalence | boolean   | Whether subgroups are stored up to automorphism (as opposed to up to conjugacy)
 subgroup_index_bound | smallint  | If not `NULL`, we store all (equivalence classes of) subgroups of index up to this bound.  Additional subgroups may also be stored (for example, normal subgroups, maximal subgroups, or subgroups of small order)
-moddecompuniq | jsonb    | ????
+moddecompuniq | jsonb    | &#x1F534; &#x1F534;  Not added to db yet.  See Galois groups data eg: 3T2  
 wreath_product | boolean | whether this group is a wreath product
 central_product | boolean | whether this group is a central product
 finite_matrix_group | boolean | whether this group shows up in `gps_prep_names`
@@ -111,6 +111,9 @@ parameters    | jsonb    | To be used in formatting
 There are 4952 transitive groups up to n=23.
 
 Note that we can recover siblings by doing another search for transitive groups with the same abstract group label.
+
+
+&#x1F534; &#x1F534; This doesn't match transitive database currently. Since transitive is in production we should update the schema here first to match, before modifying database.
 
 Column        | Type     | Notes
 --------------|----------|------
@@ -199,10 +202,10 @@ count             | numeric   | The number of subgroups of `G` equivalent to `H`
 conjugacy_class_count | numeric   | The number of conjugacy classes of subgroups in this equivalence class (`NULL` if `outer_equivalence` is false)
 core              | text     | the subgroup label for the core: the intersection of all conjugates of `H`
 coset_action_label| text      | when `H` has trivial core `C` and the size of `Q` is at most 31 (GAP)/47 (Magma), gives the transitive group label for `G` as a permutation representation on `G/H`; `NULL` otherwise
-normalizer        | integer   | the label of the normalizer of `H` in `G`
+normalizer        | text   | the label of the normalizer of `H` in `G`
 centralizer       | text      | the label of the centralizer of `H` in `G`
-normal_closure    | integer   | the label of the smallest normal subgroup of `G` containing `H`
-quotient_action_kernel | integer   | the subgroup label of the kernel of the map from `Q` to `A` (`NULL` if `H` is not normal).  Here `A = Aut(H)` when the sequence is split or `H` is abliean, and `A = Out(H)` otherwise
+normal_closure    | text   | the label of the smallest normal subgroup of `G` containing `H`
+quotient_action_kernel | text   | the subgroup label of the kernel of the map from `Q` to `A` (`NULL` if `H` is not normal).  Here `A = Aut(H)` when the sequence is split or `H` is abliean, and `A = Out(H)` otherwise
 quotient_action_image | text  | the label for `Q/K` as an abstract group, where `K` is the quotient action kernel (NULL if `H` is not normal)
 contains          | integer[] | A sorted list of labels for the maximal subgroups of `H`, up to equivalence (`NULL` if unknown)
 contained_in      | integer[] | A sorted list of labels for the minimal subgroups of `G` containing `H`, up to equivalence (`NULL` if unknown) (include?)
@@ -225,6 +228,9 @@ If `Z(G_1)` and `Z(G_2)` contain a common nontrivial subgroup `U` then the quoti
 
 If there are multiple choices of U that yield isomorphic central products, we choose the lowest numbered subgroup label in `G_1`, then the lowest numbered subgroup label in `G_2`.
 
+&#x1F534; &#x1F534; Table not yet in database.
+
+
 Column         | Type      | Notes
 ---------------|-----------|------
 factor1        | text      | label for `G_1`, lexicographically smaller (ie, smaller order or same order and smaller `i`
@@ -238,6 +244,9 @@ alias_spot     | smallint  | Which position this alias should appear in the list
 
 The wreath product of an abstract group `G` and a permutation group `P` of degree `n` is the semidirect product of `G^n` with `P`, where `P` acts by permuting the copies of `G`.
 
+
+&#x1F534; &#x1F534; Table not yet in database.
+
 Column         | Type      | Notes
 ---------------|-----------|------
 acted          | text      | label for `G` as an abstract group
@@ -250,16 +259,19 @@ alias_spot     | smallint  | Which position this alias should appear in the list
 `gps_qrep`: Finite subgroups of GL_n(Z), up to GL_n(Q) conjugacy
 
 Note that every finite subgroup of GL_n(Q) is conjugate to one within GL_n(Z),
-so we use the `gps_zrep` table to store actual matrices.
+so we use the `gps_zrep` table to store actual matrices.  (Actually, the entry gens will hold a copy for now.)
+
 
 Column         | Type      | Notes
 ---------------|-----------|------
-label          | text      | `n.i`, where `n` is the dimension, `i` is an index for the Q-class as in the CARAT GAP package (see Hoshi-Yamasaki, Rationality Problem for Algebraic Tori for examples)
+label          | text      | label of the "first" character giving this subgroup as its image
+carat_label    | text      | `n.i`, where `n` is the dimension, `i` is an index for the Q-class as in the CARAT GAP package (see Hoshi-Yamasaki, Rationality Problem for Algebraic Tori for examples)
 dim            | smallint  | Dimension `n`
 order          | numeric   | The size of the group
 group          | text      | The LMFDB id for the abstract group
 c_class        | text      | The LFMDB id for the subgroup class in `GL_n(C)`
 irreducible    | boolean
+gens           | integer[] | List of matrices generating group, matching the generators in the `gps_groups` table
 decomposition  | jsonb     | List of pairs `(label, m)` giving the decomposition as a direct sum of irreducible Q[G]-modules.  `label` is the label for the corresponding `GL_n(Q)`-class, and `m` the multiplicity
 
 ## Subgroups of `GLnZ`
@@ -289,11 +301,12 @@ gens           | integer[] | List of matrices generating group, matching the gen
 
 `gps_crep`: Finite subgroups of GL_n(C), up to GL_n(C) conjugacy
 
-Question: Should we only include irreducible representations?
+
+&#x1F534; &#x1F534; Question: Should we only include irreducible representations?
 
 Column         | Type      | Notes
 ---------------|-----------|------
-label          | text      | `n.N.i.j` where `n` is the dimension, `N.i` is the label of the abstract group, and `j` is determined by sorting the faithful representations lexicographically using the conjugacy class ordering (note that there may be some reducible ones)
+label          | text      | label of the first character having this group as its image
 dim            | smallint  | 
 order          | numeric   | The size of the group
 group          | text      | The label for the abstract group
@@ -314,6 +327,10 @@ traces         | jsonb | The traces of the conjugacy classes (in the order of `g
 
 Initially this table would contain subgroups of `GL_n(F_q)`, but it can easily incorporate subgroups of other groups such as `SL_n`, `Sp_n`, `GSp_n`, and `SO_n`.  Since the main point of this table is to give generators as matrices, it doesn't make sense to extend to exceptional groups of Lie type.
 
+
+&#x1F534; &#x1F534; Table not yet in database.
+
+
 Column         | Type       | Notes
 ---------------|------------|------
 label          | text       | `n.q.N.i.j` where `n` is the dimension, `q` is the cardinality of the finite field, `N.i` is the label of the ambient group and `j` is the subgroup identifier from `gps_subgroups`.
@@ -328,6 +345,9 @@ proj_label | text | The label `N.i.j` of the image of the group in the quotient 
 
 `gps_prep_names`: Names for classical groups with a specified `n` and `q`
 
+
+&#x1F534; &#x1F534; Table not yet in database.
+
 Column         | Type       | Notes
 ---------------|------------|------
 group          | text       | label of abstract group
@@ -336,6 +356,7 @@ q              | smallint   | The cardinality of the finite field
 family         | text       | For example `GL` or `Spin`
 name           | text       |
 tex_name       | text       |
+
 
 
 # Conjugacy classes
@@ -371,6 +392,8 @@ representative | numeric    | An encoded representative for this conjugacy class
 
 Up to degree 23, there are 291985 non-central classes, 9283 central elements.
 
+&#x1F534; &#x1F534; Table not yet in database.
+
 Column        | Type       | Notes
 --------------|------------|------
 label         | text       | `N.i.oJ` where `N.i` is the label for the abstract group (should it be the transitive label?), `o` is the order of elements in this class and `J` is a capital letter code
@@ -402,7 +425,7 @@ q_character    | text       | Label of the corresponding Q-character
 image          | text       | The label for the image as a subgroup of GL_n(C)
 nt             | int[]      | the pair [n,t] where nTt is the smallest permutation representation containing the character
 cyclotomic_n   | integer    | Conductor of the field generated by character values
-values         | int[][]    | a list character values in the order of the conjugacy classes.  Individual character values are given as lists of integers giving coefficients w.r.t. a power basis of zeta_n
+values         | int[]    | a list character values in the order of the conjugacy classes.  Individual character values are given as lists of integers giving coefficients w.r.t. a power basis of zeta_n
 field          | int[]      | list of coefficients of a polredabs'ed polynomial defining the field generated by the trace values
 
 ## Q-characters
