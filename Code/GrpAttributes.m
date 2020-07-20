@@ -276,6 +276,20 @@ intrinsic perm_gens(G::LMFDBGrp) -> Any
   return [z : z in Generators(gg)];
 end intrinsic;
 
+intrinsic Generators(G::LMFDBGrp) -> Any
+    {Returns the chosen generators of the underlying group}
+    ert := Get(G, "elt_rep_type");
+    if ert eq 0 then
+        gu := Get(G, "gens_used");
+        gens := SetToSequence(PCGenerators(G`MagmaGrp));
+        if Type(gu) ne NoneType then
+            gens := [gens[i] : i in gu];
+        end if;
+        return gens;
+    end if;
+    return SetToSequence(Generators(G`MagmaGrp));
+end intrinsic;
+
 intrinsic faithful_reps(G::LMFDBGrp) -> Any
   {Dimensions and Frobenius-Schur indicators of faithful irreducible representations}
   if not IsCyclic(Get(G, "MagmaCenter")) then
@@ -644,6 +658,8 @@ intrinsic Subgroups(G::LMFDBGrp) -> SeqEnum
             H`Grp := G;
             H`MagmaAmbient := GG;
             H`MagmaSubGrp := tup[2];
+            // we may eventually need to stop creating isomorphisms with the abstract subgroup, but for now we do it.
+            H`standard_generators := true;
             if #suffix gt 0 then
                 H`label := None();
                 H`special_labels := [CreateLabel(G`label, tup[1]) * suffix];

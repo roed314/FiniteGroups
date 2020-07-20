@@ -64,6 +64,7 @@ schur_multiplier  | integer[] | Smith invariants for the Schur multiplier (H_2(G
 order_stats       | numeric[] | List of pairs `(o, m)` where `m` is the number of elements of order `o`.
 elt_rep_type      | smallint  | Code for the main way that elements are encoded in conjugacy class and subgroup tables.  0=generators+relations, -n=permutation rep of degree n, 1=integer matrices, q=matrices over GF(q)
 perm_gens     | numeric[] | encoded generators for a minimal permutation representation of this group (NULL if abelian or transitive degree too large)
+gens_used     | smallint[] | Sorted list of generators used (1-based indexing going from larger to smaller in the filtration; other generators are powers of these; NULL if not solvable)
 all_subgroups_known   | boolean   | Whether we store all subgroups of this group
 normal_subgroups_known | boolean   | Whether we store all normal subgroups of this group
 maximal_subgroups_known | boolean  | Whether we store all maximal subgroups of this group

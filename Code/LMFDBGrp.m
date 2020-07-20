@@ -21,6 +21,7 @@ declare attributes LMFDBGrp:
   CCpermutationInv,
   CCCharacters,
   QQCharacters,
+  Generators,
   label,
   old_label,
   name,
@@ -73,6 +74,7 @@ declare attributes LMFDBGrp:
   nilpotency_class,
   ngens,
   pc_code,
+  gens_used,
   number_conjugacy_classes,
   number_subgroup_classes,
   number_subgroups,
@@ -141,8 +143,10 @@ declare verbose LMFDBSubGrp, 1;
 declare type LMFDBSubGrp;
 declare attributes LMFDBSubGrp:
   Grp, // input
+  Quotient, // quotient as an ambient LMFDBGrp
   MagmaAmbient, // derived from Grp
   MagmaSubGrp, // input
+  QuotientMap, // homomorphism from MagmaAmbient to Quotient`MagmaGrp
   label, // process
   special_labels,
   outer_equivalence, // input
@@ -186,6 +190,8 @@ declare attributes LMFDBSubGrp:
   subgroup_fusion,
   alias_spot,
   generators,
+  //generator_images,
+  standard_generators,
   projective_image;
 
 intrinsic Print(H::LMFDBSubGrp)
