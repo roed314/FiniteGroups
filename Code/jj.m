@@ -219,7 +219,11 @@ intrinsic characters_add_sort_and_labels(G::LMFDBGrp, cchars::Any, rchars::Any) 
       end if;
     end if;
   end for;
+  cntlist:=[z`counter : z in rchars];
+  ParallelSort(~cntlist,~rchars);
   G`QQCharacters := rchars;
+  cntlist:=[z`counter : z in cchars];
+  ParallelSort(~cntlist, ~cchars);
   G`CCCharacters := cchars;
   
   return <cchars, rchars>;

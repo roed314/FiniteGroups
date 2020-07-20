@@ -27,7 +27,7 @@ intrinsic cyc_order_mat(M::LMFDBRepCC) -> RngIntElt
   {an integer m so that the entries in the gens column lie in CyclotomicField(m)}
   MM := M`MagmaRep;
   MMmin := AbsoluteModuleOverMinimalField(MM);
-  return Conductor(CoefficientRing(MMmin));
+  return Conductor(CoefficientRing(MMmin)); // or CyclotomicOrder?
 end intrinsic;
 
 intrinsic schur_index(M::LMFDBRepCC) -> RngIntElt
@@ -47,15 +47,23 @@ intrinsic AbsoluteModuleOverMinimalField(~M::LMFDBRepCC)
   print "Module over minimal field computed and assigned";
 end intrinsic;
 
+// TODO: not quite right format...see propose schema
 intrinsic WriteCyclotomicElement(u::FldCycElt) -> SeqEnum
   {Given an element u of a cyclotomic field with primitive root zeta_m, return a SeqEnum of pairs [c,e] such that
   u is the sum of c*zeta_m^e}
-  K<z> := CyclotomicField(Conductor(Parent(u)) : Sparse := false);
+  //K<z> := CyclotomicField(Conductor(Parent(u)) : Sparse := false);
+  K<z> := CyclotomicField(CyclotomicOrder(Parent(u)) : Sparse := false);
+  m := CyclotomicOrder(K);
   u_seq := Eltseq(K!u);
   cs := [];
   for i := 1 to #u_seq do
     if u_seq[i] ne 0 then
-      Append(~cs, [u_seq[i], i-1]);
+      e := i-1;
+      if e gt Floor(m/2) then // want e in range -m/2 < e <= m/2
+        e := e - m;
+      end if;
+      assert (-m/2 lt e) and (e lt m/2); // should second lt be le?
+      Append(~cs, [u_seq[i], e]);
     end if;
   end for;
   return cs;
@@ -64,8 +72,7 @@ end intrinsic;
 intrinsic ReadCyclotomicElement(cs::SeqEnum, m::RngIntElt) -> FldCycElt
   {Given a SeqEnum of pairs representing a cyclotomic field element as in the output of WriteCyclotomicElement, construct t    he corresponding cyclotomic field element.}
   K<z> := CyclotomicField(m : Sparse := false);
-  u := K!0;
-  for pair in cs do
+  u := K!0; for pair in cs do
     e := Integers()!pair[2];
     u +:= pair[1]*z^e;
   end for;
@@ -75,6 +82,9 @@ end intrinsic;
 intrinsic CyclotomizeMatrixGroup(M::GrpMat) -> Any
   {Given a matrix group over an abelian number field, change the universe to a containing cyclotomic field}
   e := Exponent(M);
+  if e mod 4 eq 2 then
+    e := e div 2;
+  end if;
   K<z> := CyclotomicField(e : Sparse := false);
   return ChangeRing(M,K);
 end intrinsic;
@@ -90,7 +100,8 @@ intrinsic IntegralizeMatrix(M::AlgMatElt) -> Any
   return d*M, d;
 end intrinsic;
 
-intrinsic WriteCyclotomicMatrix(M::AlgMatElt) -> SeqEnum
+//intrinsic WriteCyclotomicMatrix(M::GrpMatElt) -> SeqEnum
+intrinsic WriteCyclotomicMatrix(M::Any) -> SeqEnum
   {Given a matrix over a cyclotomic field, return a SeqEnum whose entries are integral and of the form given by WriteCyclotomicElement.}
   M_seq := [];
   for row in Rows(M) do
@@ -99,7 +110,7 @@ intrinsic WriteCyclotomicMatrix(M::AlgMatElt) -> SeqEnum
   return M_seq;
 end intrinsic;
 
-intrinsic ReadCyclotomicMatrix(cs::SeqEnum, m::RngIntElt) -> AlgMatElt
+intrinsic ReadCyclotomicMatrix(cs::SeqEnum, m::RngIntElt) -> GrpMatElt
   {Given a SeqEnum as in the output of WriteCyclotomicMatrix, return the corresponding matrix}
   K<z> := CyclotomicField(m : Sparse := false);
   rows := [];
@@ -109,8 +120,40 @@ intrinsic ReadCyclotomicMatrix(cs::SeqEnum, m::RngIntElt) -> AlgMatElt
   return Matrix(K,rows);
 end intrinsic;
 
+intrinsic WriteIntegralMatrix(M::Any) -> SeqEnum
+  {Given a matrix over a Z, return a SeqEnum.}
+  return [ [el : el in Eltseq(row)] : row in Rows(M)];
+end intrinsic;
+
+intrinsic ReadIntegralMatrix(cs::SeqEnum) -> Any
+  {Read a matrix over a Z, as a SeqEnum of rows}
+  return Matrix(Integers(), cs);
+end intrinsic;
+
+
 intrinsic carat_label(G::LMFDBRepQQ) -> Any
   {Return the CARAT label for a repn of dimension < 7.  Will be computed by
    other software.}
   return None();
+end intrinsic;
+
+intrinsic order(H::LMFDBRepQQ) -> Any
+  {The size of the group}
+  return Order(H`MagmaGrp);
+end intrinsic;
+
+intrinsic group(H::LMFDBRepQQ) -> Any
+  {returns the LMFDB id for the abstract group}
+  return label(H`MagmaGrp);
+end intrinsic;
+
+
+intrinsic order(H::LMFDBRepZZ) -> Any
+  {The size of the group}
+  return Order(H`MagmaGrp);
+end intrinsic;
+
+intrinsic group(H::LMFDBRepZZ) -> Any
+  {returns the LMFDB id for the abstract group}
+  return label(H`MagmaGrp);
 end intrinsic;

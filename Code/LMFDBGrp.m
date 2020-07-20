@@ -21,6 +21,8 @@ declare attributes LMFDBGrp:
   CCpermutationInv,
   CCCharacters,
   QQCharacters,
+  QQReps,
+  CCReps,
   Characters,
   label,
   old_label,
@@ -48,6 +50,7 @@ declare attributes LMFDBGrp:
   pgroup,
   elementary,
   hyperelementary,
+  mobius_function_known,
   rank,
   eulerian_function,
   MagmaCenter,
@@ -237,7 +240,6 @@ declare attributes LMFDBRepQQ:
   carat_label,
   dim,
   order,
-  group,
   c_class,
   irreducible,
   group,
@@ -255,6 +257,7 @@ end intrinsic;
 declare verbose LMFDBRepZZ, 1;
 declare type LMFDBRepZZ;
 declare attributes LMFDBRepZZ:
+  MagmaGrp,
   label,
   dim,
   order,
@@ -281,6 +284,7 @@ declare type LMFDBRepCC;
 declare attributes LMFDBRepCC:
   MagmaRep, // Magma GModule
   MagmaGrp, // Magma matrix group
+  E, // Exponent of the group.  Initially, reps are in Q(zeta_E)
   label,
   dim,
   order,
@@ -294,7 +298,6 @@ declare attributes LMFDBRepCC:
   cyc_order_traces,
   denominators,
   gens,
-  q_character,
   traces;
 
 intrinsic Print(Rho::LMFDBRepCC)
