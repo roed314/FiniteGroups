@@ -1,18 +1,20 @@
 /* Main function is getreps.  If g is a magma group,
    getreps(g) for complex representations or
-   getreps(g:FieldType:="Rationals")
+   getreps(g:Field:="Q")
    for rational representations
 */
 
+/* Not used
 intrinsic firstip(chr::Any, pc::Any) -> Any
-  {}
+  {First permutation character containing chr from the list pc}
   cnt:=1;
   while InnerProduct(chr, pc[cnt]) eq 0 do cnt:=cnt+1; end while;
   return cnt;
 end intrinsic;
+*/
 
 intrinsic myti(g::Any,sub::Any) -> Any
-  {}
+  {Transitive group identification for sub, a subgroup of g}
   inn := Index(g,sub);
   if inn gt 47 then
     return [Index(g,sub),0];
@@ -21,6 +23,7 @@ intrinsic myti(g::Any,sub::Any) -> Any
   return [b,a];
 end intrinsic;
 
+/* g is a magma group, ct is its character table */
 intrinsic getgoodsubs(g::Any,ct::Any)->Any
   {Get optimal subgroups s.t. the permutation representations contain the irreducible representations.  Also capture the t-numbers of the permutation representations.}
   subs:=[* 0 : z in ct *];
@@ -61,16 +64,18 @@ intrinsic getgoodsubs(g::Any,ct::Any)->Any
 end intrinsic;
 
 // Any other field type produces rationals
-intrinsic getirrreps(g::Any: FieldType:="Complex")->Any
+intrinsic getirrreps(G::LMFDBGrp: Field:="C")->Any
   {}
-  if FieldType eq "Complex" then
+  g:=G`MagmaGrp;
+  if Field eq "C" then
       e:=Exponent(g);
       K:=CyclotomicField(e);
-      ct:=CharacterTable(g);
+      cct:=Get(G, "CCCharacters");
+      ct:=<c`MagmaChtr : c in cct>;
   else
     K:=Rationals();
-    comp_ct:=CharacterTable(g);
-    ct,matching:=RationalCharacterTable(g);
+    cct:=Get(G, "QQCharacters");
+    ct:=<c`MagmaChtr : c in cct>;
   end if;
   gs:=getgoodsubs(g, ct);
   subs:=gs[1];
@@ -92,10 +97,10 @@ intrinsic getirrreps(g::Any: FieldType:="Complex")->Any
   end for;
   res:=[*0 : z in ct*];
   for j:=1 to #ct do
-    mult:= FieldType eq "Complex" select 1 else SchurIndex(comp_ct[matching[j][1]]);
+    mult:= Field eq "C" select 1 else Get(cct[j], "schur_index");
     for rep in im do
       if Character(rep) eq ct[j]*mult then
-        res[j]:=<ct[j], rep, tvals[j]>;
+        res[j]:=<cct[j], rep, tvals[j]>;
         Exclude(~im, rep);
         break;
       end if;
@@ -105,6 +110,60 @@ intrinsic getirrreps(g::Any: FieldType:="Complex")->Any
   return <z : z in res>;
 end intrinsic;
 
+intrinsic CCreps(G::LMFDBGrp)->Any
+  {Get irreducible matrix representations}
+  im:=getirrreps(G: Field:="C");
+  cct:=Get(G, "CCCharacters");
+  g:=G`MagmaGrp;
+  e:=Exponent(g);
+  K:=CyclotomicField(e);
+  // Double check entries in im have the right dimensions
+  result:=<>;
+  for rep in im do
+    nag:=Nagens(rep[2]);
+    data:= <<g . j, ActionGenerator(rep[2], j)> : j in [1..nag]>;
+    Append(~result, <rep[1], rep[3], data>);
+  end for;
+
+  /* myimages contains faithful images for this group stored as
+     label -> <dimension, generator list>
+  */
+  myimages:=AssociativeArray(); 
+  System("mkdir -p Creps");
+  result2:=<>;
+  for rep in result do
+  // Working on rep_label
+    replabel:= rep_label(rep[1], [z[2] : z in rep[3]], myimages, K);
+    r3 := [z[2] : z in rep[3]];
+    if replabel eq Get(rep[1], "label") then
+      r := New(LMFDBRepCC);
+      r`group := Get(G, "label");
+      denoms:=[0 : z in r3];
+      gens2:=[* 0 : z in r3*];
+      for j:=1 to #r3 do
+        dm, d:= IntegralizeMatrix(r3[j]);
+        denoms[j]:=d;
+        gens2[j]:=dm;
+      end for;
+      r`gens := [z : z in gens2];
+      r`denominators:=denoms;
+      r`dim := Integers() ! Degree(Get(rep[1], "MagmaChtr"));
+      assert r`dim eq Nrows(r`gens[1]);
+      r`irreducible:= true;
+      r`label := replabel;
+      r`decomposition:= [<r`label, 1>];
+      r`order := Get(G, "order");
+      r`E:=e;
+      myimages[replabel] := <r`dim, r3>;
+      saverep(r);
+      Append(~result2, r);
+    end if;
+    // Write to a file to track character label -> rep label
+    write("CCchars2reps", Get(rep[1], "label") * " " *replabel);
+  end for;
+  return result2;
+end intrinsic;
+
 /* Returns a list of trips 
    <character, minimal <n,t>, list of generators and images> 
 
@@ -112,17 +171,171 @@ end intrinsic;
    characters which are multiples of the values in the rational
    character table.
  */
-intrinsic getreps(g::Any: FieldType:="Complex")->Any
+intrinsic QQreps(G::LMFDBGrp)->Any
   {Get irreducible matrix representations}
-  im:=getirrreps(g: FieldType:=FieldType);
+  im:=getirrreps(G: Field:="Q");
+  cct:=Get(G, "QQCharacters");
+  g:=G`MagmaGrp;
   result:=<>;
   for rep in im do
     nag:=Nagens(rep[2]);
     data:= <<g . j, ActionGenerator(rep[2], j)> : j in [1..nag]>;
     Append(~result, <rep[1], rep[3], data>);
   end for;
-  return result;
+
+  /* myimages contains faithful images for this group stored as
+     label -> <dimension, generator list>
+  */
+  myimages:=AssociativeArray(); 
+  System("mkdir -p Qreps");
+  result2:=<>;
+  for rep in result do
+    replabel:= rep_label(rep[1], [z[2] : z in rep[3]], myimages);
+    r3 := [z[2] : z in rep[3]];
+    if replabel eq Get(rep[1], "label") then
+      r := New(LMFDBRepQQ);
+      r`group := Get(G, "label");
+      r`gens := [castZ(geninfo) : geninfo in r3];
+      r`dim := Integers() ! Degree(Get(rep[1], "MagmaChtr"));
+      r`carat_label := None();
+      r`c_class := None();
+      r`irreducible:= true;
+      r`label := replabel;
+      r`decomposition:= [<r`label, 1>];
+      r`order := Get(G, "order");
+      myimages[replabel] := <r`dim, r3>;
+      saverep(r);
+      Append(~result2, r);
+    end if;
+    // Write to a file to track character label -> rep label
+    write("QQchars2reps", Get(rep[1], "label") * " " *replabel);
+  end for;
+  return result2;
 end intrinsic;
+
+// For rational characters
+intrinsic rep_label(C::LMFDBGrpChtrQQ, r::Any, A::Assoc)->MonStgElt
+ {Return the label for the image of a representation.  It might come from
+  a quotient group, or from the current group but already seen, or it might
+  be new.}
+  qdim := Get(C, "qdim")*Get(C, "schur_index");
+  bigg := GL(qdim, Integers());
+  K:=sub<bigg| { g : g in r}>;
+  if Get(C, "faithful") then // this group
+    for k in Keys(A) do
+      if A[k][1] eq qdim then
+        H:=sub<bigg| A[k][2]>;
+        if IsGLQConjugate(H,K) then
+          return k;
+        end if;
+      end if;
+    end for;
+    return Get(C, "label");
+  else // need quotient group, read from file
+    try
+      ker:=Kernel(Get(C,"MagmaChtr"));
+      quot:=Get(C,"Grp")`MagmaGrp/ker;
+      idquot:=IdentifyGroup(quot);
+      oldreps:=Split(Read(Sprintf("%o/%o.%o", "Qreps", idquot[1], idquot[2])));
+      for orep in oldreps do
+        dat := Split(orep, " ");
+        lab := dat[1];
+        elts := [Matrix(z): z in eval(dat[2])];
+        H := sub<bigg|elts>;
+        if IsGLQConjugate(H,K) then
+          return lab;
+        end if;
+      end for;
+    catch e
+      "Error reading old reps for ", idquot;
+      return "";
+    end try;
+    assert false;
+    return ""; // Should not get here
+  end if;
+end intrinsic;
+
+// Same, but for complex characters
+intrinsic rep_label(C::LMFDBGrpChtrCC, r::Any, A::Assoc, K::Any)->MonStgElt
+ {Return the label for the image of a representation.  It might come from
+  a quotient group, or from the current group but already seen, or it might
+  be new. r = list of generators; K = defining field for matrices}
+  dim := Get(C, "dim");
+  bigg := GL(dim, K);
+  K1:=sub<bigg| { g : g in r}>;
+  if Get(C, "faithful") then // this group
+    for k in Keys(A) do
+      if A[k][1] eq dim then
+        H:=sub<bigg| A[k][2]>;
+        if IsConjugate(bigg,H,K1) then
+          return k;
+        end if;
+      end if;
+    end for;
+    return Get(C, "label");
+  else // need quotient group, read from file
+    try
+      ker:=Kernel(Get(C,"MagmaChtr"));
+      quot:=Get(C,"Grp")`MagmaGrp/ker;
+      idquot:=IdentifyGroup(quot);
+      oldreps:=Split(Read(Sprintf("%o/%o.%o", "Creps", idquot[1], idquot[2])));
+      for orep in oldreps do
+        // dat = [label, denoms, E, matrixlist]
+        dat := Split(orep, " ");
+        lab := dat[1];
+        denoms := eval(dat[2]);
+        E:=eval(dat[3]);
+        elts := eval(dat[4]);
+        elts := [ReadCyclotomicMatrix(elts[j], E)/denoms[j] : j in [1..#elts]];
+        H := sub<bigg|elts>;
+        if IsConjugate(bigg,H,K1) then
+          return lab;
+        end if;
+      end for;
+    catch e
+      "Error reading old reps for ", idquot;
+      return "";
+    end try;
+    assert false;
+    return ""; // Should not get here
+  end if;
+end intrinsic;
+
+
+intrinsic castZ(m::Any) -> Any
+  {Take a matrix with entries in Q and cast them to Z.  They should already
+   be integers, or else we raise an error.}
+  dm, d:=IntegralizeMatrix(m);
+  assert d eq 1;
+  nr:=Nrows(m);
+  return GL(nr, Integers()) ! dm;
+end intrinsic;
+
+/* Write a representation to a file 
+   We append to the file, so make sure it is new
+*/
+intrinsic saverep(r::LMFDBRepQQ)
+  {}
+  mm:=Get(r, "gens");
+  mm:=[WriteIntegralMatrix(geninfo) : geninfo in mm];
+  mystr:=Sprintf("%o$%o",Get(r, "label"), mm);
+  mystr:=DelSpaces(mystr);
+  mystr:=ReplaceString(mystr, "$", " ");
+  write("Qreps/"*Get(r, "group"), mystr);
+end intrinsic;
+
+intrinsic saverep(r::LMFDBRepCC)
+  {}
+  mm:=Get(r, "gens");
+  E:=Get(r, "E");
+  denoms:=Get(r, "denominators");
+  mm:=[WriteCyclotomicMatrix(geninfo) : geninfo in mm];
+  mystr:=Sprintf("%o$%o$%o$%o",Get(r, "label"), denoms, E, mm);
+  mystr:=DelSpaces(mystr);
+  mystr:=ReplaceString(mystr, "$", " ");
+  write("Creps/"*Get(r, "group"), mystr);
+end intrinsic;
+
 
 /* Useful commands to lower a representation to a smaller field:
    u:= AbsoluteModuleOverMinimalField(gmodule);

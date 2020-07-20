@@ -1,6 +1,16 @@
 intrinsic order(M::LMFDBRepCC) -> FldRatElt
   {Return order of the group}
-  return (M`MagmaGrp)`order;
+  return Order(M`MagmaGrp);
+end intrinsic;
+
+intrinsic dim(M::LMFDBRepCC) -> FldRatElt
+  {Return the dimension of the representation}
+  return Dimension(M`MagmaRep);
+end intrinsic;
+
+intrinsic irreducible(M::LMFDBRepCC) -> FldRatElt
+  {Return true if the representation is irreducible; false otherwise.}
+  return IsIrreducible(M`MagmaRep);
 end intrinsic;
 
 intrinsic indicator(M::LMFDBRepCC) -> FldRatElt
@@ -17,7 +27,7 @@ intrinsic cyc_order_mat(M::LMFDBRepCC) -> RngIntElt
   {an integer m so that the entries in the gens column lie in CyclotomicField(m)}
   MM := M`MagmaRep;
   MMmin := AbsoluteModuleOverMinimalField(MM);
-  return Conductor(CoefficientRing(MMmin));
+  return Conductor(CoefficientRing(MMmin)); // or CyclotomicOrder?
 end intrinsic;
 
 intrinsic schur_index(M::LMFDBRepCC) -> RngIntElt
@@ -37,15 +47,23 @@ intrinsic AbsoluteModuleOverMinimalField(~M::LMFDBRepCC)
   print "Module over minimal field computed and assigned";
 end intrinsic;
 
+// TODO: not quite right format...see propose schema
 intrinsic WriteCyclotomicElement(u::FldCycElt) -> SeqEnum
   {Given an element u of a cyclotomic field with primitive root zeta_m, return a SeqEnum of pairs [c,e] such that
   u is the sum of c*zeta_m^e}
-  K<z> := CyclotomicField(Conductor(Parent(u)) : Sparse := false);
+  //K<z> := CyclotomicField(Conductor(Parent(u)) : Sparse := false);
+  K<z> := CyclotomicField(CyclotomicOrder(Parent(u)) : Sparse := false);
+  m := CyclotomicOrder(K);
   u_seq := Eltseq(K!u);
   cs := [];
   for i := 1 to #u_seq do
     if u_seq[i] ne 0 then
-      Append(~cs, [u_seq[i], i-1]);
+      e := i-1;
+      if e gt Floor(m/2) then // want e in range -m/2 < e <= m/2
+        e := e - m;
+      end if;
+      assert (-m/2 lt e) and (e lt m/2); // should second lt be le?
+      Append(~cs, [u_seq[i], e]);
     end if;
   end for;
   return cs;
@@ -54,16 +72,37 @@ end intrinsic;
 intrinsic ReadCyclotomicElement(cs::SeqEnum, m::RngIntElt) -> FldCycElt
   {Given a SeqEnum of pairs representing a cyclotomic field element as in the output of WriteCyclotomicElement, construct t    he corresponding cyclotomic field element.}
   K<z> := CyclotomicField(m : Sparse := false);
-  u := K!0;
-  for pair in cs do
+  u := K!0; for pair in cs do
     e := Integers()!pair[2];
     u +:= pair[1]*z^e;
   end for;
   return u, K;
 end intrinsic;
 
-intrinsic WriteCyclotomicMatrix(M::AlgMatElt) -> SeqEnum
-  {Write a matrix over a cyclotomic field as a SeqEnum whose entries are of the form given by WriteCyclotomicElement}
+intrinsic CyclotomizeMatrixGroup(M::GrpMat) -> Any
+  {Given a matrix group over an abelian number field, change the universe to a containing cyclotomic field}
+  e := Exponent(M);
+  if e mod 4 eq 2 then
+    e := e div 2;
+  end if;
+  K<z> := CyclotomicField(e : Sparse := false);
+  return ChangeRing(M,K);
+end intrinsic;
+
+intrinsic IntegralizeMatrix(M::AlgMatElt) -> Any
+  {Given a matrix return a matrix with integral entries, along with a common denominator}
+  d := 1;
+  for i := 1 to Nrows(M) do
+    for j := 1 to Ncols(M) do
+      d := Lcm(d, Denominator(M[i,j]));
+    end for;
+  end for;
+  return d*M, d;
+end intrinsic;
+
+//intrinsic WriteCyclotomicMatrix(M::GrpMatElt) -> SeqEnum
+intrinsic WriteCyclotomicMatrix(M::Any) -> SeqEnum
+  {Given a matrix over a cyclotomic field, return a SeqEnum whose entries are integral and of the form given by WriteCyclotomicElement.}
   M_seq := [];
   for row in Rows(M) do
     Append(~M_seq, [WriteCyclotomicElement(el) : el in Eltseq(row)]);
@@ -71,7 +110,7 @@ intrinsic WriteCyclotomicMatrix(M::AlgMatElt) -> SeqEnum
   return M_seq;
 end intrinsic;
 
-intrinsic ReadCyclotomicMatrix(cs::SeqEnum, m::RngIntElt) -> AlgMatElt
+intrinsic ReadCyclotomicMatrix(cs::SeqEnum, m::RngIntElt) -> GrpMatElt
   {Given a SeqEnum as in the output of WriteCyclotomicMatrix, return the corresponding matrix}
   K<z> := CyclotomicField(m : Sparse := false);
   rows := [];
@@ -79,4 +118,21 @@ intrinsic ReadCyclotomicMatrix(cs::SeqEnum, m::RngIntElt) -> AlgMatElt
     Append(~rows, [ReadCyclotomicElement(el,m) : el in r]);
   end for;
   return Matrix(K,rows);
+end intrinsic;
+
+intrinsic WriteIntegralMatrix(M::Any) -> SeqEnum
+  {Given a matrix over a Z, return a SeqEnum.}
+  return [ [el : el in Eltseq(row)] : row in Rows(M)];
+end intrinsic;
+
+intrinsic ReadIntegralMatrix(cs::SeqEnum) -> Any
+  {Read a matrix over a Z, as a SeqEnum of rows}
+  return Matrix(Integers(), cs);
+end intrinsic;
+
+
+intrinsic carat_label(G::LMFDBRepQQ) -> Any
+  {Return the CARAT label for a repn of dimension < 7.  Will be computed by
+   other software.}
+  return None();
 end intrinsic;
