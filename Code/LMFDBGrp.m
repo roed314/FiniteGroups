@@ -51,7 +51,7 @@ declare attributes LMFDBGrp:
   pgroup,
   elementary,
   hyperelementary,
-  mobius_function_known,
+  mobius_function,
   rank,
   eulerian_function,
   MagmaCenter,
