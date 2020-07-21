@@ -33,7 +33,7 @@ intrinsic getgoodsubs(g::Any,ct::Any)->Any
   ordg:=Order(g);
   while not IsEmpty(notdone) do
     if (ordg mod ind) eq 0 then
-      sg:=Subgroups(g: OrderEqual:= ordg div ind);
+      sg:=Subgroups(g: OrderEqual:= (ordg div ind));
       sg:=[z`subgroup : z in sg];
       pc := [ <PermutationCharacter(g,z),z> : z in sg];
       // Sort them based on t number

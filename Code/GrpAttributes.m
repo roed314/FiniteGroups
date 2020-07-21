@@ -814,7 +814,7 @@ intrinsic Subgroups(G::LMFDBGrp) -> SeqEnum
 
     // Add series
     Un := Reverse(UpperCentralSeries(GG));
-    Ln := LowerCetex_namentralSeries(GG);
+    Ln := LowerCentralSeries(GG);
     Dn := DerivedSeries(GG);
     Cn := ChiefSeries(GG);
     SpecialGrps := [<Z,"Z">, <D,"D">, <F,"F">, <Ph,"Phi">, <R,"R">, <So,"S">, <Dn[#Dn],"PC">];
@@ -1308,7 +1308,7 @@ intrinsic central_product(G::LMFDBGrp) -> BoolElt
     GG := G`MagmaGrp;
     if Get(G, "abelian") then
         /* G abelian will not be a central product <=> it is cyclic of prime power order (including trivial group).*/
-        if coset_action_labelnot (Get(G, "cyclic") and #factors_of_order(G) in {0,1}) then /* changed FactoredOrder(GG) by factors_of_order(G).*/
+        if not (Get(G, "cyclic") and #factors_of_order(G) in {0,1}) then /* changed FactoredOrder(GG) by factors_of_order(G).*/
             return true;
         end if;
     else
