@@ -307,21 +307,18 @@ intrinsic DefaultAttributes(c::Cat) -> SeqEnum
         // Blacklist attributes that aren't working
         blacklist := [
                       // Group attributes
-                      //"pc_code",
                       "eulerian_function",
                       "rank",
                       "mobius_function_known",
-
+    
                       // Subgroup attributes
                       "alias_spot",
                       "aut_counter",
                       "mobius_function",
-
-                      //"count", // should be set in Subgroups method
-                      "extension_counter"
-	             // "direct", DONE BY MR
-                      //"generators", // DR
-	              // "projective_image", DONE BY MR
+		      "extension_counter",
+		      "diagram_x",
+		      "generators",
+		      "standard_generators"
 
                       // Conjugacy class attributes
                       //"representative" // Need to be able to encode GrpPCElts - DR
