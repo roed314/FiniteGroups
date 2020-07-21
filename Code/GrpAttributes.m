@@ -322,7 +322,12 @@ end intrinsic;
 intrinsic smallrep(G::LMFDBGrp) -> Any
   {Smallest degree of a faithful irreducible representation}
   if IsCyclic(Get(G, "MagmaCenter")) then
-    return Get(G, "faithful_reps")[1][1];
+    faith:= Get(G, "faithful_reps");
+    if #faith gt 0 then
+      return faith[1][1];
+    else
+      return 0;
+    end if;
   else
     return 0;
   end if;
