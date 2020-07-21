@@ -82,20 +82,24 @@ chain_to_gens := function(chain)
     for i in [2..#chain] do
         B := Group(chain[i]);
         r := #B div #A;
-        if not (A subset B) then
+        if not (A subset B and IsCyclic(quo<B | A>)) then
             // have to conjugate
             N := Normalizer(G, B);
             T := Transversal(G, N);
             for t in T do
-                if A subset B^t then
-                    B := B^t;
-                    break;
+                Bt := B^t;
+                if A subset Bt then
+                    Q, fQ := quo<Bt | A>;
+                    if IsCyclic(Q) then
+                        B := Bt;
+                        break;
+                    end if;
                 end if;
             end for;
+        else
+            Q, fQ := quo<B | A>;
         end if;
-        Q, fQ := quo<B | A>;
         C, fC := AbelianGroup(Q);
-        assert IsCyclic(C);
         g := G!((C.1@@fC)@@fQ);
         Append(~ans, <g, r, B>);
         A := B;
