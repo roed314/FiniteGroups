@@ -207,8 +207,8 @@ centralizer       | text      | the label of the centralizer of `H` in `G`
 normal_closure    | text   | the label of the smallest normal subgroup of `G` containing `H`
 quotient_action_kernel | text   | the subgroup label of the kernel of the map from `Q` to `A` (`NULL` if `H` is not normal).  Here `A = Aut(H)` when the sequence is split or `H` is abliean, and `A = Out(H)` otherwise
 quotient_action_image | text  | the label for `Q/K` as an abstract group, where `K` is the quotient action kernel (NULL if `H` is not normal)
-contains          | integer[] | A sorted list of labels for the maximal subgroups of `H`, up to equivalence (`NULL` if unknown)
-contained_in      | integer[] | A sorted list of labels for the minimal subgroups of `G` containing `H`, up to equivalence (`NULL` if unknown) (include?)
+contains          | text[] | A sorted list of labels for the maximal subgroups of `H`, up to equivalence (`NULL` if unknown)
+contained_in      | text[] | A sorted list of labels for the minimal subgroups of `G` containing `H`, up to equivalence (`NULL` if unknown) (include?)
 quotient_fusion   | jsonb     | A list of lists: for each conjugacy class of `Q`, lists the conjugacy classes in `G` that map to it (`NULL` if unknown)
 subgroup_fusion   | integer[] | A list: for each conjugacy class of `H`, gives the conjugacy class of `G` in which it's contained
 alias_spot        | smallint  | Which position this alias should appear in the list of aliases for the group.  0 indicates that it's the main name; `NULL` if not normal (or if it shouldn't be displayed; we only want to display one of the two orders for a direct product)
