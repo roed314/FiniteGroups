@@ -322,7 +322,12 @@ end intrinsic;
 intrinsic smallrep(G::LMFDBGrp) -> Any
   {Smallest degree of a faithful irreducible representation}
   if IsCyclic(Get(G, "MagmaCenter")) then
-    return Get(G, "faithful_reps")[1][1];
+    faith:= Get(G, "faithful_reps");
+    if #faith gt 0 then
+      return faith[1][1];
+    else
+      return 0;
+    end if;
   else
     return 0;
   end if;
@@ -977,6 +982,29 @@ intrinsic CCpermutationInv(G::LMFDBGrp) -> SeqEnum
    return G`CCpermutationInv; // Set as a side effect
 end intrinsic;
 
+intrinsic MagmaPowerMap(G::LMFDBGrp) -> Any
+  {Return Magma's powermap.}
+  return PowerMap(G`MagmaGrp);
+end intrinsic;
+
+intrinsic MagmaClassMap(G::LMFDBGrp) -> Any
+  {Return Magma's ClassMap.}
+  return ClassMap(G`MagmaGrp);
+end intrinsic;
+
+intrinsic MagmaConjugacyClasses(G::LMFDBGrp) -> Any
+  {Return Magma's Conjugacy classes.}
+  return ConjugacyClasses(G`MagmaGrp);
+end intrinsic;
+
+intrinsic MagmaGenerators(G::LMFDBGrp) -> Any
+  {Like magma command GeneratorsSequence, but works for small groups too.
+   It should change to use our recorded generators.}
+  g:=G`MagmaGrp;
+  ng:=NumberOfGenerators(g);
+  return [g . j : j in [1..ng]];
+end intrinsic;
+
 intrinsic ConjugacyClasses(G::LMFDBGrp) ->  SeqEnum
   {The list of conjugacy classes for this group}
   g:=G`MagmaGrp;
@@ -1025,6 +1053,160 @@ intrinsic FrobeniusSchur(ch::Any) -> Any
   return 0;
 end intrinsic;
 
+intrinsic MagmaCharacterTable(G::LMFDBGrp) -> Any
+  {Return Magma's character table.}
+  return CharacterTable(G`MagmaGrp);
+end intrinsic;
+
+intrinsic MagmaCharacterMatching(G::LMFDBGrp) -> Any
+  {Return the list of list showing which complex characters go with each rational character.}
+  u:=Get(G,"MagmaRationalCharacterTable");
+  return G`MagmaCharacterMatching; // Set as side effect
+end intrinsic;
+
+
+intrinsic MagmaRationalCharacterTable(G::LMFDBGrp) -> Any
+  {Return Magma's rational character table.}
+  u,v:= RationalCharacterTable(G`MagmaGrp);
+  G`MagmaCharacterMatching:=v;
+  return u;
+end intrinsic;
+
+intrinsic complexconjindex(ct::Any, gorb::Any, achar::Any) -> Any
+  {Find the complex conj of achar among indeces in gorb all from 
+   character table ct (which is now a list of lists).}
+  findme:=[ComplexConjugate(achar[z]) : z in [1..#achar]];
+  gorbvals:=[ct[z] : z in gorb];
+  myind:= Index(gorbvals, findme);
+  return gorb[myind];
+end intrinsic;
+
+intrinsic QQCharacters(G::LMFDBGrp) -> Any
+  { Compute and return Q characters }
+  dummy := Get(G, "Characters");
+  return G`QQCharacters;
+end intrinsic;
+
+intrinsic CCCharacters(G::LMFDBGrp) -> Any
+  { Compute and return Q characters }
+  dummy := Get(G, "Characters");
+  return G`CCCharacters;
+end intrinsic;
+
+intrinsic characters_add_sort_and_labels(G::LMFDBGrp, cchars::Any, rchars::Any) -> Any
+  {Order characters and make labels for them.  This does complex and rational
+   characters together since the ordering and labelling are connected.}
+  g:=G`MagmaGrp;
+  ct:=Get(G,"MagmaCharacterTable");
+  rct:=Get(G,"MagmaRationalCharacterTable");
+  matching:=Get(G,"MagmaCharacterMatching");
+  perm:=Get(G, "CCpermutationInv"); // perm[j] is the a Magma index
+  glabel:=Get(G, "label");
+  // Need outer sort for rct, and then an inner sort for ct
+  goodsubs:=getgoodsubs(g, ct); // gives <subs, tvals>
+  ntlist:= goodsubs[2];
+  // Need the list which takes complex chars and gives index of rational char
+  comp2rat:=[0 : z in ct];
+  for j:=1 to #matching do
+    for k:=1 to #matching[j] do
+      comp2rat[matching[j][k]]:=j;
+    end for;
+  end for;
+  // Want sort list to be <degree, size of Gal orbit, n, t, lex info, ...>
+  // We give rational character values first, then complex
+  // Priorities by lex sort
+  forlexsortrat:=Flat(<<rct[comp2rat[j]][perm[k]] : j in [1..#rct]> : k in [1..#ct]>);
+  forlexsort:=<Flat(<<Round(10^29*Real(ct[j,perm[k]])), Round(10^29*Imaginary(ct[j,perm[k]]))> : k in [1..#ct]>) : j in [1..#ct]>;
+  // We add three fields at the end. The last is old index, before sorting.
+  // Before that is the old index in the rational table
+  // Before that is the old index of its complex conjugate
+  sortme:=<<Degree(ct[j]), #matching[comp2rat[j]], ntlist[j][1], ntlist[j][2]> cat forlexsortrat
+     cat forlexsort[j] cat <0,0,0> : j in [1..#ct]>;
+  len:=#sortme[1];
+  for j:=1 to #ct do 
+    sortme[j][len] := j; 
+  end for;
+  allvals := [[ct[j][k] : k in [1..#ct]] : j in [1..#ct]];
+  for j:=1 to #matching do
+    for k:=1 to #matching[j] do
+      sortme[matching[j][k]][len-1] := j;
+      sortme[matching[j][k]][len-2]:= complexconjindex(allvals, matching[j], ct[matching[j][k]]);
+    end for;
+  end for;
+  sortme:= [[a : a in b] : b in sortme];
+  Sort(~sortme);
+  // Now step through to figure out the order
+  donec:={};
+  doneq:={};
+  olddim:=-1;
+  rcnt:=0;
+  rtotalcnt:=0;
+  ccnt:=0;
+  ctotalcnt:=0;
+  for j:=1 to #sortme do
+    dat:=sortme[j];
+    if dat[1] ne olddim then
+      olddim := dat[1];
+      rcnt:=0;
+      ccnt:=0;
+    end if;
+    if dat[len] notin donec then // New C character
+      if dat[len-1] notin doneq then // New Q character
+        rcnt+:=1;
+        ccnt:=0;
+        rtotalcnt+:=1;
+        rcode:=num2letters(rcnt: Case:="lower");
+        Include(~doneq, dat[len-1]);
+        rindex:=Integers()!dat[len-1];
+        rchars[rindex]`counter :=rtotalcnt;
+        rchars[rindex]`label:=Sprintf("%o.%o%o.%o",glabel,dat[1],rcode,dat[2]);
+        rchars[rindex]`nt:=[dat[2],dat[3]];
+        rchars[rindex]`values:=[Integers()! dat[j+4] : j in [1..#ct]];
+      end if;
+      ccnt+:=1;
+      ctotalcnt+:=1;
+      Include(~donec, dat[len]);
+      cindex:=Integers()!dat[len];
+      cchars[cindex]`counter:=ctotalcnt;
+      cchars[cindex]`nt:=[dat[2],dat[3]];
+      cextra:= (dat[2] eq 1) select "" else Sprintf("%o", ccnt);
+      cchars[cindex]`label:=Sprintf("%o.%o%o", glabel, dat[1],rcode)*cextra;
+      // Encode values
+      thischar:=ct[cindex];
+      basef:=BaseRing(thischar);
+      cyclon:=CyclotomicOrder(basef);
+      Kn:=CyclotomicField(cyclon);
+      cchars[cindex]`cyclotomic_n:=cyclon;
+      cchars[cindex]`values:=[PrintRelExtElement(Kn!thischar[perm[z]]) : z in [1..#thischar]];
+      if dat[len-2] notin donec then
+        ccnt+:=1;
+        ctotalcnt+:=1;
+        cindex:=Integers()!dat[len-2];
+        Include(~donec, dat[len-2]);
+        cchars[cindex]`counter:=ctotalcnt;
+        cchars[cindex]`nt:=[dat[2],dat[3]];
+        cextra:= (dat[2] eq 1) select "" else Sprintf("%o", ccnt);
+        cchars[cindex]`label:=Sprintf("%o.%o%o", glabel, dat[1],rcode)*cextra;
+        thischar:=ct[cindex];
+        basef:=BaseRing(thischar);
+        cyclon:=CyclotomicOrder(basef);
+        Kn:=CyclotomicField(cyclon);
+        cchars[cindex]`cyclotomic_n:=cyclon;
+        cchars[cindex]`values:=[PrintRelExtElement(Kn!thischar[perm[z]]) : z in [1..#thischar]];
+      end if;
+    end if;
+  end for;
+  cntlist:=[z`counter : z in rchars];
+  ParallelSort(~cntlist,~rchars);
+  G`QQCharacters := rchars;
+  cntlist:=[z`counter : z in cchars];
+  ParallelSort(~cntlist, ~cchars);
+  G`CCCharacters := cchars;
+  
+  return <cchars, rchars>;
+end intrinsic;
+
+
 intrinsic Characters(G::LMFDBGrp) ->  Tup
   {Initialize characters of an LMFDB group and return a list of complex characters and a list of rational characters}
   g:=G`MagmaGrp;
@@ -1069,6 +1251,62 @@ intrinsic Characters(G::LMFDBGrp) ->  Tup
 
   return <cchars, rchars>;
 end intrinsic;
+
+intrinsic name(G::LMFDBGrp) -> Any
+  {Returns Magma's name for the group.}
+  g:=G`MagmaGrp;
+  return GroupName(g);
+end intrinsic;
+
+intrinsic tex_name(G::LMFDBGrp) -> Any
+  {Returns Magma's name for the group.}
+  g:=G`MagmaGrp;
+  return GroupName(g: TeX:=true);
+end intrinsic;
+
+intrinsic Socle(G::LMFDBGrp) -> Any
+  {Returns the socle of a group.}
+  g:=G`MagmaGrp;
+  try
+    s:=Socle(g);
+    return s;
+  catch e  ;
+  end try;
+  nl:=NormalLattice(g);
+  mins:=[z : z in MinimalOvergroups(Bottom(nl))];
+  spot:= IntegerRing() ! mins[#mins];
+  // Can't believe there is no support of join of subgroups
+  while spot le #nl do
+    fail := false;
+    for j:=1 to #mins do
+      if not ((nl ! spot) ge (nl ! mins[j])) then
+        fail:=true;
+        break;
+      end if;
+    end for;
+    if fail then spot +:= 1; else break; end if;
+  end while;
+  assert spot le #nl;
+  return nl! spot;
+end intrinsic;
+
+intrinsic coset_action_label(H::LMFDBSubGrp) -> Any
+  {Determine the transitive classification for G/H}
+  GG := Get(H, "MagmaAmbient");
+  HH := H`MagmaSubGrp;
+  if Order(Core(GG,HH)) eq 1 then
+    if Index(GG,HH) gt 47 then
+      return None();
+    end if;
+    ca:=CosetImage(GG,HH);
+    t,n:=TransitiveGroupIdentification(ca);
+    return Sprintf("%oT%o", n, t);
+  else
+    return None();
+  end if;
+end intrinsic;
+
+
 
 intrinsic central_product(G::LMFDBGrp) -> BoolElt
     {Checks if the group G is a central product.}
@@ -1138,7 +1376,344 @@ intrinsic wreath_product(G::LMFDBGrp) -> Any
 end intrinsic;
 
 
-intrinsic old_label(G::LMFDBGrp) -> Any
-    {Currently just returns None, since this is used when we compute labels all groups of a given order where we didn't have a label before}
-    return None();
+intrinsic counter(G::LMFDBGrp) -> RngIntElt
+{Second entry in label}
+   lab:= Get(G,"label");
+   spl:=Split(lab,".");
+   return eval spl[2];
 end intrinsic;
+
+intrinsic elt_rep_type(G:LMFDBGrp) -> Any
+    {type of an element of the group}
+    if Type(G`MagmaGrp) eq GrpPC then
+        return 0;
+    elif Type(G`MagmaGrp) eq GrpPerm then
+        return -Degree(G`MagmaGrp);
+    elif Type(G`MagmaGrp) eq GrpMat then
+        R := CoefficientRing(G);
+        if R eq Integers() then
+            return 1;
+        elif Type(R) eq FldFin then
+            return #R;
+        else
+            error Sprintf("Unsupported ring %o", R);
+        end if;
+    else
+        error Sprintf("Unsupported group type %o", Type(G`MagmaGrp));
+    end if;
+end intrinsic;
+
+/* should be improved when matrix groups are added */
+intrinsic finite_matrix_group(G:LMFDBGrp)-> Any
+{determines whether finite matrix group}
+  return None();
+end intrinsic;
+
+/* placeholder for when larger groups get added */
+intrinsic old_label(G:LMFDBGrp)-> Any
+{graveyard for labels when they are no longer needed. Currently just returns None, since this is used when we compute labels all groups of a given order where we did not have a label before}  
+  return None();
+end intrinsic;
+
+
+/* From DR.m */
+cycquos := function(Lat, h)
+    H := Group(h);
+    D := DerivedSubgroup(H);
+    A, fA := quo<H | D>; // Can maybe make this more efficient by switching to GrpAb and using Dual
+    n := Order(A);
+    ans := {};
+    for B in Subgroups(A) do
+        if B`order eq n then
+            continue;
+        end if;
+        Bsub := B`subgroup;
+        if IsCyclic(A / Bsub) then
+            Include(~ans, Lat!(Bsub@@fA));
+        end if;
+    end for;
+    return ans;
+end function;
+
+all_minimal_chains := function(G, Lat)
+    assert IsSolvable(G);
+    cycdist := AssociativeArray();
+    top := Lat!(#Lat);
+    bottom := Lat!1;
+    cycdist[top] := 0;
+    reverse_path := AssociativeArray();
+    cqsubs := AssociativeArray();
+    Seen := {top};
+    Layer := {top};
+    while true do
+        NewLayer := {};
+        for h in Layer do
+            cq := cycquos(Lat, h);
+            cqsubs[h] := cq;
+            for x in cq do
+                if not IsDefined(cycdist, x) or cycdist[x] gt cycdist[h] + 1 then
+                    cycdist[x] := cycdist[h] + 1;
+                    reverse_path[x] := {h};
+                elif cycdist[x] eq cycdist[h] + 1 then
+                    Include(~(reverse_path[x]), h);
+                end if;
+                if not (x in Seen) then
+                    Include(~NewLayer, x);
+                    Include(~Seen, x);
+                end if;
+            end for;
+        end for;
+        Layer := NewLayer;
+        if bottom in Layer then
+            break;
+        end if;
+    end while;
+    M := cycdist[bottom];
+    chains := [[bottom]];
+    /* The following was brainstorming that I don't think works yet....
+
+       For now, we just use centralizers of already chosen elements.
+       At each step (while adding a subgroup H above a subgroup J),
+       compute the normalizer N of H and the orbits for the action of N on H.
+       Similarly, the normalizer M of J and the orbits for the action of M on J.
+       Those of J map to those of H, and places where the count increase
+       are possible conjugacy classes from which we can choose a generator.
+       We aim for those where the size of the conjugacy class is small,
+       since that will yield a large centralizer with lots of commuting relations.
+    */
+    for i in [1..M] do
+        new_chains := [];
+        for chain in chains do
+            for x in reverse_path[chain[i]] do
+                Append(~new_chains, Append(chain, x));
+            end for;
+        end for;
+        chains := new_chains;
+    end for;
+    return chains;
+end function;
+
+
+chain_to_gens := function(chain)
+    ans := [];
+    G := Group(chain[#chain]);
+    A := Group(chain[1]);
+    for i in [2..#chain] do
+        B := Group(chain[i]);
+        r := #B div #A;
+        if not (A subset B and IsCyclic(quo<B | A>)) then
+            // have to conjugate
+            N := Normalizer(G, B);
+            T := Transversal(G, N);
+            for t in T do
+                Bt := B^t;
+                if A subset Bt then
+                    Q, fQ := quo<Bt | A>;
+                    if IsCyclic(Q) then
+                        B := Bt;
+                        break;
+                    end if;
+                end if;
+            end for;
+        else
+            Q, fQ := quo<B | A>;
+        end if;
+        C, fC := AbelianGroup(Q);
+        g := G!((C.1@@fC)@@fQ);
+        Append(~ans, <g, r, B>);
+        A := B;
+    end for;
+    return ans;
+end function;
+
+intrinsic RePresentLat(G::LMFDBGrp, L::SubGrpLat)
+    {}
+    GG := G`MagmaGrp;
+    chains := all_minimal_chains(GG, L);
+    gens := [chain_to_gens(chain) : chain in chains];
+    //print "#gensA", #gens;
+    // Figure out which gives the "best" presentation.  Desired features:
+    // * raising each generator to its relative order gives the identity
+    // * fewer conjugacy relations
+    // * relative orders are non-increasing
+    // * RHS of conjugacy relations are "deeper"
+    relcnt := AssociativeArray();
+    for i in [1..#gens] do
+        c := 0;
+        for tup in gens[i] do
+            if IsIdentity(tup[1]^tup[2]) then
+                c +:= 1;
+            end if;
+        end for;
+        if not IsDefined(relcnt, c) then relcnt[c] := []; end if;
+        Append(~relcnt[c], i);
+    end for;
+    // Only keep chains with the maximum number of identity relative powers
+    gens := [gens[i] : i in relcnt[Max(Keys(relcnt))]];
+    //print "#gensB", #gens;
+
+    commut := AssociativeArray();
+    for i in [1..#gens] do
+        c := 0;
+        for a in [1..#gens[i]] do
+            for b in [a+1..#gens[i]] do
+                g := gens[i][a][1];
+                h := gens[i][b][1];
+                if IsIdentity(g*h*g^-1*h^-1) then
+                    c +:= 1;
+                end if;
+            end for;
+        end for;
+        if not IsDefined(commut, c) then commut[c] := []; end if;
+        Append(~commut[c], i);
+    end for;
+    // Only keep chains that have the most commuting pairs of generators
+    gens := [gens[i] : i in commut[Max(Keys(commut))]];
+    //print "#gensC", #gens;
+
+    ooo := AssociativeArray();
+    for i in [1..#gens] do
+        c := 0;
+        for a in [1..#gens[i]] do
+            for b in [a+1..#gens[i]] do
+                r := gens[i][a][2];
+                s := gens[i][b][2];
+                if r lt s then
+                    c +:= 1;
+                end if;
+            end for;
+        end for;
+        if not IsDefined(ooo, c) then ooo[c] := []; end if;
+        Append(~ooo[c], i);
+    end for;
+    // Only keep chains that have the minimal number of out-of-order relative orders
+    gens := [gens[i] : i in ooo[Min(Keys(ooo))]];
+    //print "#gensD", #gens;
+
+    total_depth := AssociativeArray();
+    for i in [1..#gens] do
+        c := 0;
+        for a in [1..#gens[i]] do
+            for b in [a+1..#gens[i]] do
+                g := gens[i][a][1];
+                h := gens[i][b][1];
+                com := g*h*g^-1*h^-1;
+                if not IsIdentity(com) then
+                    for j in [b-2..1 by -1] do
+                        if not com in gens[i][j][3] then
+                            c +:= j;
+                        end if;
+                    end for;
+                end if;
+            end for;
+        end for;
+        if not IsDefined(total_depth, c) then total_depth[c] := []; end if;
+        Append(~total_depth[c], i);
+    end for;
+    // Only keep chains that have the minimal total depth
+    gens := [gens[i] : i in total_depth[Min(Keys(total_depth))]];
+    //print "#gensE", #gens;
+
+    orders := [[tup[2] : tup in chain] : chain in gens];
+    ParallelSort(~orders, ~gens);
+
+    // We can't feasibly make this deterministic, and we don't have any more ideas for
+    // picking a "better" presentation, so we now just take the last one,
+    // which has the largest relative order for the first generator (and so on)
+
+    best := gens[#gens];
+    //print "best", [<tup[1], tup[2], #tup[3]> : tup in best];
+
+    // Now we build a new PC group with an isomorphism to our given one.
+    // We have to fill in powers of our chosen generators since magma wants prime relative orders
+    // We keep track of which generators are actually needed; other generators are powers of these
+    filled := [];
+    H := sub<GG|>;
+    gens_used := [];
+    used_tracker := -1;
+    for tup in best do
+        g := tup[1];
+        r := tup[2];
+        segment := [];
+        for pe in Factorization(r) do
+            p := pe[1]; e := pe[2];
+            for i in [1..e] do
+                Append(~segment, <g, p, sub<GG| H, g>>);
+                g := g^p;
+            end for;
+        end for;
+        used_tracker +:= #segment;
+        Append(~gens_used, used_tracker);
+        filled cat:= Reverse(segment);
+        H := tup[3];
+    end for;
+    // Magma has a descending filtration, so we switch to that here.
+    Reverse(~filled);
+    gens_used := [#filled - i : i in gens_used];
+    //print "filled", [<tup[1], tup[2], #tup[3]> : tup in filled];
+    F := FreeGroup(#filled);
+    rels := {};
+    one := Identity(F);
+    gens := [filled[i][1] : i in [1..#filled]];
+    function translate_to_F(x, depth)
+        fvec := one;
+        for k in [depth..#filled] do
+            //print "k", k;
+            // For the groups we're working with, the primes involved are small, so we just do a super-naive discrete log
+            if k eq #filled then
+                Filt := [Identity(GG)];
+            else
+                Filt := filled[k+1][3];
+            end if;
+            //print x, Filt;
+            while not x in Filt do
+                x := gens[k]^-1 * x;
+                fvec := fvec * F.k;
+            end while;
+        end for;
+        return fvec;
+    end function;
+
+    //print "Allrels";
+    //for i in [1..#filled] do
+    //    for j in [i+1..#filled] do
+    //        print "i,j,gj^gi", i, j, gens[j]^gens[i];
+    //    end for;
+    //end for;
+    for i in [1..#filled] do
+        //print "i", i;
+        p := filled[i][2];
+        Include(~rels, F.i^p = translate_to_F(gens[i]^p, i+1));
+        for j in [i+1..#filled] do
+            //print "j", j;
+            fvec := translate_to_F(gens[j]^gens[i], i+1);
+            if fvec ne F.j then
+                Include(~rels, F.j^F.i = fvec);
+            end if;
+        end for;
+    end for;
+    //print "rels", rels;
+    H := quo< GrpPC : F | rels >;
+    f := hom< H -> G`MagmaGrp | gens >;
+    G`MagmaOptimized := H;
+    G`OptimizedIso := f^-1;
+    G`gens_used := gens_used;
+end intrinsic;
+
+intrinsic RePresent(G::LMFDBGrp)
+    {}
+    // Without the lattice, we can't find an optimal presentation, but we can use the derived series to get something reasonable.
+    GG := G`MagmaGrp;
+    // TODO: leaving this for later since we're initially computing the lattice for all groups
+end intrinsic;
+
+
+intrinsic pc_code(G::LMFDBGrp) -> RngInt
+    {This should be updated to give a better presentation}
+    // Make sure subgoups have been computed, since that sets OptimizedIso
+    pc_code := SmallGroupEncoding(Codomain(G`OptimizedIso));
+    return pc_code;
+end intrinsic;
+
+
+

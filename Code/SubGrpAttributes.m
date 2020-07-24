@@ -240,5 +240,48 @@ intrinsic direct(H::LMFDBSubGrp) -> Any // Need to be subgroup attribute file
   end if;
 end intrinsic;
 
+intrinsic stem(H::LMFDBSubGrp) -> BoolElt
+   {Determine whether H is contained in both the center and commutator subgroups of G}
+   GG := Get(H, "MagmaAmbient");
+   HH := H`MagmaSubGrp;
+   Cent:=Center(GG);
+   Comm:=CommutatorSubgroup(GG);
+   if HH subset Cent and HH subset Comm then
+      return true;
+   else
+     return false;
+   end if;
+end intrinsic;
+
+
+/* This should be rewritten later, it returns none for now */
+intrinsic conjugacy_class_count(H::LMFDBSubGrp) -> Any
+    {The number of conjugacy classes of subgroups in this equivalence class (NULL if outer_equivalence is false)}
+    return None();
+end intrinsic;
+
+/* This should be rewritten later for nomal subgroups, it returns none for now */
+intrinsic quotient_action_image(H::LMFDBSubGrp) -> Any
+    {the subgroup label of the kernel of the map from Q to A (NULL if H is not normal). }
+    return None();
+end intrinsic;
+
+/* This should be rewritten later for nomal subgroups, it returns none for now */
+intrinsic quotient_action_kernel(H::LMFDBSubGrp) -> Any
+    {the label for Q/K as an abstract group, where K is the quotient action kernel (NULL if H is not normal)}
+    return None();
+end intrinsic;
+
+/* This should be rewritten later, it returns none for now */
+intrinsic quotient_fusion(H::LMFDBSubGrp) -> Any
+    {A list of lists: for each conjugacy class of Q, lists the conjugacy classes in G that map to it (NULL if unknown)}
+    return None();
+end intrinsic;
+
+/* This should be rewritten later, it returns none for now */
+intrinsic subgroup_fusion(H::LMFDBSubGrp) -> Any
+    {A list: for each conjugacy class of H, gives the conjugacy class of G in which it's contained}
+    return None();
+end intrinsic;
 
 
