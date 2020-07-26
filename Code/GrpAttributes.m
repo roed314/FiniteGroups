@@ -1213,6 +1213,8 @@ intrinsic Characters(G::LMFDBGrp) ->  Tup
   ct:=Get(G,"MagmaCharacterTable");
   rct:=Get(G,"MagmaRationalCharacterTable");
   matching:=Get(G,"MagmaCharacterMatching");
+  R<x>:=PolynomialRing(Rationals());
+  polredabscache:=AssociativeArray();
   //cc:=Classes(g);
   cchars:=[New(LMFDBGrpChtrCC) : c in ct];
   rchars:=[New(LMFDBGrpChtrQQ) : c in rct];
@@ -1225,7 +1227,11 @@ intrinsic Characters(G::LMFDBGrp) ->  Tup
     thepoly:=DefiningPolynomial(CharacterField(ct[j]));
     // Sometimes the type is Cyclotomic field, in which case thepoly is a different type
     if Type(thepoly) eq SeqEnum then thepoly:=thepoly[1]; end if;
-    thepoly:=Polredabs(thepoly);
+    if not IsDefined(polredabscache,thepoly) then
+      thepoly1:=Polredabs(thepoly);
+      polredabscache[thepoly] := thepoly1;
+    end if;
+    thepoly:=polredabscache[thepoly];
     cchars[j]`field:=Coefficients(thepoly);
     cchars[j]`Image_object:=New(LMFDBRepCC);
     //cchars[j]`indicator:=FrobeniusSchur(ct[j]); // Not in schema, but should be?
