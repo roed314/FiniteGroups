@@ -18,12 +18,7 @@
   IO.m
   SmallGroups.m
   ProfileSmallGroups.m
-  DR.m
-  jj.m
-  JP.m
   LC.m
-  MR.m
   mb.m
-  sam.m
   mb-gp-elts.m
 }

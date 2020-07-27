@@ -1,0 +1,3 @@
+abelian|ambient|ambient_order|central|centralizer|characteristic|complements|conjugacy_class_count|contained_in|contains|core|coset_action_label|count|cyclic|direct|hall|label|maximal|maximal_normal|minimal|minimal_normal|normal|normal_closure|normalizer|outer_equivalence|perfect|projective_image|quotient|quotient_action_image|quotient_action_kernel|quotient_fusion|quotient_order|special_labels|split|stem|subgroup|subgroup_fusion|subgroup_order|sylow
+boolean|text|numeric|boolean|text|boolean|text[]|numeric|text[]|text[]|text|text|numeric|boolean|boolean|numeric|text|boolean|boolean|boolean|boolean|boolean|text|text|boolean|boolean|text|text|text|text|jsonb|numeric|text[]|boolean|boolean|text|integer[]|numeric|smallint
+

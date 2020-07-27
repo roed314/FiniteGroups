@@ -13,6 +13,9 @@ AttachSpec("spec");
 
 //System("mkdir -p " * Folder * "/labels");
 
+
+SetColumns(0);
+
 if Folder[#Folder] ne "/" then
     Folder := Folder * "/";
 end if;

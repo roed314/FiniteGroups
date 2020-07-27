@@ -1,2 +1,0 @@
-AttachSpec("spec");
-load ex;

@@ -21,6 +21,7 @@ declare attributes LMFDBGrp:
   CCpermutationInv,
   CCCharacters,
   QQCharacters,
+  Generators,
   QQReps,
   CCReps,
   Characters,
@@ -50,7 +51,7 @@ declare attributes LMFDBGrp:
   pgroup,
   elementary,
   hyperelementary,
-  mobius_function_known,
+  mobius_function,
   rank,
   eulerian_function,
   MagmaCenter,
@@ -68,6 +69,7 @@ declare attributes LMFDBGrp:
   transitive_degree,
   MagmaTransitiveSubgroup,
   faithful_reps,
+  smallrep,
   aut_group,
   aut_order,
   MagmaAutGroup,
@@ -77,6 +79,7 @@ declare attributes LMFDBGrp:
   nilpotency_class,
   ngens,
   pc_code,
+  gens_used,
   number_conjugacy_classes,
   number_subgroup_classes,
   number_subgroups,
@@ -145,8 +148,10 @@ declare verbose LMFDBSubGrp, 1;
 declare type LMFDBSubGrp;
 declare attributes LMFDBSubGrp:
   Grp, // input
+  Quotient, // quotient as an ambient LMFDBGrp
   MagmaAmbient, // derived from Grp
   MagmaSubGrp, // input
+  QuotientMap, // homomorphism from MagmaAmbient to Quotient`MagmaGrp
   label, // process
   special_labels,
   outer_equivalence, // input
@@ -190,6 +195,8 @@ declare attributes LMFDBSubGrp:
   subgroup_fusion,
   alias_spot,
   generators,
+  //generator_images,
+  standard_generators,
   projective_image;
 
 intrinsic Print(H::LMFDBSubGrp)

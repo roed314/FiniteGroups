@@ -89,16 +89,9 @@ end intrinsic;
 
 
 
-MobiusFunction:=function(G) 
 
-  if Get(G,"mobius_function_known") then //checks if we already have it
-    S:=Get(G,"Subgroups");
-    mobius_images:=[];
-    for s in S do
-      Append(~mobius_images,[*s,s`mobius_function*]);
-    end for;
-    return mobius_images;
-  else
+intrinsic mobius_function(G::LMFDBGrp) -> Any
+  {Calculates the images of the subgroup-Mobius function on subgroups of G}
     if Get(G,"all_subgroups_known") then
       L:=SubgroupLattice(G`MagmaGrp);
       MobiusImages:=[[#L,1]]; //μ_G(G) = 1
@@ -135,8 +128,7 @@ MobiusFunction:=function(G)
     else
       return None();
     end if;
-  end if;
-end function;
+end intrinsic;
 
 
 
@@ -145,7 +137,7 @@ intrinsic eulerian_function(G::LMFDBGrp) -> Any
   if Get(G, "order") eq 1 then return 1; end if;
   n:=Get(G,"rank");
   sum:=0;
-  mobius_images:= MobiusFunction(G);
+  mobius_images:= Get(G,"mobius_function");
   for m in mobius_images do
     sum+:=(#m[1]`MagmaSubGrp)^n * m[2] * #Conjugates(G`MagmaGrp,m[1]`MagmaSubGrp);
   end for;
@@ -163,7 +155,7 @@ intrinsic rank(G::LMFDBGrp) -> Any
     return 1;
   else
     r:=2;
-    mobius_images:= MobiusFunction(G);
+    mobius_images:= Get(G,"mobius_function");
     while r le #G`MagmaGrp+1 do
       sum:=0;
       for m in mobius_images do
