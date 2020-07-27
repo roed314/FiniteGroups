@@ -280,8 +280,12 @@ end intrinsic;
 
 /* This should be rewritten later, it returns none for now */
 intrinsic subgroup_fusion(H::LMFDBSubGrp) -> Any
-    {A list: for each conjugacy class of H, gives the conjugacy class of G in which it's contained}
+    {A list: for each conjugacy class of H, gives the conjugacy class of G in which its contained}
     return None();
 end intrinsic;
 
 
+intrinsic diagram_x(H::LMFDBSubGrp) -> RngIntElt
+    {integer from 1 to 10000 indicating the x-coordinate for plotting the subgroup in the lattice, 0 if not computed--will be computed elsewhere}
+    return 0;
+end intrinsic
