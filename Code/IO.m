@@ -358,8 +358,15 @@ intrinsic SaveLMFDBObject(G::Any : attrs:=[], sep:="|") -> MonStgElt
     vprint User1: "***", Type(G);
     for attr in attrs do
         //"Attr", attr;
-        vprint User1: attr;
-        vtime User1: saved := SaveAttr(attr, Get(G, attr), G);
+        if GetVerbose("User1") gt 0 then
+            print attr;
+            t := Cputime();
+            saved := SaveAttr(attr, Get(G, attr), G);
+            t := Cputime(t);
+            if t gt 0.1 then
+                printf "Time: %.3o\n", t;
+            end if;
+        end if;
         if Type(saved) ne MonStgElt then
             print attr, Type(SaveAttr(attr, Get(G, attr), G));
         end if;
