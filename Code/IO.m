@@ -316,7 +316,7 @@ intrinsic DefaultAttributes(c::Cat) -> SeqEnum
                       "aut_counter",
                       "mobius_function",
 		      "extension_counter",
-		      "diagram_x",
+					 //  "diagram_x", returns 0 now
 		      "generators",
 		      "standard_generators"
 
