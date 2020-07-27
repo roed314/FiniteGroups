@@ -25,8 +25,9 @@ files := [Folder * "groups/" * Proc * ".txt",
           Folder * "groups_cc/" * Proc * ".txt",
           Folder * "characters_cc/" * Proc * ".txt",
           Folder * "characters_qq/" * Proc * ".txt"];
+logfile := Folder * "logs/" * Proc * ".txt";
 
-for f in ["groups", "subgroups", "groups_cc", "characters_cc", "characters_qq"] do
+for f in ["groups", "subgroups", "groups_cc", "characters_cc", "characters_qq", "logs"] do
   System("mkdir -p "* Folder * f);
 end for;
 
@@ -42,8 +43,11 @@ End := Floor((NumGroups-1) * (Proc + 1) / NumProc);
 "End", End;
 
 procedure WriteSmallGroup(N, i)
-    "Small group", N, i;
+    PrintFile(logfile, Sprintf("Starting small group %o.%o", N, i));
+    t0 := Cputime();
     print_data := MakeSmallGroupData(N, i);
+    t1 := Cputime();
+    PrintFile(logfile, Sprintf("Small group %o.%o took %o s", N, i, t1-t0));
     for j in [1..5] do
         for line in print_data[j] do
             PrintFile(files[j], line);

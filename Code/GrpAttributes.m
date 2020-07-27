@@ -534,6 +534,11 @@ end intrinsic;
 intrinsic outer_group(G::LMFDBGrp) -> Any
     {returns OuterAutomorphism Group}
     aut:=Get(G, "MagmaAutGroup");
+    // We're getting errors when the outer group is too large to construct a regular representation
+    // TODO: This should be changed as we start to label larger groups
+    if not CanIdentifyGroup(Get(G, "outer_order")) then
+        return None();
+    end if;
     try
         return label(OuterFPGroup(aut));
     catch e;
