@@ -419,9 +419,10 @@ declare attributes LMFDBGrpChtrCC:
 
 intrinsic Print(Chi::LMFDBGrpChtrCC)
   {Print LMFDBGrpChtrCC}
-  printf "LMFDBGrpChtrCC %o:\n", Get(Chi, "label");
-  printf "  Dimension %o:\n", Get(Chi, "dim");
-  printf "  Group %o:", GetGrp(Chi);
+  printf "LMFDBGrpChtrCC: %o\n", Get(Chi, "label");
+  printf "  Dimension: %o\n", Get(Chi, "dim");
+  printf "  Group %o\n", GetGrp(Chi);
+  printf "  Values: %o", Get(Chi,"MagmaChtr");
 end intrinsic;
 
 declare verbose LMFDBGrpChtrQQ, 1;
