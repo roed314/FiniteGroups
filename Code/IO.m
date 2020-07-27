@@ -166,7 +166,7 @@ intrinsic SaveElt(out::Any, G::LMFDBGrp) -> MonStgElt
         end for;
         return IntegerToString(n);
     elif Type(GG) eq GrpPerm then
-        return EncodePerm(out);
+        return IntegerToString(EncodePerm(out));
     else
         error "Other group types not yet supported";
     end if;
@@ -355,14 +355,15 @@ intrinsic SaveLMFDBObject(G::Any : attrs:=[], sep:="|") -> MonStgElt
         attrs := DefaultAttributes(Type(G));
     end if;
     saved_attrs := [];
+    vprint User1: "***", Type(G);
     for attr in attrs do
         //"Attr", attr;
         vprint User1: attr;
         vtime User1: saved := SaveAttr(attr, Get(G, attr), G);
-        Append(~saved_attrs, saved);
         if Type(saved) ne MonStgElt then
             print attr, Type(SaveAttr(attr, Get(G, attr), G));
         end if;
+        Append(~saved_attrs, saved);
     end for;
 //"Saving";
     return Join(saved_attrs, sep);
