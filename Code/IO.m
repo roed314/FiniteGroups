@@ -307,9 +307,9 @@ intrinsic DefaultAttributes(c::Cat) -> SeqEnum
         // Blacklist attributes that aren't working
         blacklist := [
                       // Group attributes
-                      "eulerian_function",
-                      "rank",
-                      "mobius_function_known",
+                      //"eulerian_function",
+                      //"rank",
+                      //"mobius_function_known",
     
                       // Subgroup attributes
                       "alias_spot",
@@ -354,14 +354,18 @@ intrinsic SaveLMFDBObject(G::Any : attrs:=[], sep:="|") -> MonStgElt
     if attrs eq [] then
         attrs := DefaultAttributes(Type(G));
     end if;
+    saved_attrs := [];
     for attr in attrs do
-//"Attr", attr;
-        if Type(SaveAttr(attr, Get(G, attr), G)) ne MonStgElt then
+        //"Attr", attr;
+        vprint User1: attr;
+        vtime User1: saved := SaveAttr(attr, Get(G, attr), G);
+        Append(~saved_attrs, saved);
+        if Type(saved) ne MonStgElt then
             print attr, Type(SaveAttr(attr, Get(G, attr), G));
         end if;
     end for;
 //"Saving";
-    return Join([SaveAttr(attr, Get(G, attr), G) : attr in attrs], sep);
+    return Join(saved_attrs, sep);
 end intrinsic;
 
 intrinsic AttrType(attr::MonStgElt) -> MonStgElt

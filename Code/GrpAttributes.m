@@ -636,6 +636,7 @@ end function;
 
 intrinsic Subgroups(G::LMFDBGrp) -> SeqEnum
     {The list of subgroups computed for this group}
+    t0 := Cputime();
     S := [];
     GG := G`MagmaGrp;
     function MakeSubgroups(SubLabels, GG, orig: suffixes := "")
@@ -744,6 +745,7 @@ intrinsic Subgroups(G::LMFDBGrp) -> SeqEnum
     end if;
     // Need to include the conjugacy class ordering
     lmfdbcc := ConjugacyClasses(G);
+    vprint User1: "XXXXXXXXXX Conj computed", Cputime(t0);
     cccounters := [c`counter : c in lmfdbcc];
     ccreps := [c`representative : c in lmfdbcc];
     ParallelSort(~cccounters, ~ccreps);
@@ -756,11 +758,14 @@ intrinsic Subgroups(G::LMFDBGrp) -> SeqEnum
     sset := {j : j in cccounters};
     perm := map<sset->sset | perm>;
     newphi := cm*perm; // Magma does composition backwards!
+    G`gens_used := []; // need to be present in order to save; overwritten in RePresentLat for solvable groups
     if G`subgroup_inclusions_known and max_index eq 0 then
         Orig := SubgroupLattice(GG : Centralizers := true, Normalizers := true);
+        vprint User1: "XXXXXXXXXX Lat computed", Cputime(t0);
         // the following sets PresentationIso and GeneratorIndexes
         if IsSolvable(GG) then
             RePresentLat(G, Orig);
+            vprint User1: "XXXXXXXXXX Represented lat", Cputime(t0);
         end if;
         G`SubGrpLat := Orig;
         RF := recformat< subgroup : Grp, order : Integers() >;
@@ -768,14 +773,19 @@ intrinsic Subgroups(G::LMFDBGrp) -> SeqEnum
         SubLabels := LabelSubgroups(GG, Subs : phi:=newphi);
     else
         Orig := Subgroups(GG: IndexLimit:=max_index);
+        vprint User1: "XXXXXXXXXX Subs computed", Cputime(t0);
+
         // the following sets PresentationIso and GeneratorIndexes
         if IsSolvable(GG) then
             RePresent(G);
+            vprint User1: "XXXXXXXXXX Represented subs", Cputime(t0);
         end if;
         SubLabels:= LabelSubgroups(GG, Orig : phi:=newphi);
     end if;
+    vprint User1: "XXXXXXXXXX Subgroups labelled", Cputime(t0);
 
     S := MakeSubgroups(SubLabels, GG, Orig);
+    vprint User1: "XXXXXXXXXX Subgroups made", Cputime(t0);
     /* assign the normal beyond index bound */
     all_normal:=G`normal_subgroups_known;
     if max_index ne 0 and all_normal then /* some unlabeled */
@@ -786,6 +796,7 @@ intrinsic Subgroups(G::LMFDBGrp) -> SeqEnum
         SubLabels := LabelSubgroups(GG, UnLabeled : phi:=newphi);
         S cat:= MakeSubgroups(SubLabels, GG, Orig : suffixes := ".N");
     end if;
+    vprint User1: "XXXXXXXXXX Normals done", Cputime(t0);
 
     /* assign the maximal beyond index bound */
     all_maximal:=G`maximal_subgroups_known;
@@ -813,6 +824,7 @@ intrinsic Subgroups(G::LMFDBGrp) -> SeqEnum
        end for;
        S cat:= MakeSubgroups(NewSubLabels, GG, Orig : suffixes := ".M");
     end if;
+    vprint User1: "XXXXXXXXXX Maximals done", Cputime(t0);
 
     /* special groups labeled */
     Z := Center(GG);
@@ -858,6 +870,7 @@ intrinsic Subgroups(G::LMFDBGrp) -> SeqEnum
             Append(~NewSuffixes, "."*tup[2]);
         end if;
     end for;
+    vprint User1: "XXXXXXXXXX Specials done", Cputime(t0);
     S cat:= MakeSubgroups(NewSubLabels, GG, Orig : suffixes := NewSuffixes);
 
     return S;
@@ -1218,6 +1231,8 @@ intrinsic Characters(G::LMFDBGrp) ->  Tup
   ct:=Get(G,"MagmaCharacterTable");
   rct:=Get(G,"MagmaRationalCharacterTable");
   matching:=Get(G,"MagmaCharacterMatching");
+  R<x>:=PolynomialRing(Rationals());
+  polredabscache:=AssociativeArray();
   //cc:=Classes(g);
   cchars:=[New(LMFDBGrpChtrCC) : c in ct];
   rchars:=[New(LMFDBGrpChtrQQ) : c in rct];
@@ -1230,7 +1245,11 @@ intrinsic Characters(G::LMFDBGrp) ->  Tup
     thepoly:=DefiningPolynomial(CharacterField(ct[j]));
     // Sometimes the type is Cyclotomic field, in which case thepoly is a different type
     if Type(thepoly) eq SeqEnum then thepoly:=thepoly[1]; end if;
-    thepoly:=Polredabs(thepoly);
+    if not IsDefined(polredabscache,thepoly) then
+      thepoly1:=Polredabs(thepoly);
+      polredabscache[thepoly] := thepoly1;
+    end if;
+    thepoly:=polredabscache[thepoly];
     cchars[j]`field:=Coefficients(thepoly);
     cchars[j]`Image_object:=New(LMFDBRepCC);
     //cchars[j]`indicator:=FrobeniusSchur(ct[j]); // Not in schema, but should be?
@@ -1716,6 +1735,9 @@ end intrinsic;
 intrinsic pc_code(G::LMFDBGrp) -> RngInt
     {This should be updated to give a better presentation}
     // Make sure subgoups have been computed, since that sets OptimizedIso
+    if not Get(G, "solvable") then
+        return 0;
+    end if;
     pc_code := SmallGroupEncoding(Codomain(G`OptimizedIso));
     return pc_code;
 end intrinsic;

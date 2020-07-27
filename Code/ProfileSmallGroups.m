@@ -33,6 +33,43 @@ intrinsic ProfileSmallGroups(N::RngIntElt) -> Assoc
     return A;
 end intrinsic;
 
+intrinsic ProfileSmallGroup(N::RngIntElt, i::RngIntElt : cutoff := 0.01)
+    {}
+    orig := GetProfile();
+    SetProfile(true);
+    data :=MakeSmallGroupData(N, i);
+    V := Vertices(ProfileGraph());
+    times := [];
+    for j in [1..#V] do
+        fc := Label(V!j);
+        t := fc`Time;
+        name := fc`Name;
+        if not name in skipnames then
+            Append(~times, <t, name, fc`Count>);
+        end if;
+    end for;
+    ProfileReset();
+    SetProfile(orig);
+    Sort(~times);
+    Reverse(~times);
+    total_time := &+[x[1] : x in times];
+    cutoff *:= total_time;
+    for tup in times do
+        tot := tup[1]; name := tup[2];
+        if tot gt cutoff then
+            printf "%o took %.2os in %.1o calls\n", name, tot, tup[3];
+        end if;
+    end for;
+end intrinsic;
+
+intrinsic ProfileByAttr(N::RngIntElt, i::RngIntElt)
+    {}
+    SetVerbose("User1", 1);
+    G := MakeSmallGroup(N, i);
+    saved := SaveLMFDBObject(G);
+    SetVerbose("User1", 0);
+end intrinsic;
+
 intrinsic ShowProfiling(N::RngIntElt, A::Assoc : cutoff := 0.01, mbound := 2)
     {Summarize timing data produced by ProfileSmallGroups}
     times := [];
