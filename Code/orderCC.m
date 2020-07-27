@@ -257,6 +257,38 @@ intrinsic testCCs(g::Any:dorandom:=true)->Any
   pm:=PowerMap(g);
   ngens:=NumberOfGenerators(g);
   gens:=[g . j : j in [1..ngens]];
+
+  if not dorandom and #g gt 100 then 
+  /* Add extra generator whose shortest representation as a word in the existing generators is at least length_bound if such a word exists.
+     length_bound is set to some value that seems reasonable (currently a fixed constant). Something adaptive like Floor(Log(#g)/Log(#gens)) might be better, but this was slightly slower during limited testing.. 
+  */
+    length_bound := 7;
+    gen_ords := [Order(x) : x in gens];
+
+    /*  element_set is constructed so it contains all group elements represented by words of length less than length_bound. */
+    element_set := {Id(g)};
+    w := [];
+    while (#element_set lt #g) and (#w lt length_bound) do
+      w := NextWord(w,gens,gen_ords);
+      Include(~element_set,&*w);
+    end while;
+
+    /* Find next valid word w not in element_set. */
+    if (#element_set lt #g) then
+      found := false;
+      while not found do
+        if not (&*w in element_set) then
+          found := true;
+        else
+          w := NextWord(w,gens,gen_ords);
+        end if;
+      end while;
+
+      /* Add the group element represented by w as an extra generator to the list gens. */
+      Append(~gens,&*w);
+    end if;
+  end if;
   return ordercc(g,cc,cm,pm,gens: dorandom:=dorandom);
 end intrinsic;
+
 
