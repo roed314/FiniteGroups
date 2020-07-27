@@ -2,20 +2,22 @@
 
 intrinsic characteristic(H::LMFDBSubGrp) -> Any
   {Returns true if H is a characteristic subgroup of G}
-  GG := Get(H, "MagmaAmbient");
+  if not Get(H, "normal") then
+    return false;
+  end if;
+  G := H`Grp;
   HH := H`MagmaSubGrp;
-  A:=AutomorphismGroup(GG);
+  A:=Get(G, "MagmaAutGroup");
   gens:=Generators(A); //we only need to check the generators
-  IsChar:=true;
+  Hgens:=Generators(HH);
   for aut in gens do
-    for h in HH do
+    for h in Hgens do
       if not(aut(h) in HH) then
-        IsChar:=false;
-        break aut;
+        return false;
       end if;
     end for;
   end for;
-  return IsChar;
+  return true;
 end intrinsic;
 
 
@@ -24,18 +26,9 @@ end intrinsic;
 
 
 intrinsic number_characteristic_subgroups(G::LMFDBGrp) -> Any
-  {Compute the number of characteristic subgroups}
-  S:=Subgroups(G`MagmaGrp);
-  total:=0;
-  for s in S do
-    H:=New(LMFDBSubGrp);
-    H`Grp:=G;
-    H`MagmaSubGrp:=s`subgroup;
-    if Get(H,"characteristic") then
-      total+:=1;
-    end if;
-  end for;
-  return total;
+    {Compute the number of characteristic subgroups}
+    S:=Get(G, "Subgroups");
+    return #[H : H in S | Get(H, "characteristic")];
 end intrinsic;
 
 

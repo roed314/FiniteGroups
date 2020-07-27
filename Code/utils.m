@@ -72,6 +72,10 @@ end intrinsic;
 
 intrinsic Polredabs(f::Any) -> Any
   {Have gp compute polredabs}
+  // If degree is too large, we just return f, since we won't be adding this field to the LMFDB
+  if Degree(f) gt 100 then
+    return f;
+  end if;
   R<x>:=PolynomialRing(Rationals());
   out := Sprintf("/tmp/polredabs%o.out", Random(10^30));
   txt := Sprintf("/tmp/polredabs%o.txt", Random(10^30));
