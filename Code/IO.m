@@ -166,7 +166,7 @@ intrinsic SaveElt(out::Any, G::LMFDBGrp) -> MonStgElt
         end for;
         return IntegerToString(n);
     elif Type(GG) eq GrpPerm then
-        return EncodePerm(out);
+        return IntegerToString(EncodePerm(out));
     else
         error "Other group types not yet supported";
     end if;
@@ -316,7 +316,7 @@ intrinsic DefaultAttributes(c::Cat) -> SeqEnum
                       "aut_counter",
                       "mobius_function",
 		      "extension_counter",
-		      "diagram_x",
+					 //  "diagram_x", returns 0 now
 		      "generators",
 		      "standard_generators"
 
@@ -355,14 +355,22 @@ intrinsic SaveLMFDBObject(G::Any : attrs:=[], sep:="|") -> MonStgElt
         attrs := DefaultAttributes(Type(G));
     end if;
     saved_attrs := [];
+    vprint User1: "***", Type(G);
     for attr in attrs do
         //"Attr", attr;
-        vprint User1: attr;
-        vtime User1: saved := SaveAttr(attr, Get(G, attr), G);
-        Append(~saved_attrs, saved);
+        if GetVerbose("User1") gt 0 then
+            print attr;
+            t := Cputime();
+            saved := SaveAttr(attr, Get(G, attr), G);
+            t := Cputime(t);
+            if t gt 0.1 then
+                printf "Time: %.3o\n", t;
+            end if;
+        end if;
         if Type(saved) ne MonStgElt then
             print attr, Type(SaveAttr(attr, Get(G, attr), G));
         end if;
+        Append(~saved_attrs, saved);
     end for;
 //"Saving";
     return Join(saved_attrs, sep);

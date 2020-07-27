@@ -66,7 +66,7 @@ intrinsic ProfileByAttr(N::RngIntElt, i::RngIntElt)
     {}
     SetVerbose("User1", 1);
     G := MakeSmallGroup(N, i);
-    saved := SaveLMFDBObject(G);
+    saved := PrintData(G);
     SetVerbose("User1", 0);
 end intrinsic;
 

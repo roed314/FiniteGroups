@@ -199,8 +199,7 @@ end intrinsic;
 
 intrinsic rational(G::LMFDBGrp) -> BoolElt
   {Determine if a group is rational, i.e., all characters are rational}
-  g:=G`MagmaGrp;
-  ct,szs:=RationalCharacterTable(g);
+  szs := Get(G, "MagmaCharacterMatching");
   for s in szs do
     if #s gt 1 then
         return false;
@@ -346,8 +345,11 @@ end intrinsic;
 
 intrinsic commutator_count(G::LMFDBGrp) -> Any
   {Smallest integer n such that every element of the derived subgroup is a product of n commutators}
+  if Get(G, "abelian") then
+    return 0; // the identity is an empty product
+  end if;
   g:=G`MagmaGrp;
-  ct := CharacterTable(g);
+  ct := Get(G, "MagmaCharacterTable");
   nccl:= #ct;
   kers := [Set(ClassPositionsOfKernel(lc)) : lc in ct | Degree(lc) eq 1];
   derived := kers[1];
