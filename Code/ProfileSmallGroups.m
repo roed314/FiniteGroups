@@ -62,9 +62,9 @@ intrinsic ProfileSmallGroup(N::RngIntElt, i::RngIntElt : cutoff := 0.01)
     end for;
 end intrinsic;
 
-intrinsic ProfileByAttr(N::RngIntElt, i::RngIntElt)
+intrinsic ProfileByAttr(N::RngIntElt, i::RngIntElt : crash:=false)
     {}
-    SetVerbose("User1", 1);
+    SetVerbose("User1", crash select 2 else 1);
     G := MakeSmallGroup(N, i);
     saved := PrintData(G);
     SetVerbose("User1", 0);

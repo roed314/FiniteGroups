@@ -316,7 +316,7 @@ intrinsic DefaultAttributes(c::Cat) -> SeqEnum
                       "aut_counter",
                       "mobius_function",
 		      "extension_counter",
-					 //  "diagram_x", returns 0 now
+		      //  "diagram_x", returns 0 now
 		      "generators",
 		      "standard_generators"
 
@@ -355,17 +355,15 @@ intrinsic SaveLMFDBObject(G::Any : attrs:=[], sep:="|") -> MonStgElt
         attrs := DefaultAttributes(Type(G));
     end if;
     saved_attrs := [];
-    vprint User1: "***", Type(G);
+    vprint User1, 2: "***", Type(G);
     for attr in attrs do
         //"Attr", attr;
-        if GetVerbose("User1") gt 0 then
-            print attr;
-            t := Cputime();
-            saved := SaveAttr(attr, Get(G, attr), G);
-            t := Cputime(t);
-            if t gt 0.1 then
-                printf "Time: %.3o\n", t;
-            end if;
+        vprint User1, 2: attr;
+        t := Cputime();
+        saved := SaveAttr(attr, Get(G, attr), G);
+        t := Cputime(t);
+        if t gt 0.1 then
+            vprintf User1: "%o time: %.3o\n", attr, t;
         end if;
         if Type(saved) ne MonStgElt then
             print attr, Type(SaveAttr(attr, Get(G, attr), G));

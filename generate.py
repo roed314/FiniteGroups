@@ -4,8 +4,10 @@ from itertools import izip_longest
 import json, os, re, sys, random, string
 opj, ope = os.path.join, os.path.exists
 from collections import defaultdict
+from datetime import datetime
 from ConfigParser import ConfigParser
 from lmfdb import db
+from lmfdb.backend.database import PostgresDatabase
 from psycopg2.sql import SQL
 from sage.arith.misc import euler_phi
 from sage.combinat.hall_polynomial import hall_polynomial
@@ -19,6 +21,8 @@ from sage.functions.other import ceil
 from sage.misc.flatten import flatten
 from sage.misc.misc_c import prod
 
+int_re = re.compile(r'-?\d+')
+
 # If the group is non-abelian and the transitive degree is under the following bound
 # we store generators as permutations
 TRANSITIVE_DEGREE_BOUND = 20
@@ -30,15 +34,13 @@ TRANSITIVE_IDENTIFICATION_BOUND = 30
 
 class PGType(lazy_attribute):
     check=None # bound for integer types
-    @classmethod
-    def _load(cls, x):
+    def _load(self, x):
         """
         Wraps :meth:`load` for the appropriate handling of NULLs.
         """
         if x != r'\N':
-            return cls.load(x)
-    @classmethod
-    def load(cls, x):
+            return self.load(x)
+    def load(self, x):
         """
         Takes a string from a file and returns the appropriate
         Sage object.
@@ -47,25 +49,25 @@ class PGType(lazy_attribute):
 
         This default function can be overridden in subclasses.
         """
-        if x.isdigit():
+        if int_re.match(x):
             return ZZ(x)
         elif x.startswith('{'):
             return sage_eval(x.replace('{','[').replace('}',']'))
+        elif x.startswith('['): # support jsonb
+            return sage_eval(x)
         else:
             return x
 
-    @classmethod
-    def _save(cls, x):
+    def _save(self, x):
         """
         Wraps :meth:`save` for the appropriate handling of NULLs.
         """
         if x is None:
             return r'\N'
         else:
-            return cls.save(x)
+            return self.save(x)
 
-    @classmethod
-    def save(cls, x, recursing=False):
+    def save(self, x, recursing=False):
         """
         Takes a Sage object stored in this attribute
         and returns a string appropriate to write to a file
@@ -76,18 +78,24 @@ class PGType(lazy_attribute):
         This default function can be overridden in subclasses.
         """
         if isinstance(x, (list, tuple)):
-            return '{' + ','.join(cls.save(a) for a in x) + '}'
+            if self.pg_type == 'jsonb':
+                return '[' + ','.join(PGType.save(self, a) for a in x) + ']'
+            else:
+                return '{' + ','.join(PGType.save(self, a) for a in x) + '}'
         else:
-            if cls.check and (x >= cls.check or x <= -cls.check):
+            if self.check and (x >= self.check or x <= -self.check):
                 raise ValueError("Out of bounds")
-            x = str(x)
-            if recursing:
+            if isinstance(x, basestring):
                 return '"' + x + '"'
             else:
-                return x
+                return str(x)
 
 class pg_text(PGType):
     pg_type = 'text'
+    def load(self, x):
+        return x
+    def save(self, x):
+        return x
 class pg_smallint(PGType):
     check = 2**15-1
     pg_type = 'smallint'
@@ -110,7 +118,7 @@ class pg_bigint_list(PGType):
     check = 2**63-1
     pg_type = 'bigint[]'
 class pg_float8_list(PGType):
-    pg_type = 'float8[]'
+    pg_type = 'double precision[]'
 class pg_text_list(PGType):
     pg_type = 'text[]'
 class pg_numeric_list(PGType):
@@ -119,9 +127,9 @@ class pg_boolean(PGType):
     pg_type = 'boolean'
     @classmethod
     def load(cls, x):
-        if x == 't':
+        if x in ['t', '1']:
             return True
-        elif x == 'f':
+        elif x in ['f', '0']:
             return False
         else:
             raise RuntimeError
@@ -131,61 +139,88 @@ class pg_boolean(PGType):
             return 't'
         else:
             return 'f'
-class _rational_list(object):
-    @classmethod
-    def load(cls, x):
+class pg_rational_list(PGType):
+    pg_type = 'text[]'
+    def load(self, x):
         def recursive_QQ(y):
             if isinstance(y, basestring):
                 return QQ(y)
             else:
                 return map(recursive_QQ, y)
-        x = PGType.load(x)
+        x = PGType.load(self, x)
         return recursive_QQ(x)
-    @classmethod
-    def save(cls, x):
+    def save(self, x):
         def recursive_str(y):
             if isinstance(y, list):
                 return [recursive_str(z) for z in y]
             else:
                 return str(y)
         x = recursive_str(x)
-        return PGType.save(x)
-class pg_rational_list(_rational_list, PGType):
-    pg_type = 'text[]'
+        return PGType.save(self, x)
 class pg_jsonb(PGType):
     pg_type = 'jsonb'
-    @classmethod
-    def load(cls, x):
-        return sage_eval(x)
-    @classmethod
-    def save(cls, x):
-        return str(x).replace("'",'"')
 
 class Stage(object):
-    def __init__(self, controller, input, output, done):
+    def __init__(self, controller, input, output):
         self.controller = controller
         self.input = input
         self.output = output
-        self.done = done
+        self.logheader = controller.cfgp.get(self.__class__.__name__, 'logheader') + ' '
 
 class GenericTask(object):
-    #def __init__(self, g, q, stage):
-    #    self.g, self.q, self.stage = g, q, stage
-    #    self.logheader = stage.controller.logheader.format(g=g, q=q, name=stage.shortname)
-    def ready(self):
-        return all(ope(data[-1]) for data in self.input_data)
+    def __init__(self, stage, **kwds):
+        self.stage = stage
+        self.kwds = kwds
+        self.logheader = stage.logheader.format(**kwds)
+    @staticmethod
+    def _done(filename):
+        return filename[:-4] + '.done'
     def done(self):
-        return all(ope(output.format(g=self.g, q=self.q)) for output in self.stage.output)
+        return all(ope(filename) for filename in self.donefiles)
+    def ready(self):
+        return all(ope(self._done(data[-1])) for data in self.input_data)
+    @lazy_attribute
+    def _logfile(self):
+        stage = self.stage
+        controller = stage.controller
+        return controller.logfile_template.format(name=stage.shortname, **self.kwds)
+    def log(self, s):
+        s = str(s).strip()
+        s += " (%s)" % (datetime.utcnow() - self.t0)
+        s += '\n'
+        with open(self._logfile, 'a') as F:
+            F.write(s)
     @lazy_attribute
     def input_data(self):
         """
-        Default behavior can beoverridden in subclass
+        Default behavior can be overridden in subclass
         """
-        return [filename.format(g=self.g, q=self.q) for filename in self.stage.input]
-
-class Worker(object):
-    def __init__(self, logfile):
-        self.logfile = logfile
+        return [(None, filename.format(**self.kwds)) for filename in self.stage.input]
+    @lazy_attribute
+    def donefiles(self):
+        return [self._done(output.format(**self.kwds)) for output, attributes in self.stage.output]
+    def save(self, *sources):
+        stage = self.stage
+        controller = stage.controller
+        for (outfile, attributes), (source, cls) in zip(stage.output, sources):
+            outfile = outfile.format(**self.kwds)
+            controller.save(outfile, source, attributes, self.t0, cls=cls)
+    def _run(self, db=None):
+        if db is None:
+            db = PostgresDatabase()
+        self.t0 = datetime.utcnow()
+        self.run(db)
+        self.log("Finished")
+    def enumerate(self, sequence):
+        freq = self.stage.controller.logfrequency
+        try:
+            slen = '/%s' % len(sequence)
+        except Exception:
+            slen = ''
+        for i, item in enumerate(sequence, start):
+            if i and i%freq == 0:
+                self.log('%s%s' % (i, slen))
+            yield item
 
 class Controller(object):
     def __init__(self, worker_count=1, config=None):
@@ -210,7 +245,7 @@ class Controller(object):
         # Create Stages
         stages = []
         self.logfrequency = int(cfgp.get('logging', 'logfrequency'))
-        self.logheader = cfgp.get('logging', 'logheader') + ' '
+        self.logfile_template = opj(basedir, cfgp.get('logging', 'logfile_template'))
         plan = ['Stage'+stage.strip() for stage in cfgp.get('plan', 'stages').split(',')]
         for stage in plan:
             if stage not in cfgp.sections():
@@ -235,23 +270,53 @@ class Controller(object):
                 done = done[0]
             else:
                 raise ValueError("Multiple done values specified")
-            stages.append(getattr(self.__class__, stage)(self, input=input, output=output, done=done))
+            stages.append(getattr(self.__class__, stage)(self, input=input, output=output))
 
         self.stages = stages
         self.tasks = sum((stage.tasks for stage in stages), [])
-        logfile = cfgp.get('logging', 'logfile')
-        self.workers = [Worker(opj(basedir, logfile.format(i=i))) for i in range(worker_count)]
 
     def _extra_init(self):
         # Parse config options before creating stages and tasks
         pass
 
-    def run_serial(self):
-        worker = self.workers[0]
+    def run_serial(self, db=None):
+        if db is None:
+            db = PostgresDatabase()
         for task in self.tasks:
-            task.run(worker.logfile)
+            if task.done():
+                print "Already complete " + task.logheader
+            else:
+                print "Starting " + task.logheader
+                task._run(db)
 
-    def load(self, filename, start=None, stop=None, cls=None, old=False):
+    def run_parallel(self, worker_count=8):
+        processes = {}
+        pcounter = 0
+        tasks = copy(self.tasks)
+        while tasks or processes:
+            # start processes
+            i = 0
+            while i < len(tasks) and len(processes) < worker_count:
+                if tasks[i].done():
+                    task = tasks.pop(i)
+                    print "Already complete " + task.logheader
+                elif tasks[i].ready():
+                    task = tasks.pop(i)
+                    P = Process(target=task._run)
+                    print "Starting " + task.logheader
+                    P.start()
+                    processes[pcounter] = (P, task)
+                    pcounter += 1
+                else:
+                    i += 1
+            time.sleep(0.1)
+            # finish processes
+            for p, (P, task) in list(processes.items()):
+                if not P.is_alive():
+                    processes.pop(p)
+                    print "Finished " + task.logheader
+
+    def load(self, filename, start=None, stop=None, db=None, cls=None, allow_empty=False):
         """
         Iterates over all of the isogeny classes stored in a file.
         The data contained in the file is specified by header lines: the first giving the
@@ -272,24 +337,29 @@ class Controller(object):
         """
         if cls is None:
             cls = self.default_cls
-        def fix_attr(attr):
-            if old and hasattr(cls, 'old_' + attr):
-                attr = 'old_' + attr
-            return attr
-        with open(filename) as F:
-            for i, line in enumerate(F):
-                if i == 0:
-                    header = map(fix_attr, line.strip().split(':'))
-                elif i >= 3 and (start is None or i-3 >= start) and (stop is None or i-3 < start):
-                    yield cls.load(line.strip(), header)
+        if ope(filename):
+            with open(filename) as F:
+                for i, line in enumerate(F):
+                    if i == 0:
+                        header = line.strip().split(':')
+                    elif i >= 3 and (start is None or i-3 >= start) and (stop is None or i-3 < start):
+                        yield cls.load(line.strip(), header, db=db)
+        elif not allow_empty:
+            raise ValueError("%s does not exist" % (filename))
 
-    def save(self, filename, isogeny_classes, attributes, cls=None, force=False):
+    def _finish(self, outfile, t0):
+        donefile = outfile[:-4] + '.done'
+        with open(donefile, 'w') as F:
+            F.write(str(datetime.utcnow() - t0)+'\n')
+
+    def save(self, filename, data, attributes, t0, cls=None, force=False):
         """
         INPUT:
 
         - ``filename`` -- a filename to write
         - ``isogeny_classes`` -- an iterable of instances to write to the file
         - ``attributes`` -- a list of attributes to save to the file
+        - ``t0`` -- the time this computation was started (for recording in the .done file)
         - ``cls`` -- the class of the entries of ``isogeny_classes``
         - ``force`` -- if True, will allow overwriting an existing file
         """
@@ -304,12 +374,13 @@ class Controller(object):
                   '\n']
         with open(filename, 'w') as F:
             F.write('\n'.join(header))
-            for isog in isogeny_classes:
-                F.write(isog.save(attributes) + '\n')
+            for dat in data:
+                F.write(dat.save(attributes) + '\n')
+        self._finish(filename, t0)
 
 class PGSaver(object):
     @classmethod
-    def load(cls, s, header):
+    def load(cls, s, header, db=None):
         """
         INPUT:
 
@@ -317,10 +388,10 @@ class PGSaver(object):
         - ``header`` -- a list of attribute names to fill in
         """
         data = s.split(':')
-        isoclass = cls()
+        newobj = cls(db=db)
         for attr, val in zip(header, data):
-            setattr(isoclass, attr, getattr(cls, attr)._load(val))
-        return isoclass
+            setattr(newobj, attr, getattr(cls, attr)._load(val))
+        return newobj
 
     def save(self, header):
         """
@@ -344,7 +415,10 @@ class Groups(Controller):
     """
     def __init__(self, worker_count=1, config=None):
         libgap.eval('LoadPackage("repsn")')
-        self.default_cls = GroupGap
+        #self.default_cls = GroupGap
+        self.default_cls = GroupMagma
+        #self.classes = [GroupGap, SubgroupGap, ConjugacyClassGap, CharacterGap, CGroupGap]
+        self.classes = [GroupMagma, SubgroupMagma, ConjugacyClassMagma, CharacterMagma, CGroupMagma]
         Controller.__init__(self, worker_count, config)
 
     def _extra_init(self):
@@ -399,53 +473,93 @@ class Groups(Controller):
             for N in srange(1, max_order+1):
                 if N in skips:
                     continue
-                tasks.extend([self.Task(self, N, a, b) for (a,b) in self.intervals(N)])
+                I = list(self.intervals(N))
+                tasks.extend([self.Task(self, N, a, b, len(I)) for (a,b) in I])
             return tasks
         class Task(GenericTask):
-            def __init__(self, stage, N, min_gid, max_gid):
+            def __init__(self, stage, N, min_gid, max_gid, num_tasks):
                 self.stage = stage
                 self.N = ZZ(N)
                 self.min_gid = min_gid
                 self.max_gid = max_gid # not included
+                self.num_tasks = num_tasks
+                GenericTask.__init__(self, stage, N=N, minid=min_gid, maxid=max_gid)
+            def check_done(self):
+                """
+                Called when finishing the run method; checks to see if all other tasks with this N have completed, and if so write the N.done file.
+                """
+                stage = self.stage
+                filename = self._done(stage.input[0])
+                if all(ope(filename.format(N=self.N, minid=a)) for a,b in stage.intervals(self.N)):
+                    with open(filename.format(N=self.N, minid=''), 'w') as F:
+                        F.write('Done!\n')
             def ready(self):
-                return all(self.stage.finished(d) for d in self.N.divisors()[1:-1])
-            @lazy_attribute
-            def input_data(self):
-                divisors = self.N.divisors()
-                for d in divisors[1:-1]:
-                    pass
-            def run(self, logfile):
+                divisors = self.N.divisors()[1:-1]
+                filename = self.stage.input[0]
+                return all(ope(filename.format(N=d, minid='')) for d in divisors)
+            def run(self, db):
                 stage = self.stage
                 ctl = stage.controller
-                groups = [GroupGap(label='%s.%s'%(self.N, gid)) for gid in range(self.min_gid, self.max_gid)]
+                groups = [ctl.default_cls(label='%s.%s'%(self.N, gid)) for gid in range(self.min_gid, self.max_gid)]
                 lattices = [gp.subgroup_lattice for gp in groups]
                 character_tables = [gp.character_table for gp in groups]
                 subgroups = sum([lat.subgroups[1:] for lat in lattices], [])
                 conjugacy_classes = sum([tbl.conjugacy_classes[1:] for tbl in character_tables], [])
                 characters = sum([tbl.characters[1:] for tbl in character_tables], [])
                 cgroups = sum([tbl.cgroups[1:] for tbl in character_tables], [])
-                for (filename, attributes), (items, cls) in zip(stage.output,
-                    [(groups, GroupGap),
-                     (subgroups, SubgroupGap),
-                     (conjugacy_classes, ConjugacyClassGap),
-                     (characters, CharacterGap),
-                     (cgroups, CGroupGap)]):
-                    filename = filename.format(N=self.N, minid=self.min_gid, maxid=self.max_gid)
-                    ctl.save(filename, items, attributes, cls=cls)
-                with open(stage.done.format(N=self.N), 'a') as done:
-                    done.write('%s\n' % self.min_gid)
-
+                data = [groups, subgroups, conjugacy_classes, characters, cgroups]
+                self.save(*zip(data, ctl.classes))
+                self.check_done()
+    class StageCollate(Stage):
+        name = 'Collate'
+        shortname = 'Coll'
+        @lazy_attribute
+        def tasks(self):
+            return [self.Task(self, N=0)]
+        class Task(GenericTask):
+            @lazy_attribute
+            def input_data(self):
+                pairs = []
+                for task in self.stage.controller.tasks:
+                    if hasattr(task, 'N') and hasattr(task, 'min_gid'):
+                        pairs.append({'N':task.N, 'minid':task.min_gid})
+                return [[ifile.format(**kwds) for kwds in pairs] for ifile in self.stage.input]
+            def ready(self):
+                return all(ope(self._done(data[1])) for table in self.input_data for data in table)
+            @lazy_attribute
+            def donefiles(self):
+                return [self._done(output) for output, attributes in self.stage.output]
+            def run(self, db=None):
+                stage = self.stage
+                controller = stage.controller
+                # We don't use load and save since we're just copying lines to the output
+                print stage.output
+                print stage.input
+                print self.input_data
+                for (outfile, _), infiles in zip(stage.output, self.input_data):
+                    header_written = False
+                    with open(outfile, 'w') as Fout:
+                        for filename in infiles:
+                            print filename
+                            with open(filename) as F:
+                                for i, line in enumerate(F):
+                                    if i > 2:
+                                        Fout.write(line)
+                                    elif not header_written:
+                                        Fout.write(line)
+                                        if i == 2:
+                                            header_written = True
 class Group(PGSaver):
     def __init__(self, G=None, label=None):
         # Automatically apply IsomorphismPermGroup?
         if label is not None:
             self.label = label
-            order, which = label.split('.')
+            order, counter = label.split('.')
             self.order = ZZ(order)
             if self.order <= 2000 and self.order.valuation(2) <= 9: # We can create groups of order 512
-                self.which = ZZ(which)
+                self.counter = ZZ(counter)
                 if G is None:
-                    G = self.driver.SmallGroup(self.order, self.which)
+                    G = self.driver.SmallGroup(self.order, self.counter)
         if G is not None:
             self.G = G
 
@@ -469,12 +583,12 @@ class Group(PGSaver):
         return ZZ(self.Size(self.G))
 
     @pg_integer
-    def which(self):
+    def counter(self):
         return ZZ(tuple(self.IdGroup(self.G))[1])
 
     @pg_smallint_list
-    def factored_order(self):
-        return list(self.order.factor())
+    def factors_of_order(self):
+        return [p for p, e in self.order.factor()]
 
     @pg_integer
     def exponent(self):
@@ -506,7 +620,7 @@ class Group(PGSaver):
         if not self.solvable:
             return False
         if self.abelian:
-            E = self.abelian_invariants
+            E = self.primary_abelian_invariants
             pcounter = defaultdict(int)
             for m in E:
                 p, e = m.is_prime_power(get_data=True)
@@ -607,9 +721,25 @@ class Group(PGSaver):
     def center(self):
         return self.subgroup_lattice.identify(self.G.Center(), characteristic=True, abelian=True)
 
+    @pg_text
+    def center_label(self):
+        return self.subgroup_lattice.subgroups[self.center].subgroup
+
+    @pg_text
+    def central_quotient(self):
+        return self.subgroup_lattice.subgroups[self.center].quotient
+
     @pg_integer
     def commutator(self):
         return self.subgroup_lattice.identify(self.G.DerivedSubgroup(), characteristic=True)
+
+    @pg_text
+    def commutator_label(self):
+        return self.subgroup_lattice.subgroups[self.commutator].subgroup
+
+    @pg_text
+    def abelian_quotient(self):
+        return self.subgroup_lattice.subgroups[self.commutator].quotient
 
     @pg_integer
     def commutator_count(self):
@@ -618,6 +748,14 @@ class Group(PGSaver):
     @pg_integer
     def frattini(self):
         return self.subgroup_lattice.identify(self.G.FrattiniSubgroup(), characteristic=True)
+
+    @pg_text
+    def frattini_label(self):
+        return self.subgroup_lattice.subgroups[self.frattini].subgroup
+
+    @pg_text
+    def frattini_quotient(self):
+        return self.subgroup_lattice.subgroups[self.frattini].quotient
 
     @pg_integer
     def fitting(self):
@@ -642,6 +780,11 @@ class Group(PGSaver):
     @pg_numeric
     def aut_order(self):
         return ZZ(self.Size(self.G.AutomorphismGroup()))
+
+
+    @pg_integer_list
+    def factors_of_aut_order(self):
+        return [p for p, e in self.order.factor()]
 
     @pg_text
     def aut_group(self):
@@ -679,9 +822,9 @@ class Group(PGSaver):
         else:
             return ZZ(-1)
 
-    @pg_integer_list
-    def sylow_subgroups(self):
-        return sorted((C.sylow, C.which) for C in self.subgroup_lattice.subgroups[1:] if C.sylow)
+    #@pg_integer_list
+    #def sylow_subgroups(self):
+    #    return sorted((C.sylow, C.counter) for C in self.subgroup_lattice.subgroups[1:] if C.sylow)
 
     @pg_smallint
     def elt_rep_type(self):
@@ -704,26 +847,28 @@ class Group(PGSaver):
     @pg_numeric
     def pc_code(self):
         # Encoded relations for Pcgs groups
-        if self.elt_rep_type == 0:
+        if self.elt_rep_type == 0 and self.order > 1:
             return ZZ(self.EncodePcGroup(self.G))
         # Otherwise return None
 
     @pg_integer
     def transitive_degree(self):
-        if self.subgroups_known:
+        # TODO: don't need all subgroups if there's a transitive one in the low-index options
+        if self.all_subgroups_known:
             return min(C.quotient_order for C in self.subgroup_lattice.subgroups[1:] if C.core == 1)
 
     @pg_integer
     def transitive_subgroup(self):
-        if self.subgroups_known:
+        # TODO: don't need all subgroups if there's a transitive one in the low-index options
+        if self.all_subgroups_known:
             if self.transitive_degree <= TRANSITIVE_IDENTIFICATION_BOUND:
-                candidates = [(int(C.coset_action_label.split('T')[1]), C.which) for C in self.subgroup_lattice.subgroups[1:] if C.quotient_order == self.transitive_degree and C.core == 1]
-                tid, which = min(candidates)
-                return which
+                candidates = [(int(C.coset_action_label.split('T')[1]), C.counter) for C in self.subgroup_lattice.subgroups[1:] if C.quotient_order == self.transitive_degree and C.core == 1]
+                tid, counter = min(candidates)
+                return counter
             else:
                 for C in self.subgroup_lattice.subgroups[1:]:
                     if C.core == 1 and C.quotient_order == self.transitive_degree:
-                        return C.which
+                        return C.counter
 
     def encode(self, g):
         # Encode into an integer using a method based on the value of elt_rep_type
@@ -778,7 +923,7 @@ class Group(PGSaver):
         if self.IsPermGroup(G):
             n = -self.elt_rep_type # largest moved point
             gens = self.Generators(G)
-        elif not self.abelian and self.subgroups_known and self.transitive_degree <= TRANSITIVE_DEGREE_BOUND:
+        elif not self.abelian and self.all_subgroups_known and self.transitive_degree <= TRANSITIVE_DEGREE_BOUND:
             n = self.transitive_degree
             H = self.subgroup_lattice.subgroups[self.transitive_subgroup].H
             # TODO: This will not be a minimal set of generators, but rather the image of a pcgs
@@ -904,7 +1049,7 @@ class Group(PGSaver):
     def normal_subgroups_known(self):
         return True
 
-    @pg_smallint
+    @pg_boolean
     def maximal_subgroups_known(self):
         # TODO: figure out the plan for this
         return True
@@ -943,7 +1088,7 @@ class Group(PGSaver):
 
 class MagmaMixin(object):
     """
-    Function definitions used in multiple Gap-implemented classes
+    Function definitions used in multiple Magma-implemented classes
     """
     Size = staticmethod(magma.Order)
     IdGroup = staticmethod(magma.IdentifyGroup)
@@ -1081,7 +1226,7 @@ class GapMixin(object):
     """
     Size = staticmethod(libgap.Size)
     IdGroup = staticmethod(libgap.IdGroup)
-    FactorGroupNC = staticmethod(libgap.FactorGroupNC)
+    FactorGroupNC = staticmethod(libgap.function_factory('FactorGroupNC')) # libgap.FactorGroupNC failed
     IsPerfect = staticmethod(libgap.IsPerfectGroup)
     @staticmethod
     def CosetImage(G, H):
@@ -1095,7 +1240,7 @@ class GroupGap(Group, GapMixin):
 
     Note that various attributes must be filled in externally:
 
-    - the `label` and `which` if the order has 2-adic valuation at least 9 or is larger than 2000.
+    - the `label` and `counter` if the order has 2-adic valuation at least 9 or is larger than 2000.
     - the `name`
     - the `tex_name`
     - the `aliases`
@@ -1116,12 +1261,12 @@ class GroupGap(Group, GapMixin):
             if N.IsCyclic() and G.FactorGroup(N).IsCyclic():
                 return True
         return False
-    IsAlmostSimple = staticmethod(libgap.IsAlmostSimpleGroup)
+    IsAlmostSimple = staticmethod(libgap.function_factory('IsAlmostSimpleGroup'))
     def IsQuasiSimple(self, G):
         return self.perfect and G.FactorGroup(G.Center()).IsSimpleGroup()
     IsMonomial = staticmethod(libgap.IsMonomial)
     SylowSystem = staticmethod(libgap.SylowSystem)
-    ComplementSystem = staticmethod(libgap.ComplementSystem)
+    ComplementSystem = staticmethod(libgap.function_factory('ComplementSystem'))
     CommutatorLength = staticmethod(libgap.CommutatorLength)
     Radical = staticmethod(libgap.RadicalGroup)
     @staticmethod
@@ -1137,10 +1282,10 @@ class GroupGap(Group, GapMixin):
     IsPermGroup = staticmethod(libgap.IsPermGroup)
     IsMatrixGroup = staticmethod(libgap.IsMatrixGroup)
     Degree = staticmethod(libgap.LargestMovedPoint)
-    CoefficientRing = staticmethod(libgap.DefaultFieldOfMatrixGroup)
+    CoefficientRing = staticmethod(libgap.function_factory('DefaultFieldOfMatrixGroup'))
     RingSize = staticmethod(libgap.Size)
     Generators = staticmethod(libgap.GeneratorsOfGroup)
-    EncodePcGroup = staticmethod(libgap.CodePcGroup)
+    EncodePcGroup = staticmethod(libgap.function_factory('CodePcGroup'))
     DecodePcGroup = staticmethod(libgap.PcGroupCode)
     @staticmethod
     def PermGroup(gens, n):
@@ -1187,7 +1332,7 @@ class GroupGap(Group, GapMixin):
     def primary_abelian_invariants(self):
         return map(ZZ, self.G.AbelianInvariants())
 
-    AbelianInvariantsMultiplier = staticmethod(AbelianInvariantsMultiplier)
+    AbelianInvariantsMultiplier = staticmethod(libgap.function_factory('AbelianInvariantsMultiplier'))
 
     @pg_numeric_list
     def order_stats(self):
@@ -1205,11 +1350,11 @@ class GroupGap(Group, GapMixin):
         return CharacterTableGap(self)
 
 class Subgroup(PGSaver):
-    def __init__(self, lattice, H, which, count, contains, contained_in, outer=False):
+    def __init__(self, lattice, H, counter, count, contains, contained_in, outer=False):
         self.lattice = lattice
         self.G = lattice.G
         self.H = H
-        self.which = which
+        self.counter = counter
         self.count = count
         self.contains = contains
         self.contained_in = contained_in
@@ -1218,7 +1363,7 @@ class Subgroup(PGSaver):
     @pg_text
     def label(self):
         # TODO: should this include an indication of whether we're using outer equivalence?
-        return "%s.%s" % (self.ambient, self.which)
+        return "%s.%s" % (self.ambient, self.counter)
 
     @pg_boolean
     def outer_equivalence(self):
@@ -1226,17 +1371,17 @@ class Subgroup(PGSaver):
         raise NotImplementedError
 
     @pg_integer
-    def which(self):
+    def counter(self):
         # Set in __init__
         raise NotImplementedError
 
     @pg_integer
-    def aut_which(self):
+    def aut_counter(self):
         # TODO
         raise NotImplementedError
 
     @pg_integer
-    def extension_which(self):
+    def extension_counter(self):
         # TODO: waiting for Tim's description
         raise NotImplementedError
 
@@ -1382,7 +1527,7 @@ class Subgroup(PGSaver):
     @pg_integer
     def core(self):
         if self.normal:
-            return self.which
+            return self.counter
         else:
             return self.lattice.identify(self.G.Core(self.H), normal=True)
 
@@ -1415,7 +1560,7 @@ class Subgroup(PGSaver):
     @pg_integer
     def normal_closure(self):
         if self.normal:
-            return self.which
+            return self.counter
         else:
             # TODO: could do this just using the lattice
             return self.lattice.identify(self.G.NormalClosure(self.H), normal=True)
@@ -1470,7 +1615,7 @@ class Subgroup(PGSaver):
     def generating_elt(self):
         # An element of `H` that generates `H` along with the smallest-numbered maximal subgroup `K` of `H`.
         # We can choose any element of `H` that is not in `K`
-        if self.which == 1: # trivial subgroup
+        if self.counter == 1: # trivial subgroup
             return None
         K = self.lattice.subgroups[self.contains[0]]
         # TODO: K might only be conjugate to a subgroup of H, not necessarily a subgroup itself
@@ -1486,6 +1631,7 @@ class Subgroup(PGSaver):
 
     @pg_numeric
     def new_gen(self):
+        # TODO: fix this to give a generating set
         return self.lattice.gp.encode(self.generating_elt)
 
 class SubgroupMagma(Subgroup, MagmaMixin):
@@ -1707,23 +1853,17 @@ class SubgroupLatticeGap(SubgroupLattice):
         seen.add(1)
         mark_sups(1, None)
 
-class ConjugacyClassGap(PGSaver):
-    def __init__(self, char_table, C, which, label, outer=False):
+class ConjugacyClass(PGSaver):
+    def __init__(self, char_table, C, counter, label):
         self.char_table = char_table
         self.C = C
         self.G = self.char_table.G
-        self.which = which
+        self.counter = counter
         self.label = label
-        self.outer_equivalence = outer
 
     @pg_text
     def label(self):
         # TODO: should this include an indication of whether we're using outer equivalence?
-        # Set in __init__
-        raise NotImplementedError
-
-    @pg_boolean
-    def outer_equivalence(self):
         # Set in __init__
         raise NotImplementedError
 
@@ -1732,48 +1872,61 @@ class ConjugacyClassGap(PGSaver):
         return self.char_table.gp.label
 
     @pg_integer
-    def size(self):
-        return ZZ(self.C.Size())
-
-    @pg_integer
-    def which(self):
+    def counter(self):
         # Set in __init__
         raise NotImplementedError
 
     @pg_integer
-    def order(self):
-        return ZZ(self.C.Representative().Order())
-
-    @pg_integer
     def centralizer(self):
         lat = self.char_table.gp.subgroup_lattice
-        H = self.G.Centralizer(self.C.Representative())
+        H = self.G.Centralizer(self._rep)
         return lat.identify(H)
 
     @pg_integer_list
     def powers(self):
         ans = []
-        x = self.C.Representative()
+        x = self._rep
         n = self.order
         for p, e in self.char_table.gp.factored_order:
             m = n if (n%p != 0) else n//p
             ans.append(self.char_table.identify_conjugacy_class(x**p, order=m))
         return ans
 
+class ConjugacyClassGap(ConjugacyClass, GapMixin):
+    @pg_integer
+    def size(self):
+        return ZZ(self.C.Size())
+
+    @pg_integer
+    def order(self):
+        return ZZ(self._rep.Order())
+
+    @lazy_attribute
+    def _rep(self):
+        return self.C.Representative()
+
+class ConjugacyClassMagma(ConjugacyClass, MagmaMixin):
+    @pg_integer
+    def size(self):
+        return ZZ(self.C[2])
+
+    @pg_integer
+    def order(self):
+        return ZZ(self.C[1])
+
+    @lazy_attribute
+    def _rep(self):
+        return self.C[3]
+
 class CharacterGap(PGSaver):
-    def __init__(self, char_table, chi, which):
+    def __init__(self, char_table, chi, counter):
         self.char_table = char_table
         self.chi = chi
-        self.which = which
+        self.counter = counter
 
     @pg_text
     def label(self):
-        return '%s.%s' % (self.group, self.which)
-
-    @pg_text
-    def atlas_label(self):
-        # TODO
-        raise NotImplementedError
+        return '%s.%s' % (self.group, self.counter)
 
     @pg_text
     def group(self):
@@ -1784,7 +1937,7 @@ class CharacterGap(PGSaver):
         return ZZ(self.chi.DegreeOfCharacter())
 
     @pg_smallint
-    def which(self):
+    def counter(self):
         # Set in __init__
         raise NotImplementedError
 
@@ -1902,58 +2055,44 @@ class CGroupGap(PGSaver):
             gens.append([[encode_cyclotomic_sum(x) for x in row] for row in A])
         return gens
 
-    @pg_integer_list
+    @pg_jsonb
     def traces(self):
         return [encode_cyclotomic_sum(x) for x in self.char_values]
 
-class CharacterTableGap(object):
+class CharacterTable(object):
     """
     Coordinates the creation of conjugacy classes, characters and subgroups of GL_n(C)
     """
-    def __init__(self, gp, outer=False):
+    def __init__(self, gp):
         self.gp = gp # Group object
-        self.G = gp.G # GAP group
-        self.T = self.G.CharacterTable()
-        self.outer = outer
+        self.G = gp.G # GAP/Magma group
+        self.T = self.CharacterTable(gp.G)
+        self.RT = self.RationalTable(gp.G)
 
     @lazy_attribute
     def conjugacy_classes(self):
         classes = [None] # Start at 1 for compatibility with GAP numbering
-        # We want to order conjugacy classes by order, then by size
-        cc_by_os = defaultdict(lambda: defaultdict(list))
-        self.cc_by_os = defaultdict(lambda: defaultdict(list))
-        T = self.T
+        # We want to order conjugacy classes by order, then by size, then by power class
+        self.cc_by_os = defaultdict(lambda: defaultdict(list)) # holds the final positions
         Glabel = self.gp.label
-        if self.outer:
-            # TODO
-            raise NotImplementedError
-        else:
-            for i, C in enumerate(T.ConjugacyClasses()):
-                size = ZZ(C.Size())
-                order = ZZ(C.Representative().Order())
-                cc_by_os[order][size].append((C, i))
-            i = 1
-            for order in sorted(cc_by_os):
-                j = 0
-                cc_by_s = cc_by_os[order]
-                num_of_order = sum(map(len, cc_by_s.values()))
-                for size in sorted(cc_by_s):
-                    for C, gap_index in cc_by_s[size]:
-                        if num_of_order > 1:
-                            label = '%s.%s%s' % (Glabel, order, cremona_letter_code(j).upper())
-                        else:
-                            label = '%s.%s' % (Glabel, order)
-                        classes.append(ConjugacyClassGap(self, C, i, label, outer=self.outer))
-                        self.cc_by_os[order][size].append(i)
-                        # TODO: store the permutation
-                        i += 1
-                        j += 1
+        cc_by_os = self._get_cc_by_os() # holds pairs (C, i) organized by order and size
+        i = 1
+        for order in sorted(cc_by_os):
+            j = 0
+            cc_by_s = cc_by_os[order]
+            num_of_order = sum(map(len, cc_by_s.values()))
+            for size in sorted(cc_by_s):
+                for C, gap_index in cc_by_s[size]:
+                    if num_of_order > 1:
+                        label = '%s.%s%s' % (Glabel, order, cremona_letter_code(j).upper())
+                    else:
+                        label = '%s.%s' % (Glabel, order)
+                    classes.append(self.classclass(self, C, i, label))
+                    self.cc_by_os[order][size].append(i)
+                    # TODO: store the permutation
+                    i += 1
+                    j += 1
         return classes
-
-    @lazy_attribute
-    def characters(self):
-        # TODO: use something more deterministic than GAP's default ordering
-        return [None] + [CharacterGap(self, chi, i) for i, chi in enumerate(self.T.Irr(), 1)]
 
     @lazy_attribute
     def cgroups(self):
@@ -1967,9 +2106,34 @@ class CharacterTableGap(object):
                     cgroups.append(CGroupGap(self, f.chi, label))
         return cgroups
 
+    @lazy_attribute
+    def smallrep(self):
+        G = self.G
+        if not G.Center().IsCyclic():
+            return ZZ(0)
+        return min(chi.dim for chi in self.characters[1:] if chi.faithful)
+
+class CharacterTableGap(CharacterTable):
+    classclass = ConjugacyClassGap
+    charclass = CharacterGap
+    CharacterTable = staticmethod(libgap.CharacterTable)
+    def _rep(self, C):
+        return C.Representative()
+    def _get_cc_by_os(self):
+        """
+        Returns a dictionary of dictionaries of lists; D[order][size] = (C,i)
+        where C is the ith conjugacy class of specified order and size.
+        """
+        cc_by_os = defaultdict(lambda: defaultdict(list))
+        for i, C in enumerate(self.T.ConjugacyClasses()):
+            size = ZZ(C.Size())
+            order = ZZ(C.Representative().Order())
+            cc_by_os[order][size].append((C, i))
+        return cc_by_os
+
     def identify_conjugacy_class(self, x, order=None, size=None):
         """
-        Returns the ``which`` value for the conjugacy class containing ``x``.
+        Returns the ``counter`` value for the conjugacy class containing ``x``.
 
         INPUT:
 
@@ -1994,13 +2158,44 @@ class CharacterTableGap(object):
                 return i
 
     @lazy_attribute
-    def smallrep(self):
-        G = self.G
-        if not G.Center().IsCyclic():
-            return ZZ(0)
-        
+    def characters(self):
+        # TODO: use something more deterministic than GAP's default ordering
+        return [None] + [CharacterGap(self, chi, i) for i, chi in enumerate(self.T.Irr(), 1)]
 
+class CharacterTableMagma(CharacterTable):
+    classclass = ConjugacyClassMagma
+    charclass = CharacterMagma
+    CharacterTable = staticmethod(magma.CharacterTable)
+    RationalTable = staticmethod(magma.RationalCharacterTable)
+    def _rep(self, C):
+        return C[3]
+    def _get_cc_by_os(self):
+        """
+        Returns a dictionary of dictionaries of lists; D[order][size] = (C,i)
+        where C is the ith conjugacy class of specified order and size.
+        """
+        cc_by_os = defaultdict(lambda: defaultdict(list))
+        for i, C in enumerate(self.G.Classes()):
+            order, size, rep = C
+            size = ZZ(C.Size())
+            order = ZZ(C.Representative().Order())
+            cc_by_os[ZZ(order)][ZZ(size)].append((C, i))
+        return cc_by_os
 
+    @lazy_attribute
+    def _class_map(self):
+        return self.G.ClassMap()
+
+    def identify_conjugacy_class(self, x, order=None, size=None):
+        # TODO: apply the permutation!
+        return self._class_map(x)
+
+    @lazy_attribute
+    def characters(self):
+        # TODO: use something more deterministic than Magma's default ordering
+        return [None] + [CharacterMagma(self, chi, i) for i, chi in enumerate(self.T, 1)]
+
+    
 
 def encode_cyclotomic_sum(x):
     """
@@ -2021,3 +2216,22 @@ def encode_cyclotomic_sum(x):
             return [(x, 0)]
     else:
         return [(ZZ(c),ZZ(e)) for (e,c) in x.polynomial().dict().items()]
+
+def create_db_from_md(tablename, md, sort=None, id_ordered=False, skip=[]):
+    lines = md.split('\n')
+    search_columns = defaultdict(list)
+    search_order = []
+    for line in lines:
+        pieces = [piece.strip() for piece in line.split('|')]
+        col = pieces[0]
+        if col in skip:
+            continue
+        typ = pieces[1]
+        search_columns[typ].append(col)
+        search_order.append(col)
+    if 'label' in search_order:
+        label = 'label'
+    else:
+        label = None
+    db.create_table(tablename, search_columns, label, sort, id_ordered=id_ordered, search_order=search_order)
+
