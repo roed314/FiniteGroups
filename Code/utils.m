@@ -18,19 +18,8 @@ end function;
 */
 
 intrinsic ReplaceString(s::MonStgElt, fs::MonStgElt, ts::MonStgElt) -> MonStgElt
-  {Return a string obtained from the string s by replacing all occurences of fs with ts.}
-     // fs and ts are case sensitive
-     i:=Position(s,fs);
-     if i eq 0 then
-         strg:=s;  // nothing to find
-      elif (i+#fs-1) eq #s   then // if fs is at end
-         strg:=Substring(s,1,i-1) cat ts; 
-     elif i eq 1 then
-         strg:=ts cat $$(Substring(s,i+#fs,#s-i),fs,ts);
-     else
-         strg:=Substring(s,1,i-1) cat ts cat $$(Substring(s,i+#fs,#s-i),fs,ts); 
-    end if;   
-    return strg;
+    {Return a string obtained from the string s by replacing all occurences of the single character fs with ts.}
+    return Join(Split(s, fs), ts);
 end intrinsic;
 
 intrinsic ReplaceString(s::MonStgElt, fs::[MonStgElt], ts::[MonStgElt]) -> MonStgElt

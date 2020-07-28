@@ -1229,6 +1229,7 @@ end intrinsic;
 
 intrinsic Characters(G::LMFDBGrp) ->  Tup
   {Initialize characters of an LMFDB group and return a list of complex characters and a list of rational characters}
+  t := Cputime();
   g:=G`MagmaGrp;
   ct:=Get(G,"MagmaCharacterTable");
   rct:=Get(G,"MagmaRationalCharacterTable");
@@ -1238,6 +1239,8 @@ intrinsic Characters(G::LMFDBGrp) ->  Tup
   //cc:=Classes(g);
   cchars:=[New(LMFDBGrpChtrCC) : c in ct];
   rchars:=[New(LMFDBGrpChtrQQ) : c in rct];
+  vprint User2: "A", t;
+  t := Cputime(t);
   for j:=1 to #cchars do
     cchars[j]`Grp:=G;
     cchars[j]`MagmaChtr:=ct[j];
@@ -1256,6 +1259,8 @@ intrinsic Characters(G::LMFDBGrp) ->  Tup
     cchars[j]`Image_object:=New(LMFDBRepCC);
     //cchars[j]`indicator:=FrobeniusSchur(ct[j]); // Not in schema, but should be?
     cchars[j]`label:="placeholder";
+    vprint User2: "B", j, t;
+    t := Cputime(t);
   end for;
   for j:=1 to #rchars do
     rchars[j]`Grp:=G; // These don't have a group?
@@ -1271,6 +1276,8 @@ intrinsic Characters(G::LMFDBGrp) ->  Tup
     // Character may not be irreducible, so value might not be in 1,0,-1
     rchars[j]`indicator:=FrobeniusSchur(ct[matching[j][1]])*rchars[j]`multiplicity;
     rchars[j]`label:="placeholder";
+    vprint User2: "C", j, t;
+    t := Cputime(t);
   end for;
   /* This still needs labels and ordering for both types */
   sortdata:=characters_add_sort_and_labels(G, cchars, rchars);
