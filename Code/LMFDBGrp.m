@@ -20,6 +20,8 @@ declare attributes LMFDBGrp:
   CCpermutation,
   CCpermutationInv,
   CCCharacters,
+  CCRepLabels,
+  CCreps,
   QQCharacters,
   Generators,
   QQReps,

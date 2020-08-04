@@ -74,7 +74,7 @@ lookup:= function(qvals, faithq);
   return 0;
 end function;
 
-intrinsic labelCCreps(G::LMFDBGrp) -> Any
+intrinsic CCRepLabels(G::LMFDBGrp) -> Any
  {Label all of the complex reps.  The faithful ones are separated to
   avoid a little of duplication of effort as we recurse to quotient
   groups.}
@@ -108,9 +108,11 @@ intrinsic labelCCreps(G::LMFDBGrp) -> Any
       faith[Get(f,"label")] := faithq[newlab];
     end if;
   end for;
+  /*
   for ky in Keys(faith) do
     ky,"->",faith[ky];
   end for;
+  */
   return faith;
 end intrinsic;
 

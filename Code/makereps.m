@@ -125,15 +125,17 @@ intrinsic CCreps(G::LMFDBGrp)->Any
     Append(~result, <rep[1], rep[3], data>);
   end for;
 
-  /* myimages contains faithful images for this group stored as
-     label -> <dimension, generator list>
+  alllabels := Get(G, "CCRepLabels");
+  /*
+  for j in [1..#cct] do
+    cct[j]`image := alllabels[Get(cct[j],"label")];
+  end for;
   */
-  myimages:=AssociativeArray(); 
-  System("mkdir -p Creps");
+
   result2:=<>;
   for rep in result do
   // Working on rep_label
-    replabel:= rep_label(rep[1], [z[2] : z in rep[3]], myimages, K);
+    replabel:= alllabels[Get(rep[1], "label")];
     r3 := [z[2] : z in rep[3]];
     if replabel eq Get(rep[1], "label") then
       r := New(LMFDBRepCC);
@@ -154,8 +156,6 @@ intrinsic CCreps(G::LMFDBGrp)->Any
       r`decomposition:= [<r`label, 1>];
       r`order := Get(G, "order");
       r`E:=e;
-      myimages[replabel] := <r`dim, r3>;
-      saverep(r);
       Append(~result2, r);
     end if;
     // Write to a file to track character label -> rep label
