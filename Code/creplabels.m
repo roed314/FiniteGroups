@@ -68,7 +68,7 @@ end intrinsic;
 lookup:= function(qvals, faithq);
   for jj:=1 to #faithq do
     achar:=Get(faithq[jj],"MagmaChtr");
-    faithqvals :=<achar[j]: j in [1..#achar]>;
+    faithqvals := [* achar[j]: j in [1..#achar] *];
     if faithqvals eq qvals then return jj; end if;
   end for;
   return 0;
@@ -95,7 +95,7 @@ intrinsic CCRepLabels(G::LMFDBGrp) -> Any
       boo,mapp:=IsIsomorphic(q, magquo);
       qchars:=Get(lmfdbquo, "CCCharacters");
       faithq := labelCCfaithfulreps(lmfdbquo);
-      qvals:= <0 : z in Get(lmfdbquo, "ConjugacyClasses")>;
+      qvals:= [* 0 : z in Get(lmfdbquo, "ConjugacyClasses") *];
       cmquo:=ClassMap(magquo);
       /* Fill in character for quotient */
       for c in [1..#cc] do

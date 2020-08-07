@@ -1,0 +1,3 @@
+cyc_order_mat|cyc_order_traces|decomposition|denominators|dim|gens|group|indicator|irreducible|label|order|schur_index|trace_field|traces
+integer|integer|jsonb|integer[]|integer|integer[]|text|integer|boolean|text|integer|integer|integer[]|jsonb
+
