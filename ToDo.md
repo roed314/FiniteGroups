@@ -3,26 +3,26 @@
 ## Backend
 
 ### Planning
-* Choosing generators (solvable, permutation and matrix cases)
-* How to deal with "bad" generator lists from polycyclic
+* ~Choosing generators (solvable, permutation and matrix cases)~
 * ~Labeling for conjugacy classes~
 * ~Labeling for subgroups~
+* How to deal with "bad" generator lists from polycyclic (in progress: David)
 * Write more upload code (remaining issues are blacklist on io.m)
 
 ### Uploading data
 * ~Create framework for computing LmfdbGroup attributes from a Magma group with a few small examples~
 * ~Make a list of attributes that can't be directly imported from the Magma group~
 * ~Port over implementations from generate.py for some of these~
-* Figure out how to compute others in Magma
+* ~Figure out how to compute others in Magma~
+* ~Implement hash for determining isomorphism classes~
+* Run timing tests to determine which attributes are slow (in progress)
 * Streamline Magma code that may redundantly call Magma functions which are now attributes.
-* Run timing tests to determine which attributes are slow (lattice of subgroups is; what else?)
 * Figure out how to reuse work between different groups for slow features (using a recursive algorithm for example)
+* Figure out criterion/heuristic for when to compute difficult/space-intensive things (lattice of subgroups, etc).
 * Design a process for adding groups outside the small groups range and assigning labels: three steps
   - find new groups of interest to add, compute their hash and specify a format to store information for the next stage
   - for each order and hash value, split the records up into isomorphism classes, determine whether each isomorphism class has already been added.  If not yet added, assign a label.  We may want to ensure that some common group families get simple labels (e.g. cyclic group is always .a)
   - With label in hand, go pass control back to the process that computes all relevant quantities about a group.  This may recurse to adding subgroups.
-* Figure out criterion/heuristic for when to compute difficult/space-intensive things (lattice of subgroups, etc).
-* ~Implement hash for determining isomorphism classes (David)~
 * Run hash on all groups of order 512, 1536, and other orders that can't be IDed.
 * Add generator and relations template to families
 * Add Magma coded number for families from series
@@ -45,8 +45,8 @@
   * Using katex looks pretty complicated right now (just getting katex html does not work)
   * Using mathjax might be an option, but then we have mathjax and katex, and it still might not work/look good.  There is some hope of using svg output from mathjax, especially with version 3
   * We could generate images on the fly. I have done this with WeBWorK problems, and it worked ok there.  But, I am not sure I want to put the time in to set it up if we don't want to go in that direction
-  * On my (Jen) screen: http://teal.lmfdb.xyz/Groups/Abstract/24.5  the left hand side of the graph is currently cut off. So the C2xC4 subgroup should have a subscript to the left of it indicating the number of conjugate subgroups but I don't see that and I don't see part of the first C.
-* Click vs. Mouseover of subgroups?
+  * On my (Jen) screen: http://teal.lmfdb.xyz/Groups/Abstract/24.5  the left hand side of the graph is currently cut off. So the C2xC4 subgroup should have a subscript to the left of it indicating the number of conjugate subgroups but I don't see that and I don't see part of the first C. (Update: was fixed and now issue again on 8/10/20)
+* Click vs. Mouseover of subgroups? (Still needs to be fixed in new version in 2020?)
   * currently the diagram does both: mouseover for highlighting and click for showing information.
 * Add list of orders of elements in the group to top
 * Add special names (aliases) to *Construction* section
