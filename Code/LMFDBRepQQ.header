@@ -1,3 +1,3 @@
 c_class|carat_label|decomposition|dim|gens|group|irreducible|label|order
-text|text|jsonb|smallint|integer[]|text|boolean|text|numeric
+text|text|jsonb|smallint|jsonb|text|boolean|text|numeric
 

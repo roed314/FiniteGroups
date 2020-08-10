@@ -69,6 +69,7 @@ intrinsic WriteCyclotomicElement(u::FldCycElt) -> SeqEnum
       Append(~cs, [u_seq[i], e]);
     end if;
   end for;
+  if cs eq [] then return [[0,0]]; end if;
   return cs;
 end intrinsic;
 

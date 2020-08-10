@@ -4,12 +4,12 @@ IntegerCols := ["alias_spot", "ambient_order", "arith_equiv", "aut_counter", "au
 
 TextListCols := ["composition_factors", "special_labels"];
 
-IntegerListCols := ["contained_in", "contains", "cycle_type", "denominators", "factors_of_aut_order", "factors_of_order", "faithful_reps", "gens", "order_stats", "powers", "primary_abelian_invariants", "schur_multiplier", "smith_abelian_invariants", "subgroup_fusion", "nt","values","field","trace_field", "gens_used"];
+IntegerListCols := ["contained_in", "contains", "cycle_type", "denominators", "factors_of_aut_order", "factors_of_order", "faithful_reps", "order_stats", "powers", "primary_abelian_invariants", "schur_multiplier", "smith_abelian_invariants", "subgroup_fusion", "nt","values","field","trace_field", "gens_used"];
 
 BoolCols := ["Agroup", "Zgroup", "abelian", "all_subgroups_known", "almost_simple", "central", "central_product", "characteristic", "cyclic", "direct", "direct_product", "faithful", "finite_matrix_group", "indecomposible", "irreducible", "maximal", "maximal_normal", "maximal_subgroups_known", "metabelian", "metacyclic", "minimal", "minimal_normal", "monomial", "nilpotent", "normal", "normal_subgroups_known", "outer_equivalence", "perfect", "prime", "primitive", "quasisimple", "rational", "semidirect_product", "simple", "solvable", "split", "stem", "subgroup_inclusions_known", "supersolvable", "sylow_subgroups_known", "wreath_product", "standard_generators"];
 
 // creps has a gens which is not integer[]
-JsonbCols := ["quotient_fusion","decomposition","traces"]; // , "gens"];
+JsonbCols := ["quotient_fusion","decomposition","traces", "gens"];
 
 PermsCols := ["perm_gens"];
 SubgroupCols := ["centralizer", "kernel", "core", "center", "normal_closure", "normalizer", "sub1", "sub2"];
@@ -415,18 +415,6 @@ intrinsic WriteHeaders(typ::Any : attrs:=[], sep:="|", filename:="")
     s1:=Join([attr  : attr in attrs], sep);
     s2:=Join([AttrType(attr)  : attr in attrs], sep);
     write(filename, s1 * "\n"*s2*"\n": rewrite:=true);
-end intrinsic;
-
-
-intrinsic WriteLMFDBObject(G::Any, filename::MonStgElt : attrs:=[], sep:="|")
-  {Write an LMFDB object to a file}
-    if attrs eq [] then
-        attrs := DefaultAttributes(Type(G));
-    end if;
-    for attr in attrs do
-        assert Type(SaveAttr(attr, Get(G, attr), G)) eq MonStgElt;
-    end for;
-    write(filename, Join([SaveAttr(attr, Get(G, attr), G) : attr in attrs], sep));
 end intrinsic;
 
 intrinsic PrintData(G::LMFDBGrp: sep:="|") -> Tup

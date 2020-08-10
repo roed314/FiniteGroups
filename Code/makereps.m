@@ -147,18 +147,18 @@ intrinsic CCReps(G::LMFDBGrp)->Any
         denoms[j]:=d;
         gens2[j]:=dm;
       end for;
-      r`gens := [z : z in gens2];
+      assert r`dim eq Nrows(gens2[1]);
+      r`gens := [WriteCyclotomicMatrix(z) : z in gens2];
       r`MagmaRep:=rep[4];
       r`order:=Get(G,"order");
       r`MagmaGrp:=sub<gln|r3>;
       r`cyc_order_traces:=Get(rep[1], "cyclotomic_n");
       r`denominators:=denoms;
-      assert r`dim eq Nrows(r`gens[1]);
       r`irreducible:= true;
       r`label := replabel;
       r`decomposition:= [<r`label, 1>];
       r`trace_field:=Get(rep[1], "field");
-      r`traces := [Trace(z) : z in gens2];
+      r`traces := [WriteCyclotomicElement(Trace(z)) : z in gens2];
       r`E:=e;
       Append(~result2, r);
     end if;
@@ -203,8 +203,10 @@ intrinsic QQReps(G::LMFDBGrp)->Any
       r3 := [z[2] : z in rep[3]];
       r := New(LMFDBRepQQ);
       r`group := Get(G, "label");
-      r`gens := [castZ(geninfo) : geninfo in r3];
-      r`dim := #Rows(r`gens[1]);
+      gentmp := [castZ(geninfo) : geninfo in r3];
+      r`gens := [[[u[j,k]: k in [1..Nrows(u)]] : j in [1..Nrows(u)]] : u in gentmp];
+      //r`gens := [castZ(geninfo) : geninfo in r3];
+      r`dim := #(r`gens[1]);
       r`carat_label := None();
       r`c_class := None();
       r`irreducible:= true;
@@ -241,7 +243,8 @@ intrinsic QQReps(G::LMFDBGrp)->Any
         gln:= GL(r`dim, Rationals());
         rc`MagmaGrp:=sub<gln|r3>;
         rc`group := Get(G, "label");
-        rc`gens := r`gens;
+        rc`cyc_order_mat:=1;
+        rc`gens := [[[[[z,0]] : z in u] : u in v] : v in r`gens];
         rc`MagmaRep:=rep[4];
         rc`order:=Get(G,"order");
         //rc`MagmaGrp:=sub<gln|r3>;
@@ -251,7 +254,7 @@ intrinsic QQReps(G::LMFDBGrp)->Any
         rc`label := clabel;
         rc`decomposition:= [z : z in decomp];
         rc`trace_field:= [0,1];
-        rc`traces := [Trace(z) : z in r`gens];
+        rc`traces := [[[&+[z[i,i]:i in [1..#z]],0]] : z in r`gens];
         rc`E:=1;
         if not HasAttribute(G, "QQRepsAsCC") then
           G`QQRepsAsCC := <>;
@@ -382,7 +385,7 @@ end intrinsic;
 intrinsic saverep(r::LMFDBRepQQ)
   {}
   mm:=Get(r, "gens");
-  mm:=[WriteIntegralMatrix(geninfo) : geninfo in mm];
+  //mm:=[WriteIntegralMatrix(geninfo) : geninfo in mm];
   mystr:=Sprintf("%o$%o",Get(r, "label"), mm);
   mystr:=DelSpaces(mystr);
   mystr:=ReplaceString(mystr, "$", " ");

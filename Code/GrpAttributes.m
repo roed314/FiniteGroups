@@ -1197,7 +1197,8 @@ intrinsic characters_add_sort_and_labels(G::LMFDBGrp, cchars::Any, rchars::Any) 
       cyclon:=CyclotomicOrder(basef);
       Kn:=CyclotomicField(cyclon);
       cchars[cindex]`cyclotomic_n:=cyclon;
-      cchars[cindex]`values:=[PrintRelExtElement(Kn!thischar[perm[z]]) : z in [1..#thischar]];
+      //cchars[cindex]`values:=[PrintRelExtElement(Kn!thischar[perm[z]]) : z in [1..#thischar]];
+      cchars[cindex]`values:=[WriteCyclotomicElement(Kn!thischar[perm[z]]) : z in [1..#thischar]];
       if dat[len-2] notin donec then
         ccnt+:=1;
         ctotalcnt+:=1;
