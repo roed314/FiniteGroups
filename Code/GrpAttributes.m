@@ -1135,13 +1135,20 @@ intrinsic characters_add_sort_and_labels(G::LMFDBGrp, cchars::Any, rchars::Any) 
   // Want sort list to be <degree, size of Gal orbit, n, t, lex info, ...>
   // We give rational character values first, then complex
   // Priorities by lex sort
-  forlexsortrat:=Flat(<<rct[comp2rat[j]][perm[k]] : j in [1..#rct]> : k in [1..#ct]>);
-  forlexsort:=<Flat(<<Round(10^29*Real(ct[j,perm[k]])), Round(10^29*Imaginary(ct[j,perm[k]]))> : k in [1..#ct]>) : j in [1..#ct]>;
+  forlexsortrat:=<<rct[comp2rat[j]][perm[k]] : k in [1..#ct]> : j in [1..#ct]>;
+  forlexsort:=<Flat(<<Round(10^25*Real(ct[j,perm[k]])), Round(10^25*Imaginary(ct[j,perm[k]]))> : k in [1..#ct]>) : j in [1..#ct]>;
+//"forlexsortrat";
+//forlexsortrat;
+//"forlexsort";
+//forlexsort;
   // We add three fields at the end. The last is old index, before sorting.
   // Before that is the old index in the rational table
   // Before that is the old index of its complex conjugate
-  sortme:=<<Degree(ct[j]), #matching[comp2rat[j]], ntlist[j][1], ntlist[j][2]> cat forlexsortrat
+  sortme:=<<Degree(ct[j]), #matching[comp2rat[j]], ntlist[j][1], ntlist[j][2]> cat forlexsortrat[j]
      cat forlexsort[j] cat <0,0,0> : j in [1..#ct]>;
+//"sortme";
+//sortme;
+//"done";
   len:=#sortme[1];
   for j:=1 to #ct do 
     sortme[j][len] := j; 
@@ -1155,6 +1162,8 @@ intrinsic characters_add_sort_and_labels(G::LMFDBGrp, cchars::Any, rchars::Any) 
   end for;
   sortme:= [[a : a in b] : b in sortme];
   Sort(~sortme);
+//"did it";
+//sortme;
   // Now step through to figure out the order
   donec:={};
   doneq:={};
@@ -1213,7 +1222,7 @@ intrinsic characters_add_sort_and_labels(G::LMFDBGrp, cchars::Any, rchars::Any) 
         cyclon:=CyclotomicOrder(basef);
         Kn:=CyclotomicField(cyclon);
         cchars[cindex]`cyclotomic_n:=cyclon;
-        cchars[cindex]`values:=[PrintRelExtElement(Kn!thischar[perm[z]]) : z in [1..#thischar]];
+        cchars[cindex]`values:=[WriteCyclotomicElement(Kn!thischar[perm[z]]) : z in [1..#thischar]];
       end if;
     end if;
   end for;
