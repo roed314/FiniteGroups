@@ -405,6 +405,7 @@ declare attributes LMFDBGrpChtrCC:
   Grp,
   MagmaChtr,
   cyclotomic_n,
+  q_character,
   values,
   Image_object,
   label,
