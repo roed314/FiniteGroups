@@ -433,7 +433,7 @@ declare type LMFDBGrpChtrQQ;
 declare attributes LMFDBGrpChtrQQ:
   Grp,
   MagmaChtr,
-  values,
+  qvalues,
   Image_object,
   label,
   group,
