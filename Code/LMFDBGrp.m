@@ -199,6 +199,7 @@ declare attributes LMFDBSubGrp:
   generators,
   //generator_images,
   standard_generators,
+  diagram_x,
   projective_image;
 
 intrinsic Print(H::LMFDBSubGrp)

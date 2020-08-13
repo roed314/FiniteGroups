@@ -58,6 +58,14 @@ intrinsic WriteCyclotomicElement(u::FldCycElt) -> SeqEnum
   K<z> := CyclotomicField(CyclotomicOrder(Parent(u)) : Sparse := false);
   m := CyclotomicOrder(K);
   u_seq := Eltseq(K!u);
+  if IsPrime(m) then
+    u_seq := u_seq cat [0];
+    cnt:=0;
+    for j in u_seq do if j ne 0 then cnt +:=1; v:=j; end if; end for;
+    if cnt gt m/2 then
+      for j:=1 to #u_seq do u_seq[j] -:= v; end for;
+    end if;
+  end if;
   cs := [];
   for i := 1 to #u_seq do
     if u_seq[i] ne 0 then

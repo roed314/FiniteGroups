@@ -1188,7 +1188,7 @@ intrinsic characters_add_sort_and_labels(G::LMFDBGrp, cchars::Any, rchars::Any) 
         Include(~doneq, dat[len-1]);
         rindex:=Integers()!dat[len-1];
         rchars[rindex]`counter :=rtotalcnt;
-        rchars[rindex]`label:=Sprintf("%o.%o%o.%o",glabel,dat[1],rcode,dat[2]);
+        rchars[rindex]`label:=Sprintf("%o.%o%o",glabel,dat[1],rcode);
         rchars[rindex]`nt:=[dat[2],dat[3]];
         rchars[rindex]`qvalues:=[Integers()! dat[j+4] : j in [1..#ct]];
       end if;
