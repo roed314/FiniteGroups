@@ -165,8 +165,9 @@ intrinsic minimal_normal(H::LMFDBSubGrp) -> BoolElt // Need to be subgroup attri
   else
     for r in Get(G, "NormalSubgroups") do
       N := r`MagmaSubGrp;
-      if (N subset HH) and (N ne HH) and (Order(N) ne 1) then
-        return false;
+//      if (N subset HH) and (N ne HH) and (Order(N) ne 1) then
+      if (N subset HH) and (N ne HH) then
+         return false;
       end if;
     end for;
     return true;
