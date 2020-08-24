@@ -1016,7 +1016,7 @@ intrinsic direct_factorization(G::LMFDBGrp) -> SeqEnum
   while not all_irred do
     new_facts :=[];
     for fact in facts do
-      split_bool, Nisub, Kisub := SemidirectFactorization(fact : direct := true);
+      split_bool, Nisub, Kisub := DirectFactorization(fact);
       if not split_bool then
         Append(~irred_facts, fact);
       else
@@ -1034,7 +1034,28 @@ intrinsic direct_factorization(G::LMFDBGrp) -> SeqEnum
   GG := Get(G, "MagmaGrp");
   irred_facts_mag := [Get(el, "MagmaGrp") : el in irred_facts];
   assert IsIsomorphic(GG, DirectProduct(irred_facts_mag));
-  return irred_facts;
+  return CollectDirectFactors(irred_facts);
+end intrinsic;
+
+intrinsic CollectDirectFactors(facts::SeqEnum) -> SeqEnum
+  {Group together factors in direct product, returning a sequence of pairs [label, exponent]}
+  pairs := [];
+  for fact in facts do
+    label := Get(fact, "label");
+    old_bool := false;
+    for i := 1 to #pairs do
+      if label eq pairs[i][1] then
+        fact_ind := i;
+        old_bool := true;
+      end if;
+    end for;
+    if old_bool then
+      pairs[fact_ind][2] +:= 1;
+    else
+      Append(~pairs, [* Get(fact, "label"), 1 *]);
+    end if;
+  end for;
+  return pairs;
 end intrinsic;
 
 intrinsic CCpermutation(G::LMFDBGrp) -> SeqEnum
