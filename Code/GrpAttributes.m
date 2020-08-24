@@ -957,8 +957,8 @@ intrinsic order_stats(G::LMFDBGrp) -> Any
     return [[k, v] : k -> v in A];
 end intrinsic;
 
-intrinsic semidirect_product(G::LMFDBGrp : direct := false) -> Any
-  {Returns true if G is a nontrivial semidirect product; otherwise returns false.}
+intrinsic SemidirectFactorization(G::LMFDBGrp : direct := false) -> Any
+  {Returns true if G is a nontrivial semidirect product, along with factors; otherwise returns false.}
   GG := Get(G, "MagmaGrp");
   ordG := Get(G, "order");
   if ordG eq 1 then return false; end if;
@@ -977,17 +977,64 @@ intrinsic semidirect_product(G::LMFDBGrp : direct := false) -> Any
     for K in comps do
       KK := Get(K, "MagmaSubGrp");
       if #(NN meet KK) eq 1 then
-        return true;
+        return true, N, K;
         //print N, K;
       end if;
     end for;
   end for;
-  return false;
+  return false, _, _;
+end intrinsic;
+
+intrinsic DirectFactorization(G::LMFDBGrp) -> Any
+  {Returns true if G is a nontrivial direct product, along with factors; otherwise returns false.}
+  return SemidirectFactorization(G : direct := true);
+end intrinsic;
+
+intrinsic semidirect_product(G::LMFDBGrp) -> Any
+  {Returns true if G is a nontrivial semidirect product; otherwise returns false.}
+  fact_bool, _, _ := SemidirectFactorization(G);
+  return fact_bool;
 end intrinsic;
 
 intrinsic direct_product(G::LMFDBGrp) -> Any
   {Returns true if G is a nontrivial direct product; otherwise returns false.}
-  return semidirect_product(G : direct := true);
+  fact_bool, _, _ := DirectFactorization(G);
+  return fact_bool;
+end intrinsic;
+
+intrinsic direct_factorization(G::LMFDBGrp) -> SeqEnum
+  {}
+  fact_bool, Nsub, Ksub := DirectFactorization(G);
+  if not fact_bool then
+    return [];
+  end if;
+  N := LabelToLMFDBGrp(Get(Nsub, "subgroup"));
+  K := LabelToLMFDBGrp(Get(Ksub, "subgroup"));
+  facts := [N,K];
+  irred_facts := [];
+  all_irred := false;
+  while not all_irred do
+    new_facts :=[];
+    for fact in facts do
+      split_bool, Nisub, Kisub := SemidirectFactorization(fact : direct := true);
+      if not split_bool then
+        Append(~irred_facts, fact);
+      else
+        Ni := LabelToLMFDBGrp(Get(Nisub, "subgroup"));
+        Ki := LabelToLMFDBGrp(Get(Kisub, "subgroup"));
+        new_facts cat:= [Ni,Ki];
+      end if;
+    end for;
+    if #new_facts eq 0 then
+      all_irred := true;
+    end if;
+    facts := new_facts;
+  end while;
+  // check that they're really isomorphic
+  GG := Get(G, "MagmaGrp");
+  irred_facts_mag := [Get(el, "MagmaGrp") : el in irred_facts];
+  assert IsIsomorphic(GG, DirectProduct(irred_facts_mag));
+  return irred_facts;
 end intrinsic;
 
 intrinsic CCpermutation(G::LMFDBGrp) -> SeqEnum
