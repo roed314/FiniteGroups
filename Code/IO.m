@@ -2,7 +2,7 @@ TextCols := ["abelian_quotient", "acted", "actor", "ambient", "aut_group", "brav
 
 IntegerCols := ["alias_spot", "ambient_order", "arith_equiv", "aut_counter", "aut_order", "auts", "cdim", "commutator_count", "composition_length", "conjugacy_class_count", "count", "counter", "counter_by_index", "cyc_order_mat", "cyc_order_traces", "cyclotomic_n", "degree", "derived_length", "diagram_x", "dim", "elementary", "elt_rep_type", "eulerian_function", "exponent", "extension_counter", "hall", "hyperelementary", "indicator", "mobius_function", "multiplicity", "n", "ngens", "nilpotency_class", "number_characteristic_subgroups", "number_conjugacy_classes", "number_normal_subgroups", "number_subgroup_classes", "number_subgroups", "order", "outer_order", "parity", "pc_code", "pgroup", "priority", "q", "qdim", "quotient_action_kernel", "quotient_order", "quotients_complenetess", "rank", "rep", "schur_index", "sibling_completeness", "size", "smallrep", "subgroup_index_bound", "subgroup_order", "sylow", "t", "transitive_degree"];
 
-TextListCols := ["composition_factors", "special_labels"];
+TextListCols := ["composition_factors", "direct_factorization", "special_labels"];
 
 IntegerListCols := ["contained_in", "contains", "cycle_type", "denominators", "factors_of_aut_order", "factors_of_order", "faithful_reps", "order_stats", "powers", "primary_abelian_invariants", "schur_multiplier", "smith_abelian_invariants", "subgroup_fusion", "nt","qvalues","field","trace_field", "gens_used"];
 
@@ -281,7 +281,7 @@ intrinsic SetGrp(G::LMFDBGrp)
     end if;
 end intrinsic;
 
-intrinsic LoadGrp(line::MonStgElt, attrs::SeqEnum: sep:="|") -> LMFDBGrp
+intrinsic LoadGrp(line::MonStgElt, attrs::SeqEnum : sep:="|") -> LMFDBGrp
     {Load an LMFDBGrp from a row of a file, setting stored attributes correctly}
     data := Split(line, sep: IncludeEmpty := true);
     error if #data ne #attrs, "Wrong size data line";

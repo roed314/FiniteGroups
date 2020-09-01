@@ -180,6 +180,7 @@ declare attributes LMFDBSubGrp:
   split,
   complements,
   direct,
+  direct_factorization,
   central,
   stem,
   count,
