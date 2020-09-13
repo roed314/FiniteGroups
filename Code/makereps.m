@@ -140,6 +140,9 @@ intrinsic CCReps(G::LMFDBGrp)->Any
       r`dim := Integers() ! Degree(Get(rep[1], "MagmaChtr"));
       gln:= GL(r`dim, BaseRing(rep[4]));
       r`group := Get(G, "label");
+      //asub:=sub<gln|r3>;
+      //r4:= random_gens(asub);
+
       denoms:=[0 : z in r3];
       gens2:=[* 0 : z in r3*];
       for j:=1 to #r3 do
@@ -201,9 +204,12 @@ intrinsic QQReps(G::LMFDBGrp)->Any
     replabel:= rep_label(rep[1], [z[2] : z in rep[3]], myimages);
     if replabel eq Get(rep[1], "label") then
       r3 := [z[2] : z in rep[3]];
+      gln:= GL(Nrows(r3[1]), Rationals());
       r := New(LMFDBRepQQ);
       r`group := Get(G, "label");
       gentmp := [castZ(geninfo) : geninfo in r3];
+      asub:=sub<gln|gentmp>;
+      gentmp:= random_gens(asub);
       r`gens := [[[u[j,k]: k in [1..Nrows(u)]] : j in [1..Nrows(u)]] : u in gentmp];
       //r`gens := [castZ(geninfo) : geninfo in r3];
       r`dim := #(r`gens[1]);
@@ -390,6 +396,45 @@ intrinsic saverep(r::LMFDBRepQQ)
   mystr:=DelSpaces(mystr);
   mystr:=ReplaceString(mystr, "$", " ");
   write("Qreps/"*Get(r, "group"), mystr);
+end intrinsic;
+
+intrinsic min_gen_set(g::Any, s::Any)->Any
+  {Find a minimal subset of s which generates the group g}
+  n:=Order(g);
+  keepers:=[true : a in s];
+  for i:=1 to #s do
+    keepers[i]:=false;
+    h:=sub<g| [s[j] : j in [1..#s] | keepers[j]]>;
+    if Order(h) ne n then keepers[i]:=true; end if;
+  end for;
+  return [s[i] : i in [1..#s] | keepers[i]];
+end intrinsic;
+
+intrinsic random_gens(g::Any) -> Any
+  {Get a random list of generators for g}
+  ResetRandomSeed();
+  n:=Order(g);
+  if n eq 1 then return [Id(g)]; end if;
+  max_tries:=5;
+  best_k:=n+1;
+  best:=[];
+  for jj:=1 to max_tries do
+    s1:=[g . i : i in [1..NumberOfGenerators(g)]];
+    rlist:=initRandomGroupElement(s1);
+    h1:=Id(g);
+    randomG(~rlist, ~h1);
+    s:=[h1];
+    while Order(sub<g|s>) lt n do
+      randomG(~rlist,~h1);
+      Append(~s, h1);
+    end while;
+    current:= min_gen_set(g,s);
+    if #current lt best_k then
+      best_k:= #current;
+      best:= current;
+    end if;
+  end for;
+  return best;
 end intrinsic;
 
 

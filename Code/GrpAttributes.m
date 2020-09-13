@@ -1257,7 +1257,7 @@ intrinsic characters_add_sort_and_labels(G::LMFDBGrp, cchars::Any, rchars::Any) 
         rindex:=Integers()!dat[len-1];
         rchars[rindex]`counter :=rtotalcnt;
         rchars[rindex]`label:=Sprintf("%o.%o%o",glabel,dat[1],rcode);
-        rchars[rindex]`nt:=[dat[2],dat[3]];
+        rchars[rindex]`nt:=[dat[3],dat[2]];
         rchars[rindex]`qvalues:=[Integers()! dat[j+4] : j in [1..#ct]];
       end if;
       ccnt+:=1;
@@ -1265,7 +1265,7 @@ intrinsic characters_add_sort_and_labels(G::LMFDBGrp, cchars::Any, rchars::Any) 
       Include(~donec, dat[len]);
       cindex:=Integers()!dat[len];
       cchars[cindex]`counter:=ctotalcnt;
-      cchars[cindex]`nt:=[dat[2],dat[3]];
+      cchars[cindex]`nt:=[dat[3],dat[2]];
       cextra:= (dat[2] eq 1) select "" else Sprintf("%o", ccnt);
       cchars[cindex]`label:=Sprintf("%o.%o%o", glabel, dat[1],rcode)*cextra;
       // Encode values
@@ -1282,7 +1282,7 @@ intrinsic characters_add_sort_and_labels(G::LMFDBGrp, cchars::Any, rchars::Any) 
         cindex:=Integers()!dat[len-2];
         Include(~donec, dat[len-2]);
         cchars[cindex]`counter:=ctotalcnt;
-        cchars[cindex]`nt:=[dat[2],dat[3]];
+        cchars[cindex]`nt:=[dat[3],dat[2]];
         cextra:= (dat[2] eq 1) select "" else Sprintf("%o", ccnt);
         cchars[cindex]`label:=Sprintf("%o.%o%o", glabel, dat[1],rcode)*cextra;
         thischar:=ct[cindex];
