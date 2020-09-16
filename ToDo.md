@@ -53,6 +53,7 @@
 * Add permutation representations
 * Make supergroups a searchable option
 * Add special family presentations in those cases
+* Data we compute but don't display yet.  Look at schema to see what we've computed. 
 * Change group characteristics list to be more like:  "cyclic (and so abelian, solvable, nilpotent, and monomial)"  instead of just full list
     * Z-group means metacyclic, supersolvable, and monomial
     * Cyclic hence abelian, solvable, nilpotent, and monomial
@@ -63,6 +64,10 @@
     * Supersolvable hence monomial
 * Create download buttons for Magma/GAP code
 * Improve searches
+* For complex characters, writing entries in a more efficient way. EX:  https://groups.lmfdb.xyz/Groups/Abstract/21.2  reduce some of them via trace reduction. Perhaps consider naming one recurring "phrase" as a variable.  Maybe long term toggle back and forth.
+* Label characters as orthogonal, symplectic, linear, faithful on right/left or maybe in knowl as it is? Maybe some indication of these?
+* Cutoff for pre-displaying character table.
+
 
 ## Knowls
 
@@ -71,6 +76,7 @@
 * rename agroup and zgroup to a_group and z_group in code, same with rational versus rational_group
 * Rename Meow Wolf to Tim
 * RCS knowls
+* Dynamic Knowls edited
 
 ## Last Stage
 
