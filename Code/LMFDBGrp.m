@@ -109,6 +109,7 @@ declare attributes LMFDBGrp:
   central_product,
   finite_matrix_group,
   direct_product,
+  direct_factorization,
   semidirect_product,
   composition_factors,
   composition_length;
@@ -180,7 +181,6 @@ declare attributes LMFDBSubGrp:
   split,
   complements,
   direct,
-  direct_factorization,
   central,
   stem,
   count,
