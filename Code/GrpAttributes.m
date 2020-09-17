@@ -1032,8 +1032,11 @@ intrinsic direct_factorization(G::LMFDBGrp) -> SeqEnum
   end while;
   // check that they're really isomorphic
   GG := Get(G, "MagmaGrp");
-  irred_facts_mag := [Get(el, "MagmaGrp") : el in irred_facts];
-  assert IsIsomorphic(GG, DirectProduct(irred_facts_mag));
+  // The factors might not be in the same magma "universe" e.g., for 120.35
+  // Can't have a SeqEnum of these, so you can't take apply DirectProduct
+  //irred_facts_mag := [ Get(el, "MagmaGrp") : el in irred_facts ];
+  //assert IsIsomorphic(GG, DirectProduct(irred_facts_mag));
+
   return CollectDirectFactors(irred_facts);
 end intrinsic;
 
