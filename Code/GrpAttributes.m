@@ -961,7 +961,10 @@ intrinsic SemidirectFactorization(G::LMFDBGrp : direct := false) -> Any, Any, An
   {Returns true if G is a nontrivial semidirect product, along with factors; otherwise returns false.}
   GG := Get(G, "MagmaGrp");
   ordG := Get(G, "order");
-  if ordG eq 1 then return false; end if;
+  // deal with trivial group
+  if ordG eq 1 then
+    return false, _, _;
+  end if;
   Ns := Get(G, "NormalSubgroups");
   if Type(Ns) eq NoneType then return None(); end if;
   Remove(~Ns,#Ns); // remove full group;
