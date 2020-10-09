@@ -85,8 +85,8 @@ end intrinsic;
 
 intrinsic mobius_function(G::LMFDBGrp) -> Any
   {Calculates the images of the subgroup-Mobius function on subgroups of G}
-    if Get(G,"all_subgroups_known") then
-      L:=SubgroupLattice(G`MagmaGrp);
+    if G`all_subgroups_known and G`subgroup_inclusions_known then
+      L:=G`SubGrpLat;
       MobiusImages:=[[#L,1]]; //μ_G(G) = 1
 
       for i in [1..#L-1] do
@@ -103,7 +103,7 @@ intrinsic mobius_function(G::LMFDBGrp) -> Any
 
       conj_mobii:=[];
       subgps_new := [];
-      for s in S do //converts the data to [<conjugacy class label, group>, mobius image] format
+      for s in S do //loops over the subgroups and adds the Mobius function data to each one
         s_new := s;
         H:=s_new`MagmaSubGrp;
         for m in MobiusImages do
