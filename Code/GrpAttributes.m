@@ -957,7 +957,7 @@ intrinsic order_stats(G::LMFDBGrp) -> Any
     return [[k, v] : k -> v in A];
 end intrinsic;
 
-intrinsic SemidirectFactorization(G::LMFDBGrp : direct := false) -> Any
+intrinsic SemidirectFactorization(G::LMFDBGrp : direct := false) -> Any, Any, Any
   {Returns true if G is a nontrivial semidirect product, along with factors; otherwise returns false.}
   GG := Get(G, "MagmaGrp");
   ordG := Get(G, "order");
