@@ -1,0 +1,3 @@
+centralizer|counter|group|label|order|powers|representative|size
+text|integer|text|text|integer|integer[]|numeric|integer
+

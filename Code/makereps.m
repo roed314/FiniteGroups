@@ -110,7 +110,7 @@ intrinsic getirrreps(G::LMFDBGrp: Field:="C")->Any
   return <z : z in res>;
 end intrinsic;
 
-intrinsic CCreps(G::LMFDBGrp)->Any
+intrinsic CCReps(G::LMFDBGrp)->Any
   {Get irreducible matrix representations}
   im:=getirrreps(G: Field:="C");
   cct:=Get(G, "CCCharacters");
@@ -122,22 +122,27 @@ intrinsic CCreps(G::LMFDBGrp)->Any
   for rep in im do
     nag:=Nagens(rep[2]);
     data:= <<g . j, ActionGenerator(rep[2], j)> : j in [1..nag]>;
-    Append(~result, <rep[1], rep[3], data>);
+    Append(~result, <rep[1], rep[3], data,rep[2]>);
   end for;
-
-  /* myimages contains faithful images for this group stored as
-     label -> <dimension, generator list>
+  /* result is a list of
+    <Magma character, t-number, <group element,matrix>, G-module >
   */
-  myimages:=AssociativeArray(); 
-  System("mkdir -p Creps");
+
+  alllabels := Get(G, "CCRepLabels");
+
   result2:=<>;
   for rep in result do
   // Working on rep_label
-    replabel:= rep_label(rep[1], [z[2] : z in rep[3]], myimages, K);
-    r3 := [z[2] : z in rep[3]];
+    replabel:= alllabels[Get(rep[1], "label")];
+    r3 := [z[2] : z in rep[3]]; // Just matrices
     if replabel eq Get(rep[1], "label") then
       r := New(LMFDBRepCC);
+      r`dim := Integers() ! Degree(Get(rep[1], "MagmaChtr"));
+      gln:= GL(r`dim, BaseRing(rep[4]));
       r`group := Get(G, "label");
+      //asub:=sub<gln|r3>;
+      //r4:= random_gens(asub);
+
       denoms:=[0 : z in r3];
       gens2:=[* 0 : z in r3*];
       for j:=1 to #r3 do
@@ -145,17 +150,19 @@ intrinsic CCreps(G::LMFDBGrp)->Any
         denoms[j]:=d;
         gens2[j]:=dm;
       end for;
-      r`gens := [z : z in gens2];
+      assert r`dim eq Nrows(gens2[1]);
+      r`gens := [WriteCyclotomicMatrix(z) : z in gens2];
+      r`MagmaRep:=rep[4];
+      r`order:=Get(G,"order");
+      r`MagmaGrp:=sub<gln|r3>;
+      r`cyc_order_traces:=Get(rep[1], "cyclotomic_n");
       r`denominators:=denoms;
-      r`dim := Integers() ! Degree(Get(rep[1], "MagmaChtr"));
-      assert r`dim eq Nrows(r`gens[1]);
       r`irreducible:= true;
       r`label := replabel;
       r`decomposition:= [<r`label, 1>];
-      r`order := Get(G, "order");
+      r`trace_field:=Get(rep[1], "field");
+      r`traces := [WriteCyclotomicElement(Trace(z)) : z in gens2];
       r`E:=e;
-      myimages[replabel] := <r`dim, r3>;
-      saverep(r);
       Append(~result2, r);
     end if;
     // Write to a file to track character label -> rep label
@@ -171,7 +178,7 @@ end intrinsic;
    characters which are multiples of the values in the rational
    character table.
  */
-intrinsic QQreps(G::LMFDBGrp)->Any
+intrinsic QQReps(G::LMFDBGrp)->Any
   {Get irreducible matrix representations}
   im:=getirrreps(G: Field:="Q");
   cct:=Get(G, "QQCharacters");
@@ -180,8 +187,12 @@ intrinsic QQreps(G::LMFDBGrp)->Any
   for rep in im do
     nag:=Nagens(rep[2]);
     data:= <<g . j, ActionGenerator(rep[2], j)> : j in [1..nag]>;
-    Append(~result, <rep[1], rep[3], data>);
+    Append(~result, <rep[1], rep[3], data, rep[2]>);
   end for;
+  /* Entries in result are now
+     <character , t-value , <<generator, matrix>,...>, g-module >
+  */
+  alllabels := Get(G, "CCRepLabels");
 
   /* myimages contains faithful images for this group stored as
      label -> <dimension, generator list>
@@ -191,12 +202,17 @@ intrinsic QQreps(G::LMFDBGrp)->Any
   result2:=<>;
   for rep in result do
     replabel:= rep_label(rep[1], [z[2] : z in rep[3]], myimages);
-    r3 := [z[2] : z in rep[3]];
     if replabel eq Get(rep[1], "label") then
+      r3 := [z[2] : z in rep[3]];
+      gln:= GL(Nrows(r3[1]), Rationals());
       r := New(LMFDBRepQQ);
       r`group := Get(G, "label");
-      r`gens := [castZ(geninfo) : geninfo in r3];
-      r`dim := Integers() ! Degree(Get(rep[1], "MagmaChtr"));
+      gentmp := [castZ(geninfo) : geninfo in r3];
+      asub:=sub<gln|gentmp>;
+      gentmp:= random_gens(asub);
+      r`gens := [[[u[j,k]: k in [1..Nrows(u)]] : j in [1..Nrows(u)]] : u in gentmp];
+      //r`gens := [castZ(geninfo) : geninfo in r3];
+      r`dim := #(r`gens[1]);
       r`carat_label := None();
       r`c_class := None();
       r`irreducible:= true;
@@ -206,6 +222,53 @@ intrinsic QQreps(G::LMFDBGrp)->Any
       myimages[replabel] := <r`dim, r3>;
       saverep(r);
       Append(~result2, r);
+
+      // Now need to build an entry for the complex rep table
+      // Step 1, the label
+      schur:=r`dim/Get(rep[1],"MagmaChtr")[1];
+      decomp:= decompinC(schur*Get(rep[1], "MagmaChtr"), Get(G, "CCCharacters"));
+      decomp:= <<alllabels[z[1]],z[2]> : z in decomp>;
+      clabel:=Get(G, "label")*".";
+      joinme:=[];
+      tot:=0; // irred if tot ends up as 1
+      for l in decomp do
+        boo,_,newpart:=Regexp("^[^.]*\.[^.]*\.(.*)$", l[1]);
+        assert boo;
+        newpart:=newpart[1];
+        for k:=1 to l[2] do
+          Append(~joinme, newpart);
+        end for;
+        tot+:=l[2];
+      end for;
+      clabel *:= Join(joinme, "-");
+      r`c_class := clabel;
+
+      if tot gt 1 then // Need to create a complex rep
+        rc := New(LMFDBRepCC);
+        rc`dim := r`dim;
+        gln:= GL(r`dim, Rationals());
+        rc`MagmaGrp:=sub<gln|r3>;
+        rc`group := Get(G, "label");
+        rc`cyc_order_mat:=1;
+        rc`gens := [[[[[z,0]] : z in u] : u in v] : v in r`gens];
+        rc`MagmaRep:=rep[4];
+        rc`order:=Get(G,"order");
+        //rc`MagmaGrp:=sub<gln|r3>;
+        rc`cyc_order_traces:=1;
+        rc`denominators:=[1: z in r3];
+        rc`irreducible:= false;
+        rc`label := clabel;
+        rc`decomposition:= [z : z in decomp];
+        rc`trace_field:= [0,1];
+        rc`traces := [[[&+[z[i,i]:i in [1..#z]],0]] : z in r`gens];
+        rc`E:=1;
+        if not HasAttribute(G, "QQRepsAsCC") then
+          G`QQRepsAsCC := <>;
+        end if;
+        rlist:=G`QQRepsAsCC;
+        Append(~rlist, rc);
+        G`QQRepsAsCC := rlist;
+      end if;
     end if;
     // Write to a file to track character label -> rep label
     write("QQchars2reps", Get(rep[1], "label") * " " *replabel);
@@ -301,6 +364,17 @@ intrinsic rep_label(C::LMFDBGrpChtrCC, r::Any, A::Assoc, K::Any)->MonStgElt
   end if;
 end intrinsic;
 
+intrinsic decompinC(achar::Any, cct::Any)->Any
+ {Decompose a character into complex irreducible characters given by cct}
+ answer:=<>;
+ for j:=1 to #cct do
+   ip:= Integers() ! InnerProduct(achar, Get(cct[j], "MagmaChtr"));
+   if ip gt 0 then
+     Append(~answer, <Get(cct[j], "label"), ip>);
+   end if;
+ end for;
+ return answer;
+end intrinsic;
 
 intrinsic castZ(m::Any) -> Any
   {Take a matrix with entries in Q and cast them to Z.  They should already
@@ -317,23 +391,50 @@ end intrinsic;
 intrinsic saverep(r::LMFDBRepQQ)
   {}
   mm:=Get(r, "gens");
-  mm:=[WriteIntegralMatrix(geninfo) : geninfo in mm];
+  //mm:=[WriteIntegralMatrix(geninfo) : geninfo in mm];
   mystr:=Sprintf("%o$%o",Get(r, "label"), mm);
   mystr:=DelSpaces(mystr);
   mystr:=ReplaceString(mystr, "$", " ");
   write("Qreps/"*Get(r, "group"), mystr);
 end intrinsic;
 
-intrinsic saverep(r::LMFDBRepCC)
-  {}
-  mm:=Get(r, "gens");
-  E:=Get(r, "E");
-  denoms:=Get(r, "denominators");
-  mm:=[WriteCyclotomicMatrix(geninfo) : geninfo in mm];
-  mystr:=Sprintf("%o$%o$%o$%o",Get(r, "label"), denoms, E, mm);
-  mystr:=DelSpaces(mystr);
-  mystr:=ReplaceString(mystr, "$", " ");
-  write("Creps/"*Get(r, "group"), mystr);
+intrinsic min_gen_set(g::Any, s::Any)->Any
+  {Find a minimal subset of s which generates the group g}
+  n:=Order(g);
+  keepers:=[true : a in s];
+  for i:=1 to #s do
+    keepers[i]:=false;
+    h:=sub<g| [s[j] : j in [1..#s] | keepers[j]]>;
+    if Order(h) ne n then keepers[i]:=true; end if;
+  end for;
+  return [s[i] : i in [1..#s] | keepers[i]];
+end intrinsic;
+
+intrinsic random_gens(g::Any) -> Any
+  {Get a random list of generators for g}
+  ResetRandomSeed();
+  n:=Order(g);
+  if n eq 1 then return [Id(g)]; end if;
+  max_tries:=5;
+  best_k:=n+1;
+  best:=[];
+  for jj:=1 to max_tries do
+    s1:=[g . i : i in [1..NumberOfGenerators(g)]];
+    rlist:=initRandomGroupElement(s1);
+    h1:=Id(g);
+    randomG(~rlist, ~h1);
+    s:=[h1];
+    while Order(sub<g|s>) lt n do
+      randomG(~rlist,~h1);
+      Append(~s, h1);
+    end while;
+    current:= min_gen_set(g,s);
+    if #current lt best_k then
+      best_k:= #current;
+      best:= current;
+    end if;
+  end for;
+  return best;
 end intrinsic;
 
 

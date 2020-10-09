@@ -20,14 +20,17 @@ intrinsic indicator(M::LMFDBRepCC) -> FldRatElt
   for g in Mat do
     ind +:= Trace(g^2);
   end for;
-  return (1/Get(M,'order'))*ind;
+  return Integers() ! (ind/Get(M,"order"));
 end intrinsic;
 
 intrinsic cyc_order_mat(M::LMFDBRepCC) -> RngIntElt
   {an integer m so that the entries in the gens column lie in CyclotomicField(m)}
   MM := M`MagmaRep;
   MMmin := AbsoluteModuleOverMinimalField(MM);
-  return Conductor(CoefficientRing(MMmin)); // or CyclotomicOrder?
+  rng:= CoefficientRing(MMmin);
+  if rng eq Rationals() then return 1; end if;
+  if Type(rng) eq FldCyc then return Conductor(rng); end if;
+  return Norm(Conductor(AbelianExtension(rng)));
 end intrinsic;
 
 intrinsic schur_index(M::LMFDBRepCC) -> RngIntElt
@@ -55,6 +58,14 @@ intrinsic WriteCyclotomicElement(u::FldCycElt) -> SeqEnum
   K<z> := CyclotomicField(CyclotomicOrder(Parent(u)) : Sparse := false);
   m := CyclotomicOrder(K);
   u_seq := Eltseq(K!u);
+  if IsPrime(m) then
+    u_seq := u_seq cat [0];
+    cnt:=0;
+    for j in u_seq do if j ne 0 then cnt +:=1; v:=j; end if; end for;
+    if cnt gt m/2 then
+      for j:=1 to #u_seq do u_seq[j] -:= v; end for;
+    end if;
+  end if;
   cs := [];
   for i := 1 to #u_seq do
     if u_seq[i] ne 0 then
@@ -66,6 +77,7 @@ intrinsic WriteCyclotomicElement(u::FldCycElt) -> SeqEnum
       Append(~cs, [u_seq[i], e]);
     end if;
   end for;
+  if cs eq [] then return [[0,0]]; end if;
   return cs;
 end intrinsic;
 

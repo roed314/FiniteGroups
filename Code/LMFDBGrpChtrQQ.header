@@ -1,0 +1,3 @@
+cdim|counter|faithful|group|image|indicator|label|multiplicity|nt|qdim|qvalues|schur_index
+smallint|smallint|boolean|text|text|smallint|text|smallint|integer[]|smallint|integer[]|smallint
+

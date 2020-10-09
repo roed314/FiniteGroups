@@ -957,8 +957,8 @@ intrinsic order_stats(G::LMFDBGrp) -> Any
     return [[k, v] : k -> v in A];
 end intrinsic;
 
-intrinsic semidirect_product(G::LMFDBGrp : direct := false) -> Any
-  {Returns true if G is a nontrivial semidirect product; otherwise returns false.}
+intrinsic SemidirectFactorization(G::LMFDBGrp : direct := false) -> Any
+  {Returns true if G is a nontrivial semidirect product, along with factors; otherwise returns false.}
   GG := Get(G, "MagmaGrp");
   ordG := Get(G, "order");
   if ordG eq 1 then return false; end if;
@@ -977,17 +977,88 @@ intrinsic semidirect_product(G::LMFDBGrp : direct := false) -> Any
     for K in comps do
       KK := Get(K, "MagmaSubGrp");
       if #(NN meet KK) eq 1 then
-        return true;
+        return true, N, K;
         //print N, K;
       end if;
     end for;
   end for;
-  return false;
+  return false, _, _;
+end intrinsic;
+
+intrinsic DirectFactorization(G::LMFDBGrp) -> Any
+  {Returns true if G is a nontrivial direct product, along with factors; otherwise returns false.}
+  return SemidirectFactorization(G : direct := true);
+end intrinsic;
+
+intrinsic semidirect_product(G::LMFDBGrp) -> Any
+  {Returns true if G is a nontrivial semidirect product; otherwise returns false.}
+  fact_bool, _, _ := SemidirectFactorization(G);
+  return fact_bool;
 end intrinsic;
 
 intrinsic direct_product(G::LMFDBGrp) -> Any
   {Returns true if G is a nontrivial direct product; otherwise returns false.}
-  return semidirect_product(G : direct := true);
+  fact_bool, _, _ := DirectFactorization(G);
+  return fact_bool;
+end intrinsic;
+
+intrinsic direct_factorization(G::LMFDBGrp) -> SeqEnum
+  {}
+  fact_bool, Nsub, Ksub := DirectFactorization(G);
+  if not fact_bool then
+    return [];
+  end if;
+  N := LabelToLMFDBGrp(Get(Nsub, "subgroup"));
+  K := LabelToLMFDBGrp(Get(Ksub, "subgroup"));
+  facts := [N,K];
+  irred_facts := [];
+  all_irred := false;
+  while not all_irred do
+    new_facts :=[];
+    for fact in facts do
+      split_bool, Nisub, Kisub := DirectFactorization(fact);
+      if not split_bool then
+        Append(~irred_facts, fact);
+      else
+        Ni := LabelToLMFDBGrp(Get(Nisub, "subgroup"));
+        Ki := LabelToLMFDBGrp(Get(Kisub, "subgroup"));
+        new_facts cat:= [Ni,Ki];
+      end if;
+    end for;
+    if #new_facts eq 0 then
+      all_irred := true;
+    end if;
+    facts := new_facts;
+  end while;
+  // check that they're really isomorphic
+  GG := Get(G, "MagmaGrp");
+  // The factors might not be in the same magma "universe" e.g., for 120.35
+  // Can't have a SeqEnum of these, so you can't take apply DirectProduct
+  //irred_facts_mag := [ Get(el, "MagmaGrp") : el in irred_facts ];
+  //assert IsIsomorphic(GG, DirectProduct(irred_facts_mag));
+
+  return CollectDirectFactors(irred_facts);
+end intrinsic;
+
+intrinsic CollectDirectFactors(facts::SeqEnum) -> SeqEnum
+  {Group together factors in direct product, returning a sequence of pairs [label, exponent]}
+  pairs := [];
+  for fact in facts do
+    label := Get(fact, "label");
+    old_bool := false;
+    for i := 1 to #pairs do
+      if label eq pairs[i][1] then
+        fact_ind := i;
+        old_bool := true;
+      end if;
+    end for;
+    if old_bool then
+      pairs[fact_ind][2] +:= 1;
+    else
+      Append(~pairs, [* Get(fact, "label"), 1 *]);
+    end if;
+  end for;
+  return pairs;
 end intrinsic;
 
 intrinsic CCpermutation(G::LMFDBGrp) -> SeqEnum
@@ -1135,13 +1206,20 @@ intrinsic characters_add_sort_and_labels(G::LMFDBGrp, cchars::Any, rchars::Any) 
   // Want sort list to be <degree, size of Gal orbit, n, t, lex info, ...>
   // We give rational character values first, then complex
   // Priorities by lex sort
-  forlexsortrat:=Flat(<<rct[comp2rat[j]][perm[k]] : j in [1..#rct]> : k in [1..#ct]>);
-  forlexsort:=<Flat(<<Round(10^29*Real(ct[j,perm[k]])), Round(10^29*Imaginary(ct[j,perm[k]]))> : k in [1..#ct]>) : j in [1..#ct]>;
+  forlexsortrat:=<<rct[comp2rat[j]][perm[k]] : k in [1..#ct]> : j in [1..#ct]>;
+  forlexsort:=<Flat(<<Round(10^25*Real(ct[j,perm[k]])), Round(10^25*Imaginary(ct[j,perm[k]]))> : k in [1..#ct]>) : j in [1..#ct]>;
+//"forlexsortrat";
+//forlexsortrat;
+//"forlexsort";
+//forlexsort;
   // We add three fields at the end. The last is old index, before sorting.
   // Before that is the old index in the rational table
   // Before that is the old index of its complex conjugate
-  sortme:=<<Degree(ct[j]), #matching[comp2rat[j]], ntlist[j][1], ntlist[j][2]> cat forlexsortrat
+  sortme:=<<Degree(ct[j]), #matching[comp2rat[j]], ntlist[j][1], ntlist[j][2]> cat forlexsortrat[j]
      cat forlexsort[j] cat <0,0,0> : j in [1..#ct]>;
+//"sortme";
+//sortme;
+//"done";
   len:=#sortme[1];
   for j:=1 to #ct do 
     sortme[j][len] := j; 
@@ -1155,6 +1233,8 @@ intrinsic characters_add_sort_and_labels(G::LMFDBGrp, cchars::Any, rchars::Any) 
   end for;
   sortme:= [[a : a in b] : b in sortme];
   Sort(~sortme);
+//"did it";
+//sortme;
   // Now step through to figure out the order
   donec:={};
   doneq:={};
@@ -1179,16 +1259,16 @@ intrinsic characters_add_sort_and_labels(G::LMFDBGrp, cchars::Any, rchars::Any) 
         Include(~doneq, dat[len-1]);
         rindex:=Integers()!dat[len-1];
         rchars[rindex]`counter :=rtotalcnt;
-        rchars[rindex]`label:=Sprintf("%o.%o%o.%o",glabel,dat[1],rcode,dat[2]);
-        rchars[rindex]`nt:=[dat[2],dat[3]];
-        rchars[rindex]`values:=[Integers()! dat[j+4] : j in [1..#ct]];
+        rchars[rindex]`label:=Sprintf("%o.%o%o",glabel,dat[1],rcode);
+        rchars[rindex]`nt:=[dat[3],dat[2]];
+        rchars[rindex]`qvalues:=[Integers()! dat[j+4] : j in [1..#ct]];
       end if;
       ccnt+:=1;
       ctotalcnt+:=1;
       Include(~donec, dat[len]);
       cindex:=Integers()!dat[len];
       cchars[cindex]`counter:=ctotalcnt;
-      cchars[cindex]`nt:=[dat[2],dat[3]];
+      cchars[cindex]`nt:=[dat[3],dat[2]];
       cextra:= (dat[2] eq 1) select "" else Sprintf("%o", ccnt);
       cchars[cindex]`label:=Sprintf("%o.%o%o", glabel, dat[1],rcode)*cextra;
       // Encode values
@@ -1197,14 +1277,15 @@ intrinsic characters_add_sort_and_labels(G::LMFDBGrp, cchars::Any, rchars::Any) 
       cyclon:=CyclotomicOrder(basef);
       Kn:=CyclotomicField(cyclon);
       cchars[cindex]`cyclotomic_n:=cyclon;
-      cchars[cindex]`values:=[PrintRelExtElement(Kn!thischar[perm[z]]) : z in [1..#thischar]];
+      //cchars[cindex]`values:=[PrintRelExtElement(Kn!thischar[perm[z]]) : z in [1..#thischar]];
+      cchars[cindex]`values:=[WriteCyclotomicElement(Kn!thischar[perm[z]]) : z in [1..#thischar]];
       if dat[len-2] notin donec then
         ccnt+:=1;
         ctotalcnt+:=1;
         cindex:=Integers()!dat[len-2];
         Include(~donec, dat[len-2]);
         cchars[cindex]`counter:=ctotalcnt;
-        cchars[cindex]`nt:=[dat[2],dat[3]];
+        cchars[cindex]`nt:=[dat[3],dat[2]];
         cextra:= (dat[2] eq 1) select "" else Sprintf("%o", ccnt);
         cchars[cindex]`label:=Sprintf("%o.%o%o", glabel, dat[1],rcode)*cextra;
         thischar:=ct[cindex];
@@ -1212,7 +1293,7 @@ intrinsic characters_add_sort_and_labels(G::LMFDBGrp, cchars::Any, rchars::Any) 
         cyclon:=CyclotomicOrder(basef);
         Kn:=CyclotomicField(cyclon);
         cchars[cindex]`cyclotomic_n:=cyclon;
-        cchars[cindex]`values:=[PrintRelExtElement(Kn!thischar[perm[z]]) : z in [1..#thischar]];
+        cchars[cindex]`values:=[WriteCyclotomicElement(Kn!thischar[perm[z]]) : z in [1..#thischar]];
       end if;
     end if;
   end for;

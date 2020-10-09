@@ -1,15 +1,15 @@
-TextCols := ["abelian_quotient", "acted", "actor", "ambient", "aut_group", "bravais_class", "c_class", "center_label", "central_quotient", "commutator_label", "coset_action_label", "crystal_symbol", "factor1", "factor2", "family", "frattini_label", "frattini_quotient", "group", "image", "knowl", "label", "magma_cmd", "name", "old_label", "outer_group", "product", "proj_label", "projective_image", "q_class", "quotient", "quotient_action_image", "subgroup", "tex_name", "trace_field", "q_character","carat_label"];
+TextCols := ["abelian_quotient", "acted", "actor", "ambient", "aut_group", "bravais_class", "c_class", "center_label", "central_quotient", "commutator_label", "coset_action_label", "crystal_symbol", "factor1", "factor2", "family", "frattini_label", "frattini_quotient", "group", "image", "knowl", "label", "magma_cmd", "name", "old_label", "outer_group", "product", "proj_label", "projective_image", "q_class", "quotient", "quotient_action_image", "subgroup", "tex_name", "q_character","carat_label"];
 
 IntegerCols := ["alias_spot", "ambient_order", "arith_equiv", "aut_counter", "aut_order", "auts", "cdim", "commutator_count", "composition_length", "conjugacy_class_count", "count", "counter", "counter_by_index", "cyc_order_mat", "cyc_order_traces", "cyclotomic_n", "degree", "derived_length", "diagram_x", "dim", "elementary", "elt_rep_type", "eulerian_function", "exponent", "extension_counter", "hall", "hyperelementary", "indicator", "mobius_function", "multiplicity", "n", "ngens", "nilpotency_class", "number_characteristic_subgroups", "number_conjugacy_classes", "number_normal_subgroups", "number_subgroup_classes", "number_subgroups", "order", "outer_order", "parity", "pc_code", "pgroup", "priority", "q", "qdim", "quotient_action_kernel", "quotient_order", "quotients_complenetess", "rank", "rep", "schur_index", "sibling_completeness", "size", "smallrep", "subgroup_index_bound", "subgroup_order", "sylow", "t", "transitive_degree"];
 
 TextListCols := ["composition_factors", "special_labels"];
 
-IntegerListCols := ["contained_in", "contains", "cycle_type", "denominators", "factors_of_aut_order", "factors_of_order", "faithful_reps", "gens", "order_stats", "powers", "primary_abelian_invariants", "schur_multiplier", "smith_abelian_invariants", "subgroup_fusion", "nt","values","field","gens_used"];
+IntegerListCols := ["contained_in", "contains", "cycle_type", "denominators", "factors_of_aut_order", "factors_of_order", "faithful_reps", "order_stats", "powers", "primary_abelian_invariants", "schur_multiplier", "smith_abelian_invariants", "subgroup_fusion", "nt","qvalues","field","trace_field", "gens_used"];
 
 BoolCols := ["Agroup", "Zgroup", "abelian", "all_subgroups_known", "almost_simple", "central", "central_product", "characteristic", "cyclic", "direct", "direct_product", "faithful", "finite_matrix_group", "indecomposible", "irreducible", "maximal", "maximal_normal", "maximal_subgroups_known", "metabelian", "metacyclic", "minimal", "minimal_normal", "monomial", "nilpotent", "normal", "normal_subgroups_known", "outer_equivalence", "perfect", "prime", "primitive", "quasisimple", "rational", "semidirect_product", "simple", "solvable", "split", "stem", "subgroup_inclusions_known", "supersolvable", "sylow_subgroups_known", "wreath_product", "standard_generators"];
 
 // creps has a gens which is not integer[]
-JsonbCols := ["quotient_fusion","decomposition"]; // , "gens"];
+JsonbCols := ["quotient_fusion","decomposition","traces", "gens","values","direct_factorization"];
 
 PermsCols := ["perm_gens"];
 SubgroupCols := ["centralizer", "kernel", "core", "center", "normal_closure", "normalizer", "sub1", "sub2"];
@@ -281,7 +281,7 @@ intrinsic SetGrp(G::LMFDBGrp)
     end if;
 end intrinsic;
 
-intrinsic LoadGrp(line::MonStgElt, attrs::SeqEnum: sep:="|") -> LMFDBGrp
+intrinsic LoadGrp(line::MonStgElt, attrs::SeqEnum : sep:="|") -> LMFDBGrp
     {Load an LMFDBGrp from a row of a file, setting stored attributes correctly}
     data := Split(line, sep: IncludeEmpty := true);
     error if #data ne #attrs, "Wrong size data line";
@@ -357,7 +357,7 @@ intrinsic SaveLMFDBObject(G::Any : attrs:=[], sep:="|") -> MonStgElt
     saved_attrs := [];
     vprint User1, 2: "***", Type(G);
     for attr in attrs do
-        //"Attr", attr;
+        // "Attr", attr;
         vprint User1, 2: attr;
         t := Cputime();
         saved := SaveAttr(attr, Get(G, attr), G);
@@ -417,18 +417,6 @@ intrinsic WriteHeaders(typ::Any : attrs:=[], sep:="|", filename:="")
     write(filename, s1 * "\n"*s2*"\n": rewrite:=true);
 end intrinsic;
 
-
-intrinsic WriteLMFDBObject(G::Any, filename::MonStgElt : attrs:=[], sep:="|")
-  {Write an LMFDB object to a file}
-    if attrs eq [] then
-        attrs := DefaultAttributes(Type(G));
-    end if;
-    for attr in attrs do
-        assert Type(SaveAttr(attr, Get(G, attr), G)) eq MonStgElt;
-    end for;
-    write(filename, Join([SaveAttr(attr, Get(G, attr), G) : attr in attrs], sep));
-end intrinsic;
-
 intrinsic PrintData(G::LMFDBGrp: sep:="|") -> Tup
     {}
     return <[SaveLMFDBObject(G: sep:=sep)],
@@ -436,4 +424,16 @@ intrinsic PrintData(G::LMFDBGrp: sep:="|") -> Tup
             [SaveLMFDBObject(cc: sep:=sep) : cc in Get(G, "ConjugacyClasses")],
             [SaveLMFDBObject(cr: sep:=sep) : cr in Get(G, "CCCharacters")],
             [SaveLMFDBObject(cr: sep:=sep) : cr in Get(G, "QQCharacters")]>;
+end intrinsic;
+
+intrinsic PrintGLnData(G::LMFDBGrp: sep:="|") -> Tup
+    {}
+    qreps := Get(G, "QQReps");
+    creps := Get(G, "CCReps");
+    if HasAttribute(G, "QQRepsAsCC") then
+      other:= G`QQRepsAsCC;
+      creps := creps cat other;
+    end if;
+    return <[SaveLMFDBObject(qr: sep:=sep) : qr in qreps],
+            [SaveLMFDBObject(cr: sep:=sep) : cr in creps]>;
 end intrinsic;

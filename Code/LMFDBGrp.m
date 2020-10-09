@@ -20,10 +20,12 @@ declare attributes LMFDBGrp:
   CCpermutation,
   CCpermutationInv,
   CCCharacters,
+  CCRepLabels,
   QQCharacters,
   Generators,
   QQReps,
   CCReps,
+  QQRepsAsCC,
   Characters,
   label,
   old_label,
@@ -107,6 +109,7 @@ declare attributes LMFDBGrp:
   central_product,
   finite_matrix_group,
   direct_product,
+  direct_factorization,
   semidirect_product,
   composition_factors,
   composition_length;
@@ -197,6 +200,7 @@ declare attributes LMFDBSubGrp:
   generators,
   //generator_images,
   standard_generators,
+  diagram_x,
   projective_image;
 
 intrinsic Print(H::LMFDBSubGrp)
@@ -403,6 +407,7 @@ declare attributes LMFDBGrpChtrCC:
   Grp,
   MagmaChtr,
   cyclotomic_n,
+  q_character,
   values,
   Image_object,
   label,
@@ -419,9 +424,10 @@ declare attributes LMFDBGrpChtrCC:
 
 intrinsic Print(Chi::LMFDBGrpChtrCC)
   {Print LMFDBGrpChtrCC}
-  printf "LMFDBGrpChtrCC %o:\n", Get(Chi, "label");
-  printf "  Dimension %o:\n", Get(Chi, "dim");
-  printf "  Group %o:", GetGrp(Chi);
+  printf "LMFDBGrpChtrCC: %o\n", Get(Chi, "label");
+  printf "  Dimension: %o\n", Get(Chi, "dim");
+  printf "  Group %o\n", GetGrp(Chi);
+  printf "  Values: %o", Get(Chi,"MagmaChtr");
 end intrinsic;
 
 declare verbose LMFDBGrpChtrQQ, 1;
@@ -429,7 +435,7 @@ declare type LMFDBGrpChtrQQ;
 declare attributes LMFDBGrpChtrQQ:
   Grp,
   MagmaChtr,
-  values,
+  qvalues,
   Image_object,
   label,
   group,

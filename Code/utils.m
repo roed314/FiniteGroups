@@ -18,8 +18,13 @@ end function;
 */
 
 intrinsic ReplaceString(s::MonStgElt, fs::MonStgElt, ts::MonStgElt) -> MonStgElt
-    {Return a string obtained from the string s by replacing all occurences of the single character fs with ts.}
-    return Join(Split(s, fs), ts);
+    {Return a string obtained from the string s by replacing all occurences of the SINGLE character fs with ts.}
+    assert #fs eq 1;
+    L := Split(s, fs);
+    // Split doesn't deal with fs at the beginning or end of the string correctly.
+    if s[1] eq fs then Insert(~L, 1, ""); end if;
+    if s[#s] eq fs then Append(~L, ""); end if;
+    return Join(L, ts);
 end intrinsic;
 
 intrinsic ReplaceString(s::MonStgElt, fs::[MonStgElt], ts::[MonStgElt]) -> MonStgElt

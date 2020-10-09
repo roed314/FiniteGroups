@@ -1,5 +1,4 @@
-{
-  LMFDBGrp.m
+{ LMFDBGrp.m
   Basics.m
   Hash.m
   Samples.m
@@ -21,4 +20,5 @@
   LC.m
   mb.m
   mb-gp-elts.m
+  creplabels.m
 }

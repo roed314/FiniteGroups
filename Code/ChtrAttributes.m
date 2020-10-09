@@ -49,6 +49,12 @@ intrinsic image(Chi::LMFDBGrpChtrCC) -> Any
   // need to use associated LMFDBRepCC...
 end intrinsic;
 
+intrinsic q_character(Chi::LMFDBGrpChtrCC) -> Any
+  {}
+  return None();
+  // need to use associated LMFDBRepCC...
+end intrinsic;
+
 intrinsic image(Chi::LMFDBGrpChtrQQ) -> Any
   {}
   return None();

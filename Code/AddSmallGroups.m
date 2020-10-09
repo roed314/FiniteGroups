@@ -24,10 +24,12 @@ files := [Folder * "groups/" * Proc * ".txt",
           Folder * "subgroups/" * Proc * ".txt",
           Folder * "groups_cc/" * Proc * ".txt",
           Folder * "characters_cc/" * Proc * ".txt",
-          Folder * "characters_qq/" * Proc * ".txt"];
+          Folder * "characters_qq/" * Proc * ".txt",
+          Folder * "glnc/" * Proc * ".txt",
+          Folder * "glnq/" * Proc * ".txt" ];
 logfile := Folder * "logs/" * Proc * ".txt";
 
-for f in ["groups", "subgroups", "groups_cc", "characters_cc", "characters_qq", "logs"] do
+for f in ["groups", "subgroups", "groups_cc", "characters_cc", "characters_qq", "logs","glnc","glnq"] do
   System("mkdir -p "* Folder * f);
 end for;
 
@@ -54,6 +56,20 @@ procedure WriteSmallGroup(N, i)
         end for;
     end for;
 end procedure;
+
+procedure WriteSmallGroupGLnx(N, i) // May use later
+    PrintFile(logfile, Sprintf("Starting GLn small group %o.%o", N, i));
+    t0 := Cputime();
+    print_data := MakeSmallGroupGLnData(N, i);
+    t1 := Cputime();
+    PrintFile(logfile, Sprintf("GLn small group %o.%o took %o s", N, i, t1-t0));
+    for j in [1..2] do
+        for line in print_data[j] do
+            PrintFile(files[5+j], line);
+        end for;
+    end for;
+end procedure;
+
 
 for N in [Nlower..(Nupper-1)] do
     ThisN := NumberOfSmallGroups(N);
