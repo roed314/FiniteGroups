@@ -1654,167 +1654,173 @@ intrinsic RePresentLat(G::LMFDBGrp, L::SubGrpLat)
     // * fewer conjugacy relations
     // * relative orders are non-increasing
     // * RHS of conjugacy relations are "deeper"
-    relcnt := AssociativeArray();
-    for i in [1..#gens] do
-        c := 0;
-        for tup in gens[i] do
-            if IsIdentity(tup[1]^tup[2]) then
-                c +:= 1;
-            end if;
-        end for;
-        if not IsDefined(relcnt, c) then relcnt[c] := []; end if;
-        Append(~relcnt[c], i);
-    end for;
-    // Only keep chains with the maximum number of identity relative powers
-    gens := [gens[i] : i in relcnt[Max(Keys(relcnt))]];
-    //print "#gensB", #gens;
+    if Get(G, "order") eq 1 then
+      G`MagmaOptimized := GG;
+      G`OptimizedIso := IdentityHomomorphism(GG);
+      G`gens_used := [];
+    else
+      relcnt := AssociativeArray();
+      for i in [1..#gens] do
+          c := 0;
+          for tup in gens[i] do
+              if IsIdentity(tup[1]^tup[2]) then
+                  c +:= 1;
+              end if;
+          end for;
+          if not IsDefined(relcnt, c) then relcnt[c] := []; end if;
+          Append(~relcnt[c], i);
+      end for;
+      // Only keep chains with the maximum number of identity relative powers
+      gens := [gens[i] : i in relcnt[Max(Keys(relcnt))]];
+      //print "#gensB", #gens;
 
-    commut := AssociativeArray();
-    for i in [1..#gens] do
-        c := 0;
-        for a in [1..#gens[i]] do
-            for b in [a+1..#gens[i]] do
-                g := gens[i][a][1];
-                h := gens[i][b][1];
-                if IsIdentity(g*h*g^-1*h^-1) then
-                    c +:= 1;
-                end if;
-            end for;
-        end for;
-        if not IsDefined(commut, c) then commut[c] := []; end if;
-        Append(~commut[c], i);
-    end for;
-    // Only keep chains that have the most commuting pairs of generators
-    gens := [gens[i] : i in commut[Max(Keys(commut))]];
-    //print "#gensC", #gens;
+      commut := AssociativeArray();
+      for i in [1..#gens] do
+          c := 0;
+          for a in [1..#gens[i]] do
+              for b in [a+1..#gens[i]] do
+                  g := gens[i][a][1];
+                  h := gens[i][b][1];
+                  if IsIdentity(g*h*g^-1*h^-1) then
+                      c +:= 1;
+                  end if;
+              end for;
+          end for;
+          if not IsDefined(commut, c) then commut[c] := []; end if;
+          Append(~commut[c], i);
+      end for;
+      // Only keep chains that have the most commuting pairs of generators
+      gens := [gens[i] : i in commut[Max(Keys(commut))]];
+      //print "#gensC", #gens;
 
-    ooo := AssociativeArray();
-    for i in [1..#gens] do
-        c := 0;
-        for a in [1..#gens[i]] do
-            for b in [a+1..#gens[i]] do
-                r := gens[i][a][2];
-                s := gens[i][b][2];
-                if r lt s then
-                    c +:= 1;
-                end if;
-            end for;
-        end for;
-        if not IsDefined(ooo, c) then ooo[c] := []; end if;
-        Append(~ooo[c], i);
-    end for;
-    // Only keep chains that have the minimal number of out-of-order relative orders
-    gens := [gens[i] : i in ooo[Min(Keys(ooo))]];
-    //print "#gensD", #gens;
+      ooo := AssociativeArray();
+      for i in [1..#gens] do
+          c := 0;
+          for a in [1..#gens[i]] do
+              for b in [a+1..#gens[i]] do
+                  r := gens[i][a][2];
+                  s := gens[i][b][2];
+                  if r lt s then
+                      c +:= 1;
+                  end if;
+              end for;
+          end for;
+          if not IsDefined(ooo, c) then ooo[c] := []; end if;
+          Append(~ooo[c], i);
+      end for;
+      // Only keep chains that have the minimal number of out-of-order relative orders
+      gens := [gens[i] : i in ooo[Min(Keys(ooo))]];
+      //print "#gensD", #gens;
 
-    total_depth := AssociativeArray();
-    for i in [1..#gens] do
-        c := 0;
-        for a in [1..#gens[i]] do
-            for b in [a+1..#gens[i]] do
-                g := gens[i][a][1];
-                h := gens[i][b][1];
-                com := g*h*g^-1*h^-1;
-                if not IsIdentity(com) then
-                    for j in [b-2..1 by -1] do
-                        if not com in gens[i][j][3] then
-                            c +:= j;
-                        end if;
-                    end for;
-                end if;
-            end for;
-        end for;
-        if not IsDefined(total_depth, c) then total_depth[c] := []; end if;
-        Append(~total_depth[c], i);
-    end for;
-    // Only keep chains that have the minimal total depth
-    gens := [gens[i] : i in total_depth[Min(Keys(total_depth))]];
-    //print "#gensE", #gens;
+      total_depth := AssociativeArray();
+      for i in [1..#gens] do
+          c := 0;
+          for a in [1..#gens[i]] do
+              for b in [a+1..#gens[i]] do
+                  g := gens[i][a][1];
+                  h := gens[i][b][1];
+                  com := g*h*g^-1*h^-1;
+                  if not IsIdentity(com) then
+                      for j in [b-2..1 by -1] do
+                          if not com in gens[i][j][3] then
+                              c +:= j;
+                          end if;
+                      end for;
+                  end if;
+              end for;
+          end for;
+          if not IsDefined(total_depth, c) then total_depth[c] := []; end if;
+          Append(~total_depth[c], i);
+      end for;
+      // Only keep chains that have the minimal total depth
+      gens := [gens[i] : i in total_depth[Min(Keys(total_depth))]];
+      //print "#gensE", #gens;
 
-    orders := [[tup[2] : tup in chain] : chain in gens];
-    ParallelSort(~orders, ~gens);
+      orders := [[tup[2] : tup in chain] : chain in gens];
+      ParallelSort(~orders, ~gens);
 
-    // We can't feasibly make this deterministic, and we don't have any more ideas for
-    // picking a "better" presentation, so we now just take the last one,
-    // which has the largest relative order for the first generator (and so on)
+      // We can't feasibly make this deterministic, and we don't have any more ideas for
+      // picking a "better" presentation, so we now just take the last one,
+      // which has the largest relative order for the first generator (and so on)
 
-    best := gens[#gens];
-    //print "best", [<tup[1], tup[2], #tup[3]> : tup in best];
+      best := gens[#gens];
+      //print "best", [<tup[1], tup[2], #tup[3]> : tup in best];
 
-    // Now we build a new PC group with an isomorphism to our given one.
-    // We have to fill in powers of our chosen generators since magma wants prime relative orders
-    // We keep track of which generators are actually needed; other generators are powers of these
-    filled := [];
-    H := sub<GG|>;
-    gens_used := [];
-    used_tracker := -1;
-    for tup in best do
-        g := tup[1];
-        r := tup[2];
-        segment := [];
-        for pe in Factorization(r) do
-            p := pe[1]; e := pe[2];
-            for i in [1..e] do
-                Append(~segment, <g, p, sub<GG| H, g>>);
-                g := g^p;
-            end for;
-        end for;
-        used_tracker +:= #segment;
-        Append(~gens_used, used_tracker);
-        filled cat:= Reverse(segment);
-        H := tup[3];
-    end for;
-    // Magma has a descending filtration, so we switch to that here.
-    Reverse(~filled);
-    gens_used := [#filled - i : i in gens_used];
-    //print "filled", [<tup[1], tup[2], #tup[3]> : tup in filled];
-    F := FreeGroup(#filled);
-    rels := {};
-    one := Identity(F);
-    gens := [filled[i][1] : i in [1..#filled]];
-    function translate_to_F(x, depth)
-        fvec := one;
-        for k in [depth..#filled] do
-            //print "k", k;
-            // For the groups we're working with, the primes involved are small, so we just do a super-naive discrete log
-            if k eq #filled then
-                Filt := [Identity(GG)];
-            else
-                Filt := filled[k+1][3];
-            end if;
-            //print x, Filt;
-            while not x in Filt do
-                x := gens[k]^-1 * x;
-                fvec := fvec * F.k;
-            end while;
-        end for;
-        return fvec;
-    end function;
+      // Now we build a new PC group with an isomorphism to our given one.
+      // We have to fill in powers of our chosen generators since magma wants prime relative orders
+      // We keep track of which generators are actually needed; other generators are powers of these
+      filled := [];
+      H := sub<GG|>;
+      gens_used := [];
+      used_tracker := -1;
+      for tup in best do
+          g := tup[1];
+          r := tup[2];
+          segment := [];
+          for pe in Factorization(r) do
+              p := pe[1]; e := pe[2];
+              for i in [1..e] do
+                  Append(~segment, <g, p, sub<GG| H, g>>);
+                  g := g^p;
+              end for;
+          end for;
+          used_tracker +:= #segment;
+          Append(~gens_used, used_tracker);
+          filled cat:= Reverse(segment);
+          H := tup[3];
+      end for;
+      // Magma has a descending filtration, so we switch to that here.
+      Reverse(~filled);
+      gens_used := [#filled - i : i in gens_used];
+      //print "filled", [<tup[1], tup[2], #tup[3]> : tup in filled];
+      F := FreeGroup(#filled);
+      rels := {};
+      one := Identity(F);
+      gens := [filled[i][1] : i in [1..#filled]];
+      function translate_to_F(x, depth)
+          fvec := one;
+          for k in [depth..#filled] do
+              //print "k", k;
+              // For the groups we're working with, the primes involved are small, so we just do a super-naive discrete log
+              if k eq #filled then
+                  Filt := [Identity(GG)];
+              else
+                  Filt := filled[k+1][3];
+              end if;
+              //print x, Filt;
+              while not x in Filt do
+                  x := gens[k]^-1 * x;
+                  fvec := fvec * F.k;
+              end while;
+          end for;
+          return fvec;
+      end function;
 
-    //print "Allrels";
-    //for i in [1..#filled] do
-    //    for j in [i+1..#filled] do
-    //        print "i,j,gj^gi", i, j, gens[j]^gens[i];
-    //    end for;
-    //end for;
-    for i in [1..#filled] do
-        //print "i", i;
-        p := filled[i][2];
-        Include(~rels, F.i^p = translate_to_F(gens[i]^p, i+1));
-        for j in [i+1..#filled] do
-            //print "j", j;
-            fvec := translate_to_F(gens[j]^gens[i], i+1);
-            if fvec ne F.j then
-                Include(~rels, F.j^F.i = fvec);
-            end if;
-        end for;
-    end for;
-    //print "rels", rels;
-    H := quo< GrpPC : F | rels >;
-    f := hom< H -> G`MagmaGrp | gens >;
-    G`MagmaOptimized := H;
-    G`OptimizedIso := f^-1;
-    G`gens_used := gens_used;
+      //print "Allrels";
+      //for i in [1..#filled] do
+      //    for j in [i+1..#filled] do
+      //        print "i,j,gj^gi", i, j, gens[j]^gens[i];
+      //    end for;
+      //end for;
+      for i in [1..#filled] do
+          //print "i", i;
+          p := filled[i][2];
+          Include(~rels, F.i^p = translate_to_F(gens[i]^p, i+1));
+          for j in [i+1..#filled] do
+              //print "j", j;
+              fvec := translate_to_F(gens[j]^gens[i], i+1);
+              if fvec ne F.j then
+                  Include(~rels, F.j^F.i = fvec);
+              end if;
+          end for;
+      end for;
+      //print "rels", rels;
+      H := quo< GrpPC : F | rels >;
+      f := hom< H -> G`MagmaGrp | gens >;
+      G`MagmaOptimized := H;
+      G`OptimizedIso := f^-1;
+      G`gens_used := gens_used;
+    end if;
 end intrinsic;
 
 intrinsic RePresent(G::LMFDBGrp)
