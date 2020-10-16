@@ -1534,7 +1534,7 @@ end intrinsic;
 
 
 /* From DR.m */
-cycquos := function(Lat, h)
+cycquos := function(L, h)
     H := Group(h);
     D := DerivedSubgroup(H);
     A, fA := quo<H | D>; // Can maybe make this more efficient by switching to GrpAb and using Dual
@@ -1546,17 +1546,17 @@ cycquos := function(Lat, h)
         end if;
         Bsub := B`subgroup;
         if IsCyclic(A / Bsub) then
-            Include(~ans, Lat!(Bsub@@fA));
+            Include(~ans, L!(Bsub@@fA));
         end if;
     end for;
     return ans;
 end function;
 
-all_minimal_chains := function(G, Lat)
+all_minimal_chains := function(G, L)
     assert IsSolvable(G);
     cycdist := AssociativeArray();
-    top := Lat!(#Lat);
-    bottom := Lat!1;
+    top := L!(#L);
+    bottom := L!1;
     cycdist[top] := 0;
     reverse_path := AssociativeArray();
     cqsubs := AssociativeArray();
@@ -1565,7 +1565,7 @@ all_minimal_chains := function(G, Lat)
     while true do
         NewLayer := {};
         for h in Layer do
-            cq := cycquos(Lat, h);
+            cq := cycquos(L, h);
             cqsubs[h] := cq;
             for x in cq do
                 if not IsDefined(cycdist, x) or cycdist[x] gt cycdist[h] + 1 then
@@ -1581,7 +1581,7 @@ all_minimal_chains := function(G, Lat)
             end for;
         end for;
         Layer := NewLayer;
-        if bottom in Layer then
+        if (bottom in Layer) or (#Layer eq 0) then
             break;
         end if;
     end while;
