@@ -247,8 +247,10 @@ end intrinsic;
 intrinsic MagmaTransitiveSubgroup(G::LMFDBGrp) -> Any
     {Subgroup producing a minimal degree transitive faithful permutation representation}
     g := G`MagmaGrp;
-    if Get(G, "order") eq 1 then return g; end if;
     S := Get(G, "Subgroups");
+    if Get(G, "order") eq 1 then
+        return g;
+    end if;
     m := G`subgroup_index_bound;
     for j in [1..#S] do
         if m ne 0 and Get(S[j], "quotient_order") gt m then
@@ -280,6 +282,7 @@ intrinsic Generators(G::LMFDBGrp) -> Any
     {Returns the chosen generators of the underlying group}
     ert := Get(G, "elt_rep_type");
     if ert eq 0 then
+        print "inside Generators(G)";
         gu := Get(G, "gens_used");
         gens := SetToSequence(PCGenerators(G`MagmaGrp));
         if Type(gu) ne NoneType then

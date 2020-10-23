@@ -355,10 +355,10 @@ intrinsic SaveLMFDBObject(G::Any : attrs:=[], sep:="|") -> MonStgElt
         attrs := DefaultAttributes(Type(G));
     end if;
     saved_attrs := [];
-    vprint User1, 2: "***", Type(G);
+    vprint User1: "***", Type(G);
     for attr in attrs do
         // "Attr", attr;
-        vprint User1, 2: attr;
+        vprint User1: attr;
         t := Cputime();
         saved := SaveAttr(attr, Get(G, attr), G);
         t := Cputime(t);
