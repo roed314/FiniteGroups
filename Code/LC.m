@@ -117,7 +117,7 @@ intrinsic mobius_function(G::LMFDBGrp) -> Any
       end for;
       G`Subgroups := subgps_new;
       //printf "Mobius function values assigned to subgroups of %o\n", G;
-      return conj_mobii;
+      return 1;
     else
       return None();
     end if;
@@ -127,14 +127,17 @@ end intrinsic;
 
 intrinsic eulerian_function(G::LMFDBGrp) -> Any
   {Calculates the Eulerian function of G for n = rank(G)}
+  if not assigned G`mobius_function then 
+    fix:=mobius_function(G);
+  end if;
   if Get(G, "order") eq 1 then return 1; end if;
   n:=Get(G,"rank");
   sum:=0;
-  mobius_images:= Get(G,"mobius_function");
-  for m in mobius_images do
-    sum+:=(#m[1]`MagmaSubGrp)^n * m[2] * #Conjugates(G`MagmaGrp,m[1]`MagmaSubGrp);
+  subs:=G`Subgroups;
+  for s in subs do
+    sum+:=(#s`MagmaSubGrp)^n * s`mobius_function * #Conjugates(G`MagmaGrp,s`MagmaSubGrp);
   end for;
-  aut := #AutomorphismGroup(G`MagmaGrp);
+  aut := G`aut_order;
   assert sum mod aut eq 0;
   return sum div aut;
 end intrinsic;
@@ -148,11 +151,11 @@ intrinsic rank(G::LMFDBGrp) -> Any
     return 1;
   else
     r:=2;
-    mobius_images:= Get(G,"mobius_function");
+    subs:=Get(G,"Subgroups");
     while r le #G`MagmaGrp+1 do
       sum:=0;
-      for m in mobius_images do
-        sum+:=(#m[1]`MagmaSubGrp)^r * m[2];
+      for s in subs do
+        sum+:=(#s`MagmaSubGrp)^r * s`mobius_function;
       end for;
       if sum gt 0 then
         return r;
