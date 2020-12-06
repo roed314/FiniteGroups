@@ -57,15 +57,43 @@ intrinsic WriteCyclotomicElement(u::FldCycElt) -> SeqEnum
   //K<z> := CyclotomicField(Conductor(Parent(u)) : Sparse := false);
   K<z> := CyclotomicField(CyclotomicOrder(Parent(u)) : Sparse := false);
   m := CyclotomicOrder(K);
-  u_seq := Eltseq(K!u);
-  if IsPrime(m) then
-    u_seq := u_seq cat [0];
-    cnt:=0;
-    for j in u_seq do if j ne 0 then cnt +:=1; v:=j; end if; end for;
-    if cnt gt m/2 then
-      for j:=1 to #u_seq do u_seq[j] -:= v; end for;
+  u_seq := Eltseq(K!u);   // j-th element is for zeta^(j-1)
+  u_seqold:=u_seq;        // For debugging
+  divlist:= Divisors(m);
+  halves:=[]; // values where we hit half the elements
+  // Count coeffs for each Galois orbit
+  // Alist[j] has counters for orbit of zeta^divlist[j], elements with
+  //   order m/divlist[j]
+  Alist := [AssociativeArray() : d in divlist];
+  for j:=1 to #u_seq do
+    if u_seq[j] ne 0 then
+      posn:=Position(divlist, GCD(j-1,m));
+      Alist[posn]:=inc_counter(Alist[posn], u_seq[j]);
     end if;
-  end if;
+  end for;
+  u_seq := u_seq cat [0 : j in [1..(m-#u_seq)]];
+  // Tr(zeta_n)= (-1)^#(primes dividing n) if n is squarefree, else 0
+  for j:=1 to #divlist-1 do  // last divlist is order 1
+    d := divlist[j];
+    posn:=Position(divlist, d);
+    cnts := Alist[posn];
+    my_order:=EulerPhi(m div d);
+    for ky in Keys(cnts) do
+"m=",m,"key=",ky,"count=",cnts[ky],"m/d=", m div d,"my order=", my_order;
+      if 2*cnts[ky] gt my_order then
+        for ell:=1 to m div d do
+          if GCD(ell, m div d) eq 1 then
+            u_seq[ell*d+1] -:= ky;
+          end if;
+        end for;
+        u_seq[1] +:= MoebiusMu(m div d) * ky;
+      elif 2*cnts[ky] eq my_order then
+        Append(~halves, [j, ky, cnts[ky]]);
+      end if;
+    end for;
+  end for;
+  u_seqold, "and", u_seq;
+
   cs := [];
   for i := 1 to #u_seq do
     if u_seq[i] ne 0 then
