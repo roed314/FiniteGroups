@@ -1344,7 +1344,7 @@ intrinsic Characters(G::LMFDBGrp) ->  Tup
     thepoly:=polredabscache[thepoly];
     cchars[j]`field:=Coefficients(thepoly);
     cchars[j]`Image_object:=New(LMFDBRepCC);
-    //cchars[j]`indicator:=FrobeniusSchur(ct[j]); // Not in schema, but should be?
+    cchars[j]`indicator:=FrobeniusSchur(ct[j]);
     cchars[j]`label:="placeholder";
     vprint User2: "B", j, t;
     t := Cputime(t);
@@ -1361,7 +1361,6 @@ intrinsic Characters(G::LMFDBGrp) ->  Tup
     rchars[j]`Image_object:=New(LMFDBRepQQ);
     rchars[j]`faithful:=IsFaithful(rct[j]);
     // Character may not be irreducible, so value might not be in 1,0,-1
-    rchars[j]`indicator:=FrobeniusSchur(ct[matching[j][1]])*rchars[j]`multiplicity;
     rchars[j]`label:="placeholder";
     vprint User2: "C", j, t;
     t := Cputime(t);

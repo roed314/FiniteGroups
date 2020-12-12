@@ -420,6 +420,7 @@ declare attributes LMFDBGrpChtrCC:
   counter,
   nt,
   field,
+  indicator,
   image;
 
 intrinsic Print(Chi::LMFDBGrpChtrCC)
@@ -443,7 +444,6 @@ declare attributes LMFDBGrpChtrQQ:
   qdim,
   multiplicity,
   faithful,
-  indicator,
   schur_index,
   image,
   counter,
