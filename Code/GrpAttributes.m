@@ -1322,7 +1322,7 @@ intrinsic Characters(G::LMFDBGrp) ->  Tup
   rct:=Get(G,"MagmaRationalCharacterTable");
   matching:=Get(G,"MagmaCharacterMatching");
   R<x>:=PolynomialRing(Rationals());
-  polredabscache:=AssociativeArray();
+  polredabscache:=LoadPolredabsCache();
   //cc:=Classes(g);
   cchars:=[New(LMFDBGrpChtrCC) : c in ct];
   rchars:=[New(LMFDBGrpChtrQQ) : c in rct];
@@ -1340,6 +1340,7 @@ intrinsic Characters(G::LMFDBGrp) ->  Tup
     if not IsDefined(polredabscache,thepoly) then
       thepoly1:=Polredabs(thepoly);
       polredabscache[thepoly] := thepoly1;
+      PolredabsCache(thepoly, thepoly1);
     end if;
     thepoly:=polredabscache[thepoly];
     cchars[j]`field:=Coefficients(thepoly);
