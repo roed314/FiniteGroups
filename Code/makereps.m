@@ -140,8 +140,16 @@ intrinsic CCReps(G::LMFDBGrp)->Any
       r`dim := Integers() ! Degree(Get(rep[1], "MagmaChtr"));
       gln:= GL(r`dim, BaseRing(rep[4]));
       r`group := Get(G, "label");
-      //asub:=sub<gln|r3>;
-      //r4:= random_gens(asub);
+      asub:=sub<gln|r3>;
+      if r`dim eq 1 then
+        zetan:=RootOfUnity(Order(asub));
+        if Order(asub) lt 3 then // Kludge since integers are not in cyclotomic fields
+          zetan := CyclotomicField(3) ! zetan;
+        end if;
+        r3:=[Matrix(Parent(zetan),1,1,[zetan])];
+      else
+        r3:= random_gens(asub);
+      end if;
 
       denoms:=[0 : z in r3];
       gens2:=[* 0 : z in r3*];
@@ -415,7 +423,7 @@ intrinsic random_gens(g::Any) -> Any
   ResetRandomSeed();
   n:=Order(g);
   if n eq 1 then return [Id(g)]; end if;
-  max_tries:=5;
+  max_tries:=25;
   best_k:=n+1;
   best:=[];
   for jj:=1 to max_tries do

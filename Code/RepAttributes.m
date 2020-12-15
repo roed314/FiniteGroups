@@ -220,7 +220,8 @@ intrinsic CyclotomizeMatrixGroup(M::GrpMat) -> Any
   return ChangeRing(M,K);
 end intrinsic;
 
-intrinsic IntegralizeMatrix(M::AlgMatElt) -> Any
+intrinsic IntegralizeMatrix(M::Any) -> Any
+//intrinsic IntegralizeMatrix(M::AlgMatElt) -> Any
   {Given a matrix return a matrix with integral entries, along with a common denominator}
   d := 1;
   for i := 1 to Nrows(M) do
@@ -228,7 +229,10 @@ intrinsic IntegralizeMatrix(M::AlgMatElt) -> Any
       d := Lcm(d, Denominator(M[i,j]));
     end for;
   end for;
-  return d*M, d;
+  q:=[[d*M[i,j] : i in [1..Nrows(M)]] : j in [1..Ncols(M)]];
+  M1:= Matrix(Parent(M[1,1]),Nrows(M), Ncols(M),q);
+  return M1, d;
+  //return d*M, d;
 end intrinsic;
 
 //intrinsic WriteCyclotomicMatrix(M::GrpMatElt) -> SeqEnum
