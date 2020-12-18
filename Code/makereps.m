@@ -77,24 +77,29 @@ intrinsic getirrreps(G::LMFDBGrp: Field:="C")->Any
     cct:=Get(G, "QQCharacters");
     ct:=<c`MagmaChtr : c in cct>;
   end if;
-  gs:=getgoodsubs(g, ct);
-  subs:=gs[1];
-  tvals:=gs[2];
-  im:={};
-  for s in subs do
-    pm:=PermutationModule(g,s,K);
-    ds:=DirectSumDecomposition(pm);
-    for rep in ds do
-      good:=true;
-      for orep in im do
-        if IsIsomorphic(rep, orep) then
-          good:=false;
-          break;
-        end if;
+  if IsCyclic(g) and Field eq "C" then
+    im := AbsolutelyIrreducibleModulesSchur(g, Rationals()); ;
+    tvals := [0 : z in im];
+  else
+      gs:=getgoodsubs(g, ct);
+      subs:=gs[1];
+      tvals:=gs[2];
+      im:={};
+      for s in subs do
+        pm:=PermutationModule(g,s,K);
+        ds:=DirectSumDecomposition(pm);
+        for rep in ds do
+          good:=true;
+          for orep in im do
+            if IsIsomorphic(rep, orep) then
+              good:=false;
+              break;
+            end if;
+          end for;
+          if good then Include(~im, rep); end if;
+        end for;
       end for;
-      if good then Include(~im, rep); end if;
-    end for;
-  end for;
+  end if;
   res:=[*0 : z in ct*];
   for j:=1 to #ct do
     mult:= Field eq "C" select 1 else Get(cct[j], "schur_index");
@@ -303,7 +308,7 @@ intrinsic rep_label(C::LMFDBGrpChtrQQ, r::Any, A::Assoc)->MonStgElt
     end for;
     return Get(C, "label");
   else // need quotient group, read from file
-    try
+//    try
       ker:=Kernel(Get(C,"MagmaChtr"));
       quot:=Get(C,"Grp")`MagmaGrp/ker;
       idquot:=IdentifyGroup(quot);
@@ -312,15 +317,19 @@ intrinsic rep_label(C::LMFDBGrpChtrQQ, r::Any, A::Assoc)->MonStgElt
         dat := Split(orep, " ");
         lab := dat[1];
         elts := [Matrix(z): z in eval(dat[2])];
-        H := sub<bigg|elts>;
-        if IsGLQConjugate(H,K) then
-          return lab;
+        //"bigg", bigg;
+        //"elts", elts;
+        if qdim eq Nrows(elts[1]) then
+          H := sub<bigg|elts>;
+          if IsGLQConjugate(H,K) then
+            return lab;
+          end if;
         end if;
       end for;
-    catch e
-      "Error reading old reps for ", idquot;
-      return "";
-    end try;
+//    catch e
+//      "Error reading old reps for ", idquot;
+//      return "";
+//    end try;
     assert false;
     return ""; // Should not get here
   end if;
