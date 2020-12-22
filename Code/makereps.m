@@ -77,7 +77,7 @@ intrinsic getirrreps(G::LMFDBGrp: Field:="C")->Any
     cct:=Get(G, "QQCharacters");
     ct:=<c`MagmaChtr : c in cct>;
   end if;
-  if IsCyclic(g) and Field eq "C" then
+  if IsSolvable(g) and Field eq "C" then
     im := AbsolutelyIrreducibleModulesSchur(g, Rationals()); ;
     tvals := [0 : z in im];
   else
@@ -147,9 +147,10 @@ intrinsic CCReps(G::LMFDBGrp)->Any
       r`group := Get(G, "label");
       asub:=sub<gln|r3>;
       if r`dim eq 1 then
-        zetan:=RootOfUnity(Order(asub));
-        if Order(asub) lt 3 then // Kludge since integers are not in cyclotomic fields
-          zetan := CyclotomicField(3) ! zetan;
+        if Order(asub) mod 4 eq 2 then
+          zetan:=-1*RootOfUnity(Order(asub) div 2);
+        else
+          zetan:=RootOfUnity(Order(asub));
         end if;
         r3:=[Matrix(Parent(zetan),1,1,[zetan])];
       else
@@ -164,8 +165,9 @@ intrinsic CCReps(G::LMFDBGrp)->Any
         gens2[j]:=dm;
       end for;
       assert r`dim eq Nrows(gens2[1]);
-      r`gens := [WriteCyclotomicMatrix(z) : z in gens2];
       r`MagmaRep:=rep[4];
+      cyc_order_mat:=Get(r, "cyc_order_mat");
+      r`gens := [WriteCyclotomicMatrix(z, cyc_order_mat) : z in gens2];
       r`order:=Get(G,"order");
       r`MagmaGrp:=sub<gln|r3>;
       r`cyc_order_traces:=Get(rep[1], "cyclotomic_n");
@@ -174,7 +176,7 @@ intrinsic CCReps(G::LMFDBGrp)->Any
       r`label := replabel;
       r`decomposition:= [<r`label, 1>];
       r`trace_field:=Get(rep[1], "field");
-      r`traces := [WriteCyclotomicElement(Trace(z)) : z in gens2];
+      r`traces := [WriteCyclotomicElement(Trace(z), r`cyc_order_traces) : z in gens2];
       r`E:=e;
       Append(~result2, r);
     end if;

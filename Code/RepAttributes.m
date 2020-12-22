@@ -23,13 +23,14 @@ intrinsic indicator(M::LMFDBRepCC) -> FldRatElt
   return Integers() ! (ind/Get(M,"order"));
 end intrinsic;
 
+// Already minimizing
 intrinsic cyc_order_mat(M::LMFDBRepCC) -> RngIntElt
   {an integer m so that the entries in the gens column lie in CyclotomicField(m)}
   MM := M`MagmaRep;
-  MMmin := AbsoluteModuleOverMinimalField(MM);
-  rng:= CoefficientRing(MMmin);
+  //MMmin := AbsoluteModuleOverMinimalField(MM);
+  rng:= CoefficientRing(MM);
   if rng eq Rationals() then return 1; end if;
-  if Type(rng) eq FldCyc then return Conductor(rng); end if;
+  if Type(rng) eq FldCyc then return CyclotomicOrder(rng); end if;
   return Norm(Conductor(AbelianExtension(rng)));
 end intrinsic;
 
@@ -103,12 +104,11 @@ intrinsic oldWriteCyclotomicElement(u::FldCycElt) -> SeqEnum
 end intrinsic;
 
 // TODO: not quite right format...see propose schema
-intrinsic WriteCyclotomicElement(u::FldCycElt) -> SeqEnum
+intrinsic WriteCyclotomicElement(u::Any, m::RngIntElt) -> SeqEnum
   {Given an element u of a cyclotomic field with primitive root zeta_m, return a SeqEnum of pairs [c,e] such that
   u is the sum of c*zeta_m^e}
-  //K<z> := CyclotomicField(Conductor(Parent(u)) : Sparse := false);
-  K<z> := CyclotomicField(CyclotomicOrder(Parent(u)) : Sparse := false);
-  m := CyclotomicOrder(K);
+  K<z> := CyclotomicField(m : Sparse := false);
+  //K<z> := CyclotomicField(CyclotomicOrder(Parent(u)) : Sparse := false);
   u_seq := Eltseq(K!u);   // j-th element is for zeta^(j-1)
   // Check if it is just an integer
   is_int:=true; j:=2;
@@ -236,11 +236,11 @@ intrinsic IntegralizeMatrix(M::Any) -> Any
 end intrinsic;
 
 //intrinsic WriteCyclotomicMatrix(M::GrpMatElt) -> SeqEnum
-intrinsic WriteCyclotomicMatrix(M::Any) -> SeqEnum
+intrinsic WriteCyclotomicMatrix(M::Any, m::RngIntElt) -> SeqEnum
   {Given a matrix over a cyclotomic field, return a SeqEnum whose entries are integral and of the form given by WriteCyclotomicElement.}
   M_seq := [];
   for row in Rows(M) do
-    Append(~M_seq, [WriteCyclotomicElement(el) : el in Eltseq(row)]);
+    Append(~M_seq, [WriteCyclotomicElement(el,m) : el in Eltseq(row)]);
   end for;
   return M_seq;
 end intrinsic;
