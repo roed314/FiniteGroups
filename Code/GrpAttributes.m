@@ -1381,7 +1381,8 @@ end intrinsic;
 intrinsic tex_name(G::LMFDBGrp) -> Any
   {Returns Magma's name for the group.}
   g:=G`MagmaGrp;
-  return GroupName(g: TeX:=true);
+  gn:= GroupName(g: TeX:=true);
+  return ReplaceString(gn, "\\", "\\\\");
 end intrinsic;
 
 intrinsic Socle(G::LMFDBGrp) -> Any
