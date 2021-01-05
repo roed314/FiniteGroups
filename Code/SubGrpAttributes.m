@@ -1,8 +1,3 @@
-diagramxlist:=eval(Read( "diagramxlist"));
-diagramxarray:=AssociativeArray();
-for j in diagramxlist do
-  diagramxarray[j[1]] := j[2];
-end for;
 
 /*
 list of attributes to compute. DONE is either done here or in Basics.m
@@ -294,6 +289,5 @@ end intrinsic;
 
 intrinsic diagram_x(H::LMFDBSubGrp) -> RngIntElt
     {integer from 1 to 10000 indicating the x-coordinate for plotting the subgroup in the lattice, 0 if not computed--will be computed elsewhere}
-    u,v:=IsDefined(diagramxarray, Get(H, "label"));
-    if u then return v; else return 0; end if;
+    return 0;
 end intrinsic;
