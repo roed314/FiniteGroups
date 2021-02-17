@@ -32,7 +32,7 @@
 
 * **Display the rank and Eulerian function information**
 * **Images of representations should be knowls for now instead of links**
-* **Add "subgroup profile" in place of the diagram and/or establish bound for displaying profile instead of subgroup diagram**
+* **Add "subgroup profile" in for all groups, maybe as a toggle with the diagram** (currently the subgroup profile appears in place of the diagram 
 * Character tables visible or add conjugacy classes (and order statistics)
 * Create subgroup lattice as graph
   * I added a version of this using a canvas.  Here are some notes
@@ -44,7 +44,7 @@
   * Putting them by other means probably means using foreignobject on the canvas.  I can do that with formatted html, but it looks worse and does not work as well
   * Using katex looks pretty complicated right now (just getting katex html does not work)
   * Using mathjax might be an option, but then we have mathjax and katex, and it still might not work/look good.  There is some hope of using svg output from mathjax, especially with version 3
-  * We could generate images on the fly. I have done this with WeBWorK problems, and it worked ok there.  But, I am not sure I want to put the time in to set it up if we don't want to go in that direction
+  * ~~We could generate images on the fly. I have done this with WeBWorK problems, and it worked ok there.  But, I am not sure I want to put the time in to set it up if we don't want to go in that direction~~ I think current version is ok
   * On my (Jen) screen: http://teal.lmfdb.xyz/Groups/Abstract/24.5  the left hand side of the graph is currently cut off. So the C2xC4 subgroup should have a subscript to the left of it indicating the number of conjugate subgroups but I don't see that and I don't see part of the first C. (Update: was fixed and now issue again on 8/10/20)
 * Click vs. Mouseover of subgroups? (Still needs to be fixed in new version in 2020?)
   * currently the diagram does both: mouseover for highlighting and click for showing information.
