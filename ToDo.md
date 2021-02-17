@@ -1,20 +1,16 @@
 # To Do List
+**Bold** items indicate requirements to get to beta.
 
 ## Backend
 
 ### Planning
-* ~Choosing generators (solvable, permutation and matrix cases)~
-* ~Labeling for conjugacy classes~
-* ~Labeling for subgroups~
 * How to deal with "bad" generator lists from polycyclic (in progress: David)
 * Write more upload code (remaining issues are blacklist on io.m)
 
 ### Uploading data
-* ~Create framework for computing LmfdbGroup attributes from a Magma group with a few small examples~
-* ~Make a list of attributes that can't be directly imported from the Magma group~
-* ~Port over implementations from generate.py for some of these~
-* ~Figure out how to compute others in Magma~
-* ~Implement hash for determining isomorphism classes~
+* **Rerun the basic computation: currently have SmallGroups up to order 383, excluding a few hard groups**
+* **Make use given generators to order conjugacy classes and subgroups.**
+* **Update subgroup ordering: make sure we're using Drew's latest version**
 * Run timing tests to determine which attributes are slow (in progress)
 * Streamline Magma code that may redundantly call Magma functions which are now attributes.
 * Figure out how to reuse work between different groups for slow features (using a recursive algorithm for example)
@@ -23,16 +19,20 @@
   - find new groups of interest to add, compute their hash and specify a format to store information for the next stage
   - for each order and hash value, split the records up into isomorphism classes, determine whether each isomorphism class has already been added.  If not yet added, assign a label.  We may want to ensure that some common group families get simple labels (e.g. cyclic group is always .a)
   - With label in hand, go pass control back to the process that computes all relevant quantities about a group.  This may recurse to adding subgroups.
+* **Compute data for groups outside SmallGroups database, e.g., permutation groups and subgroups of finite linear groups**
 * Run hash on all groups of order 512, 1536, and other orders that can't be IDed.
 * Add generator and relations template to families
 * Add Magma coded number for families from series
-* Add additional families to gps_families and gps_special_names
+* **Add additional families to gps_families and gps_special_names**
 * Upload SmallGroup data except 512, 1024, 1536
 * Very large sample examples
 
 
 ## Frontend
 
+* **Display the rank and Eulerian function information**
+* **Images of representations should be knowls for now instead of links**
+* **Add "subgroup profile" in place of the diagram and/or establish bound for displaying profile instead of subgroup diagram**
 * Character tables visible or add conjugacy classes (and order statistics)
 * Create subgroup lattice as graph
   * I added a version of this using a canvas.  Here are some notes
@@ -71,8 +71,6 @@
 
 ## Knowls
 
-* ~Series knowls~
-* ~Radical subgroup~
 * rename agroup and zgroup to a_group and z_group in code, same with rational versus rational_group
 * Rename Meow Wolf to Tim
 * RCS knowls
