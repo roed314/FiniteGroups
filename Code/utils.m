@@ -64,6 +64,25 @@ intrinsic DelSpaces(s::MonStgElt) ->MonStgElt
   return &cat([x: x in Eltseq(Sprint(s)) | (x ne " ") and (x ne "\n")]);
 end intrinsic;
 
+intrinsic PolredabsCache(f::Any, g::Any)
+  { Write to a cache file of polredabs results }
+  ff:= DelSpaces(Sprint(f));
+  gg:= DelSpaces(Sprint(g));
+  write("Polredabs-cache", Sprintf("%o %o", ff, gg) : rewrite:=false);
+end intrinsic;
+
+intrinsic LoadPolredabsCache() -> Any
+  {Load polredabs values from a file}
+  prastr:=Split(Read("Polredabs-cache"));
+  prac:= AssociativeArray();
+  R<x>:=PolynomialRing(Rationals());
+  for pdat in prastr do
+    pralist:=Split(pdat, " ");
+    prac[eval(pralist[1])] := eval(pralist[2]);
+  end for;
+  return prac;
+end intrinsic;
+
 intrinsic Polredabs(f::Any) -> Any
   {Have gp compute polredabs}
   // If degree is too large, we just return f, since we won't be adding this field to the LMFDB
@@ -102,3 +121,15 @@ intrinsic write(filename::MonStgElt,str::MonStgElt: console:=false, rewrite:=fal
   end if;
 end intrinsic;
 
+intrinsic allrankslist(n::Any)->Any
+  {}
+  l:=[];
+  for j:=1 to n do
+    for k:=1 to NumberOfSmallGroups(j) do
+      [j,k];
+      g:=MakeSmallGroup(j,k);
+      Append(~l, <j,k,Get(g,"rank")>);
+    end for;
+  end for;
+  return l;
+end intrinsic;

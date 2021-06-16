@@ -309,12 +309,11 @@ intrinsic DefaultAttributes(c::Cat) -> SeqEnum
                       // Group attributes
                       //"eulerian_function",
                       //"rank",
-                      //"mobius_function_known",
+                      //"mobius_function",
     
                       // Subgroup attributes
                       "alias_spot",
                       "aut_counter",
-                      "mobius_function",
 		      "extension_counter",
 		      //  "diagram_x", returns 0 now
 		      "generators",

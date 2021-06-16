@@ -1285,7 +1285,7 @@ intrinsic characters_add_sort_and_labels(G::LMFDBGrp, cchars::Any, rchars::Any) 
       Kn:=CyclotomicField(cyclon);
       cchars[cindex]`cyclotomic_n:=cyclon;
       //cchars[cindex]`values:=[PrintRelExtElement(Kn!thischar[perm[z]]) : z in [1..#thischar]];
-      cchars[cindex]`values:=[WriteCyclotomicElement(Kn!thischar[perm[z]]) : z in [1..#thischar]];
+      cchars[cindex]`values:=[WriteCyclotomicElement(Kn!thischar[perm[z]],cyclon) : z in [1..#thischar]];
       if dat[len-2] notin donec then
         ccnt+:=1;
         ctotalcnt+:=1;
@@ -1300,7 +1300,7 @@ intrinsic characters_add_sort_and_labels(G::LMFDBGrp, cchars::Any, rchars::Any) 
         cyclon:=CyclotomicOrder(basef);
         Kn:=CyclotomicField(cyclon);
         cchars[cindex]`cyclotomic_n:=cyclon;
-        cchars[cindex]`values:=[WriteCyclotomicElement(Kn!thischar[perm[z]]) : z in [1..#thischar]];
+        cchars[cindex]`values:=[WriteCyclotomicElement(Kn!thischar[perm[z]], cyclon) : z in [1..#thischar]];
       end if;
     end if;
   end for;
@@ -1323,7 +1323,7 @@ intrinsic Characters(G::LMFDBGrp) ->  Tup
   rct:=Get(G,"MagmaRationalCharacterTable");
   matching:=Get(G,"MagmaCharacterMatching");
   R<x>:=PolynomialRing(Rationals());
-  polredabscache:=AssociativeArray();
+  polredabscache:=LoadPolredabsCache();
   //cc:=Classes(g);
   cchars:=[New(LMFDBGrpChtrCC) : c in ct];
   rchars:=[New(LMFDBGrpChtrQQ) : c in rct];
@@ -1341,11 +1341,12 @@ intrinsic Characters(G::LMFDBGrp) ->  Tup
     if not IsDefined(polredabscache,thepoly) then
       thepoly1:=Polredabs(thepoly);
       polredabscache[thepoly] := thepoly1;
+      PolredabsCache(thepoly, thepoly1);
     end if;
     thepoly:=polredabscache[thepoly];
     cchars[j]`field:=Coefficients(thepoly);
     cchars[j]`Image_object:=New(LMFDBRepCC);
-    //cchars[j]`indicator:=FrobeniusSchur(ct[j]); // Not in schema, but should be?
+    cchars[j]`indicator:=FrobeniusSchur(ct[j]);
     cchars[j]`label:="placeholder";
     vprint User2: "B", j, t;
     t := Cputime(t);
@@ -1362,7 +1363,6 @@ intrinsic Characters(G::LMFDBGrp) ->  Tup
     rchars[j]`Image_object:=New(LMFDBRepQQ);
     rchars[j]`faithful:=IsFaithful(rct[j]);
     // Character may not be irreducible, so value might not be in 1,0,-1
-    rchars[j]`indicator:=FrobeniusSchur(ct[matching[j][1]])*rchars[j]`multiplicity;
     rchars[j]`label:="placeholder";
     vprint User2: "C", j, t;
     t := Cputime(t);
@@ -1382,7 +1382,8 @@ end intrinsic;
 intrinsic tex_name(G::LMFDBGrp) -> Any
   {Returns Magma's name for the group.}
   g:=G`MagmaGrp;
-  return GroupName(g: TeX:=true);
+  gn:= GroupName(g: TeX:=true);
+  return ReplaceString(gn, "\\", "\\\\");
 end intrinsic;
 
 intrinsic Socle(G::LMFDBGrp) -> Any

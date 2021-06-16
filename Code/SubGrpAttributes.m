@@ -1,3 +1,4 @@
+
 /*
 list of attributes to compute. DONE is either done here or in Basics.m
 see https://github.com/roed314/FiniteGroups/blob/master/ProposedSchema.md for description of attributes
@@ -290,4 +291,4 @@ end intrinsic;
 intrinsic diagram_x(H::LMFDBSubGrp) -> RngIntElt
     {integer from 1 to 10000 indicating the x-coordinate for plotting the subgroup in the lattice, 0 if not computed--will be computed elsewhere}
     return 0;
-end intrinsic
+end intrinsic;
