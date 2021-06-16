@@ -1064,6 +1064,7 @@ intrinsic CollectDirectFactors(facts::SeqEnum) -> SeqEnum
       Append(~pairs, [* Get(fact, "label"), 1 *]);
     end if;
   end for;
+  Sort(~pairs);
   return pairs;
 end intrinsic;
 

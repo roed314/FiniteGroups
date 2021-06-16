@@ -160,7 +160,8 @@ intrinsic minimal_normal(H::LMFDBSubGrp) -> BoolElt // Need to be subgroup attri
   GG := Get(H, "MagmaAmbient");
   G := Get(H, "Grp");
   HH := H`MagmaSubGrp;
-  if not IsNormal(GG, HH) then 
+  // We don't consider the trivial subgroup to be minimal normal
+  if not IsNormal(GG, HH) or Order(HH) eq 1 then
     return false;
   else
     for r in Get(G, "NormalSubgroups") do
