@@ -8,73 +8,65 @@
 * Write more upload code (remaining issues are blacklist on io.m)
 
 ### Uploading data
-* **Rerun the basic computation: currently have SmallGroups up to order 383, excluding a few hard groups**
-* **Make use given generators to order conjugacy classes and subgroups.**
-* **Update subgroup ordering: make sure we're using Drew's latest version**
+* **Fix bug in Magma's SmallGroupDecoding** (Sam)
+* **Rerun the basic computation: currently have SmallGroups up to order 383, excluding a few hard groups** (John, do last)
+* **Make use given generators to order conjugacy classes and subgroups and fix Lehmer codes.** (Jen)
+* **Update subgroup ordering: make sure we're using Drew's latest version** (David will email)
 * Run timing tests to determine which attributes are slow (in progress)
 * Streamline Magma code that may redundantly call Magma functions which are now attributes.
 * Figure out how to reuse work between different groups for slow features (using a recursive algorithm for example)
-* Figure out criterion/heuristic for when to compute difficult/space-intensive things (lattice of subgroups, etc).
+* **Figure out criterion/heuristic for when to compute difficult/space-intensive things (lattice of subgroups, etc)** (discuss on Zulip)
+* Timing dictionary saved to output
 * Design a process for adding groups outside the small groups range and assigning labels: three steps
   - find new groups of interest to add, compute their hash and specify a format to store information for the next stage
   - for each order and hash value, split the records up into isomorphism classes, determine whether each isomorphism class has already been added.  If not yet added, assign a label.  We may want to ensure that some common group families get simple labels (e.g. cyclic group is always .a)
   - With label in hand, go pass control back to the process that computes all relevant quantities about a group.  This may recurse to adding subgroups.
-* **Compute data for groups outside SmallGroups database, e.g., permutation groups and subgroups of finite linear groups**
+* Compute data for groups outside SmallGroups database, e.g., permutation groups and subgroups of finite linear groups
 * Run hash on all groups of order 512, 1536, and other orders that can't be IDed.
 * Add generator and relations template to families
 * Add Magma coded number for families from series
-* **Add additional families to gps_families and gps_special_names**
+* Add additional families to gps_families and gps_special_names
 * Upload SmallGroup data except 512, 1024, 1536
 * Very large sample examples
-
+* Write to Tim Dokchitser about status on adding his group names to Magma
+* Smallest n where the group is a subgroup of Sn (new Magma function)
 
 ## Frontend
 
-* **Display the rank and Eulerian function information**
-* **Images of representations should be knowls for now instead of links**
-* **Add "subgroup profile" in for all groups, maybe as a toggle with the diagram** (currently the subgroup profile appears in place of the diagram 
+* **Display the rank and Eulerian function information** (Lewis)
+* **Images of representations should be knowls for now instead of links** (John)
+* **Add "subgroup profile" in for all groups as a toggle with the diagram** (currently the subgroup profile appears in place of the diagram) (John)
+* **In subgroup profile, make sure orders are actually sorted (https://groups.lmfdb.xyz/Groups/Abstract/192.1511)** (John)
 * Character tables visible or add conjugacy classes (and order statistics)
-* Create subgroup lattice as graph
-  * I added a version of this using a canvas.  Here are some notes
-  * Subgroups have an intial layout which might not be great, but it could be worse, and they are dragable
-  * Clicking on a subgroup gives information about that subgroup below the canvas
-  * Subgroups have typeset pretty names
-  * On the downside, the typesetting is done beforehand and are png's included in static/graphs/img.  There are ~17000 of them
-  * This covers over 17,000 groups because there are many duplicates
-  * Putting them by other means probably means using foreignobject on the canvas.  I can do that with formatted html, but it looks worse and does not work as well
-  * Using katex looks pretty complicated right now (just getting katex html does not work)
-  * Using mathjax might be an option, but then we have mathjax and katex, and it still might not work/look good.  There is some hope of using svg output from mathjax, especially with version 3
-  * ~~We could generate images on the fly. I have done this with WeBWorK problems, and it worked ok there.  But, I am not sure I want to put the time in to set it up if we don't want to go in that direction~~ I think current version is ok
-  * On my (Jen) screen: http://teal.lmfdb.xyz/Groups/Abstract/24.5  the left hand side of the graph is currently cut off. So the C2xC4 subgroup should have a subscript to the left of it indicating the number of conjugate subgroups but I don't see that and I don't see part of the first C. (Update: was fixed and now issue again on 8/10/20)
+* Cutoff for pre-displaying character table.
 * Click vs. Mouseover of subgroups? (Still needs to be fixed in new version in 2020?)
   * currently the diagram does both: mouseover for highlighting and click for showing information.
-* Add list of orders of elements in the group to top
+* **Add list of orders of elements in the group to top** (Manami)
+* **Make Schur multiplier prettier (look at direction factorization code)** (Manami)
 * Add special names (aliases) to *Construction* section
 * Add permutation representations
-* Make supergroups a searchable option
 * Add special family presentations in those cases
-* Data we compute but don't display yet.  Look at schema to see what we've computed. 
-* Change group characteristics list to be more like:  "cyclic (and so abelian, solvable, nilpotent, and monomial)"  instead of just full list
+* Data we compute but don't display yet.  Look at schema to see what we've computed.
+* Magma isn't consistent about the styling on the name (SL vs C2.SL)
+* **Change group characteristics list to be more like:  "cyclic (and so abelian, solvable, nilpotent, and monomial)" instead of just full list** (Jen)
     * Z-group means metacyclic, supersolvable, and monomial
     * Cyclic hence abelian, solvable, nilpotent, and monomial
     * Abelian hence solvable, nilpotent, and monomial
     * Metabelian hence solvable
     * Metacyclic hence metabelian, supersolvable, and monomial
-    * Monomial hence solvable 
+    * Monomial hence solvable
     * Supersolvable hence monomial
-* Create download buttons for Magma/GAP code
-* Improve searches
-* For complex characters, writing entries in a more efficient way. EX:  https://groups.lmfdb.xyz/Groups/Abstract/21.2  reduce some of them via trace reduction. Perhaps consider naming one recurring "phrase" as a variable.  Maybe long term toggle back and forth.
-* Label characters as orthogonal, symplectic, linear, faithful on right/left or maybe in knowl as it is? Maybe some indication of these?
-* Cutoff for pre-displaying character table.
+* Create download buttons for Magma/GAP code, data like character tables
+* **Improve searches (add more things to search on)** (Sam)
+* Make supergroups a searchable option
+* Label characters as orthogonal, symplectic, linear, faithful on right/left or maybe in knowl as it is? Maybe some indication of these?  Update the Type code to include more info.
+* **Profile why group pages are so slow to load** (David)
 
 
 ## Knowls
 
-* rename agroup and zgroup to a_group and z_group in code, same with rational versus rational_group
-* Rename Meow Wolf to Tim
-* RCS knowls
-* Dynamic Knowls edited
+* Rename Meow Wolf to Tim (David)
+* RCS knowls (after we upload the data)
 
 ## Last Stage
 
