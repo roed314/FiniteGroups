@@ -1509,7 +1509,9 @@ intrinsic elt_rep_type(G:LMFDBGrp) -> Any
     if Type(G`MagmaGrp) eq GrpPC then
         return 0;
     elif Type(G`MagmaGrp) eq GrpPerm then
-        return -Degree(G`MagmaGrp);
+      deg:=Get(G,"transitive_degree");
+      return -deg;
+      /* return -Degree(G`MagmaGrp);  */
     elif Type(G`MagmaGrp) eq GrpMat then
         R := CoefficientRing(G);
         if R eq Integers() then
