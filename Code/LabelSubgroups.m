@@ -2,7 +2,8 @@
 This file implements a scheme for labeling conjugacy classes of subgroups of a finite group G.
 When we refer to a subgroup H of G we always view it up to conjugacy.
 
-The label of a subgroup takes the form n.i.j, where n=[G:H] is the index, i is an ordinal that distinguishes Gassmann equivalence classes of the same index, and j is
+The label of a subgroup takes the form n.i.j, where n=[G:H] is the index, i is an ordinal that distinguishes Gassmann
+equivalence classes of the same index, and j is
 an ordinal that distinguishes Gassmann-equivalent conjugacy classes of subgroups.  Recall that subgroups H1 and H2 of G
 are Gassmann equivalent if they intersect each G-conjugacy class with the same cardinality, equivalently, H1 and H2 have
 the same index n and the permutation representations pi_H1:G->S_n and pi_H2:G->S_n have the same character (which counts
@@ -20,7 +21,8 @@ elements of H (in any order) and uses an efficiently computable map from element
 In order to keep labels small we assume that we compute all the Gassmann classes for a given index so we can assign
 ordinals to them (but we don't have to do this for all subgroups, just all with the same index).
 
-To compute j we first order subgroups H in the same Gassmann class using the lex ordering on sorted list of labels of all (proper) supergroups of H (one can
+To compute j we first order subgroups H in the same Gassmann class using the lex ordering on sorted list of labels
+of all (proper) supergroups of H (one can
 and often does have Gassmann equivalent subgroups for which the lists of supergroups are differ).  Note that
 here "supergroup" refers to inclusions in the poset of conjugacy classes of subgroups: we consider K to be
 a supergroup of H if it contains any G-conjugate of H (note that we are free to fix any G-conjugate of K
@@ -29,7 +31,7 @@ equivalent subgroups have the same set of supergroups do we resort to computing 
 and rather than computing sig(G,H), we are free to replace G with any supergroup K of H and instead compute
 sig(K,H), which helps a lot when [K:H] is smaller then [G:H].  We need to be careful to account for the fact
 that there may be two or more G-conjugates of H contained in K that are not K-conjugate, so we compute the
-sorted list sig(K,H') where H' varies over G-conjugates of H in K to esure we get a signature that is
+sorted list sig(K,H') where H' varies over G-conjugates of H in K to ensure we get a signature that is
 G-invariant (but computing a bunch of signatures of smaller index is much better than computing one of large
 index, and we are free to choose K to minimize the index, since we know that all the subgroups we want to
 distinguish have the same set of supergroups).
