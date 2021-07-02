@@ -27,7 +27,7 @@ intrinsic MakeSmallGroupGLnData(N::RngIntElt, i::RngIntElt) -> Tup
 end intrinsic;
 
 /* Sorry, made by copy/paste and tailored to me */
-Folder:="JJ-test/";
+Folder:="DATA/";
 Proc:="0";
 files := [Folder * "groups/" * Proc * ".txt",
           Folder * "subgroups/" * Proc * ".txt",

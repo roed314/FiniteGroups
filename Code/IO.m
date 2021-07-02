@@ -309,12 +309,11 @@ intrinsic DefaultAttributes(c::Cat) -> SeqEnum
                       // Group attributes
                       //"eulerian_function",
                       //"rank",
-                      //"mobius_function_known",
+                      //"mobius_function",
     
                       // Subgroup attributes
                       "alias_spot",
                       "aut_counter",
-                      "mobius_function",
 		      "extension_counter",
 		      //  "diagram_x", returns 0 now
 		      "generators",
@@ -355,10 +354,10 @@ intrinsic SaveLMFDBObject(G::Any : attrs:=[], sep:="|") -> MonStgElt
         attrs := DefaultAttributes(Type(G));
     end if;
     saved_attrs := [];
-    vprint User1, 2: "***", Type(G);
+    vprint User1: "***", Type(G);
     for attr in attrs do
         // "Attr", attr;
-        vprint User1, 2: attr;
+        vprint User1: attr;
         t := Cputime();
         saved := SaveAttr(attr, Get(G, attr), G);
         t := Cputime(t);

@@ -1,3 +1,4 @@
+AttachSpec("spec");
 G := New(LMFDBGrp);
 G`label := "whateva";
 G`MagmaGrp := DihedralGroup(12);
@@ -21,8 +22,12 @@ harder:=["maximal","abelian","normal"];
 for j in harder do dummy:=Get(H,j); end for;
 
 
-G`all_subgroups_known:=false;
-G`subgroup_index_bound:=3;
+G`subgroup_index_bound:=0;
 G`normal_subgroups_known:=true;
 G`maximal_subgroups_known:=true;
+G`all_subgroups_known:=true;
+G`subgroup_inclusions_known:=true;
+Get(G,"Subgroups");
+
+mobius_function(G);
 

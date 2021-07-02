@@ -1,3 +1,4 @@
+
 /*
 list of attributes to compute. DONE is either done here or in Basics.m
 see https://github.com/roed314/FiniteGroups/blob/master/ProposedSchema.md for description of attributes
@@ -160,7 +161,8 @@ intrinsic minimal_normal(H::LMFDBSubGrp) -> BoolElt // Need to be subgroup attri
   GG := Get(H, "MagmaAmbient");
   G := Get(H, "Grp");
   HH := H`MagmaSubGrp;
-  if not IsNormal(GG, HH) then 
+  // We don't consider the trivial subgroup to be minimal normal
+  if not IsNormal(GG, HH) or Order(HH) eq 1 then
     return false;
   else
     for r in Get(G, "NormalSubgroups") do
@@ -289,4 +291,4 @@ end intrinsic;
 intrinsic diagram_x(H::LMFDBSubGrp) -> RngIntElt
     {integer from 1 to 10000 indicating the x-coordinate for plotting the subgroup in the lattice, 0 if not computed--will be computed elsewhere}
     return 0;
-end intrinsic
+end intrinsic;

@@ -56,6 +56,7 @@ find_aut_action := function(G)
   end for;
 
   orbits := OrbitRepresentatives(sub<P | auts_as_perms_list>);
+  orbits := [<T[1], S[T[2]]`subgroup> : T in orbits];
   return(orbits);
 end function;
 
@@ -90,10 +91,78 @@ find_aut_action_v2 := function(G)
   end for;
 
   orbits := OrbitRepresentatives(sub<P | auts_as_perms_list>);
+  orbits := [<T[1], S[T[2]]`subgroup> : T in orbits];
+  // There is a bug somewhere in this function: when called on SmallGroup(32, 51) = C2^5, it gives two representatives of order 2^3
   return(orbits);
 end function;
 
+check_characteristic := function(G)
+    S := find_aut_action(G);
+    C := [T[2] : T in S | T[1] eq 1 and #T[2] ne 1];
+    b, p := IsPrimePower(#G);
+    if not b then
+        error "G must be a p-group";
+    end if;
+    Ch := {G};
+    q := p;
+    qG := G;
+    while true do
+        Gq := sub<G|[x : x in PCGenerators(G) | x^q eq One(G)]>;
+        qG := sub<G|[G!(x^p) : x in Generators(qG)]>;
+        q *:= p;
+        if #qG eq 1 then
+            break;
+        end if;
+        Include(~Ch, qG);
+        Include(~Ch, Gq);
+    end while;
+    CdCh := [c : c in C | not (c in Ch)];
+    ChdC := [c : c in Ch | not (c in C)];
+    if #CdCh ne 0 then
+        print "Unexpected characteristic subgroup";
+    end if;
+    if #ChdC ne 0 then
+        print "Error: qG or Gq not characteristic!";
+    end if;
+    A := AssociativeArray();
+    for T in S do
+        H := T[2];
+        v := [#(H meet c) : c in C];
+        if not IsDefined(A, v) then
+            A[v] := [];
+        end if;
+        Append(~A[v], H);
+    end for;
+    dups := [];
+    for v -> L in A do
+        if #L gt 1 then
+            Append(~dups, v);
+            printf "Collision in %o\n", v;
+        end if;
+    end for;
+    return A, dups, CdCh, ChdC;
+end function;
 
+check_twos := function(d)
+    for P in Partitions(d) do
+        if #P gt 7 then
+            continue;
+        end if;
+        print P;
+        G := PCGroup(AbelianGroup([2^i : i in P]));
+        A, dups, CdCh, ChdC := check_characteristic(G);
+        if #dups gt 0 then
+            print "Duplicate!";
+            return G, A, dups, CdCh, ChdC;
+        end if;
+        //if #CdCh gt 0 then
+        //    print "Extra characteristic subgroup";
+        //    return A, CdCh;
+        //end if;
+    end for;
+    print "Complete!";
+    return [];
+end function;
 /*
 SAMPLE INPUT/OUTPUT
 -------------------

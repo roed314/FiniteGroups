@@ -77,24 +77,29 @@ intrinsic getirrreps(G::LMFDBGrp: Field:="C")->Any
     cct:=Get(G, "QQCharacters");
     ct:=<c`MagmaChtr : c in cct>;
   end if;
-  gs:=getgoodsubs(g, ct);
-  subs:=gs[1];
-  tvals:=gs[2];
-  im:={};
-  for s in subs do
-    pm:=PermutationModule(g,s,K);
-    ds:=DirectSumDecomposition(pm);
-    for rep in ds do
-      good:=true;
-      for orep in im do
-        if IsIsomorphic(rep, orep) then
-          good:=false;
-          break;
-        end if;
+  if IsSolvable(g) and Field eq "C" then
+    im := AbsolutelyIrreducibleModulesSchur(g, Rationals()); ;
+    tvals := [0 : z in im];
+  else
+      gs:=getgoodsubs(g, ct);
+      subs:=gs[1];
+      tvals:=gs[2];
+      im:={};
+      for s in subs do
+        pm:=PermutationModule(g,s,K);
+        ds:=DirectSumDecomposition(pm);
+        for rep in ds do
+          good:=true;
+          for orep in im do
+            if IsIsomorphic(rep, orep) then
+              good:=false;
+              break;
+            end if;
+          end for;
+          if good then Include(~im, rep); end if;
+        end for;
       end for;
-      if good then Include(~im, rep); end if;
-    end for;
-  end for;
+  end if;
   res:=[*0 : z in ct*];
   for j:=1 to #ct do
     mult:= Field eq "C" select 1 else Get(cct[j], "schur_index");
@@ -140,8 +145,17 @@ intrinsic CCReps(G::LMFDBGrp)->Any
       r`dim := Integers() ! Degree(Get(rep[1], "MagmaChtr"));
       gln:= GL(r`dim, BaseRing(rep[4]));
       r`group := Get(G, "label");
-      //asub:=sub<gln|r3>;
-      //r4:= random_gens(asub);
+      asub:=sub<gln|r3>;
+      if r`dim eq 1 then
+        if Order(asub) mod 4 eq 2 then
+          zetan:=-1*RootOfUnity(Order(asub) div 2);
+        else
+          zetan:=RootOfUnity(Order(asub));
+        end if;
+        r3:=[Matrix(Parent(zetan),1,1,[zetan])];
+      else
+        r3:= random_gens(asub);
+      end if;
 
       denoms:=[0 : z in r3];
       gens2:=[* 0 : z in r3*];
@@ -151,8 +165,9 @@ intrinsic CCReps(G::LMFDBGrp)->Any
         gens2[j]:=dm;
       end for;
       assert r`dim eq Nrows(gens2[1]);
-      r`gens := [WriteCyclotomicMatrix(z) : z in gens2];
       r`MagmaRep:=rep[4];
+      cyc_order_mat:=Get(r, "cyc_order_mat");
+      r`gens := [WriteCyclotomicMatrix(z, cyc_order_mat) : z in gens2];
       r`order:=Get(G,"order");
       r`MagmaGrp:=sub<gln|r3>;
       r`cyc_order_traces:=Get(rep[1], "cyclotomic_n");
@@ -161,7 +176,7 @@ intrinsic CCReps(G::LMFDBGrp)->Any
       r`label := replabel;
       r`decomposition:= [<r`label, 1>];
       r`trace_field:=Get(rep[1], "field");
-      r`traces := [WriteCyclotomicElement(Trace(z)) : z in gens2];
+      r`traces := [WriteCyclotomicElement(Trace(z), r`cyc_order_traces) : z in gens2];
       r`E:=e;
       Append(~result2, r);
     end if;
@@ -295,7 +310,7 @@ intrinsic rep_label(C::LMFDBGrpChtrQQ, r::Any, A::Assoc)->MonStgElt
     end for;
     return Get(C, "label");
   else // need quotient group, read from file
-    try
+//    try
       ker:=Kernel(Get(C,"MagmaChtr"));
       quot:=Get(C,"Grp")`MagmaGrp/ker;
       idquot:=IdentifyGroup(quot);
@@ -304,15 +319,19 @@ intrinsic rep_label(C::LMFDBGrpChtrQQ, r::Any, A::Assoc)->MonStgElt
         dat := Split(orep, " ");
         lab := dat[1];
         elts := [Matrix(z): z in eval(dat[2])];
-        H := sub<bigg|elts>;
-        if IsGLQConjugate(H,K) then
-          return lab;
+        //"bigg", bigg;
+        //"elts", elts;
+        if qdim eq Nrows(elts[1]) then
+          H := sub<bigg|elts>;
+          if IsGLQConjugate(H,K) then
+            return lab;
+          end if;
         end if;
       end for;
-    catch e
-      "Error reading old reps for ", idquot;
-      return "";
-    end try;
+//    catch e
+//      "Error reading old reps for ", idquot;
+//      return "";
+//    end try;
     assert false;
     return ""; // Should not get here
   end if;
@@ -415,7 +434,7 @@ intrinsic random_gens(g::Any) -> Any
   ResetRandomSeed();
   n:=Order(g);
   if n eq 1 then return [Id(g)]; end if;
-  max_tries:=5;
+  max_tries:=25;
   best_k:=n+1;
   best:=[];
   for jj:=1 to max_tries do

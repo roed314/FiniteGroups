@@ -247,8 +247,10 @@ end intrinsic;
 intrinsic MagmaTransitiveSubgroup(G::LMFDBGrp) -> Any
     {Subgroup producing a minimal degree transitive faithful permutation representation}
     g := G`MagmaGrp;
-    if Get(G, "order") eq 1 then return g; end if;
     S := Get(G, "Subgroups");
+    if Get(G, "order") eq 1 then
+        return g;
+    end if;
     m := G`subgroup_index_bound;
     for j in [1..#S] do
         if m ne 0 and Get(S[j], "quotient_order") gt m then
@@ -280,6 +282,7 @@ intrinsic Generators(G::LMFDBGrp) -> Any
     {Returns the chosen generators of the underlying group}
     ert := Get(G, "elt_rep_type");
     if ert eq 0 then
+        print "inside Generators(G)";
         gu := Get(G, "gens_used");
         gens := SetToSequence(PCGenerators(G`MagmaGrp));
         if Type(gu) ne NoneType then
@@ -1061,6 +1064,7 @@ intrinsic CollectDirectFactors(facts::SeqEnum) -> SeqEnum
       Append(~pairs, [* Get(fact, "label"), 1 *]);
     end if;
   end for;
+  Sort(~pairs);
   return pairs;
 end intrinsic;
 
@@ -1281,7 +1285,7 @@ intrinsic characters_add_sort_and_labels(G::LMFDBGrp, cchars::Any, rchars::Any) 
       Kn:=CyclotomicField(cyclon);
       cchars[cindex]`cyclotomic_n:=cyclon;
       //cchars[cindex]`values:=[PrintRelExtElement(Kn!thischar[perm[z]]) : z in [1..#thischar]];
-      cchars[cindex]`values:=[WriteCyclotomicElement(Kn!thischar[perm[z]]) : z in [1..#thischar]];
+      cchars[cindex]`values:=[WriteCyclotomicElement(Kn!thischar[perm[z]],cyclon) : z in [1..#thischar]];
       if dat[len-2] notin donec then
         ccnt+:=1;
         ctotalcnt+:=1;
@@ -1296,7 +1300,7 @@ intrinsic characters_add_sort_and_labels(G::LMFDBGrp, cchars::Any, rchars::Any) 
         cyclon:=CyclotomicOrder(basef);
         Kn:=CyclotomicField(cyclon);
         cchars[cindex]`cyclotomic_n:=cyclon;
-        cchars[cindex]`values:=[WriteCyclotomicElement(Kn!thischar[perm[z]]) : z in [1..#thischar]];
+        cchars[cindex]`values:=[WriteCyclotomicElement(Kn!thischar[perm[z]], cyclon) : z in [1..#thischar]];
       end if;
     end if;
   end for;
@@ -1319,7 +1323,7 @@ intrinsic Characters(G::LMFDBGrp) ->  Tup
   rct:=Get(G,"MagmaRationalCharacterTable");
   matching:=Get(G,"MagmaCharacterMatching");
   R<x>:=PolynomialRing(Rationals());
-  polredabscache:=AssociativeArray();
+  polredabscache:=LoadPolredabsCache();
   //cc:=Classes(g);
   cchars:=[New(LMFDBGrpChtrCC) : c in ct];
   rchars:=[New(LMFDBGrpChtrQQ) : c in rct];
@@ -1337,11 +1341,12 @@ intrinsic Characters(G::LMFDBGrp) ->  Tup
     if not IsDefined(polredabscache,thepoly) then
       thepoly1:=Polredabs(thepoly);
       polredabscache[thepoly] := thepoly1;
+      PolredabsCache(thepoly, thepoly1);
     end if;
     thepoly:=polredabscache[thepoly];
     cchars[j]`field:=Coefficients(thepoly);
     cchars[j]`Image_object:=New(LMFDBRepCC);
-    //cchars[j]`indicator:=FrobeniusSchur(ct[j]); // Not in schema, but should be?
+    cchars[j]`indicator:=FrobeniusSchur(ct[j]);
     cchars[j]`label:="placeholder";
     vprint User2: "B", j, t;
     t := Cputime(t);
@@ -1358,7 +1363,6 @@ intrinsic Characters(G::LMFDBGrp) ->  Tup
     rchars[j]`Image_object:=New(LMFDBRepQQ);
     rchars[j]`faithful:=IsFaithful(rct[j]);
     // Character may not be irreducible, so value might not be in 1,0,-1
-    rchars[j]`indicator:=FrobeniusSchur(ct[matching[j][1]])*rchars[j]`multiplicity;
     rchars[j]`label:="placeholder";
     vprint User2: "C", j, t;
     t := Cputime(t);
@@ -1378,7 +1382,8 @@ end intrinsic;
 intrinsic tex_name(G::LMFDBGrp) -> Any
   {Returns Magma's name for the group.}
   g:=G`MagmaGrp;
-  return GroupName(g: TeX:=true);
+  gn:= GroupName(g: TeX:=true);
+  return ReplaceString(gn, "\\", "\\\\");
 end intrinsic;
 
 intrinsic Socle(G::LMFDBGrp) -> Any
@@ -1505,7 +1510,9 @@ intrinsic elt_rep_type(G:LMFDBGrp) -> Any
     if Type(G`MagmaGrp) eq GrpPC then
         return 0;
     elif Type(G`MagmaGrp) eq GrpPerm then
-        return -Degree(G`MagmaGrp);
+      deg:=Get(G,"transitive_degree");
+      return -deg;
+      /* return -Degree(G`MagmaGrp);  */
     elif Type(G`MagmaGrp) eq GrpMat then
         R := CoefficientRing(G);
         if R eq Integers() then

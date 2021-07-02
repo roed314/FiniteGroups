@@ -23,13 +23,14 @@ intrinsic indicator(M::LMFDBRepCC) -> FldRatElt
   return Integers() ! (ind/Get(M,"order"));
 end intrinsic;
 
+// Already minimizing
 intrinsic cyc_order_mat(M::LMFDBRepCC) -> RngIntElt
   {an integer m so that the entries in the gens column lie in CyclotomicField(m)}
   MM := M`MagmaRep;
-  MMmin := AbsoluteModuleOverMinimalField(MM);
-  rng:= CoefficientRing(MMmin);
+  //MMmin := AbsoluteModuleOverMinimalField(MM);
+  rng:= CoefficientRing(MM);
   if rng eq Rationals() then return 1; end if;
-  if Type(rng) eq FldCyc then return Conductor(rng); end if;
+  if Type(rng) eq FldCyc then return CyclotomicOrder(rng); end if;
   return Norm(Conductor(AbelianExtension(rng)));
 end intrinsic;
 
@@ -50,8 +51,29 @@ intrinsic AbsoluteModuleOverMinimalField(~M::LMFDBRepCC)
   print "Module over minimal field computed and assigned";
 end intrinsic;
 
-// TODO: not quite right format...see propose schema
-intrinsic WriteCyclotomicElement(u::FldCycElt) -> SeqEnum
+intrinsic recog(u::SeqEnum, v::SeqEnum : AllowS:=false) -> BoolElt, RngIntElt, RngIntElt
+  {See if there exist integers r,s such that u = r*v+s.  Inputs are vectors
+   of coefficients from elements of a cyclotomic field.  1st entry is the
+   coefficient of 1.  Return is yes/no, r, s}
+  k:=  AllowS select 2 else 1;
+  Z := Integers();
+  while u[k] eq 0 and v[k] eq 0 do
+    k:= k+1;
+  end while;
+  if u[k] eq 0 or v[k] eq 0 then
+    return false, 0, 0;
+  end if;
+  // Now have first non-zero place
+  r := (Z ! u[k]) div (Z ! v[k]);
+  for j:=k to #u do
+    if u[j] ne r*v[j] then return false, 0, 0; end if;
+  end for;
+  s:= u[1] - r*v[1];
+  return true, r, (Z ! s);
+end intrinsic;
+
+// Temporarily still here for comparison to debug the newer version below
+intrinsic oldWriteCyclotomicElement(u::FldCycElt) -> SeqEnum
   {Given an element u of a cyclotomic field with primitive root zeta_m, return a SeqEnum of pairs [c,e] such that
   u is the sum of c*zeta_m^e}
   //K<z> := CyclotomicField(Conductor(Parent(u)) : Sparse := false);
@@ -66,6 +88,103 @@ intrinsic WriteCyclotomicElement(u::FldCycElt) -> SeqEnum
       for j:=1 to #u_seq do u_seq[j] -:= v; end for;
     end if;
   end if;
+  cs := [];
+  for i := 1 to #u_seq do
+    if u_seq[i] ne 0 then
+      e := i-1;
+      if e gt Floor(m/2) then // want e in range -m/2 < e <= m/2
+        e := e - m;
+      end if;
+      assert (-m/2 lt e) and (e lt m/2); // should second lt be le?
+      Append(~cs, [u_seq[i], e]);
+    end if;
+  end for;
+  if cs eq [] then return [[0,0]]; end if;
+  return cs;
+end intrinsic;
+
+// TODO: not quite right format...see propose schema
+intrinsic WriteCyclotomicElement(u::Any, m::RngIntElt) -> SeqEnum
+  {Given an element u of a cyclotomic field with primitive root zeta_m, return a SeqEnum of pairs [c,e] such that
+  u is the sum of c*zeta_m^e}
+  K<z> := CyclotomicField(m : Sparse := false);
+  //K<z> := CyclotomicField(CyclotomicOrder(Parent(u)) : Sparse := false);
+  u_seq := Eltseq(K!u);   // j-th element is for zeta^(j-1)
+  // Check if it is just an integer
+  is_int:=true; j:=2;
+  while is_int and j le #u_seq do
+    is_int := u_seq[j] eq 0;
+    j +:= 1;
+  end while;
+  if is_int then return [[u_seq[1], 0]]; end if;
+  is_found:=false;
+  // Test for r*(zeta^j+zeta^(-j)
+  for j:=1 to (m-1) div 2 do
+    v := Eltseq(K! z^j+z^(-j));
+    tf, r, s := recog(u_seq, v);
+    //"Try ", j, " with ", u_seq, " and ", v, " got ", tf;
+    if tf then
+      new_u := [0 : k in [1..m]];
+      new_u[1] := s;
+      new_u[j+1] := r;
+      new_u[m-j+1] := r;
+      u_seq := new_u;
+      is_found:=true;
+      break;
+    end if;
+  end for;
+  // Test for r*zeta^j
+  for j:=1 to m-1 do
+    if is_found then break; end if; // Avoids nesting for skipping loop
+    v := Eltseq(K! z^j);
+    tf, r, s := recog(u_seq, v);
+    //"Try ", j, " with ", u_seq, " and ", v, " got ", tf;
+    if tf then
+      new_u := [0 : k in [1..m]];
+      new_u[1] := s;
+      new_u[j+1] := r;
+      u_seq := new_u;
+      is_found:=true;
+      break;
+    end if;
+  end for;
+  if #u_seq lt m then u_seq := u_seq cat [0 : j in [1..(m-#u_seq)]]; end if;
+
+  u_seqold:=u_seq;        // For debugging
+  divlist:= Divisors(m);
+  halves:=[]; // values where we hit half the elements
+  // Count coeffs for each Galois orbit
+  // Alist[j] has counters for orbit of zeta^divlist[j], elements with
+  //   order m/divlist[j]
+  Alist := [AssociativeArray() : d in divlist];
+  for j:=1 to #u_seq do
+    if u_seq[j] ne 0 then
+      posn:=Position(divlist, GCD(j-1,m));
+      Alist[posn]:=inc_counter(Alist[posn], u_seq[j]);
+    end if;
+  end for;
+  // Tr(zeta_n)= (-1)^#(primes dividing n) if n is squarefree, else 0
+  for j:=1 to #divlist-1 do  // last divlist is order 1
+    d := divlist[j];
+    posn:=Position(divlist, d);
+    cnts := Alist[posn];
+    my_order:=EulerPhi(m div d);
+    for ky in Keys(cnts) do
+//"m=",m,"key=",ky,"count=",cnts[ky],"m/d=", m div d,"my order=", my_order;
+      if 2*cnts[ky] gt my_order then
+        for ell:=1 to m div d do
+          if GCD(ell, m div d) eq 1 then
+            u_seq[ell*d+1] -:= ky;
+          end if;
+        end for;
+        u_seq[1] +:= MoebiusMu(m div d) * ky;
+      elif 2*cnts[ky] eq my_order then
+        Append(~halves, [j, ky, cnts[ky]]);
+      end if;
+    end for;
+  end for;
+  //u_seqold, "and", u_seq;
+
   cs := [];
   for i := 1 to #u_seq do
     if u_seq[i] ne 0 then
@@ -101,7 +220,8 @@ intrinsic CyclotomizeMatrixGroup(M::GrpMat) -> Any
   return ChangeRing(M,K);
 end intrinsic;
 
-intrinsic IntegralizeMatrix(M::AlgMatElt) -> Any
+intrinsic IntegralizeMatrix(M::Any) -> Any
+//intrinsic IntegralizeMatrix(M::AlgMatElt) -> Any
   {Given a matrix return a matrix with integral entries, along with a common denominator}
   d := 1;
   for i := 1 to Nrows(M) do
@@ -109,15 +229,18 @@ intrinsic IntegralizeMatrix(M::AlgMatElt) -> Any
       d := Lcm(d, Denominator(M[i,j]));
     end for;
   end for;
-  return d*M, d;
+  q:=[[d*M[i,j] : i in [1..Nrows(M)]] : j in [1..Ncols(M)]];
+  M1:= Matrix(Parent(M[1,1]),Nrows(M), Ncols(M),q);
+  return M1, d;
+  //return d*M, d;
 end intrinsic;
 
 //intrinsic WriteCyclotomicMatrix(M::GrpMatElt) -> SeqEnum
-intrinsic WriteCyclotomicMatrix(M::Any) -> SeqEnum
+intrinsic WriteCyclotomicMatrix(M::Any, m::RngIntElt) -> SeqEnum
   {Given a matrix over a cyclotomic field, return a SeqEnum whose entries are integral and of the form given by WriteCyclotomicElement.}
   M_seq := [];
   for row in Rows(M) do
-    Append(~M_seq, [WriteCyclotomicElement(el) : el in Eltseq(row)]);
+    Append(~M_seq, [WriteCyclotomicElement(el,m) : el in Eltseq(row)]);
   end for;
   return M_seq;
 end intrinsic;
