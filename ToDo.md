@@ -10,7 +10,7 @@
 ### Uploading data
 * **Fix bug in Magma's SmallGroupDecoding** (Sam)
 * **Rerun the basic computation: currently have SmallGroups up to order 383, excluding a few hard groups** (John, do last)
-* **Make use given generators to order conjugacy classes and subgroups and fix Lehmer codes.** (Jen)
+* **Make use given generators to order conjugacy classes and subgroups ~~and fix Lehmer codes.~~** (Jen)
 * **Update subgroup ordering: make sure we're using Drew's latest version** (David will email)
 * Run timing tests to determine which attributes are slow (in progress)
 * Streamline Magma code that may redundantly call Magma functions which are now attributes.
@@ -48,14 +48,7 @@
 * Add special family presentations in those cases
 * Data we compute but don't display yet.  Look at schema to see what we've computed.
 * Magma isn't consistent about the styling on the name (SL vs C2.SL)
-* **Change group characteristics list to be more like:  "cyclic (and so abelian, solvable, nilpotent, and monomial)" instead of just full list** (Jen)
-    * Z-group means metacyclic, supersolvable, and monomial
-    * Cyclic hence abelian, solvable, nilpotent, and monomial
-    * Abelian hence solvable, nilpotent, and monomial
-    * Metabelian hence solvable
-    * Metacyclic hence metabelian, supersolvable, and monomial
-    * Monomial hence solvable
-    * Supersolvable hence monomial
+* **~~Change group characteristics list to be more like:  "cyclic (and so abelian, solvable, nilpotent, and monomial)" instead of just full list** (Jen)~~
 * Create download buttons for Magma/GAP code, data like character tables
 * **Improve searches (add more things to search on)** (Sam)
 * Make supergroups a searchable option
@@ -64,7 +57,7 @@
 
 
 ## Knowls
-
+* **properties_interdependencies (cyclic hence abelian, etc.)**  (Jen)
 * Rename Meow Wolf to Tim (David)
 * RCS knowls (after we upload the data)
 
