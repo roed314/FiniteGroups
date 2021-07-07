@@ -48,7 +48,7 @@
 * Add special family presentations in those cases
 * Data we compute but don't display yet.  Look at schema to see what we've computed.
 * Magma isn't consistent about the styling on the name (SL vs C2.SL)
-* **~~Change group characteristics list to be more like:  "cyclic (and so abelian, solvable, nilpotent, and monomial)" instead of just full list** (Jen)~~
+* **~~Change group characteristics list to be more like:  "cyclic (and so abelian, solvable, nilpotent, and monomial)" instead of just full list~~** (Jen)
 * Create download buttons for Magma/GAP code, data like character tables
 * **Improve searches (add more things to search on)** (Sam)
 * Make supergroups a searchable option
