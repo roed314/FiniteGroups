@@ -134,6 +134,7 @@ intrinsic CCReps(G::LMFDBGrp)->Any
   */
 
   alllabels := Get(G, "CCRepLabels");
+  cyc_cache := Get(G, "CycEltCache");
 
   result2:=<>;
   for rep in result do
@@ -167,7 +168,7 @@ intrinsic CCReps(G::LMFDBGrp)->Any
       assert r`dim eq Nrows(gens2[1]);
       r`MagmaRep:=rep[4];
       cyc_order_mat:=Get(r, "cyc_order_mat");
-      r`gens := [WriteCyclotomicMatrix(z, cyc_order_mat) : z in gens2];
+      r`gens := [WriteCyclotomicMatrix(z, cyc_order_mat, cyc_cache) : z in gens2];
       r`order:=Get(G,"order");
       r`MagmaGrp:=sub<gln|r3>;
       r`cyc_order_traces:=Get(rep[1], "cyclotomic_n");
@@ -176,7 +177,7 @@ intrinsic CCReps(G::LMFDBGrp)->Any
       r`label := replabel;
       r`decomposition:= [<r`label, 1>];
       r`trace_field:=Get(rep[1], "field");
-      r`traces := [WriteCyclotomicElement(Trace(z), r`cyc_order_traces) : z in gens2];
+      r`traces := [WriteCyclotomicElement(Trace(z), r`cyc_order_traces, cyc_cache) : z in gens2];
       r`E:=e;
       Append(~result2, r);
     end if;

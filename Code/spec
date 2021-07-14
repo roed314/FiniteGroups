@@ -4,6 +4,7 @@
   Samples.m
   Label.m
   LabelSubgroups.m
+  Subgroups.m
   GrpAttributes.m
   SubGrpAttributes.m
   ConjClsAttributes.m

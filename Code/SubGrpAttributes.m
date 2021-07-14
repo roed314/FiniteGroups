@@ -137,12 +137,7 @@ intrinsic quotient_order(H::LMFDBSubGrp) -> Any // Need to be subgroup attribute
 {Determine the order of the quotient group}
   GG := Get(H, "MagmaAmbient");
   HH := H`MagmaSubGrp;
-  Q := quo< GG | HH >;
-  if not IsNormal(GG, HH) then
-    return None();
-  else
-    return Order(Q);
-  end if;
+  return Index(GG, HH);
 end intrinsic;
 
 intrinsic GetGrp(H::LMFDBSubGrp) -> LMFDBGrp
@@ -167,8 +162,7 @@ intrinsic minimal_normal(H::LMFDBSubGrp) -> BoolElt // Need to be subgroup attri
   else
     for r in Get(G, "NormalSubgroups") do
       N := r`MagmaSubGrp;
-//      if (N subset HH) and (N ne HH) and (Order(N) ne 1) then
-      if (N subset HH) and (N ne HH) then
+      if (N subset HH) and (N ne HH) and (Order(N) ne 1) then
          return false;
       end if;
     end for;
@@ -177,16 +171,16 @@ intrinsic minimal_normal(H::LMFDBSubGrp) -> BoolElt // Need to be subgroup attri
 end intrinsic;
 
 
-intrinsic split(H::LMFDBSubGrp) -> Any 
+intrinsic split(H::LMFDBSubGrp) -> Any
   {Returns whether this sequence with H splits or not, null when non-normal}
   GG := Get(H, "MagmaAmbient");
   HH := H`MagmaSubGrp;
   G := Get(H, "Grp");
-  S := Get(G, "Subgroups"); 
+  S := Get(G, "Subgroups");
   if not IsNormal(GG, HH) then
     return None();
-  else 
-    comps := [el : el in S | Order(el`MagmaSubGrp) eq (Order(GG) div Order(HH))]; 
+  else
+    comps := [el : el in S | Order(el`MagmaSubGrp) eq (Order(GG) div Order(HH))];
     for s in comps do
       K := s`MagmaSubGrp;
       if #(K meet HH) eq 1 then 
@@ -291,4 +285,89 @@ end intrinsic;
 intrinsic diagram_x(H::LMFDBSubGrp) -> RngIntElt
     {integer from 1 to 10000 indicating the x-coordinate for plotting the subgroup in the lattice, 0 if not computed--will be computed elsewhere}
     return 0;
+end intrinsic;
+
+intrinsic subgroup_tex(H::LMFDBSubGrp) -> Any
+  {Returns Magma's name for the subgroup.}
+  g:=H`MagmaSubGrp;
+  gn:= GroupName(g: TeX:=true);
+  return ReplaceString(gn, "\\", "\\\\");
+end intrinsic;
+
+intrinsic ambient_tex(H::LMFDBSubGrp) -> Any
+  {Returns Magma's name for the ambient group.}
+  g := Get(H, "MagmaAmbient");
+  gn:= GroupName(g: TeX:=true);
+  return ReplaceString(gn, "\\", "\\\\");
+end intrinsic;
+
+intrinsic quotient_tex(H::LMFDBSubGrp) -> Any
+  {Returns Magma's name for the quotient.}
+  GG := Get(H, "MagmaAmbient");
+  HH := H`MagmaSubGrp;
+  if IsNormal(GG, HH) then
+    Q := quo< GG | HH >;
+    gn:= GroupName(Q: TeX:=true);
+    return ReplaceString(gn, "\\", "\\\\");
+  else
+    return None();
+  end if;
+end intrinsic;
+
+intrinsic cyclic_quotient(H::LMFDBSubGrp) -> Any
+  {Whether the quotient exists and is cyclic}
+  GG := Get(H, "MagmaAmbient");
+  HH := H`MagmaSubGrp;
+  if IsNormal(GG, HH) then
+    Q := quo< GG | HH >;
+    return IsCyclic(Q);
+  else
+    return false;
+  end if;
+end intrinsic;
+
+intrinsic abelian_quotient(H::LMFDBSubGrp) -> Any
+  {Whether the quotient exists and is abelian}
+  GG := Get(H, "MagmaAmbient");
+  HH := H`MagmaSubGrp;
+  if IsNormal(GG, HH) then
+    Q := quo< GG | HH >;
+    return IsAbelian(Q);
+  else
+    return false;
+  end if;
+end intrinsic;
+
+intrinsic solvable_quotient(H::LMFDBSubGrp) -> Any
+  {Whether the quotient exists and is solvable}
+  GG := Get(H, "MagmaAmbient");
+  HH := H`MagmaSubGrp;
+  if IsNormal(GG, HH) then
+    Q := quo< GG | HH >;
+    return IsSolvable(Q);
+  else
+    return false;
+  end if;
+end intrinsic;
+
+intrinsic weyl_group(H::LMFDBSubGrp) -> Any
+  {The quotient of the normalizer by the centralizer}
+  GG := Get(H, "MagmaAmbient");
+  HH := H`MagmaSubGrp;
+  N := Normalizer(GG, HH);
+  Z := Centralizer(GG, HH);
+  W := quo< N | Z >;
+  try
+    return label(W);
+  catch e;
+    print "weyl_group", e;
+    return None();
+  end try;
+end intrinsic;
+
+intrinsic proper(H::LMFDBSubGrp) -> Any
+  {false for trivial group and whole group}
+  GG := Get(H, "MagmaAmbient");
+  HH := H`MagmaSubGrp;
+  return (Order(HH) ne 1 and Index(GG, HH) ne 1);
 end intrinsic;

@@ -104,9 +104,15 @@ intrinsic oldWriteCyclotomicElement(u::FldCycElt) -> SeqEnum
 end intrinsic;
 
 // TODO: not quite right format...see propose schema
-intrinsic WriteCyclotomicElement(u::Any, m::RngIntElt) -> SeqEnum
+intrinsic WriteCyclotomicElement(u::Any, m::RngIntElt, cache::CyclotomicCache) -> SeqEnum
   {Given an element u of a cyclotomic field with primitive root zeta_m, return a SeqEnum of pairs [c,e] such that
   u is the sum of c*zeta_m^e}
+  if not IsDefined(cache`cache, m) then
+    cache`cache[m] := AssociativeArray();
+  end if;
+  if IsDefined(cache`cache[m], u) then
+    return cache`cache[m][u];
+  end if;
   K<z> := CyclotomicField(m : Sparse := false);
   //K<z> := CyclotomicField(CyclotomicOrder(Parent(u)) : Sparse := false);
   u_seq := Eltseq(K!u);   // j-th element is for zeta^(j-1)
@@ -116,7 +122,10 @@ intrinsic WriteCyclotomicElement(u::Any, m::RngIntElt) -> SeqEnum
     is_int := u_seq[j] eq 0;
     j +:= 1;
   end while;
-  if is_int then return [[u_seq[1], 0]]; end if;
+  if is_int then
+    cache`cache[m][u] := [[u_seq[1], 0]];
+    return [[u_seq[1], 0]];
+  end if;
   is_found:=false;
   // Test for r*(zeta^j+zeta^(-j)
   for j:=1 to (m-1) div 2 do
@@ -196,7 +205,10 @@ intrinsic WriteCyclotomicElement(u::Any, m::RngIntElt) -> SeqEnum
       Append(~cs, [u_seq[i], e]);
     end if;
   end for;
-  if cs eq [] then return [[0,0]]; end if;
+  if cs eq [] then
+      cs := [[0, 0]];
+  end if;
+  cache`cache[m][u] := cs;
   return cs;
 end intrinsic;
 
@@ -236,11 +248,11 @@ intrinsic IntegralizeMatrix(M::Any) -> Any
 end intrinsic;
 
 //intrinsic WriteCyclotomicMatrix(M::GrpMatElt) -> SeqEnum
-intrinsic WriteCyclotomicMatrix(M::Any, m::RngIntElt) -> SeqEnum
+intrinsic WriteCyclotomicMatrix(M::Any, m::RngIntElt, cache::CyclotomicCache) -> SeqEnum
   {Given a matrix over a cyclotomic field, return a SeqEnum whose entries are integral and of the form given by WriteCyclotomicElement.}
   M_seq := [];
   for row in Rows(M) do
-    Append(~M_seq, [WriteCyclotomicElement(el,m) : el in Eltseq(row)]);
+    Append(~M_seq, [WriteCyclotomicElement(el,m,cache) : el in Eltseq(row)]);
   end for;
   return M_seq;
 end intrinsic;

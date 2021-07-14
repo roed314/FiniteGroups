@@ -17,6 +17,7 @@ declare attributes LMFDBGrp:
   MagmaCharacterTable,
   MagmaRationalCharacterTable,
   MagmaCharacterMatching,
+  CycEltCache,
   CCpermutation,
   CCpermutationInv,
   CCCharacters,
@@ -170,6 +171,10 @@ declare attributes LMFDBSubGrp:
   characteristic,
   cyclic,
   abelian,
+  solvable,
+  cyclic_quotient,
+  abelian_quotient,
+  solvable_quotient,
   perfect,
   sylow,
   hall,
@@ -201,7 +206,12 @@ declare attributes LMFDBSubGrp:
   //generator_images,
   standard_generators,
   diagram_x,
-  projective_image;
+  projective_image,
+  subgroup_tex,
+  ambient_tex,
+  quotient_tex,
+  weyl_group,
+  proper;
 
 intrinsic Print(H::LMFDBSubGrp)
   {Print LMFDBSubGrp}

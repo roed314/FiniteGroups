@@ -60,12 +60,11 @@
 * **Improve searches (add more things to search on)** (Sam)
 * Make supergroups a searchable option
 * Label characters as orthogonal, symplectic, linear, faithful on right/left or maybe in knowl as it is? Maybe some indication of these?  Update the Type code to include more info.
-* **Profile why group pages are so slow to load** (David)
+* Make sure we have the right indexes
 
 
 ## Knowls
 
-* Rename Meow Wolf to Tim (David)
 * RCS knowls (after we upload the data)
 
 ## Last Stage

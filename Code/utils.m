@@ -73,8 +73,12 @@ end intrinsic;
 
 intrinsic LoadPolredabsCache() -> Any
   {Load polredabs values from a file}
-  prastr:=Split(Read("Polredabs-cache"));
   prac:= AssociativeArray();
+  try
+    prastr:=Split(Read("Polredabs-cache"));
+  catch e;
+    return prac;
+  end try;
   R<x>:=PolynomialRing(Rationals());
   for pdat in prastr do
     pralist:=Split(pdat, " ");
