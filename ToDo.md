@@ -8,9 +8,12 @@
 * Write more upload code (remaining issues are blacklist on io.m)
 
 ### Uploading data
-* **Fix bug in Magma's SmallGroupDecoding** (Sam)
-* **Rerun the basic computation: currently have SmallGroups up to order 383, excluding a few hard groups** (John, do last)
-* **Make use given generators to order conjugacy classes and subgroups ~~and fix Lehmer codes.~~** (Jen)
+* Fix bug in Magma's SmallGroupDecoding
+* **Work around Magma's SmallGroupDecoding bug by using %m**
+* **Rerun the basic computation up to 511: currently have SmallGroups up to order 383, excluding a few hard groups** (John, do last)
+* **Make sure we use given generators to order conjugacy classes and subgroups.** (Jen + John + David)
+* **Revise subgroup labels** (David)
+* **Store the weights in the subgroup lattice** (David)
 * **Update subgroup ordering: make sure we're using Drew's latest version** (David will email)
 * Run timing tests to determine which attributes are slow (in progress)
 * Streamline Magma code that may redundantly call Magma functions which are now attributes.
@@ -42,6 +45,7 @@
 * Click vs. Mouseover of subgroups? (Still needs to be fixed in new version in 2020?)
   * currently the diagram does both: mouseover for highlighting and click for showing information.
 * **Add list of orders of elements in the group to top** (Manami)
+* **Add list of dimensions of irreducible representations just below** (Manami)
 * **Make Schur multiplier prettier (look at direction factorization code)** (Manami)
 * Add special names (aliases) to *Construction* section
 * Add permutation representations
@@ -54,6 +58,14 @@
 * Make supergroups a searchable option
 * Label characters as orthogonal, symplectic, linear, faithful on right/left or maybe in knowl as it is? Maybe some indication of these?  Update the Type code to include more info.
 * Make sure we have the right indexes
+* Figure out why advanced search options open by default
+* **Add list of subgroups in related objects** (Jen)
+* **Make a big version of the subgroup lattice, a la xkcd**
+* **Make the subgroup lattice downloadable**
+* **Make special urls for abelian groups** (David)
+* **Make character tables a separate page when larger than 16x16, include frozen row and column headers**
+* **Sort split and non-split products by number of characters, tie break by SALwOQDC, include "see more" links, don't put in the same table**
+* **Merge with master** (once almost ready to get into beta)
 
 
 ## Knowls
