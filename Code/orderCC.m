@@ -102,8 +102,10 @@ intrinsic ordercc(g::Any,cc::Any,cm::Any,pm::Any,gens::Any: dorandom:=true) -> A
   end function;
 
   // Now partition into divisions
+  number_divisions := 0;
   for k->v in step1 do
     step1[k] := makedivs(step1[k]);
+    number_divisions +:= #step1[k];
   end for;
 
   // Step2 partitions based on [order of rep, size of class, size of divisions]
@@ -247,7 +249,7 @@ intrinsic ordercc(g::Any,cc::Any,cm::Any,pm::Any,gens::Any: dorandom:=true) -> A
   end for;
 
   cc:=[c[3] : c in cc];
-  return cc,finalkeys, labels;
+  return cc, finalkeys, labels, number_divisions;
 end intrinsic;
 
 intrinsic testCCs(g::Any:dorandom:=true)->Any

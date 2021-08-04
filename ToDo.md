@@ -34,6 +34,10 @@
 * Write to Tim Dokchitser about status on adding his group names to Magma
 * Smallest n where the group is a subgroup of Sn (new Magma function)
 
+* Write code for finding lattices up to automorphism (Subgroups.m)
+* Update cycquos (Presentation.m) to not use the lattice, but instead using SubgroupsLift with conjugacy inside the holomorph
+* Update generator code (Presentation.m) to run before subgroups are labeled, using groups up to automorphisms
+
 ## Frontend
 
 * **Display the rank and Eulerian function information** (Lewis)
@@ -61,10 +65,9 @@
 * Figure out why advanced search options open by default
 * **Add list of subgroups in related objects** (Jen)
 * **Make a big version of the subgroup lattice, a la xkcd**
-* **Make the subgroup lattice downloadable**
-* **Make special urls for abelian groups** (David)
-* **Make character tables a separate page when larger than 16x16, include frozen row and column headers**
-* **Sort split and non-split products by number of characters, tie break by SALwOQDC, include "see more" links, don't put in the same table**
+* Make the subgroup lattice downloadable
+* Include frozen row and column headers for character tables
+* Styling for split and non-split products to make them more easily distinguishable from each other (line blue background boxes?); refine ordering heuristics.
 * **Merge with master** (once almost ready to get into beta)
 
 

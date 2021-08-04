@@ -1,6 +1,6 @@
 TextCols := ["abelian_quotient", "acted", "actor", "ambient", "aut_group", "bravais_class", "c_class", "center_label", "central_quotient", "commutator_label", "coset_action_label", "crystal_symbol", "factor1", "factor2", "family", "frattini_label", "frattini_quotient", "group", "image", "knowl", "label", "magma_cmd", "name", "old_label", "outer_group", "product", "proj_label", "projective_image", "q_class", "quotient", "quotient_action_image", "subgroup", "tex_name", "q_character", "carat_label", "subgroup_tex", "ambient_tex", "quotient_tex", "weyl_group"];
 
-IntegerCols := ["alias_spot", "ambient_order", "arith_equiv", "aut_counter", "aut_order", "auts", "cdim", "commutator_count", "composition_length", "conjugacy_class_count", "count", "counter", "counter_by_index", "cyc_order_mat", "cyc_order_traces", "cyclotomic_n", "degree", "derived_length", "diagram_x", "dim", "elementary", "elt_rep_type", "eulerian_function", "exponent", "extension_counter", "hall", "hyperelementary", "indicator", "mobius_function", "multiplicity", "n", "ngens", "nilpotency_class", "number_characteristic_subgroups", "number_conjugacy_classes", "number_normal_subgroups", "number_subgroup_classes", "number_subgroups", "order", "outer_order", "parity", "pc_code", "pgroup", "priority", "q", "qdim", "quotient_action_kernel", "quotient_order", "quotients_complenetess", "rank", "rep", "schur_index", "sibling_completeness", "size", "smallrep", "subgroup_index_bound", "subgroup_order", "sylow", "t", "transitive_degree"];
+IntegerCols := ["alias_spot", "ambient_order", "arith_equiv", "aut_counter", "aut_order", "auts", "cdim", "commutator_count", "composition_length", "conjugacy_class_count", "count", "counter", "counter_by_index", "cyc_order_mat", "cyc_order_traces", "cyclotomic_n", "degree", "derived_length", "diagram_x", "dim", "elementary", "elt_rep_type", "eulerian_function", "exponent", "extension_counter", "hall", "hyperelementary", "indicator", "mobius_function", "multiplicity", "n", "ngens", "nilpotency_class", "number_characteristic_subgroups", "number_conjugacy_classes", "number_divisions", "number_normal_subgroups", "number_subgroup_classes", "number_subgroups", "order", "outer_order", "parity", "pc_code", "pgroup", "priority", "q", "qdim", "quotient_action_kernel", "quotient_order", "quotients_complenetess", "rank", "rep", "schur_index", "sibling_completeness", "size", "smallrep", "subgroup_index_bound", "subgroup_order", "sylow", "t", "transitive_degree"];
 
 TextListCols := ["composition_factors", "special_labels"];
 
@@ -18,6 +18,27 @@ SubgroupListCols := ["complements"];
 EltCols := ["representative"];
 EltListCols := ["generators"];
 //QuotListCols := ["generator_images"];
+
+// The following is to be able to have a global variable
+declare type LMFDBRootFolderCache;
+declare attributes LMFDBRootFolderCache:
+    folder;
+LMFDBRootFolder := New(LMFDBRootFolderCache);
+LMFDBRootFolder`folder := "";
+intrinsic GetLMFDBRootFolderCache() -> LMFDBRootFolderCache
+{}
+    return LMFDBRootFolder;
+end intrinsic;
+intrinsic SetLMFDBRootFolder(folder::MonStgElt)
+{}
+    cache := GetLMFDBRootFolderCache();
+    cache`folder := folder;
+end intrinsic;
+intrinsic GetLMFDBRootFolder() -> MonStgElt
+{}
+    cache := GetLMFDBRootFolderCache();
+    return cache`folder;
+end intrinsic;
 
 intrinsic LoadBool(inp::MonStgElt) -> BoolElt
     {}
@@ -416,7 +437,7 @@ intrinsic WriteHeaders(typ::Any : attrs:=[], sep:="|", filename:="")
         attrs := DefaultAttributes(typ);
     end if;
     if filename eq "" then
-      filename:=Sprintf("%o.header", typ);
+        filename:=Sprintf("%o.header", typ);
     end if;
     s1:=Join([attr  : attr in attrs], sep);
     s2:=Join([AttrType(attr)  : attr in attrs], sep);
@@ -437,8 +458,8 @@ intrinsic PrintGLnData(G::LMFDBGrp: sep:="|") -> Tup
     qreps := Get(G, "QQReps");
     creps := Get(G, "CCReps");
     if HasAttribute(G, "QQRepsAsCC") then
-      other:= G`QQRepsAsCC;
-      creps := creps cat other;
+        other:= G`QQRepsAsCC;
+        creps := creps cat other;
     end if;
     return <[SaveLMFDBObject(qr: sep:=sep) : qr in qreps],
             [SaveLMFDBObject(cr: sep:=sep) : cr in creps]>;
