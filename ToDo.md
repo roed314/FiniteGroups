@@ -11,14 +11,13 @@
 * Fix bug in Magma's SmallGroupDecoding
 * **Work around Magma's SmallGroupDecoding bug by using %m**
 * **Rerun the basic computation up to 511: currently have SmallGroups up to order 383, excluding a few hard groups** (John, do last)
-* **Make sure we use given generators to order conjugacy classes and subgroups.** (Jen + John + David)
+* **Make sure we use given generators to order conjugacy classes and subgroups.** (David)
 * **Revise subgroup labels** (David)
 * **Store the weights in the subgroup lattice** (David)
-* **Update subgroup ordering: make sure we're using Drew's latest version** (David will email)
 * Run timing tests to determine which attributes are slow (in progress)
 * Streamline Magma code that may redundantly call Magma functions which are now attributes.
 * Figure out how to reuse work between different groups for slow features (using a recursive algorithm for example)
-* **Figure out criterion/heuristic for when to compute difficult/space-intensive things (lattice of subgroups, etc)** (discuss on Zulip)
+* **Evaluate our criterion/heuristic for when to compute difficult/space-intensive things (lattice of subgroups, etc)**
 * Timing dictionary saved to output
 * Design a process for adding groups outside the small groups range and assigning labels: three steps
   - find new groups of interest to add, compute their hash and specify a format to store information for the next stage
@@ -37,7 +36,6 @@
 ## Frontend
 
 * **Display the rank and Eulerian function information** (Lewis)
-* **Images of representations should be knowls for now instead of links** (John)
 * **Add "subgroup profile" in for all groups as a toggle with the diagram** (currently the subgroup profile appears in place of the diagram) (John)
 * **In subgroup profile, make sure orders are actually sorted (https://groups.lmfdb.xyz/Groups/Abstract/192.1511)** (John)
 * Character tables visible or add conjugacy classes (and order statistics)
@@ -52,25 +50,25 @@
 * Add special family presentations in those cases
 * Data we compute but don't display yet.  Look at schema to see what we've computed.
 * Magma isn't consistent about the styling on the name (SL vs C2.SL)
-* **~~Change group characteristics list to be more like:  "cyclic (and so abelian, solvable, nilpotent, and monomial)" instead of just full list~~** (Jen)
 * Create download buttons for Magma/GAP code, data like character tables
 * **Improve searches (add more things to search on)** (Sam)
 * Make supergroups a searchable option
 * Label characters as orthogonal, symplectic, linear, faithful on right/left or maybe in knowl as it is? Maybe some indication of these?  Update the Type code to include more info.
 * Make sure we have the right indexes
 * Figure out why advanced search options open by default
-* **Add list of subgroups in related objects** (Jen)
-* **Make a big version of the subgroup lattice, a la xkcd**
-* **Make the subgroup lattice downloadable**
-* **Make special urls for abelian groups** (David)
-* **Make character tables a separate page when larger than 16x16, include frozen row and column headers**
-* **Sort split and non-split products by number of characters, tie break by SALwOQDC, include "see more" links, don't put in the same table**
+* **Add genus 2 curves in related objects (genus 2)** (Jen)
+* **Make a big version of the subgroup lattice, a la xkcd** (John)
+* Make the subgroup lattice downloadable
+* Frozen row and column headers for character tables
+* Evaluate sort order for split and non-split products, don't just hide one
+* Look at spacing/highlighting for split and non-split products (Jen)
 * **Merge with master** (once almost ready to get into beta)
+* **Check that the presentation is correct** (Jen, David)
 
 
 ## Knowls
 * **properties_interdependencies (cyclic hence abelian, etc.)**  (Jen)
-* RCS knowls (after we upload the data)
+* **RCS knowls (after we upload the data) and update credits after merging with master**
 
 ## Last Stage
 
