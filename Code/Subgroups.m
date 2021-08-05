@@ -369,11 +369,22 @@ function SubgroupLattice(GG, aut)
             // Otherwise, let A_G = Holomorph(G) or G, A_M = Aut(M) and H_M = Holomorph(M)
             // N_{A_G}(M) -> A_M -> H_M / N_{H_M}(H).  A transversal of the image will give *inequivalent* reps coming from H
             if cache`outer_equivalence then
+                error, "Need to work around Magma bugs";
                 NM := Normalizer(Ambient, inj(M));
                 AM := Type(M) eq GrpPC select AutomorphismGroupSolubleGroup(M) else AutomorphismGroup(M);
                 HM, injM, projM := Holomorph(M, AM);
-                SM := sub<AM | [hom<M -> M | [proj(f)(m) : m in Generators(M)]> : f in Generators(NM)]>;
-                SM := SM @@ projM;
+                SM := sub<AM | [hom<M -> M | [m -> (inj(m)^f) @@ inj : m in Generators(M)]> : f in Generators(NM)]>;
+                // This doesn't work since Magma can't seem to compute preimages under proj
+                //SM := SM @@ projM;
+                // This doesn't work: it gives a runtime error in the hom constructor, even though f@@projM fixes 1 and thus should be in the complement of M specified in the docs
+                //projMinv := hom<AM -> HM | [f -> (f @@ projM) : f in Generators(M)]>;
+                // We work around it as follows
+                AMFP, fromFP := FPGroup(AM);
+                tmp := hom<AMFP -> HM | [f -> (fromFP(f) @@ projM) : f in Generators(AMFP)]>;
+                projMinv := Inverse(fromFP) * tmp;
+                // This fails
+                //auts_from_G := SM @ projMinv;
+                auts_from_G := sub<HM | [injM(m) : m in Generators(M)] cat [projMinv(f) : f in Generators(SM)]>;
             end if;
             //Append(~collapsed[H`order],
         end if;
