@@ -37,7 +37,6 @@
 
 * **Display the rank and Eulerian function information** (Lewis)
 * **Add "subgroup profile" in for all groups as a toggle with the diagram** (currently the subgroup profile appears in place of the diagram) (John)
-* **In subgroup profile, make sure orders are actually sorted (https://groups.lmfdb.xyz/Groups/Abstract/192.1511)** (John)
 * Character tables visible or add conjugacy classes (and order statistics)
 * Cutoff for pre-displaying character table.
 * Click vs. Mouseover of subgroups? (Still needs to be fixed in new version in 2020?)
