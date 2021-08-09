@@ -55,12 +55,12 @@
 * Label characters as orthogonal, symplectic, linear, faithful on right/left or maybe in knowl as it is? Maybe some indication of these?  Update the Type code to include more info.
 * Make sure we have the right indexes
 * Figure out why advanced search options open by default
-* **Add genus 2 curves in related objects (genus 2)** (Jen)
+* **~~Add genus 2 curves in related objects (genus 2~~)** (Jen)
 * **Make a big version of the subgroup lattice, a la xkcd** (John)
 * Make the subgroup lattice downloadable
 * Frozen row and column headers for character tables
 * Evaluate sort order for split and non-split products, don't just hide one
-* Look at spacing/highlighting for split and non-split products (Jen)
+* Look at spacing/highlighting for split and non-split products (Jen - not for beta)
 * **Merge with master** (once almost ready to get into beta)
 * **Check that the presentation is correct** (Jen, David)
 
