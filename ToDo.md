@@ -66,7 +66,7 @@
 
 
 ## Knowls
-* **properties_interdependencies (cyclic hence abelian, etc.)**  (Jen)
+* **~~properties_interdependencies (cyclic hence abelian, etc.)~~**  (Jen)
 * **RCS knowls (after we upload the data) and update credits after merging with master**
 
 ## Last Stage
