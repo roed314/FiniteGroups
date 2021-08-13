@@ -153,7 +153,11 @@ intrinsic IndexFibers(S::SeqEnum, f::UserProgram) -> Assoc
     A:=AssociativeArray();
     for x in S do
         y := f(x);
-        A[y] := IsDefined(A,y) select Append(A[y],x) else [x];
+        if IsDefined(A, y) then
+            Append(~A[y], x);
+        else
+            A[y] := [x];
+        end if;
     end for;
     return A;
 end intrinsic;
@@ -266,7 +270,21 @@ return Sort([<LL[i], L[i], S[i][2]> : i in [1..#L]],func<a,b| a[1] lt b[1] selec
 /*  return [<_make_label(G, tup[1]), tup[2]> : tup in ret];  */
 end intrinsic;
 
+/*function OrderByAuts(subs::SeqEnum, */
 
+/* DR version */
+/*intrinsic LabelSubgroups(Lat::SubgroupLat)
+{}
+    
+    if Lat`outer_equivalence then
+        refinements := 
+    for n in Sort(Keys(N)) do
+        if #Lat`by_index[n] eq 1 then
+            Lat`by_index[n][1]`short_label := [n, 1, 1];
+            continue;
+        end if;
+        
+end intrinsic;*/
 
 function testsig(m:index := 0)
     for n:= 4 to m do
