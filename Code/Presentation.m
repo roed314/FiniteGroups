@@ -3,100 +3,28 @@ This file supports computation of a human-friendly presentation
 for solvable groups.
 **********************************************************/
 
-cycquos := function(L, h)
-    H := Group(h);
-    D := DerivedSubgroup(H);
-    A, fA := quo<H | D>; // Can maybe make this more efficient by switching to GrpAb and using Dual
-    n := Order(A);
-    ans := {};
-    for B in Subgroups(A) do
-        if B`order eq n then
-            continue;
-        end if;
-        Bsub := B`subgroup;
-        if IsCyclic(A / Bsub) then
-            Include(~ans, L!(Bsub@@fA));
-        end if;
-    end for;
-    return ans;
-end function;
-
-all_minimal_chains := function(G, L)
-    assert IsSolvable(G);
-    cycdist := AssociativeArray();
-    top := L!(#L);
-    bottom := L!1;
-    cycdist[top] := 0;
-    reverse_path := AssociativeArray();
-    cqsubs := AssociativeArray();
-    Seen := {top};
-    Layer := {top};
-    while true do
-        NewLayer := {};
-        for h in Layer do
-            cq := cycquos(L, h);
-            cqsubs[h] := cq;
-            for x in cq do
-                if not IsDefined(cycdist, x) or cycdist[x] gt cycdist[h] + 1 then
-                    cycdist[x] := cycdist[h] + 1;
-                    reverse_path[x] := {h};
-                elif cycdist[x] eq cycdist[h] + 1 then
-                    Include(~(reverse_path[x]), h);
-                end if;
-                if not (x in Seen) then
-                    Include(~NewLayer, x);
-                    Include(~Seen, x);
-                end if;
-            end for;
-        end for;
-        Layer := NewLayer;
-        if (bottom in Layer) or (#Layer eq 0) then
-            break;
-        end if;
-    end while;
-    M := cycdist[bottom];
-    chains := [[bottom]];
-    /* The following was brainstorming that I don't think works yet....
-
-       For now, we just use centralizers of already chosen elements.
-       At each step (while adding a subgroup H above a subgroup J),
-       compute the normalizer N of H and the orbits for the action of N on H.
-       Similarly, the normalizer M of J and the orbits for the action of M on J.
-       Those of J map to those of H, and places where the count increase
-       are possible conjugacy classes from which we can choose a generator.
-       We aim for those where the size of the conjugacy class is small,
-       since that will yield a large centralizer with lots of commuting relations.
-    */
-    for i in [1..M] do
-        new_chains := [];
-        for chain in chains do
-            for x in reverse_path[chain[i]] do
-                Append(~new_chains, Append(chain, x));
-            end for;
-        end for;
-        chains := new_chains;
-    end for;
-    return chains;
-end function;
-
-
-chain_to_gens := function(chain)
+chain_to_gens := function(chain, G)
+    Ambient := G`outer_equivalence select Get(G, "Holomorph") else G`MagmaGrp;
+    inj := G`outer_equivalence select Get(G, "HolInj") else IdentityHomomorphism(Ambient);
     ans := [];
-    G := Group(chain[#chain]);
-    A := Group(chain[1]);
+    G := chain[#chain]`subgroup;
+    A := chain[1]`subgroup;
     for i in [2..#chain] do
-        B := Group(chain[i]);
+        B := chain[i]`subgroup;
         r := #B div #A;
         if not (A subset B and IsCyclic(quo<B | A>)) then
             // have to conjugate
-            N := Normalizer(G, B);
-            T := Transversal(G, N);
+            Bi := inj(B);
+            Ai := inj(A);
+            N := Normalizer(Ambient, Bi);
+            T := Transversal(Ambient, N);
             for t in T do
-                Bt := B^t;
-                if A subset Bt then
-                    Q, fQ := quo<Bt | A>;
+                Bt := Bi^t;
+                if Ai subset Bt then
+                    Q, fQ := quo<Bt | Ai>;
                     if IsCyclic(Q) then
-                        B := Bt;
+                        B := Bt @@ inj;
+                        fQ := inj * fQ;
                         break;
                     end if;
                 end if;
@@ -112,11 +40,9 @@ chain_to_gens := function(chain)
     return ans;
 end function;
 
-intrinsic RePresentLat(G::LMFDBGrp, L::SubGrpLat)
-    {}
+intrinsic RePresentLat(G::LMFDBGrp, L::SubgroupLat)
+    {G should be solvable}
     GG := G`MagmaGrp;
-    chains := all_minimal_chains(GG, L);
-    gens := [chain_to_gens(chain) : chain in chains];
     //print "#gensA", #gens;
     // Figure out which gives the "best" presentation.  Desired features:
     // * raising each generator to its relative order gives the identity
@@ -128,6 +54,8 @@ intrinsic RePresentLat(G::LMFDBGrp, L::SubGrpLat)
         G`OptimizedIso := IdentityHomomorphism(GG);
         G`gens_used := [];
     else
+        chains := all_minimal_chains(G);
+        gens := [chain_to_gens(chain, G) : chain in chains];
         relcnt := AssociativeArray();
         for i in [1..#gens] do
             c := 0;

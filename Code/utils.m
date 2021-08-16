@@ -137,3 +137,19 @@ intrinsic allrankslist(n::Any)->Any
   end for;
   return l;
 end intrinsic;
+
+intrinsic Classify (S::[], E::UserProgram) -> SeqEnum[SeqEnum]
+{ Given a list of objects S and an equivalence relation E on them returns a list of equivalence classes (each of which is a list). }
+    if #S eq 0 then return []; end if;
+    if #S eq 1 then return [S]; end if;
+    if #S eq 2 then return E(S[1],S[2]) select [S] else [[S[1]],[S[2]]]; end if;
+    T:=[[S[1]]];
+    for i:=2 to #S do
+        s:=S[i]; sts:=true;
+        for j:=#T to 1 by -1 do // check most recently added classes first in case adjacent objects in S are more likely to be equivalent (often true)
+            if E(s,T[j][1]) then T[j] cat:= [s]; sts:=false; break; end if;
+        end for;
+        if sts then T:=Append(T,[s]); end if;
+    end for;
+    return T;
+end intrinsic;
