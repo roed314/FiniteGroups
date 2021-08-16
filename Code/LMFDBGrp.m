@@ -15,6 +15,7 @@ declare attributes LMFDBGrp:
   Holomorph,
   HolInj,
   ConjugacyClasses,
+  CCAutCollapse,
   GeneratorsSequence,
   MagmaGenerators,
   MagmaConjugacyClasses,

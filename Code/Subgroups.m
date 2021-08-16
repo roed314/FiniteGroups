@@ -318,11 +318,19 @@ end intrinsic;
 
 intrinsic CCAutCollapse(X::LMFDBGrp) -> Map
 {}
+    // Doesn't respect any custom sorting for the class map
     Hol := Get(X, "Holomorph");
     inj := Get(X, "HolInj");
     G := X`MagmaGrp;
     CC := ConjugacyClasses(G);
     D := Classify([1..#CC], func<i, j | IsConjugate(Hol, inj(CC[i][3]), inj(CC[j][3]))>);
+    A := AssociativeArray();
+    for i in [1..#D] do
+        for j in [1..#D[i]] do
+            A[D[i][j]] := i;
+        end for;
+    end for;
+    return AssociativeArrayToMap(A, [1..#D]);
 end intrinsic;
 
 intrinsic SubGrpListAut(X::LMFDBGrp) -> SeqEnum
@@ -417,27 +425,26 @@ end intrinsic;
 
 intrinsic gassman_vec(x::SubgroupLatElt) -> SeqEnum
 {}
+    // Rather than using ClassMap(G) we need to use the reordered one.
     L := x`Lat;
+    GG := L`Grp;
+    G := GG`MagmaGrp;
     if L`outer_equivalence then
-        // FIXME
-        Ambient := Get(L`Grp, "Holomorph");
-        inj := Get(L`Grp, "HolInj");
-        cmap := inj * ClassMap(Ambient);
+        cmap := ClassMap(G) * Get(GG, "CCAutCollapse")
     else
-        cmap := ClassMap(L`Grp`MagmaGrp);
+        cmap := ClassMap(G);
     end if;
     return SubgroupClass(x`subgroup, cmap);
 end intrinsic;
 intrinsic gassman_vec(x::SubgroupLstElt) -> SeqEnum
 {}
     L := x`List;
+    GG := L`Grp;
+    G := GG`MagmaGrp;
     if L`outer_equivalence then
-        // FIXME
-        Ambient := Get(L`Grp, "Holomorph");
-        inj := Get(L`Grp, "HolInj");
-        cmap := inj * ClassMap(Ambient);
+        cmap := ClassMap(G) * Get(GG, "CCAutCollapse")
     else
-        cmap := ClassMap(L`Grp`MagmaGrp);
+        cmap := ClassMap(G);
     end if;
     return SubgroupClass(x`subgroup, cmap);
 end intrinsic;

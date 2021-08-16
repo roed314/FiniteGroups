@@ -153,3 +153,8 @@ intrinsic Classify (S::[], E::UserProgram) -> SeqEnum[SeqEnum]
     end for;
     return T;
 end intrinsic;
+
+intrinsic AssociativeArrayToMap(xs :: Assoc, codomain) -> Map
+  {The map from Keys(xs) to codomain implied by xs.}
+  return map<Keys(xs) -> codomain | k :-> xs[k]>;
+end intrinsic;
