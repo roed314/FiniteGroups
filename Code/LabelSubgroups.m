@@ -270,6 +270,41 @@ return Sort([<LL[i], L[i], S[i][2]> : i in [1..#L]],func<a,b| a[1] lt b[1] selec
 /*  return [<_make_label(G, tup[1]), tup[2]> : tup in ret];  */
 end intrinsic;
 
+procedure CreateLabels(S)
+    G := S`Grp;
+    first_part := Get(G, label);
+    autugacy := Get(S, "outer_equivalence");
+    subgps := S`subs;
+    for i in [1..#subgrps] do
+        x := subgrps[i];
+        index_part := Get(G, "order") div Get(x, "order");
+        gass := Get(x, "gassman_vec");
+        if autugacy then /* NOT SET UP FOR BOTH, if up to aut we put "." */
+            S_label := Join([IntegerToString(index_part),
+                             CremonaCode(gass[1]),
+                             IntegerToString(gass[2])],
+                            ".");
+            F_label:=Join([first_part, S_label], ".");
+        else   /* if up to cc we put "_" */
+            underscorepart := Join([IntegerToString(index_part), CremonaCode(gass[1])],"_");
+            F_label:=Join([first_part,underscorepart,IntegerToString(gass[2])],".");
+            S_label:=Join([underscorepart,IntegerToString(gass[2])],".");
+        end if;
+        x`full_label:=F_label;
+        x`short_label:=S_label;
+    end for;
+end procedure;
+
+intrinsic LabelSubgroups(S::SubgroupLat)
+{}
+  CreateLabels(S);
+end intrinsic
+
+intrinsic LabelSubgroups(S::SubgroupLst)
+{}
+  CreateLabels(S);
+end intrinsic
+
 /*function OrderByAuts(subs::SeqEnum, */
 
 /* DR version */

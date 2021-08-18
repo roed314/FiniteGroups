@@ -430,7 +430,7 @@ intrinsic gassman_vec(x::SubgroupLatElt) -> SeqEnum
     GG := L`Grp;
     G := GG`MagmaGrp;
     if L`outer_equivalence then
-        cmap := ClassMap(G) * Get(GG, "CCAutCollapse")
+        cmap := ClassMap(G) * Get(GG, "CCAutCollapse");
     else
         cmap := ClassMap(G);
     end if;
@@ -442,7 +442,7 @@ intrinsic gassman_vec(x::SubgroupLstElt) -> SeqEnum
     GG := L`Grp;
     G := GG`MagmaGrp;
     if L`outer_equivalence then
-        cmap := ClassMap(G) * Get(GG, "CCAutCollapse")
+        cmap := ClassMap(G) * Get(GG, "CCAutCollapse");
     else
         cmap := ClassMap(G);
     end if;
@@ -539,7 +539,7 @@ function SubgroupIdentify(L, H : use_hash:=true, use_gassman:=false, get_conjuga
         end if;
     end for;
     if get_conjugator then
-        return false;
+        return false, 0, Identity(G);
     end if;
     error "Subgroup not found";
 end function;
@@ -650,7 +650,7 @@ end intrinsic;
 
 intrinsic Interval(top::SubgroupLatElt, bottom::SubgroupLatElt : downward:={}, upward:={}) -> SubgroupLatInterval
 {}
-    if top`Lat ne bottom`Lat then
+    if not top`Lat cmpeq bottom`Lat then
         error "elements must belong to the same lattice";
     end if;
     I := New(SubgroupLatInterval);
@@ -1134,11 +1134,75 @@ intrinsic SubGrpLat(G::LMFDBGrp) -> SubgroupLat
     return SubgroupLattice(G, false);
 end intrinsic;
 
-intrinsic all_minimal_chains(G::LMFDBGrp) -> SeqEnum
+intrinsic CyclicQuotients(Ambient::Grp, H::Grp) -> SeqEnum
+{The normal subgroups K of H with H/K cyclic, up to conjugacy inside N}
+    N := Normalizer(Ambient, H);
+    D := DerivedSubgroup(H);
+    Q, fQ := quo<H | D>;
+    A, fA := AbelianGroup(Q);
+    m := Exponent(A);
+    d := Ngens(A);
+    ords := [Order(A.i) : i in [1..d]];
+    adjust := [m div ords[i] : i in [1..d]]; // match the order of each generator
+    assert &*ords eq #Q;
+    // We construct equivalence classes of homs H -> Q -> Z/m, up to the action of N
+    // the kernels of these homs provide the cyclic quotients
+    V := { v : v in CartesianProduct([[0..(m-1) by (m div ords[i])] : i in [1..d]])};
+    Exclude(~V, <0 : _ in [1..d]>); // remove the trivial hom, corresponding to H itself
+    VxN := CartesianProduct(V, N);
+    lifts := [A.i @@ fA @@fQ : i in [1..d]];
+    //action := map<VxN -> V | x :-> <c : c in Eltseq(((&*[lifts[i]^x[1][i] : i in [1..d]])^x[2]) @ fQ @ fA)>>;
+    function dotprod(a, b)
+        // assumes all have the same length
+        return &+[a[i]*b[i] : i in [1..#a]];
+    end function;
+    action := map<VxN -> V | x :-> <dotprod(x[1], Eltseq((lifts[i]^(x[2]^-1)) @ fQ @ fA)) mod m : i in [1..d]>>;
+    GS := GSet(N, V, action);
+    orbs := Orbits(N, GS);
+    // since we only care about the kernel, we identify homs generating the same cyclic subgroup in the dual.
+    /*inj := Lat`Grp`HolInj; // remove
+    for orb in orbs do
+        print Join([Sprint(v) : v in orb], " ");
+        fs := [hom<A -> C | [v[i]*z : i in [1..d]]> : v in orb];
+        Ks := [Kernel(fQ * fA * fv) : fv in fs];
+        print Join([Sprint(Lat!(K@@inj)) : K in Ks], " ");
+    end for;*/
+    vec_reps := [];
+    scalars := [x : x in [2..m-1] | Gcd(x, m) eq 1];
+    while #orbs gt 0 do
+        o := orbs[1];
+        v := o[1];
+        Append(~vec_reps, v);
+        Remove(~orbs, 1);
+        for s in scalars do
+            sv := <s*v[i] mod m : i in [1..d]>;
+            for oi in [1..#orbs] do
+                if sv in orbs[oi] then
+                    Remove(~orbs, oi);
+                    break;
+                end if;
+            end for;
+        end for;
+    end while;
+    C := CyclicGroup(GrpAb, m); // GrpPC might be better?
+    z := C.1;
+    subgroups := [];
+    for v in vec_reps do
+        fv := hom<A -> C | [v[i]*z : i in [1..d]]>;
+        Append(~subgroups, Kernel(fQ * fA * fv));
+    end for;
+    return subgroups;
+end intrinsic;
+
+intrinsic all_minimal_chains(G::LMFDBGrp : use_lat:=0) -> SeqEnum
     {Returns all minimal length chains of subgroups so that each is normal in the previous with cyclic quotient.  SetSubgroupParameters should have been called on G}
     assert Get(G, "solvable");
-    if G`subgroup_inclusions_known then
-        L := G`outer_equivalence select Get(G, "SubGrpLatAut") else Get(G, "SubGrpLat");
+    if Type(use_lat) eq RngIntElt then
+        use_lat := G`subgroup_inclusions_known;
+    end if;
+    if use_lat then
+        //L := G`outer_equivalence select Get(G, "SubGrpLatAut") else Get(G, "SubGrpLat");
+        L := Get(G, "SubGrpLatAut");
         cycdist := AssociativeArray();
         top := L!1; // backward from how Magma internal lattices number
         bottom := L!(#L);
@@ -1198,54 +1262,15 @@ intrinsic all_minimal_chains(G::LMFDBGrp) -> SeqEnum
         cycdist[1] := 0;
         reverse_path := AssociativeArray();
         Conjugators := AssociativeArray();
+        Normalizers := AssociativeArray();
+        Normalizers[1] := Ambient;
         Layer := {1};
         while true do
             NewLayer := {};
-            print {L`subs[s]`order : s in Layer};
             for layer_ind in Layer do
                 HH := L`subs[layer_ind];
                 H := HH`subgroup;
-                N := Normalizer(Ambient, H);
-                D := DerivedSubgroup(H);
-                Q, fQ := quo<H | D>;
-                A, fA := AbelianGroup(Q);
-                m := Exponent(A);
-                d := Ngens(A);
-                ords := [Order(A.i) : i in [1..d]];
-                assert &*ords eq #Q;
-                // We construct equivalence classes of homs H -> Q -> Z/m, up to the action of N
-                // the kernels of these homs provide the cyclic quotients
-                V := { v : v in CartesianProduct([[0..ords[i]-1] : i in [1..d]])};
-                Exclude(~V, <0 : _ in [1..d]>); // remove the trivial hom, corresponding to H itself
-                VxN := CartesianProduct(V, N);
-                lifts := [A.i @@ fA @@fQ : i in [1..d]];
-                action := map<VxN -> V | x :-> <c : c in Eltseq(((&*[lifts[i]^x[1][i] : i in [1..d]])^x[2]) @ fQ @ fA)>>;
-                GS := GSet(N, V, action);
-                orbs := Orbits(N, GS);
-                // since we only care about the kernel, we identify homs generating the same cyclic subgroup in the dual.
-                vec_reps := [];
-                scalars := [x : x in [2..m-1] | Gcd(x, m) eq 1];
-                while #orbs gt 0 do
-                    o := orbs[1];
-                    v := o[1];
-                    Append(~vec_reps, v);
-                    Remove(~orbs, 1);
-                    for s in scalars do
-                        sv := <s*v[i] mod ords[i] : i in [1..d]>;
-                        for oi in [1..#orbs] do
-                            if sv in orbs[oi] then
-                                Remove(~orbs, oi);
-                                break;
-                            end if;
-                        end for;
-                    end for;
-                end while;
-                C := CyclicGroup(GrpAb, m); // GrpPC might be better?
-                z := C.1;
-                adjust := [m div ords[i] : i in [1..d]]; // match the order of each generator
-                for v in vec_reps do
-                    fv := hom<A -> C | [v[i]*adjust[i]*z : i in [1..d]]>;
-                    K := Kernel(fQ * fA * fv);
+                for K in CyclicQuotients(Ambient, H) do
                     conj, i, elt := SubgroupIdentify(L, K : get_conjugator:=true);
                     if conj then
                         Conjugators[[i, HH`i]] := elt;
@@ -1276,7 +1301,6 @@ intrinsic all_minimal_chains(G::LMFDBGrp) -> SeqEnum
                 error "Didn't reach bottom";
             end if;
         end while;
-        print [SS`order : SS in L`subs];
         bottom := L`by_index[n][1];
         M := cycdist[bottom`i];
         chains := [[bottom]];
@@ -1310,6 +1334,42 @@ intrinsic all_minimal_chains(G::LMFDBGrp) -> SeqEnum
         end for;
         return fixed_chains;
     end if;
+end intrinsic;
+
+intrinsic AMCCompare(N, i) -> LMFDBGrp, SubgroupLat
+{}
+    G := MakeSmallGroup(N, i : set_params:=false);
+    Lat := Get(G, "SubGrpLatAut");
+    //t0 := Cputime();
+    chains1 := all_minimal_chains(G : use_lat:=true);
+    //print "Lattice chains", Cputime() - t0;
+    //t0 := Cputime();
+    chains2 := all_minimal_chains(G : use_lat:=false);
+    //print "Derived chains", Cputime() - t0;
+    /*if #chains1 ne #chains2 then
+        printf "Length mismatch: %o lattice chains, %o derived chains\n", #chains1, #chains2;
+    elif {* [c`order : c in chain] : chain in chains1 *} ne {* [c`order : c in chain] : chain in chains2 *} then
+        printf "Orders mismatch";
+    end if;*/
+    function chaincmp(x, y)
+        if #x ne #y then
+            return #x - #y;
+        end if;
+        for j in [1..#x] do
+            if x[j]`i ne y[j]`i then
+                return x[j]`i - y[j]`i;
+            end if;
+        end for;
+        return 0;
+    end function;
+    for chain in Sort(chains1, chaincmp) do
+        print Join([Sprint(c) : c in chain], " ");
+    end for;
+    chains2 := [[Lat!(c`subgroup) : c in chain] : chain in chains2];
+    for chain in Sort(chains2, chaincmp) do
+        print Join([Sprint(c) : c in chain], " ");
+    end for;
+    return G, Lat;
 end intrinsic;
 
 /* turns G`label and output of LabelSubgroups into string */

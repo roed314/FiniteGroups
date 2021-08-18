@@ -158,3 +158,19 @@ intrinsic AssociativeArrayToMap(xs :: Assoc, codomain) -> Map
   {The map from Keys(xs) to codomain implied by xs.}
   return map<Keys(xs) -> codomain | k :-> xs[k]>;
 end intrinsic;
+
+/* convert number to cremona-type number */
+intrinsic CremonaCode(num::RngIntElt) -> MonStgElt
+{}
+    q,r:=Quotrem(num,26);
+    strg:=CodeToString(r+97);  /* a = 97  z=122 */
+
+    x:=q;
+
+    while x ne 0 do
+        q,r := Quotrem(x,26);
+        strg cat:= CodeToString(r+97);
+        x:=q;
+    end while;
+    return Reverse(strg);
+end intrinsic;
