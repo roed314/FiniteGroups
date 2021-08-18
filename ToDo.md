@@ -36,7 +36,6 @@
 ## Frontend
 
 * **Display the rank and Eulerian function information** (Lewis)
-* **Add "subgroup profile" in for all groups as a toggle with the diagram** (currently the subgroup profile appears in place of the diagram) (John)
 * Character tables visible or add conjugacy classes (and order statistics)
 * Cutoff for pre-displaying character table.
 * Click vs. Mouseover of subgroups? (Still needs to be fixed in new version in 2020?)
@@ -50,12 +49,12 @@
 * Data we compute but don't display yet.  Look at schema to see what we've computed.
 * Magma isn't consistent about the styling on the name (SL vs C2.SL)
 * Create download buttons for Magma/GAP code, data like character tables
-* **Improve searches (add more things to search on)** (Sam)
+* **Search order statistics**
+* Improve searches (add more things to search on)
 * Make supergroups a searchable option
 * Label characters as orthogonal, symplectic, linear, faithful on right/left or maybe in knowl as it is? Maybe some indication of these?  Update the Type code to include more info.
 * Make sure we have the right indexes
 * Figure out why advanced search options open by default
-* **~~Add genus 2 curves in related objects (genus 2~~)** (Jen)
 * **Make a big version of the subgroup lattice, a la xkcd** (John)
 * Make the subgroup lattice downloadable
 * Frozen row and column headers for character tables
@@ -66,7 +65,6 @@
 
 
 ## Knowls
-* **~~properties_interdependencies (cyclic hence abelian, etc.)~~**  (Jen)
 * **RCS knowls (after we upload the data) and update credits after merging with master**
 
 ## Last Stage
