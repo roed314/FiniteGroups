@@ -273,22 +273,20 @@ end intrinsic;
 procedure CreateLabels(S)
     G := S`Grp;
     first_part := Get(G, label);
-    autugacy := Get(S, "outer_equivalence");
+    autjugacy := Get(S, "outer_equivalence");
     subgps := S`subs;
     for i in [1..#subgrps] do
         x := subgrps[i];
         index_part := Get(G, "order") div Get(x, "order");
-        gass := Get(x, "gassman_vec");
-        if autugacy then /* NOT SET UP FOR BOTH, if up to aut we put "." */
-            S_label := Join([IntegerToString(index_part),
-                             CremonaCode(gass[1]),
-                             IntegerToString(gass[2])],
-                            ".");
-            F_label:=Join([first_part, S_label], ".");
-        else   /* if up to cc we put "_" */
-            underscorepart := Join([IntegerToString(index_part), CremonaCode(gass[1])],"_");
-            F_label:=Join([first_part,underscorepart,IntegerToString(gass[2])],".");
-            S_label:=Join([underscorepart,IntegerToString(gass[2])],".");
+        gass_aut := Get(x, "aut_gassman_vec");
+        gass_aut_strg :=  CremonaCode(gass_aut[1]) cat IntegerToString(gass_aut[2]);
+        S_label := Join([IntegerToString(index_part),gass_aut_strg], ".");
+        F_label:=Join([first_part, S_label], ".");
+        if not autjugacy then /*  also includes gassman for cc labels, i.e. there is gassman_vec entry for x */
+	     gass_con := Get(x, "gassman_vec");
+             gass_con_strg :=  CremonaCode(gass_con[1]) cat IntegerToString(gass_con[2]);
+             S_label:=Join([S_label,gass_con_strg],".");
+             F_label:=Join([first_part, S_label], ".");
         end if;
         x`full_label:=F_label;
         x`short_label:=S_label;
@@ -296,12 +294,12 @@ procedure CreateLabels(S)
 end procedure;
 
 intrinsic LabelSubgroups(S::SubgroupLat)
-{}
+{creates and assigns the full_label and short_label for each element of a subgroup lattice}
   CreateLabels(S);
 end intrinsic
 
 intrinsic LabelSubgroups(S::SubgroupLst)
-{}
+{creates and assigns the full_label and short_label for each element of a list of subgroups}
   CreateLabels(S);
 end intrinsic
 
