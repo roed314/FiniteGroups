@@ -49,7 +49,6 @@
 * Data we compute but don't display yet.  Look at schema to see what we've computed.
 * Magma isn't consistent about the styling on the name (SL vs C2.SL)
 * Create download buttons for Magma/GAP code, data like character tables
-* **Search order statistics**
 * Improve searches (add more things to search on)
 * Make supergroups a searchable option
 * Label characters as orthogonal, symplectic, linear, faithful on right/left or maybe in knowl as it is? Maybe some indication of these?  Update the Type code to include more info.
