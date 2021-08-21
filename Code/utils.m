@@ -174,3 +174,14 @@ intrinsic CremonaCode(num::RngIntElt) -> MonStgElt
     end while;
     return Reverse(strg);
 end intrinsic;
+
+intrinsic strip(X::MonStgElt) -> MonStgElt
+{ Strips spaces and carraige returns from string; much faster than StripWhiteSpace. }
+    return Join(Split(Join(Split(X," "),""),"\n"),"");
+end intrinsic;
+
+intrinsic sprint(X::.) -> MonStgElt
+{ Sprints object X with spaces and carraige returns stripped. }
+    if Type(X) eq Assoc then return Join(Sort([ $$(k) cat "=" cat $$(X[k]) : k in Keys(X)]),":"); end if;
+    return strip(Sprintf("%o",X));
+end intrinsic;

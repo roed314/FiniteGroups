@@ -3,13 +3,11 @@ declare verbose LMFDBGrp, 1;
 declare type LMFDBGrp;
 declare attributes LMFDBGrp:
   MagmaGrp,
-  MagmaOptimized,
-  OptimizedIso,
   Subgroups,
   NormalSubgroups,
-  SubGrpList,
+  SubGrpLst,
   SubGrpLat,
-  SubGrpListAut,
+  SubGrpLstAut,
   SubGrpLatAut,
   SubGrpAutOrbits,
   Holomorph,
@@ -19,6 +17,7 @@ declare attributes LMFDBGrp:
   GeneratorsSequence,
   MagmaGenerators,
   MagmaConjugacyClasses,
+  ClassMap,
   MagmaClassMap,
   MagmaPowerMap,
   MagmaCharacterTable,

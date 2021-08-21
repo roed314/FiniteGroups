@@ -153,8 +153,7 @@ end intrinsic;
 
 intrinsic LoadElt(inp::MonStgElt, G::LMFDBGrp) -> Any
     {}
-    // For PCGroups, we have loaded the group from its pc_code, so we don't need
-    // to invert the OptimizedIso
+    // For PCGroups, we have loaded the group from its pc_code since we're using a different presentation
     GG := G`MagmaGrp;
     if Type(GG) eq GrpPC then
         n := StringToInteger(inp);
@@ -176,10 +175,8 @@ intrinsic SaveElt(out::Any, G::LMFDBGrp) -> MonStgElt
     {}
     GG := G`MagmaGrp;
     if Type(GG) eq GrpPC then
-        // We first apply the isomorphism to a group with a nicer human-readable presentation
-        opt := G`OptimizedIso(out);
         n := 0;
-        v := ElementToSequence(opt);
+        v := ElementToSequence(out);
         Ps := Reverse(PCPrimes(GG));
         for i in [1..#Ps] do
             n *:= Ps[i];

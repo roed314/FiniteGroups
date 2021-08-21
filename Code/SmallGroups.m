@@ -1,6 +1,9 @@
-intrinsic MakeSmallGroup(N::RngIntElt, i::RngIntElt : set_params:=true) -> Any
+intrinsic MakeSmallGroup(N::RngIntElt, i::RngIntElt : represent:=true, set_params:=true) -> Any
     {Create an LMFDBGrp object for SmallGroup(N,i) and compute attributes}
     G := NewLMFDBGrp(SmallGroup(N, i), Sprintf("%o.%o", N, i));
+    if represent then
+        RePresent(G);
+    end if;
     AssignBasicAttributes(G);
     if set_params then
         SetSubgroupParameters(G);

@@ -163,8 +163,15 @@ intrinsic IndexFibers(S::SeqEnum, f::UserProgram) -> Assoc
 end intrinsic;
 
 intrinsic ConjugatesInSubgroup(G::Grp, H::Grp, K::Grp) -> SeqEnum
-    {Given subgroups K and H of G such that K is conjugate to a subgroup of H, return such a conjugate}
+    {Given subgroups K and H of G such that K is conjugate to a subgroup of H, return all conjugates}
     return [KK:KK in Conjugates(G,K)|KK subset H];
+end intrinsic;
+
+intrinsic ConjugateInSubgroup(G::Grp, H::Grp, K::Grp) -> GrpElt
+{Given subgroups K and H of G such that K is conjugate to a subgroup of H, return such a conjugate}
+    if K subset H then
+        return K;
+    end if;
 end intrinsic;
 
 intrinsic Supergroups(G::Grp, L::SeqEnum, LI::SeqEnum, j::RngIntElt) -> SeqEnum
@@ -270,54 +277,94 @@ return Sort([<LL[i], L[i], S[i][2]> : i in [1..#L]],func<a,b| a[1] lt b[1] selec
 /*  return [<_make_label(G, tup[1]), tup[2]> : tup in ret];  */
 end intrinsic;
 
-procedure CreateLabels(S)
-    G := S`Grp;
-    first_part := Get(G, label);
-    autjugacy := Get(S, "outer_equivalence");
-    subgps := S`subs;
-    for i in [1..#subgrps] do
-        x := subgrps[i];
-        index_part := Get(G, "order") div Get(x, "order");
-        gass_aut := Get(x, "aut_gassman_vec");
-        gass_aut_strg :=  CremonaCode(gass_aut[1]) cat IntegerToString(gass_aut[2]);
-        S_label := Join([IntegerToString(index_part),gass_aut_strg], ".");
-        F_label:=Join([first_part, S_label], ".");
-        if not autjugacy then /*  also includes gassman for cc labels, i.e. there is gassman_vec entry for x */
-	     gass_con := Get(x, "gassman_vec");
-             gass_con_strg :=  CremonaCode(gass_con[1]) cat IntegerToString(gass_con[2]);
-             S_label:=Join([S_label,gass_con_strg],".");
-             F_label:=Join([first_part, S_label], ".");
+function SortSuperClass(L, aut)
+    ans := [];
+    return ans;
+end function;
+
+function SortGClass(L, aut)
+    Lat := L[1]`Lat;
+    GG := L[1]`Lat`Grp;
+    ans := [];
+    if aut then
+        f := func<x|Sort([Lat`subs[y]`aut_label : y in Keys(Get(x[1], "aut_overs"))])>;
+        Ambient := Get(GG, "Holomorph");
+        inj := Get(GG, "HolInj");
+    else
+        print Type(Lat);
+        f := func<x|Sort([Lat`subs[y]`full_label : y in Keys(Get(x, "overs"))])>;
+        Ambient := GG`MagmaGrp;
+        inj := IdentityHomomorphism(Ambient);
+    end if;
+    by_supergroups := IndexFibers(L, f);
+    for supers in Sort([k : k in Keys(by_supergroups)]) do
+        subs := by_supergroups[supers];
+        if #subs gt 1 then
+            overs := [[ConjugateInSubgroup(Ambient, inj(Lat`subs[over]`subgroup), inj(s`subgroup)) @@ inj : over in Keys(Get(s, "overs"))] : s in subs];
+            sorter := [Sort([sig(over, subs[i]`subgroup) : over in overs[i]]) : i in [1..#subs]];
+            ParallelSort(~sorter, ~subs);
         end if;
-        x`full_label:=F_label;
-        x`short_label:=S_label;
+        ans cat:= subs;
     end for;
-end procedure;
+    return ans;
+end function;
 
 intrinsic LabelSubgroups(S::SubgroupLat)
 {creates and assigns the full_label and short_label for each element of a subgroup lattice}
-  CreateLabels(S);
-end intrinsic
-
-intrinsic LabelSubgroups(S::SubgroupLst)
-{creates and assigns the full_label and short_label for each element of a list of subgroups}
-  CreateLabels(S);
-end intrinsic
-
-/*function OrderByAuts(subs::SeqEnum, */
-
-/* DR version */
-/*intrinsic LabelSubgroups(Lat::SubgroupLat)
-{}
-    
-    if Lat`outer_equivalence then
-        refinements := 
-    for n in Sort(Keys(N)) do
-        if #Lat`by_index[n] eq 1 then
-            Lat`by_index[n][1]`short_label := [n, 1, 1];
-            continue;
+    G := S`Grp;
+    autjugacy := Get(S, "outer_equivalence");
+    function aaa(L, key) // {key: L} in Python
+        aa := AssociativeArray(); aa[key] := L; return aa;
+    end function;
+    by_ind := Get(S, "by_index_aut");
+    for index in Sort([k : k in Keys(by_ind)]) do
+        subs := by_ind[index];
+        if #subs eq 1 then
+            by_acode := aaa(subs, 0);
+        else
+            avecs := {@ Get(x[1], "aut_gassman_vec") : x in subs @};
+            Sort(~avecs);
+            by_acode := IndexFibers(subs, func<x|Index(avecs, Get(x[1], "aut_gassman_vec"))-1>);
         end if;
-        
-end intrinsic;*/
+        for acode -> asubs in by_acode do
+            if #asubs eq 1 then
+                by_anum := asubs;
+            else
+                by_anum := SortGClass(asubs, true);
+            end if;
+            for anum in [1..#by_anum] do
+                if S`outer_equivalence then
+                    sub := by_anum[anum][1];
+                    sub`aut_label := [index, acode, anum];
+                    sub`full_label := [index, acode, anum];
+                    sub`label := IntegerToString(index) * "." * CremonaCode(acode) * IntegerToString(anum);
+                else
+                    aclass := by_anum[anum];
+                    if #aclass eq 1 then
+                        by_ccode := aaa(aclass, 0);
+                    else
+                        cvecs := {@ Get(x, "gassman_vec") : x in aclass @};
+                        Sort(~cvecs);
+                        by_ccode := IndexFibers(aclass, func<x|Index(cvecs, Get(x, "gassman_vec"))-1>);
+                    end if;
+                    for ccode -> csubs in by_ccode do
+                        if #csubs eq 1 then
+                            by_cnum := csubs;
+                        else
+                            by_cnum := SortGClass(csubs, false);
+                        end if;
+                        for cnum in [1..#by_cnum] do
+                            sub := by_cnum[cnum];
+                            sub`aut_label := [index, acode, anum];
+                            sub`full_label := [index, acode, anum, ccode, cnum];
+                            sub`label := IntegerToString(index) * "." * CremonaCode(acode) * IntegerToString(anum) * "." * CremonaCode(ccode) * IntegerToString(cnum);
+                        end for;
+                    end for;
+                end if;
+            end for;
+        end for;
+    end for;
+end intrinsic
 
 function testsig(m:index := 0)
     for n:= 4 to m do

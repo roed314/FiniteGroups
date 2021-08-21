@@ -774,17 +774,23 @@ intrinsic MagmaPowerMap(G::LMFDBGrp) -> Any
   return PowerMap(G`MagmaGrp);
 end intrinsic;
 
-intrinsic MagmaClassMap(G::LMFDBGrp) -> Any
+intrinsic MagmaClassMap(G::LMFDBGrp) -> Map
   {Return Magma's ClassMap.}
   return ClassMap(G`MagmaGrp);
 end intrinsic;
 
-intrinsic MagmaConjugacyClasses(G::LMFDBGrp) -> Any
+intrinsic ClassMap(G::LMFDBGrp) -> Map
+{Renumbered version of the class map to align with our numbering}
+    cc := ConjugacyClasses(G); // set as a side effect
+    return G`ClassMap;
+end intrinsic;
+
+intrinsic MagmaConjugacyClasses(G::LMFDBGrp) -> SeqEnum
   {Return Magma's Conjugacy classes.}
   return ConjugacyClasses(G`MagmaGrp);
 end intrinsic;
 
-intrinsic MagmaGenerators(G::LMFDBGrp) -> Any
+intrinsic MagmaGenerators(G::LMFDBGrp) -> SeqEnum
   {Like magma command GeneratorsSequence, but works for small groups too.
    It should change to use our recorded generators.}
   g:=G`MagmaGrp;
@@ -801,7 +807,7 @@ intrinsic ConjugacyClasses(G::LMFDBGrp) ->  SeqEnum
   gens:=Get(G, "MagmaGenerators");
   ordercc, _, labels, G`number_divisions := ordercc(g,cc,cm,pm,gens);
   // We determine the number of rational characters
-  
+
   // perm will convert given index to the one out of ordercc
   // perm2 is its inverse
   perm := [0 : j in [1..#cc]];
@@ -812,6 +818,9 @@ intrinsic ConjugacyClasses(G::LMFDBGrp) ->  SeqEnum
   end for;
   G`CCpermutation:=perm;
   G`CCpermutationInv:=perminv;
+  sset := {1..#cc};
+  permmap := map<sset->sset | [j -> perminv[j] : j in sset]>;
+  G`ClassMap := cm*permmap; // Magma does composition backwards!
   magccs:=[ New(LMFDBGrpConjCls) : j in cc];
   gord:=Order(g);
   plist:=[z[1] : z in Factorization(gord)];
@@ -1243,11 +1252,9 @@ intrinsic old_label(G:LMFDBGrp)-> Any
 end intrinsic;
 
 intrinsic pc_code(G::LMFDBGrp) -> RngInt
-    {This should be updated to give a better presentation}
-    // Make sure subgoups have been computed, since that sets OptimizedIso
+{}
     if not Get(G, "solvable") then
         return 0;
     end if;
-    pc_code := SmallGroupEncoding(Codomain(G`OptimizedIso));
-    return pc_code;
+    return SmallGroupEncoding(G`MagmaGrp);
 end intrinsic;

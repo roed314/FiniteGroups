@@ -90,12 +90,11 @@ end intrinsic;
 intrinsic HashData(G::LMFDBGrp) -> LMFDBHashData
 {}
     HD := New(LMFDBHashData);
-    if assigned G`MagmaOptimized then
-        HD`MagmaGrp := G`MagmaOptimized;
+    HD`MagmaGrp := G`MagmaGrp;
+    if assigned G`gens_used then
         HD`gens_used := G`gens_used;
         HD`gens_fixed := true;
     else
-        HD`MagmaGrp := G`MagmaGrp;
         HD`gens_used := [];
         HD`gens_fixed := not Get(G, "solvable");
     end if;
@@ -118,12 +117,7 @@ end intrinsic;
 // Not an attribute since it isn't saved to the database
 intrinsic description(G::LMFDBGrp) -> MonStgElt
 {}
-    if assigned G`MagmaOptimized then
-        GG := G`MagmaOptimized;
-    else
-        GG := G`MagmaGrp;
-    end if;
-    return ReplaceString(Sprintf("%m", GG), ["\n", " "], ["", ""]);
+    return ReplaceString(Sprintf("%m", G`MagmaGrp), ["\n", " "], ["", ""]);
 end intrinsic;
 
 intrinsic description(HD::LMFDBHashData) -> MonStgElt

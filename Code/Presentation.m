@@ -65,16 +65,17 @@ end intrinsic;
 
 RF := recformat<subgroup, order, length>;
 intrinsic all_minimal_chains(G::LMFDBGrp) -> SeqEnum
-    {Returns minimal length chains of subgroups so that each is normal in the previous with cyclic quotient}
-    assert Get(G, "solvable");
+{Returns minimal length chains of subgroups so that each is normal in the previous with cyclic quotient}
+    assert IsSolvable(G`MagmaGrp);
     Ambient := Get(G, "Holomorph");
     inj := Get(G, "HolInj");
     GG := inj(G`MagmaGrp);
-    L := New(SubgroupLst); // we build a new subgroup list in order to be able to take advantage of the identification features.
+    L := New(SubgroupLat); // we build a new subgroup list in order to be able to take advantage of the identification features.
     L`Grp := G;
     L`outer_equivalence := true;
-    n := Get(G, "order");
-    KK := SubgroupLstElement(L, GG : i:=1);
+    L`inclusions_known := false;
+    n := #GG;
+    KK := SubgroupLatElement(L, GG : i:=1);
     L`subs := [KK];
     L`by_index := AssociativeArray();
     L`by_index[1] := [KK];
@@ -89,13 +90,15 @@ intrinsic all_minimal_chains(G::LMFDBGrp) -> SeqEnum
             HH := L`subs[layer_ind];
             H := HH`subgroup;
             for K in CyclicQuotients(Ambient, H) do
-                conj, i, elt := SubgroupIdentify(L, K : get_conjugator:=true);
+                // We avoid gassman classification since we're working with subgroups of Ambient
+                conj, i, elt := SubgroupIdentify(L, K : use_gassman:=false, get_conjugator:=true);
                 if conj then
+                    // It's possible that [i, HH`i] was already defined using a different subgroup, but that's not a problem
                     Conjugators[[i, HH`i]] := elt;
                     KK := L`subs[i];
                 else
                     i := 1+#L`subs;
-                    KK := SubgroupLstElement(L, K : i:=i);
+                    KK := SubgroupLatElement(L, K : i:=i);
                     Append(~L`subs, KK);
                     ind := n div KK`order;
                     if not IsDefined(L`by_index, ind) then
@@ -140,20 +143,16 @@ intrinsic all_minimal_chains(G::LMFDBGrp) -> SeqEnum
         for j in [M..1 by -1] do
             sub := chain[j];
             super := chain[j+1];
+            i := sub`i;
             if IsDefined(Conjugators, [sub`i, super`i]) then
-                //conjugator := conjugator * Conjugators[[sub`i, super`i]];
-                //sub := rec<RF|subgroup:=((sub`subgroup)^conjugator)@@inj, order:=sub`order>;
-                sub := rec<RF|subgroup:=(inj(fixed_chain[#fixed_chain]`subgroup)^Conjugators[[sub`i, super`i]])@@inj, order:=sub`order>;
+                c := Conjugators[[sub`i, super`i]];
+                conjugator := conjugator * c; //Conjugators[[sub`i, super`i]];
+                //c := Conjugators[[sub`i, super`i]];
+                //sub := rec<RF|subgroup:=(inj(fixed_chain[#fixed_chain]`subgroup)^c)@@inj, order:=sub`order>;
             else
-                sub := rec<RF|subgroup:=(sub`subgroup)@@inj, order:=sub`order>;
+                c := 1;
             end if;
-            //if not inj(sub`subgroup) subset super`subgroup then
-            //    print "BLAH", k, j;
-            //end if;
-            if not sub`subgroup subset fixed_chain[#fixed_chain]`subgroup then
-                print "HALB", k, j;
-                assert false;
-            end if;
+            sub := rec<RF|subgroup:=((sub`subgroup)^conjugator)@@inj, order:=sub`order>;
             Append(~fixed_chain, sub);
         end for;
         Append(~fixed_chains, Reverse(fixed_chain));
@@ -181,15 +180,16 @@ end function;
 
 intrinsic RePresent(G::LMFDBGrp)
 {Changes G`MagmaGrp and sets G`gens_used to give a more human readable presentation.
-Does nothing if not solvable.}
+Does nothing if not solvable.
+This function is only safe to call on a newly created group, since it changes MagmaGrp (and thus invalidates a lot of attributes)}
     //print "#gensA", #gens;
     // Figure out which gives the "best" presentation.  Desired features:
     // * raising each generator to its relative order gives the identity
     // * fewer conjugacy relations
     // * relative orders are non-increasing
     // * RHS of conjugacy relations are "deeper"
-    if Get(G, "order") ne 1 and Get(G, "solvable") then
-        GG := G`MagmaGrp;
+    GG := G`MagmaGrp;
+    if #GG ne 1 and IsSolvable(GG) then
         chains := all_minimal_chains(G);
         gens := [chain_to_gens(chain, G) : chain in chains];
         relcnt := AssociativeArray();
@@ -351,7 +351,10 @@ Does nothing if not solvable.}
         H := quo< GrpPC : F | rels >;
         G`MagmaGrp := H;
         G`gens_used := gens_used;
-        // f := hom< H -> G`MagmaGrp | gens >;
-        // G`OptimizedIso := f^-1;
+        // We have to reset Holomorph, HolInj, ClassMap to use the new group
+        Ambient, inj := Holomorph(H);
+        G`Holomorph := Ambient;
+        G`HolInj := inj;
+        G`ClassMap := ClassMap(H);
     end if;
 end intrinsic;
