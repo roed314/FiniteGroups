@@ -17,11 +17,14 @@ intrinsic initRandomGroupElement(gens::Any) -> Any
   // Initialize the random number generator first
   rlist:=[gener : gener in gens];
   // A paper says to add 5 extra entries for better results
-  rlist:= rlist cat [gens[1] : z in [1..5]];
+  rlist:= rlist cat [gens[1 + (z mod #gens)] : z in [0..4]];
   for rl in [1..20] do
-    ii:=ourrand(#rlist)+1;
-    jj:=ourrand(#rlist)+1;
-    if ii ne jj then rlist[ii] *:= rlist[jj]; end if;
+    ii := ourrand(#rlist)+1;
+    jj := ii;
+    while ii eq jj do
+      jj := ourrand(#rlist)+1;
+    end while;
+    rlist[ii] *:= rlist[jj];
   end for;
   return rlist;
 end intrinsic;
@@ -29,9 +32,9 @@ end intrinsic;
 
 intrinsic randomG(~rlist::Any,~result::Any)
   {Produce the next random group element updating rlist in the process}
-  ii:=0;jj:=0;
+  ii:=ourrand(#rlist)+1;
+  jj:=ii;
   while ii eq jj do
-    ii:=ourrand(#rlist)+1;
     jj:=ourrand(#rlist)+1;
   end while;
   rlist[ii] *:= rlist[jj];
@@ -47,9 +50,9 @@ intrinsic nonrandomG(~state::Any, gen_seq::SeqEnum, ord_seq::SeqEnum, ~result::A
   end for;
 end intrinsic;
 
-// Pass in the group data 
+// Pass in the group data
 intrinsic ordercc(g::Any,cc::Any,cm::Any,pm::Any,gens::Any: dorandom:=true) -> Any
-  {Take a Magma group, the conjugacy class, class map, power map, and 
+  {Take a Magma group, the conjugacy class, class map, power map, and
    generators, and return ordered classes and labels.}
   ncc:=#cc;
   gens:=[z : z in gens];
@@ -123,7 +126,7 @@ intrinsic ordercc(g::Any,cc::Any,cm::Any,pm::Any,gens::Any: dorandom:=true) -> A
     end for;
   end for;
 
-  // Initialization for random group elements 
+  // Initialization for random group elements
   if dorandom then
     ResetRandomSeed();
     rlist := initRandomGroupElement(gens);
@@ -134,7 +137,7 @@ intrinsic ordercc(g::Any,cc::Any,cm::Any,pm::Any,gens::Any: dorandom:=true) -> A
 
   // Within a division, or between divisions which are as yet
   // unordered, we break ties via the priority, which is essentially
-  // the order they appear in the random generation phase 
+  // the order they appear in the random generation phase
   priorities:= [ncc + 1 : z in cc];
   cnt:=1;
   // We track the expos for labels within a division
@@ -156,8 +159,8 @@ intrinsic ordercc(g::Any,cc::Any,cm::Any,pm::Any,gens::Any: dorandom:=true) -> A
         for sgn in [1,-1] do
           ac := pm(gen, sgn*pcnt);
 //"Testing", gen, " to ", sgn*pcnt," got ", ac, priorities;
-          if priorities[ac] gt ncc then 
-            notdone -:=1; 
+          if priorities[ac] gt ncc then
+            notdone -:=1;
             priorities[ac]:=val;
             expos[ac] := sgn*pcnt;
             val+:=1;
@@ -171,9 +174,9 @@ intrinsic ordercc(g::Any,cc::Any,cm::Any,pm::Any,gens::Any: dorandom:=true) -> A
 
   for k in kys do
     if #step2[k] eq 1 and #Rep(step2[k]) eq 1 then
-      ; // nothing to do 
+      ; // nothing to do
     else
-      // random group elements until we hit a class we need 
+      // random group elements until we hit a class we need
       needmoregens:=true;
       while needmoregens do
         needmoregens:=false;
@@ -185,10 +188,10 @@ intrinsic ordercc(g::Any,cc::Any,cm::Any,pm::Any,gens::Any: dorandom:=true) -> A
         end for;
         if needmoregens then
           if dorandom then
-            ggcl:=rlist[1];
+            ggcl := rlist[1];
             randomG(~rlist, ~ggcl);
           else
-            ggcl:=Id(g);
+            ggcl := Id(g);
             nonrandomG(~state, gens, order_seq, ~ggcl);
           end if;
           gcl:=cm(ggcl);
@@ -221,7 +224,7 @@ intrinsic ordercc(g::Any,cc::Any,cm::Any,pm::Any,gens::Any: dorandom:=true) -> A
         finalkeys[aclass] := [k[1],k[2],k[3], priorities[aclass],expos[aclass]];
       end for;
     end for;
-  end for; // End of keys loop 
+  end for; // End of keys loop
   ParallelSort(~finalkeys,~cc);
   labels:=["" : z in cc]; divcnt:=0;
   oord:=0;
@@ -258,9 +261,9 @@ intrinsic testCCs(g::Any:dorandom:=true)->Any
   ngens:=NumberOfGenerators(g);
   gens:=[g . j : j in [1..ngens]];
 
-  if not dorandom and #g gt 100 then 
+  if not dorandom and #g gt 100 then
   /* Add extra generator whose shortest representation as a word in the existing generators is at least length_bound if such a word exists.
-     length_bound is set to some value that seems reasonable (currently a fixed constant). Something adaptive like Floor(Log(#g)/Log(#gens)) might be better, but this was slightly slower during limited testing.. 
+     length_bound is set to some value that seems reasonable (currently a fixed constant). Something adaptive like Floor(Log(#g)/Log(#gens)) might be better, but this was slightly slower during limited testing..
   */
     length_bound := 7;
     gen_ords := [Order(x) : x in gens];
