@@ -77,7 +77,7 @@ intrinsic ordercc(g::Any,cc::Any,cm::Any,pm::Any,gens::Any: dorandom:=true) -> A
     // Just in case the identity is not first
     if j eq 1 then ismax[pm(1, cc[1][1])] := false; end if;
   end for;
-
+  print "a";
   // Separate a set of classes into divisions
   // The order of a rep is cc[r][1].  This could be more efficient
   // if we used generators for (Z/nZ)^* where n=cc[r][1]
@@ -100,7 +100,7 @@ intrinsic ordercc(g::Any,cc::Any,cm::Any,pm::Any,gens::Any: dorandom:=true) -> A
     end while;
     return divs;
   end function;
-
+  print "b";
   // Now partition into divisions
   number_divisions := 0;
   for k->v in step1 do
@@ -124,7 +124,7 @@ intrinsic ordercc(g::Any,cc::Any,cm::Any,pm::Any,gens::Any: dorandom:=true) -> A
       end for;
     end for;
   end for;
-
+  print "c";
   // Initialization for random group elements 
   if dorandom then
     ResetRandomSeed();
@@ -143,7 +143,7 @@ intrinsic ordercc(g::Any,cc::Any,cm::Any,pm::Any,gens::Any: dorandom:=true) -> A
   expos := [0:z in cc];
   // Just the key to step 2 plus the priority
   finalkeys:= [[0,0,0,0] : z in cc];
-
+  print "d";
   kys:=Sort([z : z in Keys(step2)]);
 //"Keys", kys;
   // utility for below, gen is a class index
@@ -170,8 +170,9 @@ intrinsic ordercc(g::Any,cc::Any,cm::Any,pm::Any,gens::Any: dorandom:=true) -> A
     end while;
     return priorities, val, expos;
   end function;
-
+  print "d1";
   for k in kys do
+    print k, kys;
     if #step2[k] eq 1 and #Rep(step2[k]) eq 1 then
       ; // nothing to do 
     else
@@ -182,6 +183,7 @@ intrinsic ordercc(g::Any,cc::Any,cm::Any,pm::Any,gens::Any: dorandom:=true) -> A
         for divi in step2[k] do
           if priorities[Rep(divi)] gt ncc then
             needmoregens:=true;
+            print "breaking1";
             break;
           end if;
         end for;
@@ -189,9 +191,11 @@ intrinsic ordercc(g::Any,cc::Any,cm::Any,pm::Any,gens::Any: dorandom:=true) -> A
           if dorandom then
             ggcl:=rlist[1];
             randomG(~rlist, ~ggcl);
+            print "randomed";
           else
             ggcl:=Id(g);
             nonrandomG(~state, gens, order_seq, ~ggcl);
+            print "nonrandomed";
           end if;
           gcl:=cm(ggcl);
           if ismax[gcl] and priorities[gcl] gt ncc then
@@ -199,10 +203,12 @@ intrinsic ordercc(g::Any,cc::Any,cm::Any,pm::Any,gens::Any: dorandom:=true) -> A
             for dd in step2[mydivkey] do
               if gcl in dd then
                 priorities, cnt, expos:=setpriorities(dd,cnt,gcl,priorities,expos);
+                print "breaking2";
                 break;
               end if;
             end for;
             divisors:=Divisors(cc[gcl][1]);
+            print "divisorloop";
             for kk:=2 to #divisors-1 do
               newgen:=pm(gcl,divisors[kk]);
               powerdiv:=revmap[newgen];
@@ -223,7 +229,8 @@ intrinsic ordercc(g::Any,cc::Any,cm::Any,pm::Any,gens::Any: dorandom:=true) -> A
         finalkeys[aclass] := [k[1],k[2],k[3], priorities[aclass],expos[aclass]];
       end for;
     end for;
-  end for; // End of keys loop 
+  end for; // End of keys loop
+  print "e";
   ParallelSort(~finalkeys,~cc);
   labels:=["" : z in cc]; divcnt:=0;
   oord:=0;
@@ -247,7 +254,7 @@ intrinsic ordercc(g::Any,cc::Any,cm::Any,pm::Any,gens::Any: dorandom:=true) -> A
       labels[j]:=Sprintf("%o%o", finalkeys[j][1], num2letters(divcnt));
     end if;
   end for;
-
+  print "f";
   cc:=[c[3] : c in cc];
   return cc, finalkeys, labels, number_divisions;
 end intrinsic;

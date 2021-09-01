@@ -799,45 +799,50 @@ intrinsic MagmaGenerators(G::LMFDBGrp) -> SeqEnum
 end intrinsic;
 
 intrinsic ConjugacyClasses(G::LMFDBGrp) ->  SeqEnum
-  {The list of conjugacy classes for this group}
-  g:=G`MagmaGrp;
-  cc:=Get(G, "MagmaConjugacyClasses");
-  cm:=Get(G, "MagmaClassMap");
-  pm:=Get(G, "MagmaPowerMap");
-  gens:=Get(G, "MagmaGenerators");
-  ordercc, _, labels, G`number_divisions := ordercc(g,cc,cm,pm,gens);
-  // We determine the number of rational characters
+{The list of conjugacy classes for this group}
+    g:=G`MagmaGrp;
+    print "A";
+    cc:=Get(G, "MagmaConjugacyClasses");
+    cm:=Get(G, "MagmaClassMap");
+    pm:=Get(G, "MagmaPowerMap");
+    gens:=Get(G, "MagmaGenerators");
+    print "B";
+    ordercc, _, labels, G`number_divisions := ordercc(g,cc,cm,pm,gens);
+    // We determine the number of rational characters
 
-  // perm will convert given index to the one out of ordercc
-  // perm2 is its inverse
-  perm := [0 : j in [1..#cc]];
-  perminv := [0 : j in [1..#cc]];
-  for j:=1 to #cc do
-    perm[cm(ordercc[j])] := j;
-    perminv[j] := cm(ordercc[j]);
-  end for;
-  G`CCpermutation:=perm;
-  G`CCpermutationInv:=perminv;
-  sset := {1..#cc};
-  permmap := map<sset->sset | [j -> perminv[j] : j in sset]>;
-  G`ClassMap := cm*permmap; // Magma does composition backwards!
-  magccs:=[ New(LMFDBGrpConjCls) : j in cc];
-  gord:=Order(g);
-  plist:=[z[1] : z in Factorization(gord)];
-  //gord:=Get(G, 'Order');
-  for j:=1 to #cc do
-    ix:=perm[j];
-    magccs[j]`Grp := G;
-    magccs[j]`MagmaConjCls := cc[ix];
-    magccs[j]`label := labels[j];
-    magccs[j]`size := cc[ix][2];
-    magccs[j]`counter := j;
-    magccs[j]`order := cc[ix][1];
-    // Not sure of which other powers are desired
-    magccs[j]`powers := [perm[pm(ix,p)] : p in plist];
-    magccs[j]`representative := cc[ix][3];
-  end for;
-  return magccs;
+    // perm will convert given index to the one out of ordercc
+    // perm2 is its inverse
+    perm := [0 : j in [1..#cc]];
+    perminv := [0 : j in [1..#cc]];
+    for j:=1 to #cc do
+        perm[cm(ordercc[j])] := j;
+        perminv[j] := cm(ordercc[j]);
+    end for;
+    print "C";
+    G`CCpermutation:=perm;
+    G`CCpermutationInv:=perminv;
+    sset := {1..#cc};
+    permmap := map<sset->sset | [j -> perminv[j] : j in sset]>;
+    G`ClassMap := cm*permmap; // Magma does composition backwards!
+    magccs:=[ New(LMFDBGrpConjCls) : j in cc];
+    gord:=Order(g);
+    plist:=[z[1] : z in Factorization(gord)];
+    print "D";
+    //gord:=Get(G, 'Order');
+    for j:=1 to #cc do
+        ix:=perm[j];
+        magccs[j]`Grp := G;
+        magccs[j]`MagmaConjCls := cc[ix];
+        magccs[j]`label := labels[j];
+        magccs[j]`size := cc[ix][2];
+        magccs[j]`counter := j;
+        magccs[j]`order := cc[ix][1];
+        // Not sure of which other powers are desired
+        magccs[j]`powers := [perm[pm(ix,p)] : p in plist];
+        magccs[j]`representative := cc[ix][3];
+    end for;
+    print "E";
+    return magccs;
 end intrinsic;
 
 intrinsic FrobeniusSchur(ch::Any) -> Any

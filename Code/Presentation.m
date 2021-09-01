@@ -349,12 +349,22 @@ This function is only safe to call on a newly created group, since it changes Ma
         end for;
         //print "rels", rels;
         H := quo< GrpPC : F | rels >;
+        //print sprint([x : x in GetAttributes(LMFDBGrp) | assigned G``x]);
+        //[CCAutCollapse,CCpermutation,CCpermutationInv]
         G`MagmaGrp := H;
         G`gens_used := gens_used;
         // We have to reset Holomorph, HolInj, ClassMap to use the new group
         Ambient, inj := Holomorph(H);
         G`Holomorph := Ambient;
         G`HolInj := inj;
-        G`ClassMap := ClassMap(H);
+        // Various conjugacy class attributes were set in determining an ordering on conjugacy classes for Gassman vectors
+        print "CClasses";
+        G`MagmaConjugacyClasses := MagmaConjugacyClasses(G);
+        G`MagmaClassMap := MagmaClassMap(G);
+        G`MagmaPowerMap := MagmaPowerMap(G);
+        G`MagmaGenerators := MagmaGenerators(G);
+        print "AutCollapse";
+        G`CCAutCollapse := CCAutCollapse(G); // also sets CCpermutation, CCpermutationInv and ClassMap
+        print "done";
     end if;
 end intrinsic;

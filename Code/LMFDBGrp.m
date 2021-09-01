@@ -166,6 +166,8 @@ declare attributes LMFDBSubGrp:
   MagmaSubGrp, // input
   QuotientMap, // homomorphism from MagmaAmbient to Quotient`MagmaGrp
   label, // process
+  short_label,
+  aut_label,
   special_labels,
   outer_equivalence, // input
   aut_counter,

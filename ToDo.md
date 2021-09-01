@@ -32,6 +32,7 @@
 * Very large sample examples
 * Write to Tim Dokchitser about status on adding his group names to Magma
 * Smallest n where the group is a subgroup of Sn (new Magma function)
+* **Fix Mobius function, rank, eulerian function** (David)
 
 * Write code for finding lattices up to automorphism (Subgroups.m)
 * Update cycquos (Presentation.m) to not use the lattice, but instead using SubgroupsLift with conjugacy inside the holomorph
