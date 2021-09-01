@@ -140,7 +140,7 @@ intrinsic metacyclic(G::LMFDBGrp) -> BoolElt
         return false;
     end if;
     for HH in CyclicSubgroups(GG) do
-	H:=HH`subgroup;    
+	H:=HH`subgroup;
         if D subset H then
             Q2 := quo<GG | H>;
             if IsCyclic(Q2) then
@@ -793,9 +793,16 @@ end intrinsic;
 intrinsic MagmaGenerators(G::LMFDBGrp) -> SeqEnum
   {Like magma command GeneratorsSequence, but works for small groups too.
    It should change to use our recorded generators.}
-  g:=G`MagmaGrp;
-  ng:=NumberOfGenerators(g);
-  return [g . j : j in [1..ng]];
+  return SetToSequence(Generators(G`MagmaGrp));
+  /* Note: the following code doesn't work or PC groups
+   * > g := G`MagmaGrp;
+   * > return [g.j : j in [1..NumberOfGenerators(g)]]
+   * as G.i is i-th polycyclic generator for G
+   * thus one is not guaranteed to get all generators, e.g:
+   * > G`MagmaGrp := SmallGroupDecoding(292129084436, 64);
+   * > Generators(G`MagmaGrp);
+   * { $.1, $.2, $.3, $.5 }
+   */
 end intrinsic;
 
 intrinsic ConjugacyClasses(G::LMFDBGrp) ->  SeqEnum
@@ -876,7 +883,7 @@ intrinsic MagmaRationalCharacterTable(G::LMFDBGrp) -> Any
 end intrinsic;
 
 intrinsic complexconjindex(ct::Any, gorb::Any, achar::Any) -> Any
-  {Find the complex conj of achar among indeces in gorb all from 
+  {Find the complex conj of achar among indeces in gorb all from
    character table ct (which is now a list of lists).}
   findme:=[ComplexConjugate(achar[z]) : z in [1..#achar]];
   gorbvals:=[ct[z] : z in gorb];
@@ -946,8 +953,8 @@ intrinsic characters_add_sort_and_labels(G::LMFDBGrp, cchars::Any, rchars::Any) 
 //sortme;
 //"done";
   len:=#sortme[1];
-  for j:=1 to #ct do 
-    sortme[j][len] := j; 
+  for j:=1 to #ct do
+    sortme[j][len] := j;
   end for;
   allvals := [[ct[j][k] : k in [1..#ct]] : j in [1..#ct]];
   for j:=1 to #matching do
@@ -1184,15 +1191,15 @@ intrinsic schur_multiplier(G::LMFDBGrp) -> Any
   {Returns abelian invariants for Schur multiplier by computing prime compoments and then merging them.}
   invs := [];
   ps := factors_of_order(G);
-  GG := Get(G, "MagmaGrp"); 
+  GG := Get(G, "MagmaGrp");
   // Need GrpPerm for pMultiplicator function calls below. Check and convert if not GrpPerm.
   if Type(GG) ne GrpPerm then
-       // We find an efficient permutation representation. 
+       // We find an efficient permutation representation.
        ts:=Get(G, "MagmaTransitiveSubgroup");
-       GG:=CosetImage(GG,ts); 
+       GG:=CosetImage(GG,ts);
   end if;
-  for p in ps do 
-    for el in pMultiplicator(GG,p) do 
+  for p in ps do
+    for el in pMultiplicator(GG,p) do
       if el gt 1 then
         Append(~invs, el);
       end if;
@@ -1207,9 +1214,9 @@ intrinsic wreath_product(G::LMFDBGrp) -> Any
   GG := Get(G, "MagmaGrp");
   // Need GrpPerm for IsWreathProduct function call below. Check and convert if not GrpPerm.
   if Type(GG) ne GrpPerm then
-       // We find an efficient permutation representation. 
+       // We find an efficient permutation representation.
        ts:=Get(G, "MagmaTransitiveSubgroup");
-       GG:=CosetImage(GG,ts); 
+       GG:=CosetImage(GG,ts);
   end if;
   return IsWreathProduct(GG);
 end intrinsic;
@@ -1252,7 +1259,7 @@ end intrinsic;
 
 /* placeholder for when larger groups get added */
 intrinsic old_label(G:LMFDBGrp)-> Any
-{graveyard for labels when they are no longer needed. Currently just returns None, since this is used when we compute labels all groups of a given order where we did not have a label before}  
+{graveyard for labels when they are no longer needed. Currently just returns None, since this is used when we compute labels all groups of a given order where we did not have a label before}
   return None();
 end intrinsic;
 
