@@ -658,7 +658,7 @@ intrinsic SemidirectFactorization(G::LMFDBGrp : direct := false) -> Any, Any, An
   end if;
   Ns := Get(G, "NormalSubgroups");
   if Type(Ns) eq NoneType then return None(); end if;
-  Remove(~Ns,#Ns); // remove full group;
+  Ns := Remove(Ns,#Ns); // remove full group;
   Remove(~Ns,1); // remove trivial group;
   if direct then
     Ks := Ns;
@@ -702,8 +702,9 @@ intrinsic direct_factorization(G::LMFDBGrp) -> SeqEnum
   if not fact_bool then
     return [];
   end if;
-  N := LabelToLMFDBGrp(Get(Nsub, "subgroup"));
-  K := LabelToLMFDBGrp(Get(Ksub, "subgroup"));
+  // It would be better to do this computation without creating new LMFDBGrps, since it should be possible entirely within the SubgroupLat (given that we have normalizers).
+  N := LabelToLMFDBGrp(Get(Nsub, "subgroup") : represent:=false);
+  K := LabelToLMFDBGrp(Get(Ksub, "subgroup") : represent:=false);
   facts := [N,K];
   irred_facts := [];
   all_irred := false;
@@ -714,8 +715,8 @@ intrinsic direct_factorization(G::LMFDBGrp) -> SeqEnum
       if not split_bool then
         Append(~irred_facts, fact);
       else
-        Ni := LabelToLMFDBGrp(Get(Nisub, "subgroup"));
-        Ki := LabelToLMFDBGrp(Get(Kisub, "subgroup"));
+        Ni := LabelToLMFDBGrp(Get(Nisub, "subgroup") : represent:=false);
+        Ki := LabelToLMFDBGrp(Get(Kisub, "subgroup") : represent:=false);
         new_facts cat:= [Ni,Ki];
       end if;
     end for;
@@ -725,7 +726,7 @@ intrinsic direct_factorization(G::LMFDBGrp) -> SeqEnum
     facts := new_facts;
   end while;
   // check that they're really isomorphic
-  GG := Get(G, "MagmaGrp");
+  //GG := Get(G, "MagmaGrp");
   // The factors might not be in the same magma "universe" e.g., for 120.35
   // Can't have a SeqEnum of these, so you can't take apply DirectProduct
   //irred_facts_mag := [ Get(el, "MagmaGrp") : el in irred_facts ];
@@ -808,12 +809,10 @@ end intrinsic;
 intrinsic ConjugacyClasses(G::LMFDBGrp) ->  SeqEnum
 {The list of conjugacy classes for this group}
     g:=G`MagmaGrp;
-    print "A";
     cc:=Get(G, "MagmaConjugacyClasses");
     cm:=Get(G, "MagmaClassMap");
     pm:=Get(G, "MagmaPowerMap");
     gens:=Get(G, "MagmaGenerators");
-    print "B";
     ordercc, _, labels, G`number_divisions := ordercc(g,cc,cm,pm,gens);
     // We determine the number of rational characters
 
@@ -825,7 +824,6 @@ intrinsic ConjugacyClasses(G::LMFDBGrp) ->  SeqEnum
         perm[cm(ordercc[j])] := j;
         perminv[j] := cm(ordercc[j]);
     end for;
-    print "C";
     G`CCpermutation:=perm;
     G`CCpermutationInv:=perminv;
     sset := {1..#cc};
@@ -834,7 +832,6 @@ intrinsic ConjugacyClasses(G::LMFDBGrp) ->  SeqEnum
     magccs:=[ New(LMFDBGrpConjCls) : j in cc];
     gord:=Order(g);
     plist:=[z[1] : z in Factorization(gord)];
-    print "D";
     //gord:=Get(G, 'Order');
     for j:=1 to #cc do
         ix:=perm[j];
@@ -848,7 +845,6 @@ intrinsic ConjugacyClasses(G::LMFDBGrp) ->  SeqEnum
         magccs[j]`powers := [perm[pm(ix,p)] : p in plist];
         magccs[j]`representative := cc[ix][3];
     end for;
-    print "E";
     return magccs;
 end intrinsic;
 
@@ -1211,6 +1207,7 @@ end intrinsic;
 
 intrinsic wreath_product(G::LMFDBGrp) -> Any
   {Returns true if G is a wreath product; otherwise returns false.}
+  if Get(G, "abelian") then return false; end if; // abelian groups can't be nontrivial wreath products
   GG := Get(G, "MagmaGrp");
   // Need GrpPerm for IsWreathProduct function call below. Check and convert if not GrpPerm.
   if Type(GG) ne GrpPerm then
@@ -1269,4 +1266,33 @@ intrinsic pc_code(G::LMFDBGrp) -> RngInt
         return 0;
     end if;
     return SmallGroupEncoding(G`MagmaGrp);
+end intrinsic;
+
+intrinsic rank(G::LMFDBGrp) -> Any
+{Calculates the rank of the group G: the minimal number of generators}
+    if Get(G, "order") eq 1 then return 0; end if;
+    if Get(G, "cyclic") then return 1; end if;
+    if Get(G, "pgroup") then
+        _, p, m := IsPrimePower(Get(G, "order"));
+        _, _, k := IsPrimePower(#Get(G, "MagmaFrattini"));
+        return m - k;
+    end if;
+    if not G`inclusions_known then return None(); end if;
+    subs := Get(G, "Subgroups");
+    for r in [2..Get(G, "order")] do
+        if &+[(s`order)^r * s`mobius_function : s in subs] gt 0 then
+            return r;
+        end if;
+    end for;
+    error "rank calculation overflow";
+end intrinsic;
+
+intrinsic eulerian_function(G::LMFDBGrp) -> Any
+{Calculates the Eulerian function of G for n = rank(G)}
+    if Get(G, "order") eq 1 then return 1; end if;
+    r := Get(G,"rank");
+    tot := &+[(s`order)^r * s`mobius_function * s`count : s in Get(G, "Subgroups")];
+    aut := G`aut_order;
+    assert tot mod aut eq 0;
+    return tot div aut;
 end intrinsic;

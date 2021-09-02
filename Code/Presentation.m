@@ -358,13 +358,10 @@ This function is only safe to call on a newly created group, since it changes Ma
         G`Holomorph := Ambient;
         G`HolInj := inj;
         // Various conjugacy class attributes were set in determining an ordering on conjugacy classes for Gassman vectors
-        print "CClasses";
         G`MagmaConjugacyClasses := MagmaConjugacyClasses(G);
         G`MagmaClassMap := MagmaClassMap(G);
         G`MagmaPowerMap := MagmaPowerMap(G);
         G`MagmaGenerators := MagmaGenerators(G);
-        print "AutCollapse";
         G`CCAutCollapse := CCAutCollapse(G); // also sets CCpermutation, CCpermutationInv and ClassMap
-        print "done";
     end if;
 end intrinsic;

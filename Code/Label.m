@@ -20,10 +20,10 @@ intrinsic label(G::LMFDBGrp) -> Any
 end intrinsic;
 
 // TODO: make this better; currently only for small groups
-intrinsic LabelToLMFDBGrp(label::MonStgElt) -> LMFDBGrp
+intrinsic LabelToLMFDBGrp(label::MonStgElt : represent:=true) -> LMFDBGrp
   {Given label, create corresponding LMFDBGrp, including data from file}
   n, i := Explode(Split(label, "."));
   n := eval n;
   i := eval i;
-  return MakeSmallGroup(n,i);
+  return MakeSmallGroup(n,i : represent:=represent);
 end intrinsic;

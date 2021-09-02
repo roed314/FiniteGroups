@@ -167,10 +167,29 @@ intrinsic ConjugatesInSubgroup(G::Grp, H::Grp, K::Grp) -> SeqEnum
     return [KK:KK in Conjugates(G,K)|KK subset H];
 end intrinsic;
 
-intrinsic ConjugateInSubgroup(G::Grp, H::Grp, K::Grp) -> GrpElt
-{Given subgroups K and H of G such that K is conjugate to a subgroup of H, return such a conjugate}
+intrinsic ConjugateOverSubgroup(G::Grp, H::Grp, K::Grp) -> GrpElt
+{Given subgroups K and H of G such that K is conjugate to a subgroup of H, return a conjugate of H containing K}
     if K subset H then
-        return K;
+        return H;
+    end if;
+    NH := Normalizer(G, H);
+    NK := Normalizer(G, K);
+    if #NH ge #NK then
+        T := Transversal(G, NH);
+        for t in T do
+            Ht := H^t;
+            if K subset Ht then
+                return Ht;
+            end if;
+        end for;
+    else
+        T := Transversal(G, NK);
+        for t in T do
+            Kt := K^t;
+            if Kt subset H then
+                return H^(t^(-1));
+            end if;
+        end for;
     end if;
 end intrinsic;
 
@@ -283,7 +302,6 @@ function SortSuperClass(L, aut)
 end function;
 
 function SortGClass(L, aut)
-    print "SortGClass", aut;
     ans := [];
     if aut then
         Lat := L[1][1]`Lat;
@@ -307,7 +325,7 @@ function SortGClass(L, aut)
     for supers in Sort([k : k in Keys(by_supergroups)]) do
         subs := by_supergroups[supers];
         if #subs gt 1 then
-            overs := [[ConjugateInSubgroup(Ambient, inj(Lat`subs[over]`subgroup), inj(access(s)`subgroup)) @@ inj : over in Keys(Get(access(s), okey))] : s in subs];
+            overs := [[ConjugateOverSubgroup(Ambient, inj(Lat`subs[over]`subgroup), inj(access(s)`subgroup)) @@ inj : over in Keys(Get(access(s), okey))] : s in subs];
             sorter := [Sort([sig(over, subs[i]`subgroup) : over in overs[i]]) : i in [1..#subs]];
             ParallelSort(~sorter, ~subs);
         end if;

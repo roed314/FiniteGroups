@@ -55,6 +55,16 @@ intrinsic maximal_normal(H::LMFDBSubGrp) -> BoolElt // Need to be subgroup attri
   end if;
 end intrinsic;
 
+intrinsic characteristic(H::LMFDBSubGrp) -> BoolElt
+{Returns true if H is a characteristic subgroup of G}
+    if not Get(H, "normal") then return false; end if;
+    G := H`Grp;
+    HH := H`MagmaSubGrp;
+    Hol := Get(G, "Holomorph");
+    inj := Get(G, "HolInj");
+    return IsNormal(Hol, inj(HH));
+end intrinsic;
+
 
 intrinsic hall(H::LMFDBSubGrp) -> RngIntElt // Need to be subgroup attribute file
 {when order of H and order of Q are prime to each other it returns the radical of the order of H, otherwise returns 0}
