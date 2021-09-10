@@ -513,13 +513,24 @@ intrinsic composition_length(G::LMFDBGrp) -> Any
   return #Get(G,"composition_factors"); // Correct if trivial group is labeled G_0
 end intrinsic;
 
+intrinsic MagmaAutGroup(G::LMFDBGrp) -> Grp
+{Returns the automorphism group}
+    if Get(G, "solvable") then
+        try
+            return AutomorphismGroupSolubleGroup(G`MagmaGrp);
+        catch e;
+        end try;
+    end if;
+    return AutomorphismGroup(G`MagmaGrp);
+end intrinsic;
+
 intrinsic aut_group(G::LMFDBGrp) -> MonStgElt
     {returns label of automorphism group}
     aut:=Get(G, "MagmaAutGroup");
     try
         return label(aut);
     catch e;
-        print "aut_group", e;
+        //print "aut_group", e;
         return None();
     end try;
 end intrinsic;
@@ -1272,15 +1283,20 @@ intrinsic rank(G::LMFDBGrp) -> Any
 {Calculates the rank of the group G: the minimal number of generators}
     if Get(G, "order") eq 1 then return 0; end if;
     if Get(G, "cyclic") then return 1; end if;
-    if Get(G, "pgroup") then
+    if Get(G, "pgroup") ne 0 then
         _, p, m := IsPrimePower(Get(G, "order"));
-        _, _, k := IsPrimePower(#Get(G, "MagmaFrattini"));
+        F := #Get(G, "MagmaFrattini");
+        if F eq 1 then
+            k := 0;
+        else
+            _, _, k := IsPrimePower(F);
+        end if;
         return m - k;
     end if;
-    if not G`inclusions_known then return None(); end if;
+    if not G`subgroup_inclusions_known then return None(); end if;
     subs := Get(G, "Subgroups");
     for r in [2..Get(G, "order")] do
-        if &+[(s`order)^r * s`mobius_function : s in subs] gt 0 then
+        if &+[Get(s, "subgroup_order")^r * s`mobius_function : s in subs] gt 0 then
             return r;
         end if;
     end for;
@@ -1291,8 +1307,19 @@ intrinsic eulerian_function(G::LMFDBGrp) -> Any
 {Calculates the Eulerian function of G for n = rank(G)}
     if Get(G, "order") eq 1 then return 1; end if;
     r := Get(G,"rank");
-    tot := &+[(s`order)^r * s`mobius_function * s`count : s in Get(G, "Subgroups")];
-    aut := G`aut_order;
-    assert tot mod aut eq 0;
+    tot := &+[Get(s, "subgroup_order")^r * s`mobius_function * s`count : s in Get(G, "Subgroups")];
+    aut := Get(G, "aut_order");
+    //print "tot", tot, "aut", aut;
+    assert IsDivisibleBy(tot, aut);
     return tot div aut;
+end intrinsic;
+
+intrinsic MagmaCenter(G::LMFDBGrp) -> Grp
+{}
+    return Center(G`MagmaGrp);
+end intrinsic;
+
+intrinsic MagmaRadical(G::LMFDBGrp) -> Grp
+{}
+    return Radical(G`MagmaGrp);
 end intrinsic;

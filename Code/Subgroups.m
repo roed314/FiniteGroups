@@ -86,6 +86,7 @@ declare attributes SubgroupLat:
         subs,
         by_index,
         by_index_aut,
+        conjugator,
         aut_class,
         index_bound;
 
@@ -300,7 +301,7 @@ end intrinsic;
 intrinsic Holomorph(X::LMFDBGrp) -> Grp
 {}
     G := X`MagmaGrp;
-    A := Type(G) eq GrpPC select AutomorphismGroupSolubleGroup(G) else AutomorphismGroup(G);
+    A := Get(X, "MagmaAutGroup");
     H, inj := Holomorph(G, A);
     X`HolInj := inj;
     return H;
@@ -458,7 +459,7 @@ intrinsic SubGrpLstAut(X::LMFDBGrp) -> SubgroupLat
         X`number_subgroups := nsubs;
         X`number_subgroup_classes := nconj;
     end if;
-    Sort(~subs, func<x, y | x`order - y`order>);
+    Sort(~subs, func<x, y | y`order - x`order>);
     if trim and #subs ge NUM_SUBS_CUTOFF_AUT then
         cut := NUM_SUBS_LIMIT_AUT - 1;
         while cut gt 0 and subs[cut]`order eq subs[NUM_SUBS_LIMIT_AUT]`order do
@@ -568,6 +569,33 @@ intrinsic easy_hash(x::SubgroupLatElt) -> RngIntElt
 {}
     return EasyHash(x`subgroup);
 end intrinsic;
+
+function gvec_le(a, b)
+    // determine whether the gassman vectors of two subsets are compatible with an inclusion
+    // a and b are sorted lists of pairs [k,v] where k is a conjugacy class index and v is a count of elements in that class
+    ai := 1;
+    bi := 1;
+    while bi le #b do
+        if a[ai][1] eq b[bi][1] then
+            if a[ai][2] gt b[bi][2] then
+                return false;
+            end if;
+            ai +:= 1;
+            bi +:= 1;
+            if ai gt #a then
+                return true; // We've seen all the entries of a
+            end if;
+        elif a[ai][1] gt b[bi][1] then
+            // entry of b was missing in a; that's fine
+            bi +:= 1;
+        else
+            // entry of a was missing in b, so a cannot be a subset
+            return false;
+        end if;
+    end while;
+    // We've reached the end of b, but not of a (otherwise the ai gt #a clause would have triggered)
+    return false;
+end function;
 
 intrinsic SubgroupIdentify(L::SubgroupLat, H::Grp : use_hash:=true, use_gassman:=true, get_conjugator:=false, characteristic:=false) -> Any
 {}
@@ -818,7 +846,25 @@ end intrinsic;
 
 intrinsic NumberOfInclusions(x::SubgroupLatElt, y::SubgroupLatElt) -> RngIntElt
 {The number of elements of the conjugacy class of subgroups x that lie in a fixed representative of the conjugacy class of subgroups y}
-    error "Not Implemented";
+    if x`i eq y`i then return 1; end if;
+    G := x`Lat`Grp;
+    if x`Lat`outer_equivalence then
+        Ambient := Get(G, "Holomorph");
+        inj := Get(G, "HolInj");
+    else
+        Ambient := G`MagmaGrp;
+        inj := IdentityHomomorphism(G`MagmaGrp);
+    end if;
+    c := x`Lat`conjugator[[x`i, y`i]];
+    H := inj(y`subgroup);
+    K := inj(x`subgroup)^c;
+    /*
+    // Unfortunately, this is not correct since it's possible to have elements of G that map K into H but don't normalize H.
+    NH := Normalizer(Ambient, H);
+    NK := Normalizer(Ambient, K);
+    return Index(NH, NH meet NK);
+    */
+    return #[J : J in Conjugates(Ambient, K) | J subset H];
 end intrinsic;
 
 // Implementation adapted from Magma's Groups/GrpFin/subgroup_lattice.m
@@ -1065,7 +1111,7 @@ function SubgroupLattice(GG, aut)
         end for;
     end for;
     // Set the mobius function
-    Lat`subs[1]`mobius := 1; //μ_G(G) = 1
+    /*Lat`subs[1]`mobius := 1; //μ_G(G) = 1
     for i in [2..#Lat`subs] do
         x := Lat`subs[i];
         x`mobius := 0;
@@ -1073,14 +1119,152 @@ function SubgroupLattice(GG, aut)
             y := Lat`subs[j];
             x`mobius -:= (y`subgroup_count * NumberOfInclusions(x, y) * y`mobius) div x`subgroup_count;
         end for;
-    end for;
+    end for;*/
     AddSpecialSubgroups(Lat); // just adds the labels since the subgroups already present
     return Lat;
 end function;
 
+function SubgroupLattice_edges(G, aut)
+    // This version of SubgroupLattice constructs the subgroups first then adds edges
+    GG := G`MagmaGrp;
+    vprint User1: "Starting to list subgroups with aut =", aut;
+    if aut then
+        L := Get(G, "SubGrpLstAut");
+        Ambient := Get(G, "Holomorph");
+        inj := Get(G, "HolInj");
+    else
+        L := Get(G, "SubGrpLst");
+        Ambient := GG;
+        inj := IdentityHomomorphism(GG);
+    end if;
+    one := Identity(Ambient);
+    n := #GG;
+    C := AssociativeArray();
+    overs := [{Integers()|} : i in [1..#L]];
+    unders := [{Integers()|} : i in [1..#L]];
+    // We start by adding all edges with prime order
+    D := Reverse(Sort([k : k in Keys(L`by_index)]));
+    vprint User1: "Adding length 1 edges";
+    //print "D", D;
+    for d in D do
+        M := [m : m in D | IsDivisibleBy(d, m) and IsPrime(d div m)];
+        for sub in L`by_index[d] do
+            //print d, sub`order;
+            subvec := Get(sub, "gassman_vec");
+            //print "subvec", sprint(subvec);
+            for m in M do
+                for super in L`by_index[m] do
+                    supervec := Get(super, "gassman_vec");
+                    //print "supervec", sprint(supervec);
+                    //print "orders", sub`order, super`order;
+                    if gvec_le(subvec, supervec) then
+                        conj, elt := IsConjugateSubgroup(Ambient, inj(super`subgroup), inj(sub`subgroup));
+                        if conj then
+                            C[[sub`i, super`i]] := elt;
+                            //print "HERE", sub`i, #overs;
+                            Include(~overs[sub`i], super`i);
+                            Include(~unders[super`i], sub`i);
+                            //print "Including", sub`i, super`i;
+                        end if;
+                    end if;
+                end for;
+            end for;
+        end for;
+    end for;
+    vprint User1: "Length 1 edges added";
+
+    procedure propogate_edges(~CC, bottom, new_edges)
+        // Recursively propogate the addition of some edges to fill in all relevant new comparisons in C
+        // new_edges should be a list of integers, each the top of a new edge from bottom
+        current := &cat[[<ov, i> : i in overs[ov]] : ov in new_edges];
+        while #current gt 0 do
+            next := [];
+            for pair in current do
+                top := pair[2];
+                if IsDefined(CC, [bottom, top]) then continue; end if;
+                mid := pair[1];
+                if CC[[bottom, mid]] eq one and CC[[mid, top]] eq one then
+                    CC[[bottom, top]] := one;
+                elif L`subs[bottom]`subgroup subset L`subs[top]`subgroup then
+                    // We want use use one whenever possible
+                    CC[[bottom, top]] := one;
+                else
+                    CC[[bottom, top]] := CC[[bottom, mid]] * CC[[mid, top]];
+                end if;
+                next cat:= [<top, i> : i in overs[top]];
+            end for;
+            current := next;
+        end while;
+    end procedure;
+
+    // Now create longer edges
+    for bottom in [1..#L] do
+        propogate_edges(~C, bottom, overs[bottom]);
+    end for;
+
+    // Now we need to add edges coming from inclusions that are not of prime order
+    for d in D do
+        M := [m : m in D | m ne d and IsDivisibleBy(d, m) and not IsPrime(d div m)];
+        for sub in L`by_index[d] do
+            subvec := Get(sub, "gassman_vec");
+            for m in M do
+                for super in L`by_index[m] do
+                    supervec := Get(super, "gassman_vec");
+                    if IsDefined(C, [sub`i, super`i]) then continue; end if;
+                    if gvec_le(subvec, supervec) then
+                        conj, elt := IsConjugateSubgroup(Ambient, inj(super`subgroup), inj(sub`subgroup));
+                        if conj then
+                            C[[sub`i, super`i]] := elt;
+                            Include(~overs[sub`i], super`i);
+                            Include(~unders[super`i], sub`i);
+                            // We need to propogate this new edge up to the top of the lattice
+                            propogate_edges(~C, sub`i, [super`i]);
+                        end if;
+                    end if;
+                end for;
+            end for;
+        end for;
+    end for;
+    vprint User1: "Longer edges added";
+    L`conjugator := C;
+    for i in [1..#L] do
+        // For now we switch to AssociativeArrays for compatibility with the old code
+        //L`subs[i]`overs := overs[i];
+        L`subs[i]`overs := AssociativeArray();
+        for j in overs[i] do
+            L`subs[i]`overs[j] := true;
+        end for;
+        //L`subs[i]`unders := unders[i];
+        L`subs[i]`unders := AssociativeArray();
+        for j in unders[i] do
+            L`subs[i]`unders[j] := true;
+        end for;
+    end for;
+
+    // Set the mobius function
+    L`subs[1]`mobius := 1; //μ_G(G) = 1
+    for i in [2..#L] do
+        print i;
+        x := L`subs[i];
+        x`mobius := 0;
+        //print "x", x`i;
+        for j in half_interval(x, "overs", {}) do
+            y := L`subs[j];
+            if x`i eq y`i then continue; end if;
+            //print x`i, y`i, Get(y, "subgroup_count"), NumberOfInclusions(x, y), y`mobius, Get(x, "subgroup_count");
+            x`mobius -:= (Get(y, "subgroup_count") * NumberOfInclusions(x, y) * y`mobius) div Get(x, "subgroup_count");
+        end for;
+        //print "mobius", x`mobius;
+    end for;
+    vprint User1: "Mobius function computed";
+    L`inclusions_known := true;
+    return L;
+end function;
+
 intrinsic SubGrpLst(G::LMFDBGrp) -> SubgroupLat
 {The list of all subgroups up to conjugacy}
-    subs := Subgroups(G`MagmaGrp);
+    // For now, we start with index 1 rather than order 1
+    subs := Reverse(Subgroups(G`MagmaGrp));
     res := New(SubgroupLat);
     res`Grp := G;
     res`outer_equivalence := false;
@@ -1092,13 +1276,19 @@ intrinsic SubGrpLst(G::LMFDBGrp) -> SubgroupLat
     return res;
 end intrinsic;
 
-intrinsic SubGrpLatAut(G::LMFDBGrp) -> SubgroupLat
+intrinsic SubGrpLatAut(G::LMFDBGrp : edges:=true) -> SubgroupLat
 {The lattice of subgroups up to automorphism}
+    if edges then
+        return SubgroupLattice_edges(G, true);
+    end if;
     return SubgroupLattice(G, true);
 end intrinsic;
 
-intrinsic SubGrpLat(G::LMFDBGrp) -> SubgroupLat
+intrinsic SubGrpLat(G::LMFDBGrp : edges:=true) -> SubgroupLat
 {The lattice of subgroups up to conjugacy}
+    if edges then
+        return SubgroupLattice_edges(G, false);
+    end if;
     return SubgroupLattice(G, false);
 end intrinsic;
 
@@ -1125,33 +1315,6 @@ intrinsic unders(x::SubgroupLatElt) -> Assoc
     end for;
     return ans;
 end intrinsic;
-
-function gvec_le(a, b)
-    // determine whether the gassman vectors of two subsets are compatible with an inclusion
-    // a and b are sorted lists of pairs [k,v] where k is a conjugacy class index and v is a count of elements in that class
-    ai := 1;
-    bi := 1;
-    while bi le #b do
-        if a[ai][1] eq b[bi][1] then
-            if a[ai][2] gt b[bi][2] then
-                return false;
-            end if;
-            ai +:= 1;
-            bi +:= 1;
-            if ai gt #a then
-                return true; // We've seen all the entries of a
-            end if;
-        elif a[ai][1] gt b[bi][1] then
-            // entry of b was missing in a; that's fine
-            bi +:= 1;
-        else
-            // entry of a was missing in b, so a cannot be a subset
-            return false;
-        end if;
-    end while;
-    // We've reached the end of b, but not of a (otherwise the ai gt #a clause would have triggered)
-    return false;
-end function;
 
 intrinsic overs(x::SubgroupLatElt) -> Assoc
 {}
@@ -1189,6 +1352,99 @@ intrinsic aut_overs(x::SubgroupLatElt) -> Assoc
         ans[aclass[s]] := true;
     end for;
     return ans;
+end intrinsic;
+
+intrinsic subgroup_count(x::SubgroupLatElt) -> RngIntElt
+{}
+    Lat := x`Lat;
+    if Lat`outer_equivalence then
+        Ambient := Get(Lat`Grp, "Holomorph");
+        inj := Get(Lat`Grp, "HolInj");
+    else
+        Ambient := Lat`Grp`MagmaGrp;
+        inj := IdentityHomomorphism(Ambient);
+    end if;
+    return Index(Ambient, Normalizer(Ambient, inj(x`subgroup)));
+end intrinsic;
+
+intrinsic cc_count(x::SubgroupLatElt) -> RngIntElt
+{}
+    Lat := x`Lat;
+    if Lat`outer_equivalence then
+        G := Lat`Grp`MagmaGrp;
+        return Get(x, "subgroup_count") div Index(G, Normalizer(G, x`subgroup));
+    else
+        return 1;
+    end if;
+end intrinsic;
+
+/*
+// These functions were used when testing SubgroupLattice_edges
+intrinsic AddConjugators(L::SubgroupLat)
+{}
+    G := L`Grp;
+    GG := G`MagmaGrp;
+    n := #GG;
+    D := Sort([k : k in Keys(L`by_index) | k gt 1]);
+    if G`outer_equivalence then
+        Ambient := Get(G, "Holomorph");
+        inj := Get(G, "HolInj");
+    else
+        Ambient := GG;
+        inj := IdentityHomomorphism(GG);
+    end if;
+    L`conjugator := AssociativeArray();
+    for d in D do
+        M := [m : m in D | m ne d and IsDivisibleBy(m, d) and m ne n];
+        for sub in L`by_index[d] do
+            subvec := Get(sub, "gassman_vec");
+            for m in M do
+                for super in L`by_index[m] do
+                    supervec := Get(super, "gassman_vec");
+                    if gvec_le(subvec, supervec) then
+                        conj, elt := IsConjugateSubgroup(Ambient, inj(super`subgroup), inj(sub`subgroup));
+                        if conj then
+                            L`conjugator[[sub`i, super`i]] := elt;
+                        end if;
+                    end if;
+                end for;
+            end for;
+        end for;
+    end for;
+end intrinsic;
+
+intrinsic ConjugatorTiming(N, i : aut:=true)
+{}
+    G := MakeSmallGroup(N, i : represent:=false, set_params:=false);
+    G`outer_equivalence := aut;
+    G`all_subgroups_known := true;
+    G`subgroup_index_bound := 0;
+    t0 := Cputime();
+    if aut then
+        L := Get(G, "SubGrpLstAut");
+    else
+        L := Get(G, "SubGrpLst");
+    end if;
+    print "List computed", Cputime() - t0;
+    t0 := Cputime();
+    for sub in L`subs do
+        gv := Get(sub, "gassman_vec");
+    end for;
+    print "Gassman complete", Cputime() - t0;
+    t0 := Cputime();
+    AddConjugators(L);
+    print "Conjugators complete", Cputime() - t0;
+    G := MakeSmallGroup(N, i : represent:=false, set_params:=false);
+    G`outer_equivalence := aut;
+    G`all_subgroups_known := true;
+    G`subgroup_index_bound := 0;
+    t0 := Cputime();
+    if aut then
+        L := Get(G, "SubGrpLatAut");
+    else
+        L := Get(G, "SubGrpLat");
+    end if;
+    print "Lattice computed", Cputime() - t0;
 end intrinsic;
 
 intrinsic test_overs_unders(N, i : aut:=true) -> LMFDBGrp
@@ -1229,10 +1485,12 @@ intrinsic test_overs_unders(N, i : aut:=true) -> LMFDBGrp
     end for;
     return G;
 end intrinsic;
+*/
 
 intrinsic normal_closure(H::SubgroupLatElt) -> RngIntElt
 {}
-    return SubgroupIdentify(H`Lat, NormalClosure(H`subgroup));
+    // There's a faster version of this available when we have the subgroup inclusion diagram: just trace up through the subgroups containing this one with breadth-first search until a normal one is found.
+    return SubgroupIdentify(H`Lat, NormalClosure(H`Lat`Grp`MagmaGrp, H`subgroup));
 end intrinsic;
 
 intrinsic normalizer(H::SubgroupLatElt) -> RngIntElt
@@ -1269,8 +1527,8 @@ intrinsic LMFDBSubgroup(H::SubgroupLatElt) -> LMFDBSubGrp
     res`short_label := H`label;
     res`aut_label := Sprintf("%o.%o%o", H`aut_label[1], CremonaCode(H`aut_label[2]), H`aut_label[3]);
     res`special_labels := H`special_labels;
-    res`count := H`subgroup_count;
-    res`conjugacy_class_count := H`cc_count;
+    res`count := Get(H, "subgroup_count");
+    res`conjugacy_class_count := Get(H, "cc_count");
     if Lat`inclusions_known then
         res`contains := [Lat`subs[k]`label : k in Keys(H`unders)]; // Sort
         res`contained_in := [Lat`subs[k]`label : k in Keys(H`overs)]; // Sort

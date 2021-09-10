@@ -249,9 +249,7 @@ intrinsic LabelSubgroups(G::Grp : phi:=ClassMap(G), max_index:=0) -> SeqEnum
     return [<_make_label(G, tup[1]), tup[2]> : tup in ret];
 end intrinsic;
 
-*/
-
-/* JP version */
+// JP version
 intrinsic LabelSubgroups(G::Grp, S1::SeqEnum : phi:=ClassMap(G)) -> SeqEnum
 {pass in any record of subgroups}
     S := [<S1[i], i> : i in [1..#S1]]; // record the original order so additional information can be recovered from the record or lattice
@@ -261,7 +259,7 @@ intrinsic LabelSubgroups(G::Grp, S1::SeqEnum : phi:=ClassMap(G)) -> SeqEnum
     LL := AssociativeArray();   // LL[i] will be set to the label of the subgroup L[i]
     N := IndexFibers([1..#L], func<i|LI[i]>);
     for n in Sort([n:n in Keys(N)]) do  // loop over indexes of subgroups (in increasing order)
-	    /* if max_index gt 0 and n gt max_index then break; end if;*/
+	    // if max_index gt 0 and n gt max_index then break; end if;
         if #N[n] eq 1 then LL[N[n][1]] := [n,1,1]; continue; end if;
         C := IndexFibers(N[n], func<i | SubgroupClass(L[i], phi)>);
         I := [C[c] : c in Sort([c : c in Keys(C)])];
@@ -293,8 +291,9 @@ intrinsic LabelSubgroups(G::Grp, S1::SeqEnum : phi:=ClassMap(G)) -> SeqEnum
         end for;
     end for;
 return Sort([<LL[i], L[i], S[i][2]> : i in [1..#L]],func<a,b| a[1] lt b[1] select -1 else a[1] gt b[1] select 1 else 0>);
-/*  return [<_make_label(G, tup[1]), tup[2]> : tup in ret];  */
 end intrinsic;
+
+*/
 
 function SortSuperClass(L, aut)
     ans := [];
@@ -326,7 +325,7 @@ function SortGClass(L, aut)
         subs := by_supergroups[supers];
         if #subs gt 1 then
             overs := [[ConjugateOverSubgroup(Ambient, inj(Lat`subs[over]`subgroup), inj(access(s)`subgroup)) @@ inj : over in Keys(Get(access(s), okey))] : s in subs];
-            sorter := [Sort([sig(over, subs[i]`subgroup) : over in overs[i]]) : i in [1..#subs]];
+            sorter := [Sort([sig(over, (aut select subs[i][1] else subs[i])`subgroup) : over in overs[i]]) : i in [1..#subs]];
             ParallelSort(~sorter, ~subs);
         end if;
         ans cat:= subs;

@@ -8,6 +8,8 @@ end intrinsic;
 
 intrinsic GetBasicAttributesGrp() -> Any
   {Outputs SeqEnum of basic attributes}
+  // You shouldn't add any attribute here that depends on the specific choice of generators,
+  // since this is called before RePresent.
   return [
    ["Order","order"],
    ["Exponent","exponent"],
@@ -17,9 +19,6 @@ intrinsic GetBasicAttributesGrp() -> Any
    ["IsNilpotent" , "nilpotent"],
    ["IsSimple" , "simple"],
    ["IsPerfect" , "perfect"],
-   ["Center" , "MagmaCenter"],
-   ["Radical" , "MagmaRadical"],
-   ["AutomorphismGroup" , "MagmaAutGroup"],
    ["NilpotencyClass" , "nilpotency_class"],
    ["Ngens" , "ngens"],
    ["DerivedLength" , "derived_length"]

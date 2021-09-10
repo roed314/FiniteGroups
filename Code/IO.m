@@ -1,6 +1,6 @@
 TextCols := ["abelian_quotient", "acted", "actor", "ambient", "aut_group", "bravais_class", "c_class", "center_label", "central_quotient", "commutator_label", "coset_action_label", "crystal_symbol", "factor1", "factor2", "family", "frattini_label", "frattini_quotient", "group", "image", "knowl", "label", "short_label", "aut_label", "magma_cmd", "name", "old_label", "outer_group", "product", "proj_label", "projective_image", "q_class", "quotient", "quotient_action_image", "subgroup", "tex_name", "q_character", "carat_label", "subgroup_tex", "ambient_tex", "quotient_tex", "weyl_group"];
 
-IntegerCols := ["alias_spot", "ambient_order", "arith_equiv", "aut_counter", "aut_order", "auts", "cdim", "commutator_count", "composition_length", "conjugacy_class_count", "count", "counter", "counter_by_index", "cyc_order_mat", "cyc_order_traces", "cyclotomic_n", "degree", "derived_length", "diagram_x", "dim", "elementary", "elt_rep_type", "eulerian_function", "exponent", "extension_counter", "hall", "hyperelementary", "indicator", "mobius_function", "multiplicity", "n", "ngens", "nilpotency_class", "number_characteristic_subgroups", "number_conjugacy_classes", "number_divisions", "number_normal_subgroups", "number_subgroup_classes", "number_subgroups", "order", "outer_order", "parity", "pc_code", "pgroup", "priority", "q", "qdim", "quotient_action_kernel", "quotient_order", "quotients_complenetess", "rank", "rep", "schur_index", "sibling_completeness", "size", "smallrep", "subgroup_index_bound", "subgroup_order", "sylow", "t", "transitive_degree", "hash"];
+IntegerCols := ["alias_spot", "ambient_order", "arith_equiv", "aut_counter", "aut_order", "auts", "cdim", "commutator_count", "composition_length", "conjugacy_class_count", "count", "counter", "counter_by_index", "cyc_order_mat", "cyc_order_traces", "cyclotomic_n", "degree", "derived_length", "diagram_x", "dim", "elementary", "elt_rep_type", "eulerian_function", "exponent", "extension_counter", "hall", "hyperelementary", "indicator", "mobius_function", "multiplicity", "n", "ngens", "nilpotency_class", "number_characteristic_subgroups", "number_conjugacy_classes", "number_divisions", "number_normal_subgroups", "number_subgroup_classes", "number_subgroup_autclasses", "number_subgroups", "order", "outer_order", "parity", "pc_code", "pgroup", "priority", "q", "qdim", "quotient_action_kernel", "quotient_order", "quotients_complenetess", "rank", "rep", "schur_index", "sibling_completeness", "size", "smallrep", "subgroup_index_bound", "subgroup_order", "sylow", "t", "transitive_degree", "hash"];
 
 TextListCols := ["composition_factors", "special_labels"];
 
@@ -332,17 +332,17 @@ intrinsic DefaultAttributes(c::Cat) -> SeqEnum
         // Blacklist attributes that aren't working
         blacklist := [
                       // Group attributes
-                      "eulerian_function",
-                      "rank",
-                      "mobius_function",
+                      //"eulerian_function",
+                      //"rank",
+                      //"mobius_function",
     
                       // Subgroup attributes
                       "alias_spot",
                       "aut_counter",
-		      "extension_counter",
+		      "extension_counter"
 		      //  "diagram_x", returns 0 now
-		      "generators",
-		      "standard_generators"
+		      //"generators",
+		      //"standard_generators"
 
                       // Conjugacy class attributes
                       //"representative" // Need to be able to encode GrpPCElts - DR
@@ -355,7 +355,7 @@ intrinsic DefaultAttributes(c::Cat) -> SeqEnum
                      "finite_matrix_group",
 
                      // Subgroup attributes
-                     "conjugacy_class_count",
+                     //"conjugacy_class_count",
                      "quotient_action_image",
                      "quotient_action_kernel",
                      "quotient_fusion",

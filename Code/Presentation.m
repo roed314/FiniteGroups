@@ -145,12 +145,7 @@ intrinsic all_minimal_chains(G::LMFDBGrp) -> SeqEnum
             super := chain[j+1];
             i := sub`i;
             if IsDefined(Conjugators, [sub`i, super`i]) then
-                c := Conjugators[[sub`i, super`i]];
-                conjugator := conjugator * c; //Conjugators[[sub`i, super`i]];
-                //c := Conjugators[[sub`i, super`i]];
-                //sub := rec<RF|subgroup:=(inj(fixed_chain[#fixed_chain]`subgroup)^c)@@inj, order:=sub`order>;
-            else
-                c := 1;
+                conjugator := Conjugators[[sub`i, super`i]] * conjugator;
             end if;
             sub := rec<RF|subgroup:=((sub`subgroup)^conjugator)@@inj, order:=sub`order>;
             Append(~fixed_chain, sub);
@@ -180,7 +175,7 @@ end function;
 
 intrinsic RePresent(G::LMFDBGrp)
 {Changes G`MagmaGrp and sets G`gens_used to give a more human readable presentation.
-Does nothing if not solvable.
+If not solvable, just sets gens_used to [1..Ngens(G)].
 This function is only safe to call on a newly created group, since it changes MagmaGrp (and thus invalidates a lot of attributes)}
     //print "#gensA", #gens;
     // Figure out which gives the "best" presentation.  Desired features:
@@ -354,7 +349,14 @@ This function is only safe to call on a newly created group, since it changes Ma
         G`MagmaGrp := H;
         G`gens_used := gens_used;
         // We have to reset Holomorph, HolInj, ClassMap to use the new group
-        Ambient, inj := Holomorph(H);
+        // We could instead compose with the isomorphism between the new and old group, but that seems
+        // prone to errors since it keeps the old group around
+        try
+            A := AutomorphismGroupSolubleGroup(H);
+        catch e;
+            A := AutomorphismGroup(H);
+        end try;
+        Ambient, inj := Holomorph(H, A);
         G`Holomorph := Ambient;
         G`HolInj := inj;
         // Various conjugacy class attributes were set in determining an ordering on conjugacy classes for Gassman vectors
@@ -363,5 +365,7 @@ This function is only safe to call on a newly created group, since it changes Ma
         G`MagmaPowerMap := MagmaPowerMap(G);
         G`MagmaGenerators := MagmaGenerators(G);
         G`CCAutCollapse := CCAutCollapse(G); // also sets CCpermutation, CCpermutationInv and ClassMap
+    else
+        G`gens_used := [1..Ngens(G`MagmaGrp)];
     end if;
 end intrinsic;
