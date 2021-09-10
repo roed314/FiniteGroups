@@ -3,107 +3,168 @@ This file supports computation of a human-friendly presentation
 for solvable groups.
 **********************************************************/
 
-cycquos := function(L, h)
-    H := Group(h);
+intrinsic CyclicQuotients(Ambient::Grp, H::Grp) -> SeqEnum
+{The normal subgroups K of H with H/K cyclic, up to conjugacy inside Ambient}
+    N := Normalizer(Ambient, H);
     D := DerivedSubgroup(H);
-    A, fA := quo<H | D>; // Can maybe make this more efficient by switching to GrpAb and using Dual
-    n := Order(A);
-    ans := {};
-    for B in Subgroups(A) do
-        if B`order eq n then
-            continue;
-        end if;
-        Bsub := B`subgroup;
-        if IsCyclic(A / Bsub) then
-            Include(~ans, L!(Bsub@@fA));
-        end if;
+    Q, fQ := quo<H | D>;
+    A, fA := AbelianGroup(Q);
+    m := Exponent(A);
+    d := Ngens(A);
+    ords := [Order(A.i) : i in [1..d]];
+    adjust := [m div ords[i] : i in [1..d]]; // match the order of each generator
+    assert &*ords eq #Q;
+    // We construct equivalence classes of homs H -> Q -> Z/m, up to the action of N
+    // the kernels of these homs provide the cyclic quotients
+    V := { v : v in CartesianProduct([[0..(m-1) by (m div ords[i])] : i in [1..d]])};
+    Exclude(~V, <0 : _ in [1..d]>); // remove the trivial hom, corresponding to H itself
+    VxN := CartesianProduct(V, N);
+    lifts := [A.i @@ fA @@fQ : i in [1..d]];
+    //action := map<VxN -> V | x :-> <c : c in Eltseq(((&*[lifts[i]^x[1][i] : i in [1..d]])^x[2]) @ fQ @ fA)>>;
+    function dotprod(a, b)
+        // assumes all have the same length
+        return &+[a[i]*b[i] : i in [1..#a]];
+    end function;
+    action := map<VxN -> V | x :-> <dotprod(x[1], Eltseq((lifts[i]^(x[2]^-1)) @ fQ @ fA)) mod m : i in [1..d]>>;
+    GS := GSet(N, V, action);
+    orbs := Orbits(N, GS);
+    // since we only care about the kernel, we identify homs generating the same cyclic subgroup in the dual.
+    /*inj := Lat`Grp`HolInj; // remove
+    for orb in orbs do
+        print Join([Sprint(v) : v in orb], " ");
+        fs := [hom<A -> C | [v[i]*z : i in [1..d]]> : v in orb];
+        Ks := [Kernel(fQ * fA * fv) : fv in fs];
+        print Join([Sprint(Lat!(K@@inj)) : K in Ks], " ");
+    end for;*/
+    vec_reps := [];
+    scalars := [x : x in [2..m-1] | Gcd(x, m) eq 1];
+    while #orbs gt 0 do
+        o := orbs[1];
+        v := o[1];
+        Append(~vec_reps, v);
+        Remove(~orbs, 1);
+        for s in scalars do
+            sv := <s*v[i] mod m : i in [1..d]>;
+            for oi in [1..#orbs] do
+                if sv in orbs[oi] then
+                    Remove(~orbs, oi);
+                    break;
+                end if;
+            end for;
+        end for;
+    end while;
+    C := CyclicGroup(GrpAb, m); // GrpPC might be better?
+    z := C.1;
+    subgroups := [];
+    for v in vec_reps do
+        fv := hom<A -> C | [v[i]*z : i in [1..d]]>;
+        Append(~subgroups, Kernel(fQ * fA * fv));
     end for;
-    return ans;
-end function;
+    return subgroups;
+end intrinsic;
 
-all_minimal_chains := function(G, L)
-    assert IsSolvable(G);
+RF := recformat<subgroup, order, length>;
+intrinsic all_minimal_chains(G::LMFDBGrp) -> SeqEnum
+{Returns minimal length chains of subgroups so that each is normal in the previous with cyclic quotient}
+    assert IsSolvable(G`MagmaGrp);
+    Ambient := Get(G, "Holomorph");
+    inj := Get(G, "HolInj");
+    GG := inj(G`MagmaGrp);
+    L := New(SubgroupLat); // we build a new subgroup list in order to be able to take advantage of the identification features.
+    L`Grp := G;
+    L`outer_equivalence := true;
+    L`inclusions_known := false;
+    n := #GG;
+    KK := SubgroupLatElement(L, GG : i:=1);
+    L`subs := [KK];
+    L`by_index := AssociativeArray();
+    L`by_index[1] := [KK];
     cycdist := AssociativeArray();
-    top := L!(#L);
-    bottom := L!1;
-    cycdist[top] := 0;
+    cycdist[1] := 0;
     reverse_path := AssociativeArray();
-    cqsubs := AssociativeArray();
-    Seen := {top};
-    Layer := {top};
+    Conjugators := AssociativeArray();
+    Layer := {1};
     while true do
         NewLayer := {};
-        for h in Layer do
-            cq := cycquos(L, h);
-            cqsubs[h] := cq;
-            for x in cq do
-                if not IsDefined(cycdist, x) or cycdist[x] gt cycdist[h] + 1 then
-                    cycdist[x] := cycdist[h] + 1;
-                    reverse_path[x] := {h};
-                elif cycdist[x] eq cycdist[h] + 1 then
-                    Include(~(reverse_path[x]), h);
+        for layer_ind in Layer do
+            HH := L`subs[layer_ind];
+            H := HH`subgroup;
+            for K in CyclicQuotients(Ambient, H) do
+                // We avoid gassman classification since we're working with subgroups of Ambient
+                conj, i, elt := SubgroupIdentify(L, K : use_gassman:=false, get_conjugator:=true);
+                if conj then
+                    // It's possible that [i, HH`i] was already defined using a different subgroup, but that's not a problem
+                    Conjugators[[i, HH`i]] := elt;
+                    KK := L`subs[i];
+                else
+                    i := 1+#L`subs;
+                    KK := SubgroupLatElement(L, K : i:=i);
+                    Append(~L`subs, KK);
+                    ind := n div KK`order;
+                    if not IsDefined(L`by_index, ind) then
+                        L`by_index[ind] := [];
+                    end if;
+                    Append(~L`by_index[ind], KK);
+                    Include(~NewLayer, i);
                 end if;
-                if not (x in Seen) then
-                    Include(~NewLayer, x);
-                    Include(~Seen, x);
+                if not IsDefined(cycdist, KK`i) or cycdist[KK`i] gt cycdist[HH`i] + 1 then
+                    cycdist[KK`i] := cycdist[HH`i] + 1;
+                    reverse_path[KK`i] := {HH};
+                elif cycdist[KK`i] eq cycdist[HH`i] + 1 then
+                    Include(~reverse_path[KK`i], HH);
                 end if;
             end for;
         end for;
         Layer := NewLayer;
-        if (bottom in Layer) or (#Layer eq 0) then
+        if IsDefined(L`by_index, n) then
             break;
+        elif (#Layer eq 0) then
+            error "Didn't reach bottom";
         end if;
     end while;
-    M := cycdist[bottom];
+    bottom := L`by_index[n][1];
+    M := cycdist[bottom`i];
     chains := [[bottom]];
-    /* The following was brainstorming that I don't think works yet....
-
-       For now, we just use centralizers of already chosen elements.
-       At each step (while adding a subgroup H above a subgroup J),
-       compute the normalizer N of H and the orbits for the action of N on H.
-       Similarly, the normalizer M of J and the orbits for the action of M on J.
-       Those of J map to those of H, and places where the count increase
-       are possible conjugacy classes from which we can choose a generator.
-       We aim for those where the size of the conjugacy class is small,
-       since that will yield a large centralizer with lots of commuting relations.
-    */
-    for i in [1..M] do
+    for j in [1..M] do
         new_chains := [];
         for chain in chains do
-            for x in reverse_path[chain[i]] do
+            for x in reverse_path[chain[j]`i] do
                 Append(~new_chains, Append(chain, x));
             end for;
         end for;
         chains := new_chains;
     end for;
-    return chains;
-end function;
+    // We adjust the chains so that each subgroup is actually contained in the next, instead of only up to conjugacy
+    fixed_chains := [];
+    for k in [1..#chains] do
+        chain := chains[k];
+        fixed_chain := [rec<RF|subgroup:=G`MagmaGrp, order:=n>];
+        conjugator := Identity(GG);
+        for j in [M..1 by -1] do
+            sub := chain[j];
+            super := chain[j+1];
+            i := sub`i;
+            if IsDefined(Conjugators, [sub`i, super`i]) then
+                conjugator := Conjugators[[sub`i, super`i]] * conjugator;
+            end if;
+            sub := rec<RF|subgroup:=((sub`subgroup)^conjugator)@@inj, order:=sub`order>;
+            Append(~fixed_chain, sub);
+        end for;
+        Append(~fixed_chains, Reverse(fixed_chain));
+    end for;
+    return fixed_chains;
+end intrinsic;
 
-
-chain_to_gens := function(chain)
+chain_to_gens := function(chain, G)
     ans := [];
-    G := Group(chain[#chain]);
-    A := Group(chain[1]);
+    G := chain[#chain]`subgroup;
+    A := chain[1]`subgroup;
     for i in [2..#chain] do
-        B := Group(chain[i]);
+        B := chain[i]`subgroup;
         r := #B div #A;
-        if not (A subset B and IsCyclic(quo<B | A>)) then
-            // have to conjugate
-            N := Normalizer(G, B);
-            T := Transversal(G, N);
-            for t in T do
-                Bt := B^t;
-                if A subset Bt then
-                    Q, fQ := quo<Bt | A>;
-                    if IsCyclic(Q) then
-                        B := Bt;
-                        break;
-                    end if;
-                end if;
-            end for;
-        else
-            Q, fQ := quo<B | A>;
-        end if;
+        assert A subset B;
+        Q, fQ := quo<B | A>;
+        assert IsCyclic(Q);
         C, fC := AbelianGroup(Q);
         g := G!((C.1@@fC)@@fQ);
         Append(~ans, <g, r, B>);
@@ -112,22 +173,20 @@ chain_to_gens := function(chain)
     return ans;
 end function;
 
-intrinsic RePresentLat(G::LMFDBGrp, L::SubGrpLat)
-    {}
-    GG := G`MagmaGrp;
-    chains := all_minimal_chains(GG, L);
-    gens := [chain_to_gens(chain) : chain in chains];
+intrinsic RePresent(G::LMFDBGrp)
+{Changes G`MagmaGrp and sets G`gens_used to give a more human readable presentation.
+If not solvable, just sets gens_used to [1..Ngens(G)].
+This function is only safe to call on a newly created group, since it changes MagmaGrp (and thus invalidates a lot of attributes)}
     //print "#gensA", #gens;
     // Figure out which gives the "best" presentation.  Desired features:
     // * raising each generator to its relative order gives the identity
     // * fewer conjugacy relations
     // * relative orders are non-increasing
     // * RHS of conjugacy relations are "deeper"
-    if Get(G, "order") eq 1 then
-        G`MagmaOptimized := GG;
-        G`OptimizedIso := IdentityHomomorphism(GG);
-        G`gens_used := [];
-    else
+    GG := G`MagmaGrp;
+    if #GG ne 1 and IsSolvable(GG) then
+        chains := all_minimal_chains(G);
+        gens := [chain_to_gens(chain, G) : chain in chains];
         relcnt := AssociativeArray();
         for i in [1..#gens] do
             c := 0;
@@ -285,16 +344,28 @@ intrinsic RePresentLat(G::LMFDBGrp, L::SubGrpLat)
         end for;
         //print "rels", rels;
         H := quo< GrpPC : F | rels >;
-        f := hom< H -> G`MagmaGrp | gens >;
-        G`MagmaOptimized := H;
-        G`OptimizedIso := f^-1;
+        //print sprint([x : x in GetAttributes(LMFDBGrp) | assigned G``x]);
+        //[CCAutCollapse,CCpermutation,CCpermutationInv]
+        G`MagmaGrp := H;
         G`gens_used := gens_used;
+        // We have to reset Holomorph, HolInj, ClassMap to use the new group
+        // We could instead compose with the isomorphism between the new and old group, but that seems
+        // prone to errors since it keeps the old group around
+        try
+            A := AutomorphismGroupSolubleGroup(H);
+        catch e;
+            A := AutomorphismGroup(H);
+        end try;
+        Ambient, inj := Holomorph(H, A);
+        G`Holomorph := Ambient;
+        G`HolInj := inj;
+        // Various conjugacy class attributes were set in determining an ordering on conjugacy classes for Gassman vectors
+        G`MagmaConjugacyClasses := MagmaConjugacyClasses(G);
+        G`MagmaClassMap := MagmaClassMap(G);
+        G`MagmaPowerMap := MagmaPowerMap(G);
+        G`MagmaGenerators := MagmaGenerators(G);
+        G`CCAutCollapse := CCAutCollapse(G); // also sets CCpermutation, CCpermutationInv and ClassMap
+    else
+        G`gens_used := [1..Ngens(G`MagmaGrp)];
     end if;
-end intrinsic;
-
-intrinsic RePresent(G::LMFDBGrp)
-    {}
-    // Without the lattice, we can't find an optimal presentation, but we can use the derived series to get something reasonable.
-    GG := G`MagmaGrp;
-    // TODO: leaving this for later since we're initially computing the lattice for all groups
 end intrinsic;

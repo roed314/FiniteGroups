@@ -23,7 +23,7 @@ intrinsic labelCCfaithfulreps(G::LMFDBGrp) -> Any, Any
   // First, faithful characters 
   orbs:=[];
   if #faith gt 0 then // Don't compute hard stuff if we don't need it
-    ag:=AutomorphismGroup(G`MagmaGrp);
+    ag:=Get(G, "MagmaAutGrp");
     f,A,k:=PermutationRepresentation(ag);
     h:=Inverse(f);
     cc:=Get(G, "MagmaConjugacyClasses");
@@ -32,7 +32,7 @@ intrinsic labelCCfaithfulreps(G::LMFDBGrp) -> Any, Any
     magmafaith:=[Get(c, "MagmaChtr") : c in faith];
     ctvals:=<<c[j]: j in [1..#c]> : c in magmafaith>;
     Sn := Sym(#ctvals);
-    cm:=Get(G, "MagmaClassMap");
+    cm:=Get(G, "ClassMap");
     gens:=GeneratorsSequence(A);
     subg := sub<Sn| [Sn!auttoperm(h(z), ctvals, cm, cc) : z in gens]>;
     orbs:=Orbits(subg);

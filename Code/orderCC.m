@@ -80,7 +80,6 @@ intrinsic ordercc(g::Any,cc::Any,cm::Any,pm::Any,gens::Any: dorandom:=true) -> A
     // Just in case the identity is not first
     if j eq 1 then ismax[pm(1, cc[1][1])] := false; end if;
   end for;
-
   // Separate a set of classes into divisions
   // The order of a rep is cc[r][1].  This could be more efficient
   // if we used generators for (Z/nZ)^* where n=cc[r][1]
@@ -103,10 +102,11 @@ intrinsic ordercc(g::Any,cc::Any,cm::Any,pm::Any,gens::Any: dorandom:=true) -> A
     end while;
     return divs;
   end function;
-
   // Now partition into divisions
+  number_divisions := 0;
   for k->v in step1 do
     step1[k] := makedivs(step1[k]);
+    number_divisions +:= #step1[k];
   end for;
 
   // Step2 partitions based on [order of rep, size of class, size of divisions]
@@ -144,7 +144,6 @@ intrinsic ordercc(g::Any,cc::Any,cm::Any,pm::Any,gens::Any: dorandom:=true) -> A
   expos := [0:z in cc];
   // Just the key to step 2 plus the priority
   finalkeys:= [[0,0,0,0] : z in cc];
-
   kys:=Sort([z : z in Keys(step2)]);
 //"Keys", kys;
   // utility for below, gen is a class index
@@ -171,7 +170,6 @@ intrinsic ordercc(g::Any,cc::Any,cm::Any,pm::Any,gens::Any: dorandom:=true) -> A
     end while;
     return priorities, val, expos;
   end function;
-
   for k in kys do
     if #step2[k] eq 1 and #Rep(step2[k]) eq 1 then
       ; // nothing to do
@@ -248,9 +246,8 @@ intrinsic ordercc(g::Any,cc::Any,cm::Any,pm::Any,gens::Any: dorandom:=true) -> A
       labels[j]:=Sprintf("%o%o", finalkeys[j][1], num2letters(divcnt));
     end if;
   end for;
-
   cc:=[c[3] : c in cc];
-  return cc,finalkeys, labels;
+  return cc, finalkeys, labels, number_divisions;
 end intrinsic;
 
 intrinsic testCCs(g::Any:dorandom:=true)->Any

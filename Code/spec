@@ -5,6 +5,7 @@
   Label.m
   LabelSubgroups.m
   Subgroups.m
+  Presentation.m
   GrpAttributes.m
   SubGrpAttributes.m
   ConjClsAttributes.m

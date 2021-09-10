@@ -19,6 +19,7 @@ SetColumns(0);
 if Folder[#Folder] ne "/" then
     Folder := Folder * "/";
 end if;
+SetLMFDBRootFolder(Folder);
 
 files := [Folder * "groups/" * Proc * ".txt",
           Folder * "subgroups/" * Proc * ".txt",
@@ -32,6 +33,7 @@ logfile := Folder * "logs/" * Proc * ".txt";
 for f in ["groups", "subgroups", "groups_cc", "characters_cc", "characters_qq", "logs","glnc","glnq"] do
   System("mkdir -p "* Folder * f);
 end for;
+System("mkdir -p " * Folder * "SUBCACHE");
 
 Nlower := StringToInteger(Nlower);
 Nupper := StringToInteger(Nupper);

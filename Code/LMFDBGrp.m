@@ -3,15 +3,21 @@ declare verbose LMFDBGrp, 1;
 declare type LMFDBGrp;
 declare attributes LMFDBGrp:
   MagmaGrp,
-  MagmaOptimized,
-  OptimizedIso,
   Subgroups,
   NormalSubgroups,
+  SubGrpLst,
   SubGrpLat,
+  SubGrpLstAut,
+  SubGrpLatAut,
+  SubGrpAutOrbits,
+  Holomorph,
+  HolInj,
   ConjugacyClasses,
+  CCAutCollapse,
   GeneratorsSequence,
   MagmaGenerators,
   MagmaConjugacyClasses,
+  ClassMap,
   MagmaClassMap,
   MagmaPowerMap,
   MagmaCharacterTable,
@@ -54,7 +60,6 @@ declare attributes LMFDBGrp:
   pgroup,
   elementary,
   hyperelementary,
-  mobius_function,
   rank,
   eulerian_function,
   MagmaCenter,
@@ -84,6 +89,8 @@ declare attributes LMFDBGrp:
   pc_code,
   gens_used,
   number_conjugacy_classes,
+  number_divisions,
+  number_subgroup_autclasses,
   number_subgroup_classes,
   number_subgroups,
   number_normal_subgroups,
@@ -95,6 +102,8 @@ declare attributes LMFDBGrp:
   order_stats,
   elt_rep_type,
   perm_gens,
+  hash,
+  HashData,
   all_subgroups_known,
   normal_subgroups_known,
   maximal_subgroups_known,
@@ -157,6 +166,8 @@ declare attributes LMFDBSubGrp:
   MagmaSubGrp, // input
   QuotientMap, // homomorphism from MagmaAmbient to Quotient`MagmaGrp
   label, // process
+  short_label,
+  aut_label,
   special_labels,
   outer_equivalence, // input
   aut_counter,

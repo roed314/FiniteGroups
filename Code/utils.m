@@ -137,3 +137,51 @@ intrinsic allrankslist(n::Any)->Any
   end for;
   return l;
 end intrinsic;
+
+intrinsic Classify (S::[], E::UserProgram) -> SeqEnum[SeqEnum]
+{ Given a list of objects S and an equivalence relation E on them returns a list of equivalence classes (each of which is a list). }
+    if #S eq 0 then return []; end if;
+    if #S eq 1 then return [S]; end if;
+    if #S eq 2 then return E(S[1],S[2]) select [S] else [[S[1]],[S[2]]]; end if;
+    T:=[[S[1]]];
+    for i:=2 to #S do
+        s:=S[i]; sts:=true;
+        for j:=#T to 1 by -1 do // check most recently added classes first in case adjacent objects in S are more likely to be equivalent (often true)
+            if E(s,T[j][1]) then T[j] cat:= [s]; sts:=false; break; end if;
+        end for;
+        if sts then T:=Append(T,[s]); end if;
+    end for;
+    return T;
+end intrinsic;
+
+intrinsic AssociativeArrayToMap(xs :: Assoc, codomain) -> Map
+  {The map from Keys(xs) to codomain implied by xs.}
+  return map<Keys(xs) -> codomain | k :-> xs[k]>;
+end intrinsic;
+
+/* convert number to cremona-type number */
+intrinsic CremonaCode(num::RngIntElt) -> MonStgElt
+{}
+    q,r:=Quotrem(num,26);
+    strg:=CodeToString(r+97);  /* a = 97  z=122 */
+
+    x:=q;
+
+    while x ne 0 do
+        q,r := Quotrem(x,26);
+        strg cat:= CodeToString(r+97);
+        x:=q;
+    end while;
+    return Reverse(strg);
+end intrinsic;
+
+intrinsic strip(X::MonStgElt) -> MonStgElt
+{ Strips spaces and carraige returns from string; much faster than StripWhiteSpace. }
+    return Join(Split(Join(Split(X," "),""),"\n"),"");
+end intrinsic;
+
+intrinsic sprint(X::.) -> MonStgElt
+{ Sprints object X with spaces and carraige returns stripped. }
+    if Type(X) eq Assoc then return Join(Sort([ $$(k) cat "=" cat $$(X[k]) : k in Keys(X)]),":"); end if;
+    return strip(Sprintf("%o",X));
+end intrinsic;

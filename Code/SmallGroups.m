@@ -1,16 +1,15 @@
-intrinsic MakeSmallGroup(N::RngIntElt, i::RngIntElt) -> Any
+intrinsic MakeSmallGroup(N::RngIntElt, i::RngIntElt : represent:=true, set_params:=true) -> Any
     {Create an LMFDBGrp object for SmallGroup(N,i) and compute attributes}
     G := NewLMFDBGrp(SmallGroup(N, i), Sprintf("%o.%o", N, i));
-    // G`subgroup_index_bound := N;
-    // For now we compute everything, so we don't set
-    G`subgroup_index_bound := 0;
-    G`all_subgroups_known := true;
-    G`normal_subgroups_known := true;
-    G`maximal_subgroups_known := true;
-    G`sylow_subgroups_known := true;
-    G`outer_equivalence := false;
-    G`subgroup_inclusions_known := true;
     AssignBasicAttributes(G);
+    if represent then
+        RePresent(G);
+    end if;
+    vprint User1: "New presentation found";
+    if set_params then
+        SetSubgroupParameters(G);
+    end if;
+    vprint User1: "Subgroup parameters set";
     return G;
 end intrinsic;
 

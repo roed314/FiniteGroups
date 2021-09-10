@@ -2,12 +2,6 @@ G := MakeSmallGroup(192,181);
 //GG := SmallGroup(192,181);
 PrintData(G);
 //c := 908908544103344226767159255808012832;
-/*
-  iso := G`OptimizedIso;
-  GG_opt := Codomain(iso);
-  IsIsomorphic(GG,GG_opt);
-  SmallGroupEncoding(GG_opt);
-*/
 
 function RelatorsFromCode_test(code, size, gens)
     ff := Factorisation(size);

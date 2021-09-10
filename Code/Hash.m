@@ -1,3 +1,18 @@
+/*
+Hashing is important for adding and identifying groups outside the range where IdentifyGroup works.
+*/
+
+REDP := 9223372036854775783; // largest prime below 2^63, since Postgres only has signed bigints
+
+declare type LMFDBHashData;
+declare attributes LMFDBHashData:
+    MagmaGrp,
+    hash,
+    label,
+    description, // string to reconstruct the group
+    gens_used, // a list of integers: which generators are displayed to the user (others obtained by exponentiation)
+    gens_fixed, // whether the list of generators has been fixed in the database
+    hard_hash; // a list of integers designed to break up hash collisions; possibly tailored to groups in this hash cluster, only computed when needed (initially set to [])
 
 intrinsic SmallLMFDBGroup(n::RngIntElt, i::RngIntElt) -> LMFDBGrp
     {Make an LMFDB group from the small group database}
@@ -12,22 +27,14 @@ intrinsic CollapseIntList(L::SeqEnum) -> RngIntElt
     L := [CollapseIntList(x) : x in L];
     res := 997 * #L;
     for x in L do
-        res := BitwiseXor(x, (1000003*res) mod (2^64));
+        res := BitwiseXor(x, (1000003*res) mod REDP);
     end for;
-    // Postgres only has signed bigints
-    if res ge 2^63 then
-        res -:= 2^64;
-    end if;
     return res;
 end intrinsic;
 
 intrinsic CollapseIntList(L::RngIntElt) -> RngIntElt
     {Base case}
-    L := L mod 2^64;
-    if L ge 2^63 then
-        L -:= 2^64;
-    end if;
-    return L;
+    return L mod REDP;
 end intrinsic;
 
 intrinsic EasyHash(GG::Grp) -> RngIntElt
@@ -47,7 +54,7 @@ intrinsic EasyHash(GG::Grp) -> RngIntElt
     end if;
 end intrinsic;
 
-intrinsic Hash(G::LMFDBGrp) -> RngIntElt
+intrinsic hash(G::Grp) -> RngIntElt
 {
 Hash value is invariant under isomorphism
 Estimates on how long it will take to run for the small group orders
@@ -61,12 +68,59 @@ Estimates on how long it will take to run for the small group orders
 16807 : 5 seconds (63 hashes of 83 groups, largest cluster is 4)
 78125 : 2 hours
 }
-    GG := G`MagmaGrp;
-    if CanIdentifyGroup(Order(GG)) then
-        return IdentifyGroup(GG)[2];
-    elif IsAbelian(GG) then
-        return CollapseIntList(AbelianInvariants(GG));
+    if CanIdentifyGroup(Order(G)) then
+        return IdentifyGroup(G)[2];
+    elif IsAbelian(G) then
+        return CollapseIntList(AbelianInvariants(G));
     else
-        return CollapseIntList(Sort([EasyHash(H`subgroup) : H in MaximalSubgroups(GG)]));
+        return CollapseIntList(Sort([[Order(G), EasyHash(G)]] cat [[H`order, EasyHash(H`subgroup)] : H in MaximalSubgroups(G)]));
     end if;
+end intrinsic;
+
+intrinsic hash(HD::LMFDBHashData) -> RngIntElt
+{}
+    return hash(HD`MagmaGrp);
+end intrinsic;
+
+intrinsic hash(G::LMFDBGrp) -> RngIntElt
+{}
+    return hash(G`MagmaGrp);
+end intrinsic;
+
+intrinsic HashData(G::LMFDBGrp) -> LMFDBHashData
+{}
+    HD := New(LMFDBHashData);
+    HD`MagmaGrp := G`MagmaGrp;
+    if assigned G`gens_used then
+        HD`gens_used := G`gens_used;
+        HD`gens_fixed := true;
+    else
+        HD`gens_used := [];
+        HD`gens_fixed := not Get(G, "solvable");
+    end if;
+    HD`label := G`label;
+    HD`hash := Get(G, "hash");
+    HD`hard_hash := [];
+end intrinsic;
+
+intrinsic HashData(n::RngIntElt, i::RngIntElt) -> LMFDBGrp
+    {Make HashData from the small group database}
+    G := New(LMFDBHashData);
+    G`MagmaGrp := SmallGroup(n, i);
+    G`gens_used := [];
+    G`gens_fixed := false;
+    G`label := Sprint(n) cat "." cat Sprint(i);
+    G`hard_hash := [];
+    return G;
+end intrinsic;
+
+// Not an attribute since it isn't saved to the database
+intrinsic description(G::LMFDBGrp) -> MonStgElt
+{}
+    return ReplaceString(Sprintf("%m", G`MagmaGrp), ["\n", " "], ["", ""]);
+end intrinsic;
+
+intrinsic description(HD::LMFDBHashData) -> MonStgElt
+{}
+    return ReplaceString(Sprintf("%m", HD`MagmaGrp), ["\n", " "], ["", ""]);
 end intrinsic;
