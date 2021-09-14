@@ -233,7 +233,7 @@ end intrinsic;
 intrinsic direct(H::LMFDBSubGrp) -> Any // Need to be subgroup attribute file
   {Returns whether this sequence with H direct or not, null when non-normal}
   GG := H`MagmaAmbient;
-  HH := H`MagmaSubGrp; 
+  HH := H`MagmaSubGrp;
   if not IsNormal(GG, HH) then
     return None();
   else
@@ -267,15 +267,62 @@ intrinsic conjugacy_class_count(H::LMFDBSubGrp) -> Any
     return None();
 end intrinsic;
 
-/* This should be rewritten later for nomal subgroups, it returns none for now */
-intrinsic quotient_action_image(H::LMFDBSubGrp) -> Any
-    {the subgroup label of the kernel of the map from Q to A (NULL if H is not normal). }
-    return None();
+intrinsic QuotientActionMap(H::LMFDBSubGrp) -> Any
+{if not normal, None; if split or N abelian, Q -> Aut(N); otherwise, Q -> Out(N)}
+    if Get(H, "normal") then
+        G := H`Grp;
+        GG := G`MagmaGrp;
+        N := H`MagmaSubGrp;
+        if Type(N) eq GrpPC then
+            try
+                A := AutomorphismGroupSolubleGroup(N);
+            catch e;
+                A := AutomorphismGroup(N);
+            end try;
+        else
+            A := AutomorphismGroup(N);
+        end if;
+        if Get(H, "split") then
+            Q := Get(H, "complements")[1];
+            return hom<Q -> A| [<q, hom<N -> N | [<n,n^q> : n in Generators(N)]>> : q in Generators(Q)]>;
+        else
+            Q, Qproj := quo< G`MagmaGrp | N >;
+            if IsAbelian(N) then
+                return hom<Q -> A | [<q, hom<N -> N | [<n, n^(q@@Qproj)> : n in Generators(N)]>> : q in Generators(Q)]>;
+            else
+                return None();
+                // Out, Oproj := OuterFPGroup(A);
+                // return hom<Q -> Out | [hom<N -> N | [n^(q@@Qproj) : n in Generators(N)]>@Oproj : q in Generators(Q)]>;
+            end if;
+        end if;
+    else
+        return None();
+    end if;
 end intrinsic;
 
 /* This should be rewritten later for nomal subgroups, it returns none for now */
+intrinsic quotient_action_image(H::LMFDBSubGrp) -> Any
+{the label for Q/K as an abstract group, where K is the quotient action kernel (NULL if H is not normal)}
+    if Get(H, "normal") and (Get(H, "split") or Get(H, "abelian")) then
+        return label(Image(Get(H, "QuotientActionMap")));
+    end if;
+    return None();
+end intrinsic;
+
+/* It would be better for this to return the subgroup label in the quotient, rather than the label as an abstract group */
 intrinsic quotient_action_kernel(H::LMFDBSubGrp) -> Any
-    {the label for Q/K as an abstract group, where K is the quotient action kernel (NULL if H is not normal)}
+{the label of the kernel of the map from Q to A, as an abstract group (NULL if H is not normal). }
+    if Get(H, "normal") and (Get(H, "split") or Get(H, "abelian")) then
+        return label(Kernel(Get(H, "QuotientActionMap")));
+    end if;
+    return None();
+end intrinsic;
+
+intrinsic quotient_action_kernel_order(H::LMFDBSubGrp) -> Any
+{the label of the kernel of the map from Q to A, as an abstract group (NULL if H is not normal). }
+    if Get(H, "normal") and (Get(H, "split") or Get(H, "abelian")) then
+        return #Kernel(Get(H, "QuotientActionMap"));
+    end if;
     return None();
 end intrinsic;
 
@@ -324,7 +371,7 @@ intrinsic quotient_tex(H::LMFDBSubGrp) -> Any
   end if;
 end intrinsic;
 
-intrinsic cyclic_quotient(H::LMFDBSubGrp) -> Any
+intrinsic quotient_cyclic(H::LMFDBSubGrp) -> Any
   {Whether the quotient exists and is cyclic}
   GG := Get(H, "MagmaAmbient");
   HH := H`MagmaSubGrp;
@@ -336,7 +383,7 @@ intrinsic cyclic_quotient(H::LMFDBSubGrp) -> Any
   end if;
 end intrinsic;
 
-intrinsic abelian_quotient(H::LMFDBSubGrp) -> Any
+intrinsic quotient_abelian(H::LMFDBSubGrp) -> Any
   {Whether the quotient exists and is abelian}
   GG := Get(H, "MagmaAmbient");
   HH := H`MagmaSubGrp;
@@ -348,7 +395,7 @@ intrinsic abelian_quotient(H::LMFDBSubGrp) -> Any
   end if;
 end intrinsic;
 
-intrinsic solvable_quotient(H::LMFDBSubGrp) -> Any
+intrinsic quotient_solvable(H::LMFDBSubGrp) -> Any
   {Whether the quotient exists and is solvable}
   GG := Get(H, "MagmaAmbient");
   HH := H`MagmaSubGrp;
@@ -373,6 +420,40 @@ intrinsic weyl_group(H::LMFDBSubGrp) -> Any
     print "weyl_group", e;
     return None();
   end try;
+end intrinsic;
+
+intrinsic aut_weyl_group(H::LMFDBSubGrp) -> Any
+{The quotient of the normalizer by the centralizer, inside the holomorph}
+    G := H`Grp;
+    GG := G`MagmaGrp;
+    Ambient := Get(G, "Holomorph");
+    inj := Get(G, "HolInj");
+    HH := H`MagmaSubGrp;
+    N := Normalizer(Ambient, inj(HH));
+    Z := Centralizer(Ambient, inj(HH));
+    H`aut_weyl_index := (#Ambient * #Z) div (#N * #GG);
+    H`aut_centralizer_order := #(Z meet Stabilizer(Ambient, 1));
+    if (#N div #Z) gt 2000 or (#N div #Z) in [512, 1024, 1152, 1536, 1920] then
+        return None();
+    end if;
+    try
+        W := quo< N | Z >;
+        return label(W);
+    catch e;
+        return None();
+    end try;
+end intrinsic;
+
+intrinsic aut_centralizer_order(H::LMFDBSubGrp) -> Any
+{The number of automorphisms of the ambient group that act trivially on this subgroup}
+    W := Get(H, "aut_weyl_group"); // sets attr
+    return H`aut_centralizer_order;
+end intrinsic;
+
+intrinsic aut_weyl_index(H::LMFDBSubGrp) -> Any
+{The index of the aut_weyl_group inside the automorphism group of H}
+    W := Get(H, "aut_weyl_group"); // sets attr
+    return H`aut_weyl_index;
 end intrinsic;
 
 intrinsic proper(H::LMFDBSubGrp) -> Any

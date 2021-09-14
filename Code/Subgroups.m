@@ -858,13 +858,22 @@ intrinsic NumberOfInclusions(x::SubgroupLatElt, y::SubgroupLatElt) -> RngIntElt
     c := x`Lat`conjugator[[x`i, y`i]];
     H := inj(y`subgroup);
     K := inj(x`subgroup)^c;
+    NH := Normalizer(Ambient, H);
+    NK := Normalizer(Ambient, K);
+    if #NK ge #NH then
+        return #[1: g in RightTransversal(Ambient, NK) | K^g subset H];
+    else
+        ind := #[1: g in RightTransversal(Ambient, NH) | K subset H^g];
+        assert IsDivisibleBy(ind * Get(x, "subgroup_count"), Get(y, "subgroup_count"));
+        return ind * x`subgroup_count div y`subgroup_count;
+    end if;
     /*
     // Unfortunately, this is not correct since it's possible to have elements of G that map K into H but don't normalize H.
     NH := Normalizer(Ambient, H);
     NK := Normalizer(Ambient, K);
     return Index(NH, NH meet NK);
     */
-    return #[J : J in Conjugates(Ambient, K) | J subset H];
+    //return #[J : J in Conjugates(Ambient, K) | J subset H];
 end intrinsic;
 
 // Implementation adapted from Magma's Groups/GrpFin/subgroup_lattice.m
@@ -1244,7 +1253,6 @@ function SubgroupLattice_edges(G, aut)
     // Set the mobius function
     L`subs[1]`mobius := 1; //μ_G(G) = 1
     for i in [2..#L] do
-        print i;
         x := L`subs[i];
         x`mobius := 0;
         //print "x", x`i;
@@ -1566,9 +1574,9 @@ intrinsic Subgroups(G::LMFDBGrp) -> SeqEnum
     end if;
     LabelSubgroups(L);
     S := [LMFDBSubgroup(H) : H in L`subs];
-    if G`all_subgroups_known and not G`outer_equivalence then // Remove G`outer_equivalence once Magma bugs around automorphisms are fixed or worked around
+    /*if G`all_subgroups_known and not G`outer_equivalence then // Remove G`outer_equivalence once Magma bugs around automorphisms are fixed or worked around
         SaveSubgroupCache(G, S);
-    end if;
+    end if;*/
     return S;
 end intrinsic;
 

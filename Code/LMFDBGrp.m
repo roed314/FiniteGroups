@@ -183,9 +183,9 @@ declare attributes LMFDBSubGrp:
   cyclic,
   abelian,
   solvable,
-  cyclic_quotient,
-  abelian_quotient,
-  solvable_quotient,
+  quotient_cyclic,
+  quotient_abelian,
+  quotient_solvable,
   perfect,
   sylow,
   hall,
@@ -206,6 +206,7 @@ declare attributes LMFDBSubGrp:
   normalizer,
   centralizer,
   normal_closure,
+  QuotientActionMap, // if split, Q -> Aut(N); otherwise Q -> Out(N)
   quotient_action_kernel,
   quotient_action_image,
   contains,
@@ -222,6 +223,9 @@ declare attributes LMFDBSubGrp:
   ambient_tex,
   quotient_tex,
   weyl_group,
+  aut_weyl_group,
+  aut_weyl_index,
+  aut_centralizer_order,
   proper;
 
 intrinsic Print(H::LMFDBSubGrp)

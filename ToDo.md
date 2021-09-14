@@ -11,8 +11,6 @@
 * Fix bug in Magma's SmallGroupDecoding
 * **Work around Magma's SmallGroupDecoding bug by using %m**
 * **Rerun the basic computation up to 511: currently have SmallGroups up to order 383, excluding a few hard groups** (John, do last)
-* **Make sure we use given generators to order conjugacy classes and subgroups.** (David)
-* **Revise subgroup labels** (David)
 * **Store the weights in the subgroup lattice** (David)
 * Run timing tests to determine which attributes are slow (in progress)
 * Streamline Magma code that may redundantly call Magma functions which are now attributes.
@@ -30,15 +28,10 @@
 * Add additional families to gps_families and gps_special_names
 * Upload SmallGroup data except 512, 1024, 1536
 * Very large sample examples
-* Write to Tim Dokchitser about status on adding his group names to Magma
 * Smallest n where the group is a subgroup of Sn (new Magma function)
-* **Fix Mobius function, rank, eulerian function** (David)
 * Improve DirectFactorization so that it doesn't need to create LMFDBGrps and compute their subgroup lattices
 * Speed up IsWreathProduct to use the already computed list of subgroups
-
-* Write code for finding lattices up to automorphism (Subgroups.m)
-* Update cycquos (Presentation.m) to not use the lattice, but instead using SubgroupsLift with conjugacy inside the holomorph
-* Update generator code (Presentation.m) to run before subgroups are labeled, using groups up to automorphisms
+* Rewrite ConjugateOverSubgroup to use conjugators
 
 ## Frontend
 
