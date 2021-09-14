@@ -1,19 +1,23 @@
-TextCols := ["abelian_quotient", "acted", "actor", "ambient", "aut_group", "bravais_class", "c_class", "center_label", "central_quotient", "commutator_label", "coset_action_label", "crystal_symbol", "factor1", "factor2", "family", "frattini_label", "frattini_quotient", "group", "image", "knowl", "label", "short_label", "aut_label", "magma_cmd", "name", "old_label", "outer_group", "product", "proj_label", "projective_image", "q_class", "quotient", "quotient_action_image", "subgroup", "tex_name", "q_character", "carat_label", "subgroup_tex", "ambient_tex", "quotient_tex", "weyl_group"];
+TextCols := ["abelian_quotient", "acted", "actor", "ambient", "aut_group", "bravais_class", "c_class", "center_label", "central_quotient", "commutator_label", "coset_action_label", "crystal_symbol", "factor1", "factor2", "family", "frattini_label", "frattini_quotient", "group", "image", "knowl", "label", "short_label", "aut_label", "magma_cmd", "name", "old_label", "outer_group", "product", "proj_label", "projective_image", "q_class", "quotient", "quotient_action_image", "subgroup", "tex_name", "q_character", "carat_label", "subgroup_tex", "ambient_tex", "quotient_tex", "weyl_group", "aut_weyl_group", "quotient_action_kernel"];
 
-IntegerCols := ["alias_spot", "ambient_order", "arith_equiv", "aut_counter", "aut_order", "auts", "cdim", "commutator_count", "composition_length", "conjugacy_class_count", "count", "counter", "counter_by_index", "cyc_order_mat", "cyc_order_traces", "cyclotomic_n", "degree", "derived_length", "diagram_x", "dim", "elementary", "elt_rep_type", "eulerian_function", "exponent", "extension_counter", "hall", "hyperelementary", "indicator", "mobius_function", "multiplicity", "n", "ngens", "nilpotency_class", "number_characteristic_subgroups", "number_conjugacy_classes", "number_divisions", "number_normal_subgroups", "number_subgroup_classes", "number_subgroup_autclasses", "number_subgroups", "order", "outer_order", "parity", "pc_code", "pgroup", "priority", "q", "qdim", "quotient_action_kernel", "quotient_order", "quotients_complenetess", "rank", "rep", "schur_index", "sibling_completeness", "size", "smallrep", "subgroup_index_bound", "subgroup_order", "sylow", "t", "transitive_degree", "hash"];
+IntegerCols := ["alias_spot", "arith_equiv", "aut_counter", "auts", "cdim", "commutator_count", "counter", "counter_by_index", "cyc_order_mat", "cyc_order_traces", "cyclotomic_n", "degree", "diagram_x", "dim", "elementary", "exponent", "extension_counter", "hyperelementary", "indicator", "mobius_function", "multiplicity", "n", "number_characteristic_subgroups", "number_conjugacy_classes", "number_divisions", "number_normal_subgroups", "number_subgroup_classes", "number_subgroup_autclasses", "number_subgroups", "parity", "priority", "q", "qdim", "quotients_complenetess", "rep", "schur_index", "sibling_completeness", "size", "smallrep", "t", "transitive_degree", "hash"];
+SmallintCols := ["elt_rep_type", "composition_length", "derived_length", "ngens", "nilpotency_class", "pgroup", "sylow", "rank", "subgroup_index_bound"];
+NumericCols := ["hall", "eulerian_function", "order", "aut_order", "outer_order", "ambient_order", "subgroup_order", "quotient_order", "quotient_action_kernel_order", "aut_centralizer_order", "aut_weyl_index", "count", "conjugacy_class_count", "pc_code"];
 
 TextListCols := ["composition_factors", "special_labels"];
 
-IntegerListCols := ["contained_in", "contains", "cycle_type", "denominators", "factors_of_aut_order", "factors_of_order", "faithful_reps", "order_stats", "powers", "primary_abelian_invariants", "schur_multiplier", "smith_abelian_invariants", "subgroup_fusion", "nt","qvalues","field","trace_field", "gens_used"];
+IntegerListCols := ["cycle_type", "denominators", "factors_of_aut_order", "faithful_reps", "powers", "primary_abelian_invariants", "schur_multiplier", "smith_abelian_invariants", "subgroup_fusion", "nt","qvalues","field","trace_field"];
+SmallintListCols := ["factors_of_order", "gens_used"];
+NumericListCols := ["order_stats"];
 
-BoolCols := ["Agroup", "Zgroup", "abelian", "all_subgroups_known", "almost_simple", "central", "central_product", "characteristic", "cyclic", "direct", "direct_product", "faithful", "finite_matrix_group", "indecomposible", "irreducible", "maximal", "maximal_normal", "maximal_subgroups_known", "metabelian", "metacyclic", "minimal", "minimal_normal", "monomial", "nilpotent", "normal", "normal_subgroups_known", "outer_equivalence", "perfect", "prime", "primitive", "quasisimple", "rational", "semidirect_product", "simple", "solvable", "split", "stem", "subgroup_inclusions_known", "supersolvable", "sylow_subgroups_known", "wreath_product", "standard_generators", "cyclic_quotient", "abelian_quotient", "solvable_quotient", "proper"];
+BoolCols := ["Agroup", "Zgroup", "abelian", "all_subgroups_known", "almost_simple", "central", "central_product", "characteristic", "cyclic", "direct", "direct_product", "faithful", "finite_matrix_group", "indecomposible", "irreducible", "maximal", "maximal_normal", "maximal_subgroups_known", "metabelian", "metacyclic", "minimal", "minimal_normal", "monomial", "nilpotent", "normal", "normal_subgroups_known", "outer_equivalence", "perfect", "prime", "primitive", "quasisimple", "rational", "semidirect_product", "simple", "solvable", "split", "stem", "subgroup_inclusions_known", "supersolvable", "sylow_subgroups_known", "wreath_product", "standard_generators", "quotient_cyclic", "quotient_abelian", "quotient_solvable", "proper"];
 
 // creps has a gens which is not integer[]
 JsonbCols := ["quotient_fusion","decomposition","traces", "gens","values","direct_factorization"];
 
 PermsCols := ["perm_gens"];
 SubgroupCols := ["centralizer", "kernel", "core", "center", "normal_closure", "normalizer", "sub1", "sub2"];
-SubgroupListCols := ["complements"];
+SubgroupListCols := ["complements", "contains", "contained_in"];
 
 EltCols := ["representative"];
 EltListCols := ["generators"];
@@ -217,13 +221,13 @@ intrinsic LoadAttr(attr::MonStgElt, inp::MonStgElt, obj::Any) -> Any
         return None();
     elif attr in TextCols then
         return inp;
-    elif attr in IntegerCols then
+    elif attr in IntegerCols or attr in SmallintCols or attr in NumericCols then
         return StringToInteger(inp);
     elif attr in BoolCols then
         return LoadBool(inp);
     elif attr in JsonbCols then
         return LoadJsonb(inp);
-    elif attr in IntegerListCols then
+    elif attr in IntegerListCols or attr in SmallintListCols or attr in NumericListCols then
         return LoadIntegerList(inp);
     elif attr in TextListCols then
         return LoadTextList(inp);
@@ -255,22 +259,15 @@ intrinsic SaveAttr(attr::MonStgElt, val::Any, obj::Any) -> MonStgElt
 //"Save",attr, val, obj;
     if Type(val) eq NoneType then
         return "\\N";
-    // abelian_quotient is a boolean in gps_subgroups but text in gps_groups
-    elif attr eq "abelian_quotient" then
-        if Type(val) eq BoolElt then
-            return SaveBool(val);
-        else
-            return val;
-        end if;
     elif attr in TextCols then
         return val;
-    elif attr in IntegerCols then
+    elif attr in IntegerCols or attr in SmallintCols or attr in NumericCols then
         return IntegerToString(val);
     elif attr in BoolCols then
         return SaveBool(val);
     elif attr in JsonbCols then
         return SaveJsonb(val);
-    elif attr in IntegerListCols then
+    elif attr in IntegerListCols or attr in SmallintListCols or attr in NumericListCols then
         return SaveIntegerList(val);
     elif attr in TextListCols then
         return SaveTextList(val);
@@ -405,16 +402,24 @@ intrinsic AttrType(attr::MonStgElt) -> MonStgElt
         return "text";
     elif attr in IntegerCols then
         return "integer";
+    elif attr in SmallintCols then
+        return "smallint";
+    elif attr in NumericCols then
+        return "numeric";
     elif attr in BoolCols then
         return "boolean";
     elif attr in JsonbCols then
         return "jsonb";
     elif attr in IntegerListCols then
         return "integer[]";
+    elif attr in SmallintListCols then
+        return "smallint[]";
+    elif attr in NumericListCols then
+        return "numeric[]";
     elif attr in TextListCols then
         return "text[]";
     elif attr in PermsCols then
-        return "integer[]";
+        return "numeric[]";
     elif attr in EltCols then
         return "numeric";
     elif attr in EltListCols then

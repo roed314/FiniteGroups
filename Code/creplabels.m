@@ -23,7 +23,7 @@ intrinsic labelCCfaithfulreps(G::LMFDBGrp) -> Any, Any
   // First, faithful characters 
   orbs:=[];
   if #faith gt 0 then // Don't compute hard stuff if we don't need it
-    ag:=Get(G, "MagmaAutGrp");
+    ag:=Get(G, "MagmaAutGroup");
     f,A,k:=PermutationRepresentation(ag);
     h:=Inverse(f);
     cc:=Get(G, "MagmaConjugacyClasses");

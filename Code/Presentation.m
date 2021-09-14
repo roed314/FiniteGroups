@@ -351,14 +351,9 @@ This function is only safe to call on a newly created group, since it changes Ma
         // We have to reset Holomorph, HolInj, ClassMap to use the new group
         // We could instead compose with the isomorphism between the new and old group, but that seems
         // prone to errors since it keeps the old group around
-        try
-            A := AutomorphismGroupSolubleGroup(H);
-        catch e;
-            A := AutomorphismGroup(H);
-        end try;
-        Ambient, inj := Holomorph(H, A);
-        G`Holomorph := Ambient;
-        G`HolInj := inj;
+        G`MagmaAutGroup := MagmaAutGroup(G);
+        G`Holomorph := Holomorph(G);
+        G`HolInj := HolInj(G);
         // Various conjugacy class attributes were set in determining an ordering on conjugacy classes for Gassman vectors
         G`MagmaConjugacyClasses := MagmaConjugacyClasses(G);
         G`MagmaClassMap := MagmaClassMap(G);

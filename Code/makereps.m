@@ -314,7 +314,11 @@ intrinsic rep_label(C::LMFDBGrpChtrQQ, r::Any, A::Assoc)->MonStgElt
 //    try
       ker:=Kernel(Get(C,"MagmaChtr"));
       quot:=Get(C,"Grp")`MagmaGrp/ker;
-      idquot:=IdentifyGroup(quot);
+      if #ker eq 1 then
+        idquot := <StringToInteger(c) : c in Split(Get(C,"Grp")`label, ".")>;
+      else
+        idquot:=IdentifyGroup(quot);
+      end if;
       oldreps:=Split(Read(Sprintf("%o/%o.%o", "Qreps", idquot[1], idquot[2])));
       for orep in oldreps do
         dat := Split(orep, " ");
@@ -360,7 +364,11 @@ intrinsic rep_label(C::LMFDBGrpChtrCC, r::Any, A::Assoc, K::Any)->MonStgElt
     try
       ker:=Kernel(Get(C,"MagmaChtr"));
       quot:=Get(C,"Grp")`MagmaGrp/ker;
-      idquot:=IdentifyGroup(quot);
+      if #ker eq 1 then
+        idquot := <StringToInteger(c) : c in Split(Get(C,"Grp")`label, ".")>;
+      else
+        idquot:=IdentifyGroup(quot);
+      end if;
       oldreps:=Split(Read(Sprintf("%o/%o.%o", "Creps", idquot[1], idquot[2])));
       for orep in oldreps do
         // dat = [label, denoms, E, matrixlist]
