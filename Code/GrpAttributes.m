@@ -526,9 +526,14 @@ intrinsic composition_length(G::LMFDBGrp) -> Any
   return #Get(G,"composition_factors"); // Correct if trivial group is labeled G_0
 end intrinsic;
 
-intrinsic MagmaAutGroup(G::LMFDBGrp) -> Grp
+bad_cases := Split("128.93 128.94 128.96 128.97 160.39 160.42 192.44 192.105 224.41 240.93 256.84 256.86 256.432 256.433 256.436 256.437 256.438 256.439 256.3200 256.3204 256.4915 256.4925 256.4926 256.4949 256.4952 256.4953 256.4954 256.4962 256.4963 256.5304 256.5306 256.5307 256.5308 256.5311 256.5316 256.5317 256.5320 256.5321 256.5340 256.5341 256.5343 256.5344 256.5345 256.5356 256.5359 256.5362 256.5363 256.5368 256.5369 256.5372 256.5373 256.5392 256.5393 256.5394 256.5395 256.5396 256.5397 256.5398 256.5399", " ");
+intrinsic MagmaAutGroup(G::LMFDBGrp : represent:=false) -> Grp
 {Returns the automorphism group}
-    if Get(G, "solvable") then
+    // Unfortunately, both AutomorphismGroup and AutomorphismGroupSolubleGroup
+    // can hang, and AutomorphismGroupSolubleGroup also has the potential to raise an error
+    // The best we can do for now is to hard code cases where AutomorphismGroupSolubleGroup seems to be hanging.
+    // Note that this often happens after calling RePresent
+    if Get(G, "solvable") and not (represent and G`label in bad_cases) then
         try
             return AutomorphismGroupSolubleGroup(G`MagmaGrp);
         catch e;
