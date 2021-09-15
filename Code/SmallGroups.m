@@ -78,6 +78,7 @@ intrinsic CheckLogs(: Folder:="DATA")
         catch e;
             break;
         end try;
+        i +:= 1;
     end while;
     Sort(~lasts);
     lasts := [Sprintf("%o.%o", x[1], x[2]) : x in lasts];
