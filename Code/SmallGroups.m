@@ -57,3 +57,30 @@ intrinsic WriteSmallGLnOrder(N::RngIntElt)
     WriteSmallGroupGLn(N,j);
   end for;
 end intrinsic;
+
+intrinsic CheckLogs(: Folder:="DATA")
+{}
+    i := 0;
+    lasts := []
+    while true do
+        filename := Folder * "/logs/" * Sprint(i) * ".txt";
+        try
+            contents := Split(Read(filename), "\n");
+            j := #contents;
+            while j gt 0 and contents[j][1..20] ne "Starting small group" do
+                j -:= 1;
+            end while;
+            if j eq 0 then
+                print i, "not started";
+            end if;
+            gid := Split(contents[j][22..#contents[j]], ".");
+            Append(~lasts, <StringToInteger(gid[1]), StringToInteger(gid[2])>);
+        catch e;
+            break;
+        end try;
+    end while;
+    Sort(~lasts);
+    lasts := [Sprintf("%o.%o", x[1], x[2]) : x in lasts];
+    s := Join(lasts, " ");
+    print s;
+end intrinsic;
