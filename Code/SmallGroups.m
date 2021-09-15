@@ -61,7 +61,7 @@ end intrinsic;
 intrinsic CheckLogs(: Folder:="DATA")
 {}
     i := 0;
-    lasts := []
+    lasts := [];
     while true do
         filename := Folder * "/logs/" * Sprint(i) * ".txt";
         try
