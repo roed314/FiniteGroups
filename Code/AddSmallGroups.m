@@ -38,13 +38,9 @@ System("mkdir -p " * Folder * "SUBCACHE");
 Nlower := StringToInteger(Nlower);
 Nupper := StringToInteger(Nupper);
 NumProc := StringToInteger(NumProc);
+assert NumProc gt 0;
 Proc := StringToInteger(Proc);
-NumGroups := &+[NumberOfSmallGroups(N) : N in [Nlower..(Nupper-1)]];
-"Number of groups", NumGroups;
-Start := Floor((NumGroups-1) * Proc / NumProc);
-End := Floor((NumGroups-1) * (Proc + 1) / NumProc);
-"Start", Start;
-"End", End;
+assert 0 le Proc and Proc lt NumProc;
 
 procedure WriteSmallGroup(N, i)
     PrintFile(logfile, Sprintf("Starting small group %o.%o", N, i));
@@ -73,24 +69,14 @@ procedure WriteSmallGroupGLnx(N, i) // May use later
 end procedure;
 
 
+// We have processes do every-Nth group rather than consecutive blocks in order to balance the time between different processes.
+ctr := 0;
 for N in [Nlower..(Nupper-1)] do
-    ThisN := NumberOfSmallGroups(N);
-    if Start lt ThisN then
-        if End lt ThisN then
-            // Small Group indexing is 1-based
-            for i in [Start+1..End+1] do
-                WriteSmallGroup(N, i);
-            end for;
-            break;
-        else
-            // Small Group indexing is 1-based
-            for i in [Start+1..ThisN] do
-                WriteSmallGroup(N, i);
-            end for;
+    for i in [1..NumberOfSmallGroups(N)] do
+        if ctr eq Proc then
+            WriteSmallGroup(N, i);
         end if;
-        Start := 0;
-    else
-        Start -:= ThisN;
-    end if;
-    End -:= ThisN;
+        ctr +:= 1;
+        if ctr eq NumProc then ctr := 0; end if;
+    end for;
 end for;
