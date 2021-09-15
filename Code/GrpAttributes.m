@@ -24,6 +24,19 @@ intrinsic number_conjugacy_classes(G::LMFDBGrp) -> Any
     return Nclasses(G`MagmaGrp);
 end intrinsic;
 
+intrinsic number_autjugacy_classes(G::LMFDBGrp) -> Any
+{Number of orbits of the automorphism group on elements}
+    A := Get(G, "CCAutCollapse");
+    CC := Get(G, "ConjugacyClasses");
+    D := [[] : _ in [1..#A]];
+    for k in [1..#CC] do
+        Append(~D[A[k]], k);
+        // set the aut label to the label of the first equivalent conjugacy class
+        CC[k]`aut_label := CC[D[A[k]][1]]`label;
+    end for;
+    return #A;
+end intrinsic;
+
 intrinsic number_divisions(G::LMFDBGrp) -> Any
 {Number of divisions: equivalence classes of elements up to conjugacy and exponentiation by integers prime to the order}
     C := Get(G, "ConjugacyClasses"); // computes the number

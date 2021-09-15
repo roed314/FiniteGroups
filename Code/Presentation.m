@@ -359,7 +359,8 @@ This function is only safe to call on a newly created group, since it changes Ma
         G`MagmaClassMap := MagmaClassMap(G);
         G`MagmaPowerMap := MagmaPowerMap(G);
         G`MagmaGenerators := MagmaGenerators(G);
-        G`CCAutCollapse := CCAutCollapse(G); // also sets CCpermutation, CCpermutationInv and ClassMap
+        G`ConjugacyClasses := ConjugacyClasses(G); // also sets CCpermutation, CCpermutationInv and ClassMap
+        G`CCAutCollapse := CCAutCollapse(G);
     else
         G`gens_used := [1..Ngens(G`MagmaGrp)];
     end if;

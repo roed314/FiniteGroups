@@ -317,7 +317,7 @@ intrinsic CCAutCollapse(X::LMFDBGrp) -> Map
 {}
     Hol := Get(X, "Holomorph");
     inj := Get(X, "HolInj");
-    CC := ConjugacyClasses(X);
+    CC := Get(X, "ConjugacyClasses");
     D := Classify([1..#CC], func<i, j | IsConjugate(Hol, inj(CC[i]`representative), inj(CC[j]`representative))>);
     A := AssociativeArray();
     for i in [1..#D] do

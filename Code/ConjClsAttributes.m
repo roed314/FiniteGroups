@@ -7,6 +7,12 @@ intrinsic label(C::LMFDBGrpConjCls) -> MonStgElt
   return Sprintf("%o.%o", gp_label, o);
 end intrinsic;
 
+intrinsic aut_label(C::LMFDBGrpConjCls) -> MonStgElt
+{}
+    col := Get(C`Grp, "number_autjugacy_classes"); // sets aut_label
+    return C`aut_label;
+end intrinsic;
+
 intrinsic group(C::LMFDBGrpConjCls) -> MonStgElt
     {return label of ambient group of C}
     return label(C`Grp);
