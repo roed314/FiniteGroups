@@ -355,6 +355,7 @@ intrinsic DefaultAttributes(c::Cat) -> SeqEnum
                      //"conjugacy_class_count",
                      "quotient_action_image",
                      "quotient_action_kernel",
+                     "quotient_action_kernel_order",
                      "quotient_fusion",
                      "subgroup_fusion",
                      "generator_images"

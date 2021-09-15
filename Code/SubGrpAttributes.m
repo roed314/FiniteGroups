@@ -260,13 +260,6 @@ intrinsic stem(H::LMFDBSubGrp) -> BoolElt
    end if;
 end intrinsic;
 
-
-/* This should be rewritten later, it returns none for now */
-intrinsic conjugacy_class_count(H::LMFDBSubGrp) -> Any
-    {The number of conjugacy classes of subgroups in this equivalence class (NULL if outer_equivalence is false)}
-    return None();
-end intrinsic;
-
 intrinsic QuotientActionMap(H::LMFDBSubGrp) -> Any
 {if not normal, None; if split or N abelian, Q -> Aut(N); otherwise, Q -> Out(N)}
     if Get(H, "normal") then
@@ -284,10 +277,12 @@ intrinsic QuotientActionMap(H::LMFDBSubGrp) -> Any
         end if;
         if Get(H, "split") then
             Q := Get(H, "complements")[1];
-            return hom<Q -> A| [<q, hom<N -> N | [<n,n^q> : n in Generators(N)]>> : q in Generators(Q)]>;
+            //print "split", H`label;
+            return hom<Q -> A| [<q, hom<N -> N | [<n, n^q> : n in Generators(N)]>> : q in Generators(Q)]>;
         else
             Q, Qproj := quo< G`MagmaGrp | N >;
             if IsAbelian(N) then
+                //print "abelian", H`label;
                 return hom<Q -> A | [<q, hom<N -> N | [<n, n^(q@@Qproj)> : n in Generators(N)]>> : q in Generators(Q)]>;
             else
                 return None();
@@ -303,27 +298,39 @@ end intrinsic;
 /* This should be rewritten later for nomal subgroups, it returns none for now */
 intrinsic quotient_action_image(H::LMFDBSubGrp) -> Any
 {the label for Q/K as an abstract group, where K is the quotient action kernel (NULL if H is not normal)}
-    if Get(H, "normal") and (Get(H, "split") or Get(H, "abelian")) then
-        return label(Image(Get(H, "QuotientActionMap")));
-    end if;
+    // Taking the image of the QuotientActionMap can cause segfaults (e.g. 336.172) so we disable it for now.
     return None();
+    f := Get(H, "QuotientActionMap");
+    if Type(f) eq NoneType then
+        return None();
+    else
+        return label(Image(f));
+    end if;
 end intrinsic;
 
 /* It would be better for this to return the subgroup label in the quotient, rather than the label as an abstract group */
 intrinsic quotient_action_kernel(H::LMFDBSubGrp) -> Any
 {the label of the kernel of the map from Q to A, as an abstract group (NULL if H is not normal). }
-    if Get(H, "normal") and (Get(H, "split") or Get(H, "abelian")) then
-        return label(Kernel(Get(H, "QuotientActionMap")));
-    end if;
+    // Taking the kernel of the QuotientActionMap can cause segfaults (e.g. 336.172) so we disable it for now.
     return None();
+    f := Get(H, "QuotientActionMap");
+    if Type(f) eq NoneType then
+        return None();
+    else
+        return label(Kernel(f));
+    end if;
 end intrinsic;
 
 intrinsic quotient_action_kernel_order(H::LMFDBSubGrp) -> Any
 {the label of the kernel of the map from Q to A, as an abstract group (NULL if H is not normal). }
-    if Get(H, "normal") and (Get(H, "split") or Get(H, "abelian")) then
-        return #Kernel(Get(H, "QuotientActionMap"));
-    end if;
+    // Taking the kernel of the QuotientActionMap can cause segfaults (e.g. 336.172) so we disable it for now.
     return None();
+    f := Get(H, "QuotientActionMap");
+    if Type(f) eq NoneType then
+        return None();
+    else
+        return #Kernel(f);
+    end if;
 end intrinsic;
 
 /* This should be rewritten later, it returns none for now */
