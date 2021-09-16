@@ -1152,89 +1152,89 @@ function SubgroupLattice_edges(G, aut)
     overs := [{Integers()|} : i in [1..#L]];
     unders := [{Integers()|} : i in [1..#L]];
     // We start by adding all edges with prime order
-    D := Reverse(Sort([k : k in Keys(L`by_index)]));
-    vprint User1: "Adding length 1 edges";
+    function prime_count(m)
+        return m eq 1 select 0 else &+[pair[2] : pair in Factorization(m)];
+    end function;
+    pcn := prime_count(n);
+    by_ndiv := IndexFibers([k : k in Keys(L`by_index)], prime_count);
+    known_below := AssociativeArray();
+    known_above := AssociativeArray();
+    for i in [1..#L] do
+        known_below[i] := {i};
+        known_above[i] := {i};
+    end for;
+    //D := Reverse(Sort([k : k in Keys(L`by_index)]));
     //print "D", D;
-    for d in D do
-        M := [m : m in D | IsDivisibleBy(d, m) and IsPrime(d div m)];
-        for sub in L`by_index[d] do
-            //print d, sub`order;
-            subvec := Get(sub, "gassman_vec");
-            //print "subvec", sprint(subvec);
-            for m in M do
-                for super in L`by_index[m] do
-                    supervec := Get(super, "gassman_vec");
-                    //print "supervec", sprint(supervec);
-                    //print "orders", sub`order, super`order;
-                    if gvec_le(subvec, supervec) then
-                        conj, elt := IsConjugateSubgroup(Ambient, inj(super`subgroup), inj(sub`subgroup));
-                        if conj then
-                            C[[sub`i, super`i]] := elt;
-                            //print "HERE", sub`i, #overs;
-                            Include(~overs[sub`i], super`i);
-                            Include(~unders[super`i], sub`i);
-                            //print "Including", sub`i, super`i;
-                        end if;
-                    end if;
+
+    procedure add_edge(~CC, ~kb, ~ka, ~new_edges, bottom, mid, top)
+        if not IsDefined(CC, [bottom, top]) then
+            //print "Adding", bottom, mid, top;
+            if CC[[bottom, mid]] eq one and CC[[mid, top]] eq one then
+                CC[[bottom, top]] := one;
+            elif L`subs[bottom]`subgroup subset L`subs[top]`subgroup then
+                // We want use use one whenever possible
+                CC[[bottom, top]] := one;
+            else
+                CC[[bottom, top]] := CC[[bottom, mid]] * CC[[mid, top]];
+            end if;
+            Include(~kb[top], bottom);
+            Include(~ka[bottom], top);
+            Append(~new_edges, [bottom, top]);
+        end if;
+    end procedure;
+    procedure propogate_edges(~CC, ~kb, ~ka, edges)
+        // Recursively propogate the addition of some edges to fill in all relevant new comparisons in C
+        print #edges, "edges";
+        while #edges gt 0 do
+            new_edges := [];
+            for edge in edges do
+                for bottom in kb[edge[1]] do
+                    add_edge(~CC, ~kb, ~ka, ~new_edges, bottom, edge[1], edge[2]);
+                end for;
+                for top in ka[edge[2]] do
+                    add_edge(~CC, ~kb, ~ka, ~new_edges, edge[1], edge[2], top);
                 end for;
             end for;
-        end for;
-    end for;
-    vprint User1: "Length 1 edges added";
-
-    procedure propogate_edges(~CC, bottom, new_edges)
-        // Recursively propogate the addition of some edges to fill in all relevant new comparisons in C
-        // new_edges should be a list of integers, each the top of a new edge from bottom
-        current := &cat[[<ov, i> : i in overs[ov]] : ov in new_edges];
-        while #current gt 0 do
-            next := [];
-            for pair in current do
-                top := pair[2];
-                if IsDefined(CC, [bottom, top]) then continue; end if;
-                mid := pair[1];
-                if CC[[bottom, mid]] eq one and CC[[mid, top]] eq one then
-                    CC[[bottom, top]] := one;
-                elif L`subs[bottom]`subgroup subset L`subs[top]`subgroup then
-                    // We want use use one whenever possible
-                    CC[[bottom, top]] := one;
-                else
-                    CC[[bottom, top]] := CC[[bottom, mid]] * CC[[mid, top]];
-                end if;
-                next cat:= [<top, i> : i in overs[top]];
-            end for;
-            current := next;
+            edges := new_edges;
         end while;
     end procedure;
 
-    // Now create longer edges
-    for bottom in [1..#L] do
-        propogate_edges(~C, bottom, overs[bottom]);
-    end for;
-
-    // Now we need to add edges coming from inclusions that are not of prime order
-    for d in D do
-        M := [m : m in D | m ne d and IsDivisibleBy(d, m) and not IsPrime(d div m)];
-        for sub in L`by_index[d] do
-            subvec := Get(sub, "gassman_vec");
-            for m in M do
-                for super in L`by_index[m] do
-                    supervec := Get(super, "gassman_vec");
-                    if IsDefined(C, [sub`i, super`i]) then continue; end if;
-                    if gvec_le(subvec, supervec) then
-                        conj, elt := IsConjugateSubgroup(Ambient, inj(super`subgroup), inj(sub`subgroup));
-                        if conj then
-                            C[[sub`i, super`i]] := elt;
-                            Include(~overs[sub`i], super`i);
-                            Include(~unders[super`i], sub`i);
-                            // We need to propogate this new edge up to the top of the lattice
-                            propogate_edges(~C, sub`i, [super`i]);
-                        end if;
-                    end if;
+    for len in [1..pcn] do
+        vprint User1: Sprintf("Adding length %o edges", len);
+        new_edges := [];
+        for base_cnt in [pcn..len by -1] do // number of divisors of index for subgroup
+            top_cnt := base_cnt - len; // number of divisors of index for supergroup
+            if not (IsDefined(by_ndiv, base_cnt) and IsDefined(by_ndiv, top_cnt)) then continue; end if;
+            for d in by_ndiv[base_cnt] do
+                M := [m : m in by_ndiv[top_cnt] | IsDivisibleBy(d, m)];
+                for sub in L`by_index[d] do
+                    subvec := Get(sub, "gassman_vec");
+                    for m in M do
+                        for super in L`by_index[m] do
+                            if IsDefined(C, [sub`i, super`i]) then continue; end if;
+                            supervec := Get(super, "gassman_vec");
+                            if gvec_le(subvec, supervec) then
+                                conj, elt := IsConjugateSubgroup(Ambient, inj(super`subgroup), inj(sub`subgroup));
+                                if conj then
+                                    C[[sub`i, super`i]] := elt;
+                                    Include(~known_below[super`i], sub`i);
+                                    Include(~known_above[sub`i], super`i);
+                                    Append(~new_edges, [sub`i, super`i]);
+                                    Include(~overs[sub`i], super`i);
+                                    Include(~unders[super`i], sub`i);
+                                    print "Including", sub`i, super`i;
+                                else
+                                    print "Not including", sub`i, super`i;
+                                end if;
+                            end if;
+                        end for;
+                    end for;
                 end for;
             end for;
         end for;
+        propogate_edges(~C, ~known_below, ~known_above, new_edges);
+        vprint User1: Sprintf("Length %o edges added", len);
     end for;
-    vprint User1: "Longer edges added";
     L`conjugator := C;
     for i in [1..#L] do
         // For now we switch to AssociativeArrays for compatibility with the old code
