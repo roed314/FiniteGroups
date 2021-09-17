@@ -1,3 +1,5 @@
+AttachSpec("spec");
+
 Nlower := StringToInteger(Nlower);
 Nupper := StringToInteger(Nupper);
 i := StringToInteger(Proc);
