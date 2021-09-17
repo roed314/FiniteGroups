@@ -24,7 +24,9 @@ procedure TestSmallGroup(N, i);
             filename := "aut_test/" * Proc * ".txt";
         end if;
         t := Cputime() - t0;
-        write(filename, Sprintf("%o.%o %o\n", N, i, t));
+        F := Open(filename, "w");
+        Write(F, Sprintf("%o.%o %o\n", N, i, t));
+        Flush(F);
     end if;
 end procedure;
 
