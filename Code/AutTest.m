@@ -16,12 +16,19 @@ procedure TestSmallGroup(N, i);
     G := SmallGroup(N, i);
     if Type(G) eq GrpPC then
         t0 := Cputime();
-        if solv eq "true" then // passed in via command line
+        if type eq "solv" then // passed in via command line
             A := AutomorphismGroupSolubleGroup(G);
             filename := "autsolv_test/" * Proc * ".txt";
-        else
+        elif type eq "aut" then
             A := AutomorphismGroup(G);
             filename := "aut_test/" * Proc * ".txt";
+        else // represent then solv
+            infile := "autsolv_prep/" * Proc * ".txt";
+            s := Read(infile);
+            G := (eval s)[1];
+            t0 := Cputime();
+            A := AutomorphismGroupSolubleGroup(G);
+            filename := "autrep_test/" * Proc * ".txt";
         end if;
         t := Cputime() - t0;
         F := Open(filename, "w");

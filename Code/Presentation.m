@@ -173,7 +173,7 @@ chain_to_gens := function(chain, G)
     return ans;
 end function;
 
-intrinsic RePresent(G::LMFDBGrp)
+intrinsic RePresent(G::LMFDBGrp : reset_attrs:=true)
 {Changes G`MagmaGrp and sets G`gens_used to give a more human readable presentation.
 If not solvable, just sets gens_used to [1..Ngens(G)].
 This function is only safe to call on a newly created group, since it changes MagmaGrp (and thus invalidates a lot of attributes)}
@@ -352,16 +352,18 @@ This function is only safe to call on a newly created group, since it changes Ma
         // We could instead compose with the isomorphism between the new and old group, but that seems
         // prone to errors since it keeps the old group around
         //print "MagmaAutGroup", Get(G, "pc_code");
-        G`MagmaAutGroup := MagmaAutGroup(G : represent:=true);
-        G`Holomorph := Holomorph(G);
-        G`HolInj := HolInj(G);
-        // Various conjugacy class attributes were set in determining an ordering on conjugacy classes for Gassman vectors
-        G`MagmaConjugacyClasses := MagmaConjugacyClasses(G);
-        G`MagmaClassMap := MagmaClassMap(G);
-        G`MagmaPowerMap := MagmaPowerMap(G);
-        G`MagmaGenerators := MagmaGenerators(G);
-        G`ConjugacyClasses := ConjugacyClasses(G); // also sets CCpermutation, CCpermutationInv and ClassMap
-        G`CCAutCollapse := CCAutCollapse(G);
+        if reset_attrs then
+            G`MagmaAutGroup := MagmaAutGroup(G : represent:=true);
+            G`Holomorph := Holomorph(G);
+            G`HolInj := HolInj(G);
+            // Various conjugacy class attributes were set in determining an ordering on conjugacy classes for Gassman vectors
+            G`MagmaConjugacyClasses := MagmaConjugacyClasses(G);
+            G`MagmaClassMap := MagmaClassMap(G);
+            G`MagmaPowerMap := MagmaPowerMap(G);
+            G`MagmaGenerators := MagmaGenerators(G);
+            G`ConjugacyClasses := ConjugacyClasses(G); // also sets CCpermutation, CCpermutationInv and ClassMap
+            G`CCAutCollapse := CCAutCollapse(G);
+        end if;
     else
         G`gens_used := [1..Ngens(G`MagmaGrp)];
     end if;
