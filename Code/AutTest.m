@@ -10,7 +10,6 @@ and writes to files in the aut_test folder.
 
 Nlower := StringToInteger(Nlower);
 Nupper := StringToInteger(Nupper);
-NumProc := StringToInteger(NumProc);
 i := StringToInteger(Proc);
 
 procedure TestSmallGroup(N, i);
