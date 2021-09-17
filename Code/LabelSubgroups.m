@@ -295,16 +295,11 @@ end intrinsic;
 
 */
 
-function SortSuperClass(L, aut)
-    ans := [];
-    return ans;
-end function;
-
 function SortGClass(L, aut)
     ans := [];
     if aut then
         Lat := L[1][1]`Lat;
-        GG := L[1][1]`Lat`Grp;
+        GG := Lat`Grp;
         access := func<x|x[1]>;
         okey := "aut_overs";
         lkey := "aut_label";
@@ -312,7 +307,7 @@ function SortGClass(L, aut)
         inj := Get(GG, "HolInj");
     else
         Lat := L[1]`Lat;
-        GG := L[1]`Lat`Grp;
+        GG := Lat`Grp;
         access := func<x|x>;
         okey := "overs";
         lkey := "full_label";
@@ -324,8 +319,11 @@ function SortGClass(L, aut)
     for supers in Sort([k : k in Keys(by_supergroups)]) do
         subs := by_supergroups[supers];
         if #subs gt 1 then
-            overs := [[ConjugateOverSubgroup(Ambient, inj(Lat`subs[over]`subgroup), inj(access(s)`subgroup)) @@ inj : over in Keys(Get(access(s), okey))] : s in subs];
-            sorter := [Sort([sig(over, (aut select subs[i][1] else subs[i])`subgroup) : over in overs[i]]) : i in [1..#subs]];
+            if aut then
+                sorter := [Min([sort_key(H) : H in s]) : s in subs];
+            else
+                sorter := [sort_key(s) : s in subs];
+            end if;
             ParallelSort(~sorter, ~subs);
         end if;
         ans cat:= subs;
