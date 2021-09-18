@@ -19,7 +19,9 @@ def analyze_aut_timing(Nmax=511, basedir=None):
                     D[label] = float(t)
     neither = 0
     sfast = 0
+    svfast = 0
     afast = 0
+    avfast = 0
     same = 0
     for N in range(1, Nmax+1):
         for i in range(1, ZZ(gap.NrSmallGroups(N))):
@@ -31,8 +33,12 @@ def analyze_aut_timing(Nmax=511, basedir=None):
             a = aut.get(label, 1000)
             if label not in solv and label not in aut:
                 neither += 1
+            elif s > 16*a:
+                avfast += 1
             elif s > 2*a:
                 afast += 1
+            elif a > 16*s:
+                svfast += 1
             elif a > 2*s:
                 sfast += 1
             else:
@@ -41,6 +47,8 @@ def analyze_aut_timing(Nmax=511, basedir=None):
                 continue
             print(label, solv.get(label, "+++++"), aut.get(label, "+++++"))
     print("Neither finished %s times" % neither)
+    print("AutomorphismGroupSolubleGroup much faster %s times" % svfast)
     print("AutomorphismGroupSolubleGroup faster %s times" % sfast)
-    print("AutomorphismGroup faster %s times" % afast)
     print("About the same %s times" % same)
+    print("AutomorphismGroup faster %s times" % afast)
+    print("AutomorphismGroup much faster %s times" % avfast)
