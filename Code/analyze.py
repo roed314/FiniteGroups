@@ -23,6 +23,8 @@ def analyze_aut_timing(Nmax=511, basedir=None):
             if label in nonsolv:
                 continue
             # Default is that solv and rep are faster than aut, we include an error margin
-            if solv.get(label, 10000) < 2*aut.get(label, 1000):
+            s = solv.get(label, 10000)
+            a = aut.get(label, 1000)
+            if s < 0.4 or (s < 2*a):
                 continue
             print(label, solv.get(label, "+++++"), aut.get(label, "+++++"))
