@@ -17,6 +17,10 @@ def analyze_aut_timing(Nmax=511, basedir=None):
                 for line in F:
                     label, t = line.strip().split()
                     D[label] = float(t)
+    neither = 0
+    sfast = 0
+    afast = 0
+    same = 0
     for N in range(1, Nmax+1):
         for i in range(1, ZZ(gap.NrSmallGroups(N))):
             label = "%s.%s" % (N, i)
@@ -25,6 +29,18 @@ def analyze_aut_timing(Nmax=511, basedir=None):
             # Default is that solv and rep are faster than aut, we include an error margin
             s = solv.get(label, 10000)
             a = aut.get(label, 1000)
-            if s < 0.4 or (s < 2*a):
+            if label not in solv and label not in aut:
+                neither += 1
+            elif s > 2*a:
+                afast += 1
+            elif s > 2*s:
+                sfast += 1
+            else:
+                same += 1
+            if s < 0.4 or (s < 3*a):
                 continue
             print(label, solv.get(label, "+++++"), aut.get(label, "+++++"))
+    print("Neither finished %s times" % neither)
+    print("AutomorphismGroupSolubleGroup faster %s times" % sfast)
+    print("AutomorphismGroup faster %s times" % afast)
+    print("About the same %s times" % same)
