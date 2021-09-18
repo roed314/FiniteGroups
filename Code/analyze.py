@@ -33,7 +33,7 @@ def analyze_aut_timing(Nmax=511, basedir=None):
                 neither += 1
             elif s > 2*a:
                 afast += 1
-            elif s > 2*s:
+            elif a > 2*s:
                 sfast += 1
             else:
                 same += 1
