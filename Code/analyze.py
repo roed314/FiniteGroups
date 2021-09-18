@@ -65,4 +65,4 @@ def prep_report(Nmax=511, basedir=None):
                 t = line.strip().split()[-1]
                 D[floor(float(t))] += 1
     for k, v in sorted(D.items()):
-        print "%s-%ss: %s" % (k, k+1, v)
+        print("%s-%ss: %s" % (k, k+1, v))
