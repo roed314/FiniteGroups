@@ -62,7 +62,7 @@ def prep_report(Nmax=511, basedir=None):
     for name in os.listdir(prepdir):
         with open(opj(prepdir, name)) as F:
             for line in F:
-                t = line.strip().split()[-1]
+                t = line.strip().split()[-1][:-1]
                 D[floor(float(t))] += 1
     for k, v in sorted(D.items()):
         print("%s-%ss: %s" % (k, k+1, v))
