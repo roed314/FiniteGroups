@@ -1,5 +1,6 @@
 import os
 opj = os.path.join
+from collections import defaultdict
 
 nonsolv = "60.5 120.5 120.34 120.35 168.42 180.19 240.89 240.90 240.91 240.92 240.93 240.94 240.189 240.190 300.22 336.114 336.208 336.209 360.51 360.118 360.119 360.120 360.121 360.122 420.13 480.217 480.218 480.219 480.220 480.221 480.222 480.943 480.944 480.945 480.946 480.947 480.948 480.949 480.950 480.951 480.952 480.953 480.954 480.955 480.956 480.957 480.958 480.959 480.960 480.1186 480.1187 504.156 504.157".split() # Nonsolvable groups up to 511
 def analyze_aut_timing(Nmax=511, basedir=None):
@@ -52,3 +53,16 @@ def analyze_aut_timing(Nmax=511, basedir=None):
     print("About the same %s times" % same)
     print("AutomorphismGroup faster %s times" % afast)
     print("AutomorphismGroup much faster %s times" % avfast)
+
+def prep_report(Nmax=511, basedir=None):
+    if basedir is None:
+        basedir = os.getcwd()
+    prepdir = opj(basedir, "autsolv_prep")
+    D = defaultdict(int)
+    for name in os.listdir(prepdir):
+        with open(opj(prepdir, name)) as F:
+            for line in F:
+                t = line.strip().split()[-1]
+                D[floor(float(t))] += 1
+    for k, v in sorted(D.items()):
+        print "%s-%ss: %s" % (k, k+1, v)
