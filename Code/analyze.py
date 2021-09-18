@@ -20,6 +20,8 @@ def analyze_aut_timing(Nmax=511, basedir=None):
     for N in range(1, Nmax+1):
         for i in range(1, ZZ(gap.NrSmallGroups(N))):
             label = "%s.%s" % (N, i)
+            if label in nonsolv:
+                continue
             # Default is that solv and rep are faster than aut, we include an error margin
             if solv.get(label, 10000) < 2*aut.get(label, 1000):
                 continue
