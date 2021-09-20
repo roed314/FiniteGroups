@@ -40,9 +40,6 @@
 * Cutoff for pre-displaying character table.
 * Click vs. Mouseover of subgroups? (Still needs to be fixed in new version in 2020?)
   * currently the diagram does both: mouseover for highlighting and click for showing information.
-* **Add list of orders of elements in the group to top** (Manami)
-* **Add list of dimensions of irreducible representations just below** (Manami)
-* **Make Schur multiplier prettier (look at direction factorization code)** (Manami)
 * Add special names (aliases) to *Construction* section
 * Add permutation representations
 * Add special family presentations in those cases
@@ -64,7 +61,7 @@
 
 
 ## Knowls
-* **RCS knowls (after we upload the data) and update credits after merging with master**
+* **RCS knowls (after we upload the data)**
 
 ## Last Stage
 
