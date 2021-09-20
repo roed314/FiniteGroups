@@ -61,6 +61,7 @@ def prep_report(Nmax=511, basedir=None):
     prepdir = opj(basedir, "autsolv_prep")
     D = defaultdict(int)
     for name in os.listdir(prepdir):
+        if name == "log": continue
         with open(opj(prepdir, name)) as F:
             for line in F:
                 t = line.strip().split()[-1][:-1]
