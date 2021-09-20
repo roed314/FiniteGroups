@@ -9,6 +9,7 @@ procedure PrepSmallGroup(N, i)
     if Type(G`MagmaGrp) eq GrpPC then
         filename := Sprintf("autsolv_prep/%o.%o", N, i);
         done, F := OpenTest(filename, "r");
+        print N, i, done;
         if not done then
             F := Open("autsolv_prep/log", "a");
             Write(F, Sprintf("%o.%o\n", N, i));
