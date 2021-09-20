@@ -7,13 +7,17 @@ i := StringToInteger(Proc);
 procedure PrepSmallGroup(N, i)
     G := NewLMFDBGrp(SmallGroup(N, i), Sprintf("%o.%o", N, i));
     if Type(G`MagmaGrp) eq GrpPC then
-        AssignBasicAttributes(G);
-        t0 := Cputime();
-        RePresent(G : reset_attrs:=false);
-        t := Cputime() - t0;
-        F := Open("autsolv_prep/" * Proc * ".txt", "w");
-        Write(F, Sprintf("<PCGroup(%o), %o, %o>", CompactPresentation(G`MagmaGrp), G`gens_used, t));
-        Flush(F);
+        filename := Sprintf("autsolv_prep/%o.%o", N, i);
+        done, F := OpenTest(filename, "r");
+        if not done then
+            AssignBasicAttributes(G);
+            t0 := Cputime();
+            RePresent(G : reset_attrs:=false);
+            t := Cputime() - t0;
+            F := Open(filename, "w");
+            Write(F, Sprintf("<PCGroup(%o), %o, %o>", CompactPresentation(G`MagmaGrp), G`gens_used, t));
+            Flush(F);
+        end if;
     end if;
 end procedure;
 

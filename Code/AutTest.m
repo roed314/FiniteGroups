@@ -18,17 +18,17 @@ procedure TestSmallGroup(N, i);
         t0 := Cputime();
         if type eq "solv" then // passed in via command line
             A := AutomorphismGroupSolubleGroup(G);
-            filename := "autsolv_test/" * Proc * ".txt";
+            filename := Sprintf("autsolv_test/%o.%o", N, i);
         elif type eq "aut" then
             A := AutomorphismGroup(G);
-            filename := "aut_test/" * Proc * ".txt";
+            filename := Sprintf("aut_test/%o.%o", N, i);
         else // represent then solv
             infile := "autsolv_prep/" * Proc * ".txt";
             s := Read(infile);
             G := (eval s)[1];
             t0 := Cputime();
             A := AutomorphismGroupSolubleGroup(G);
-            filename := "autrep_test/" * Proc * ".txt";
+            filename := Sprintf("autrep_test/%o.%o", N, i);
         end if;
         t := Cputime() - t0;
         F := Open(filename, "w");
