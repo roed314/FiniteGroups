@@ -10,6 +10,9 @@ procedure PrepSmallGroup(N, i)
         filename := Sprintf("autsolv_prep/%o.%o", N, i);
         done, F := OpenTest(filename, "r");
         if not done then
+            F := Open("autsolv_prep/log", "a");
+            Write(F, Sprintf("%o.%o\n", N, i));
+            Flush(F);
             AssignBasicAttributes(G);
             t0 := Cputime();
             RePresent(G : reset_attrs:=false);
