@@ -78,8 +78,9 @@ def move_files(Nmax=511, basedir=None):
     ctr = 1
     for N in range(1, Nmax+1):
         print(N)
-        for i in range(1, ZZ(gap.NrSmallGroups(N))):
+        for i in range(1, ZZ(gap.NrSmallGroups(N))+1):
             for dr in [autdir, solvdir, repdir, prepdir]:
                 filename = opj(dr, str(ctr)+".txt")
                 if ope(filename):
                     os.rename(filename, opj(dr, "%s.%s" % (N, i)))
+            ctr += 1
