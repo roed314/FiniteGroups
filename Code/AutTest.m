@@ -32,10 +32,10 @@ procedure TestSmallGroup(N, i);
             elif type eq "aut" then
                 A := AutomorphismGroup(G);
             else // represent then solv
-                infile := "autsolv_prep/" * Proc * ".txt";
+                infile := Sprintf("autsolv_prep/%o.%o", N, i);
                 inok, F := OpenTest(infile, "r");
                 if inok then
-                    Read(infile);
+                    s := Read(F);
                     G := (eval s)[1];
                     t0 := Cputime();
                     A := AutomorphismGroupSolubleGroup(G);
