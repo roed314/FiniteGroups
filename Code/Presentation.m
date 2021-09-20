@@ -173,6 +173,28 @@ chain_to_gens := function(chain, G)
     return ans;
 end function;
 
+/*
+The following groups took more than an hour to RePresent (timed out)
+256.31887
+256.31977
+256.34703
+256.34815
+256.34850
+256.36305
+256.36405
+256.36567
+256.36781
+256.36968
+256.37611
+256.39106
+256.39782
+256.40191
+256.41187
+256.41294
+256.42185
+256.44886
+256.52508
+*/
 intrinsic RePresent(G::LMFDBGrp : reset_attrs:=true)
 {Changes G`MagmaGrp and sets G`gens_used to give a more human readable presentation.
 If not solvable, just sets gens_used to [1..Ngens(G)].

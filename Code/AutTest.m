@@ -13,27 +13,41 @@ Nupper := StringToInteger(Nupper);
 i := StringToInteger(Proc);
 
 procedure TestSmallGroup(N, i);
-    G := SmallGroup(N, i);
-    if Type(G) eq GrpPC then
-        t0 := Cputime();
-        if type eq "solv" then // passed in via command line
-            A := AutomorphismGroupSolubleGroup(G);
-            filename := Sprintf("autsolv_test/%o.%o", N, i);
-        elif type eq "aut" then
-            A := AutomorphismGroup(G);
-            filename := Sprintf("aut_test/%o.%o", N, i);
-        else // represent then solv
-            infile := "autsolv_prep/" * Proc * ".txt";
-            s := Read(infile);
-            G := (eval s)[1];
+    if type eq "solv" then // passed in via command line
+        outfile := Sprintf("autsolv_test/%o.%o", N, i);
+    elif type eq "aut" then
+        outfile := Sprintf("aut_test/%o.%o", N, i);
+    else
+        outfile := Sprintf("autrep_test/%o.%o", N, i);
+    end if;
+    done, F := OpenTest(outfile, "r");
+    print N, i, done;
+    if not done then
+        G := SmallGroup(N, i);
+        if Type(G) eq GrpPC then
             t0 := Cputime();
-            A := AutomorphismGroupSolubleGroup(G);
-            filename := Sprintf("autrep_test/%o.%o", N, i);
+            inok := true;
+            if type eq "solv" then // passed in via command line
+                A := AutomorphismGroupSolubleGroup(G);
+            elif type eq "aut" then
+                A := AutomorphismGroup(G);
+            else // represent then solv
+                infile := "autsolv_prep/" * Proc * ".txt";
+                inok, F := OpenTest(infile, "r");
+                if inok then
+                    Read(infile);
+                    G := (eval s)[1];
+                    t0 := Cputime();
+                    A := AutomorphismGroupSolubleGroup(G);
+                end if;
+            end if;
+            if inok then
+                t := Cputime() - t0;
+                F := Open(outfile, "w");
+                Write(F, Sprintf("%o.%o %o\n", N, i, t));
+                Flush(F);
+            end if;
         end if;
-        t := Cputime() - t0;
-        F := Open(filename, "w");
-        Write(F, Sprintf("%o.%o %o\n", N, i, t));
-        Flush(F);
     end if;
 end procedure;
 
