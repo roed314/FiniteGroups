@@ -57,7 +57,7 @@ procedure WriteSmallGroupGLnx(N, i) // May use later
     label := Sprintf("%o.%o", N, i);
     files := [Sprintf("%oglnc/%o", Folder, label),
               Sprintf("%oglnq/%o", Folder, label)];
-    timingfile = Sprintf("%ologs/GLN%o", Folder, label);
+    timingfile := Sprintf("%ologs/GLN%o", Folder, label);
     if not label in skip then
         PrintFile(logfile, Sprintf("Starting GLn small group %o", label));
         t0 := Cputime();
