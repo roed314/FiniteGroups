@@ -42,6 +42,7 @@ procedure WriteSmallGroup(N, i)
               Sprintf("%ocharacters_qq/%o", Folder, label)];
     timingfile := Sprintf("%ologs/%o", Folder, label);
     if not label in skip then
+        print label;
         PrintFile(logfile, "Starting small group "*label);
         print_data, timings := MakeSmallGroupData(N, i);
         for j in [1..5] do
