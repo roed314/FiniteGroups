@@ -34,7 +34,7 @@ i := StringToInteger(Proc);
 // We skip the following groups since RePresent took longer than an hour in these cases
 skip := Split("256.31887 256.31977 256.34703 256.34815 256.34850 256.36305 256.36405 256.36567 256.36781 256.36968 256.37611 256.39106 256.39782 256.40191 256.41187 256.41294 256.42185 256.44886 256.52508", " ");
 procedure WriteSmallGroup(N, i)
-    label = Sprintf("%o.%o", N, i);
+    label := Sprintf("%o.%o", N, i);
     files := [Sprintf("%ogroups/%o", Folder, label),
               Sprintf("%osubgroups/%o", Folder, label),
               Sprintf("%ogroups_cc/%o", Folder, label),
