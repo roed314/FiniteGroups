@@ -1188,7 +1188,7 @@ function SubgroupLattice_edges(G, aut)
     end procedure;
     procedure propogate_edges(~CC, ~kb, ~ka, edges)
         // Recursively propogate the addition of some edges to fill in all relevant new comparisons in C
-        print #edges, "edges";
+        vprint User1: #edges, "edges";
         while #edges gt 0 do
             new_edges := [];
             for edge in edges do

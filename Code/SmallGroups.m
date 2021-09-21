@@ -18,8 +18,8 @@ intrinsic MakeSmallGroup(N::RngIntElt, i::RngIntElt : represent:=true, set_param
     end if;
     if set_params then
         SetSubgroupParameters(G);
+        vprint User1: "Subgroup parameters set";
     end if;
-    vprint User1: "Subgroup parameters set";
     return G;
 end intrinsic;
 
@@ -36,6 +36,7 @@ intrinsic MakeSmallGroupData(N::RngIntElt, i::RngIntElt) -> Tup, SeqEnum
     ts := [Cputime() - t0];
     t0 := Cputime();
     SetSubgroupParameters(G);
+    vprint User1: "Subgroup parameters set";
     Append(~ts, Cputime() - t0);
     for task in ["Subgroups", "Characters"] do
         t0 := Cputime();
