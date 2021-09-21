@@ -44,7 +44,6 @@ procedure WriteSmallGroup(N, i)
     if not label in skip then
         PrintFile(logfile, "Starting small group "*label);
         print_data, timings := MakeSmallGroupData(N, i);
-        PrintFile(logfile, Sprintf("Small group %o.%o took %o s", N, i, t1-t0));
         for j in [1..5] do
             for line in print_data[j] do
                 PrintFile(files[j], line);
