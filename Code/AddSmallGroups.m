@@ -31,8 +31,6 @@ Nlower := StringToInteger(Nlower);
 Nupper := StringToInteger(Nupper);
 i := StringToInteger(Proc);
 
-// We skip the following groups since RePresent took longer than an hour in these cases
-skip := Split("256.31887 256.31977 256.34703 256.34815 256.34850 256.36305 256.36405 256.36567 256.36781 256.36968 256.37611 256.39106 256.39782 256.40191 256.41187 256.41294 256.42185 256.44886 256.52508", " ");
 procedure WriteSmallGroup(N, i)
     label := Sprintf("%o.%o", N, i);
     files := [Sprintf("%ogroups/%o", Folder, label),
@@ -41,17 +39,15 @@ procedure WriteSmallGroup(N, i)
               Sprintf("%ocharacters_cc/%o", Folder, label),
               Sprintf("%ocharacters_qq/%o", Folder, label)];
     timingfile := Sprintf("%ologs/%o", Folder, label);
-    if not label in skip then
-        print label;
-        PrintFile(logfile, "Starting small group "*label);
-        print_data, timings := MakeSmallGroupData(N, i);
-        for j in [1..5] do
-            for line in print_data[j] do
-                PrintFile(files[j], line);
-            end for;
+    print label;
+    PrintFile(logfile, "Starting small group "*label);
+    print_data, timings := MakeSmallGroupData(N, i);
+    for j in [1..5] do
+        for line in print_data[j] do
+            PrintFile(files[j], line);
         end for;
-        PrintFile(timingfile, Sprintf("%o %o", label, Join([Sprint(t) : t in timings], " ")));
-    end if;
+    end for;
+    PrintFile(timingfile, Sprintf("%o %o", label, Join([Sprint(t) : t in timings], " ")));
 end procedure;
 
 procedure WriteSmallGroupGLnx(N, i) // May use later
