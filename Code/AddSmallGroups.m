@@ -1,14 +1,13 @@
 AttachSpec("spec");
 
-// Call using gnu parallel as follows, for computing groups of order up to 500, using a total of 1000 processes, into the folder $FOLDER (which will create subfolders as necessary)
+// Call using gnu parallel as follows, for computing groups of order up to 511, using a total of 128 processes and timing out after an hour, into the folder DATA (which will create subfolders as necessary)
 // values are processed by magma in the order given, so the file must come last
-// parallel magma Folder:=$FOLDER Nlower:=1 Nupper:=501 NumProc:=1000 Proc:={1} AddSmallGroups.m ::: {0..999}
+// parallel -j128 --timeout 3600 magma Folder:=DATA Nlower:=1 Nupper:=512 Proc:={1} AddSmallGroups.m ::: {1..92804}
 
 // We use the following variables passed in from the command line
 // Folder: folder for containing the results
 // Nlower: an overall lower bound for the order of the groups being added in this run
 // Nupper: an overall upper bound for the order of the groups being added in this run (upper bound not included)
-// NumProc: the number of processes being used in this run
 // Proc: the current process (determines which N, i will be computed by this process)
 
 //System("mkdir -p " * Folder * "/labels");
@@ -21,64 +20,67 @@ if Folder[#Folder] ne "/" then
 end if;
 SetLMFDBRootFolder(Folder);
 
-files := [Folder * "groups/" * Proc * ".txt",
-          Folder * "subgroups/" * Proc * ".txt",
-          Folder * "groups_cc/" * Proc * ".txt",
-          Folder * "characters_cc/" * Proc * ".txt",
-          Folder * "characters_qq/" * Proc * ".txt",
-          Folder * "glnc/" * Proc * ".txt",
-          Folder * "glnq/" * Proc * ".txt" ];
-logfile := Folder * "logs/" * Proc * ".txt";
+logfile := Folder * "logs/overall";
 
-for f in ["groups", "subgroups", "groups_cc", "characters_cc", "characters_qq", "logs","glnc","glnq"] do
+for f in ["groups", "subgroups", "groups_cc", "characters_cc", "characters_qq", "logs", "glnc", "glnq", "RePresentations"] do
   System("mkdir -p "* Folder * f);
 end for;
 System("mkdir -p " * Folder * "SUBCACHE");
 
 Nlower := StringToInteger(Nlower);
 Nupper := StringToInteger(Nupper);
-NumProc := StringToInteger(NumProc);
-assert NumProc gt 0;
-Proc := StringToInteger(Proc);
-assert 0 le Proc and Proc lt NumProc;
+i := StringToInteger(Proc);
 
+// We skip the following groups since RePresent took longer than an hour in these cases
+skip := Split("256.31887 256.31977 256.34703 256.34815 256.34850 256.36305 256.36405 256.36567 256.36781 256.36968 256.37611 256.39106 256.39782 256.40191 256.41187 256.41294 256.42185 256.44886 256.52508", " ");
 procedure WriteSmallGroup(N, i)
-    PrintFile(logfile, Sprintf("Starting small group %o.%o", N, i));
-    t0 := Cputime();
-    print_data := MakeSmallGroupData(N, i);
-    t1 := Cputime();
-    PrintFile(logfile, Sprintf("Small group %o.%o took %o s", N, i, t1-t0));
-    for j in [1..5] do
-        for line in print_data[j] do
-            PrintFile(files[j], line);
+    label = Sprintf("%o.%o", N, i);
+    files := [Sprintf("%ogroups/%o", Folder, label),
+              Sprintf("%osubgroups/%o", Folder, label),
+              Sprintf("%ogroups_cc/%o", Folder, label),
+              Sprintf("%ocharacters_cc/%o", Folder, label),
+              Sprintf("%ocharacters_qq/%o", Folder, label)];
+    timingfile = Sprintf("%ologs/%o", Folder, label);
+    if not label in skip then
+        PrintFile(logfile, "Starting small group "*label));
+        print_data, timings := MakeSmallGroupData(N, i);
+        PrintFile(logfile, Sprintf("Small group %o.%o took %o s", N, i, t1-t0));
+        for j in [1..5] do
+            for line in print_data[j] do
+                PrintFile(files[j], line);
+            end for;
         end for;
-    end for;
+        PrintFile(timingfile, Sprintf("%o %o", label, Join([Sprint(t) : t in timings], " ")));
+    end if;
 end procedure;
 
 procedure WriteSmallGroupGLnx(N, i) // May use later
-    PrintFile(logfile, Sprintf("Starting GLn small group %o.%o", N, i));
-    t0 := Cputime();
-    print_data := MakeSmallGroupGLnData(N, i);
-    t1 := Cputime();
-    PrintFile(logfile, Sprintf("GLn small group %o.%o took %o s", N, i, t1-t0));
-    for j in [1..2] do
-        for line in print_data[j] do
-            PrintFile(files[5+j], line);
+    label := Sprintf("%o.%o", N, i);
+    files := [Sprintf("%oglnc/%o", Folder, label),
+              Sprintf("%oglnq/%o", Folder, label)];
+    timingfile = Sprintf("%ologs/GLN%o", Folder, label);
+    if not label in skip then
+        PrintFile(logfile, Sprintf("Starting GLn small group %o", label));
+        t0 := Cputime();
+        print_data := MakeSmallGroupGLnData(N, i);
+        t1 := Cputime();
+        for j in [1..2] do
+            for line in print_data[j] do
+                PrintFile(files[j], line);
+            end for;
         end for;
-    end for;
+        PrintFile(timingfile, Sprintf("GLn small group %o.%o took %o s", N, i, t1-t0));
+    end if;
 end procedure;
 
-
 // We have processes do every-Nth group rather than consecutive blocks in order to balance the time between different processes.
-ctr := 0;
 for N in [Nlower..(Nupper-1)] do
-    for i in [1..NumberOfSmallGroups(N)] do
-        if ctr eq Proc then
-            WriteSmallGroup(N, i);
-        end if;
-        ctr +:= 1;
-        if ctr eq NumProc then ctr := 0; end if;
-    end for;
+    I := NumberOfSmallGroups(N);
+    if i le I then
+        WriteSmallGroup(N, i);
+        break;
+    end if;
+    i -:= I;
 end for;
 
 exit;

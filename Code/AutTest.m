@@ -32,7 +32,7 @@ procedure TestSmallGroup(N, i);
             elif type eq "aut" then
                 A := AutomorphismGroup(G);
             else // represent then solv
-                infile := Sprintf("autsolv_prep/%o.%o", N, i);
+                infile := Sprintf("RePresentations/%o.%o", N, i);
                 inok, F := OpenTest(infile, "r");
                 if inok then
                     s := Read(F);

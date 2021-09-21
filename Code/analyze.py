@@ -58,7 +58,7 @@ def analyze_aut_timing(Nmax=511, basedir=None):
 def prep_report(Nmax=511, basedir=None):
     if basedir is None:
         basedir = os.getcwd()
-    prepdir = opj(basedir, "autsolv_prep")
+    prepdir = opj(basedir, "RePresentations")
     D = defaultdict(int)
     for name in os.listdir(prepdir):
         if name == "log": continue
@@ -75,7 +75,7 @@ def move_files(Nmax=511, basedir=None):
     autdir = opj(basedir, "aut_test")
     solvdir = opj(basedir, "autsolv_test")
     repdir = opj(basedir, "autrep_test")
-    prepdir = opj(basedir, "autsolv_prep")
+    prepdir = opj(basedir, "RePresentations")
     ctr = 1
     for N in range(1, Nmax+1):
         print(N)
