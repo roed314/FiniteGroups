@@ -148,49 +148,10 @@ intrinsic SubgroupClass(H::Grp, phi::Map) -> SeqEnum
     return Sort([[k, v] : k -> v in T]);
 end intrinsic;
 
-intrinsic IndexFibers(S::SeqEnum, f::UserProgram) -> Assoc
-    {Given a list of objects S and a function f on S creates an associative array satisfying A[f(s)] = [t:t in S|f(t) eq f(s)]}
-    A:=AssociativeArray();
-    for x in S do
-        y := f(x);
-        if IsDefined(A, y) then
-            Append(~A[y], x);
-        else
-            A[y] := [x];
-        end if;
-    end for;
-    return A;
-end intrinsic;
-
+/*
 intrinsic ConjugatesInSubgroup(G::Grp, H::Grp, K::Grp) -> SeqEnum
     {Given subgroups K and H of G such that K is conjugate to a subgroup of H, return all conjugates}
     return [KK:KK in Conjugates(G,K)|KK subset H];
-end intrinsic;
-
-intrinsic ConjugateOverSubgroup(G::Grp, H::Grp, K::Grp) -> GrpElt
-{Given subgroups K and H of G such that K is conjugate to a subgroup of H, return a conjugate of H containing K}
-    if K subset H then
-        return H;
-    end if;
-    NH := Normalizer(G, H);
-    NK := Normalizer(G, K);
-    if #NH ge #NK then
-        T := Transversal(G, NH);
-        for t in T do
-            Ht := H^t;
-            if K subset Ht then
-                return Ht;
-            end if;
-        end for;
-    else
-        T := Transversal(G, NK);
-        for t in T do
-            Kt := K^t;
-            if Kt subset H then
-                return H^(t^(-1));
-            end if;
-        end for;
-    end if;
 end intrinsic;
 
 intrinsic Supergroups(G::Grp, L::SeqEnum, LI::SeqEnum, j::RngIntElt) -> SeqEnum
@@ -201,8 +162,6 @@ intrinsic Supergroups(G::Grp, L::SeqEnum, LI::SeqEnum, j::RngIntElt) -> SeqEnum
     return [i:i in [1..#L]|LI[i] lt n and IsDivisibleBy(n,LI[i]) and #[HH:HH in C|HH subset L[i]] gt 0];
 end intrinsic;
 
-
-/*
 function _make_label(G, triple)
     return label(G) * Sprintf(".%o.%o.%o", triple[1], triple[2], triple[3]);
 end function;

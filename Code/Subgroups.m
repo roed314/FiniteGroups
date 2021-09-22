@@ -1624,7 +1624,7 @@ intrinsic sort_gens(H::SubgroupLatElt) -> SeqEnum
             break;
         end for;
     end while;
-    b, conj := IsConjugate(Ambient, inj(H`subgroup), inj(K)); assert b;
+    b, conj := IsConjugate(Ambient, inj(H`subgroup), K); assert b;
     H`sort_conj := conj;
     return [g @@ inj : g in gens];
 end intrinsic;
@@ -1745,7 +1745,7 @@ intrinsic LookupSubgroupLabel(G::LMFDBGrp, HH::Any) -> Any
         for K in S do
             KK := Get(K, "MagmaSubGrp");
             if IsConjugate(GG, HH, KK) then
-                v := Get(K, "label");
+                v := Get(K, "short_label");
                 if Type(v) eq NoneType then
                     v := Get(K, "special_label")[1];
                 end if;

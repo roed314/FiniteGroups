@@ -86,6 +86,7 @@ intrinsic all_minimal_chains(G::LMFDBGrp) -> SeqEnum
     Layer := {1};
     while true do
         NewLayer := {};
+        vprint User1: "Minimal chains: layer of size", #Layer;
         for layer_ind in Layer do
             HH := L`subs[layer_ind];
             H := HH`subgroup;
@@ -135,6 +136,7 @@ intrinsic all_minimal_chains(G::LMFDBGrp) -> SeqEnum
         chains := new_chains;
     end for;
     // We adjust the chains so that each subgroup is actually contained in the next, instead of only up to conjugacy
+    vprint User1: "Fixing chains for actual containment";
     fixed_chains := [];
     for k in [1..#chains] do
         chain := chains[k];
@@ -209,6 +211,7 @@ This function is only safe to call on a newly created group, since it changes Ma
     if #GG ne 1 and IsSolvable(GG) then
         chains := all_minimal_chains(G);
         gens := [chain_to_gens(chain, G) : chain in chains];
+        vprint User1: #gens, "generators (initial)";
         relcnt := AssociativeArray();
         for i in [1..#gens] do
             c := 0;
@@ -222,7 +225,7 @@ This function is only safe to call on a newly created group, since it changes Ma
         end for;
         // Only keep chains with the maximum number of identity relative powers
         gens := [gens[i] : i in relcnt[Max(Keys(relcnt))]];
-        //print "#gensB", #gens;
+        vprint User1: #gens, "generators (most identity relative powers)";
 
         commut := AssociativeArray();
         for i in [1..#gens] do
@@ -241,7 +244,7 @@ This function is only safe to call on a newly created group, since it changes Ma
         end for;
         // Only keep chains that have the most commuting pairs of generators
         gens := [gens[i] : i in commut[Max(Keys(commut))]];
-        //print "#gensC", #gens;
+        vprint User1: #gens, "generators (most commuting pairs)";
 
         ooo := AssociativeArray();
         for i in [1..#gens] do
@@ -260,7 +263,7 @@ This function is only safe to call on a newly created group, since it changes Ma
         end for;
         // Only keep chains that have the minimal number of out-of-order relative orders
         gens := [gens[i] : i in ooo[Min(Keys(ooo))]];
-        //print "#gensD", #gens;
+        vprint User1: #gens, "generators (fewest out-of-order relative orders)";
 
         total_depth := AssociativeArray();
         for i in [1..#gens] do
@@ -284,7 +287,7 @@ This function is only safe to call on a newly created group, since it changes Ma
         end for;
         // Only keep chains that have the minimal total depth
         gens := [gens[i] : i in total_depth[Min(Keys(total_depth))]];
-        //print "#gensE", #gens;
+        vprint User1: #gens, "generators (require minimal total depth)";
 
         orders := [[tup[2] : tup in chain] : chain in gens];
         ParallelSort(~orders, ~gens);
@@ -369,7 +372,7 @@ This function is only safe to call on a newly created group, since it changes Ma
         //print sprint([x : x in GetAttributes(LMFDBGrp) | assigned G``x]);
         //[CCAutCollapse,CCpermutation,CCpermutationInv]
         G`MagmaGrp := H;
-        G`gens_used := gens_used;
+        G`gens_used := Sort(gens_used);
         // We have to reset Holomorph, HolInj, ClassMap to use the new group
         // We could instead compose with the isomorphism between the new and old group, but that seems
         // prone to errors since it keeps the old group around
@@ -387,6 +390,6 @@ This function is only safe to call on a newly created group, since it changes Ma
             G`CCAutCollapse := CCAutCollapse(G);
         end if;
     else
-        G`gens_used := [1..Ngens(G`MagmaGrp)];
+        G`gens_used := [i : i in [1..Ngens(G`MagmaGrp)]];
     end if;
 end intrinsic;

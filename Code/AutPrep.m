@@ -3,6 +3,7 @@ AttachSpec("spec");
 Nlower := StringToInteger(Nlower);
 Nupper := StringToInteger(Nupper);
 i := StringToInteger(Proc);
+//SetVerbose("User1", 1);
 
 procedure PrepSmallGroup(N, i)
     G := NewLMFDBGrp(SmallGroup(N, i), Sprintf("%o.%o", N, i));

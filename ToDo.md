@@ -9,14 +9,13 @@
 
 ### Uploading data
 * Fix bug in Magma's SmallGroupDecoding
-* **Work around Magma's SmallGroupDecoding bug by using %m**
 * **Rerun the basic computation up to 511: currently have SmallGroups up to order 383, excluding a few hard groups** (John, do last)
 * **Store the weights in the subgroup lattice** (David)
 * Run timing tests to determine which attributes are slow (in progress)
 * Streamline Magma code that may redundantly call Magma functions which are now attributes.
 * Figure out how to reuse work between different groups for slow features (using a recursive algorithm for example)
 * **Evaluate our criterion/heuristic for when to compute difficult/space-intensive things (lattice of subgroups, etc)**
-* Timing dictionary saved to output
+* Timing dictionary saved to output (rough version achieved in log file for each group)
 * Design a process for adding groups outside the small groups range and assigning labels: three steps
   - find new groups of interest to add, compute their hash and specify a format to store information for the next stage
   - for each order and hash value, split the records up into isomorphism classes, determine whether each isomorphism class has already been added.  If not yet added, assign a label.  We may want to ensure that some common group families get simple labels (e.g. cyclic group is always .a)
@@ -31,7 +30,6 @@
 * Smallest n where the group is a subgroup of Sn (new Magma function)
 * Improve DirectFactorization so that it doesn't need to create LMFDBGrps and compute their subgroup lattices
 * Speed up IsWreathProduct to use the already computed list of subgroups
-* Rewrite ConjugateOverSubgroup to use conjugators
 
 ## Frontend
 
@@ -56,7 +54,6 @@
 * Frozen row and column headers for character tables
 * Evaluate sort order for split and non-split products, don't just hide one
 * Look at spacing/highlighting for split and non-split products (Jen - not for beta)
-* **Merge with master** (once almost ready to get into beta)
 * **Check that the presentation is correct** (Jen, David)
 
 

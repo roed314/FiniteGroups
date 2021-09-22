@@ -154,6 +154,20 @@ intrinsic Classify (S::[], E::UserProgram) -> SeqEnum[SeqEnum]
     return T;
 end intrinsic;
 
+intrinsic IndexFibers(S::SeqEnum, f::UserProgram) -> Assoc
+    {Given a list of objects S and a function f on S creates an associative array satisfying A[f(s)] = [t:t in S|f(t) eq f(s)]}
+    A:=AssociativeArray();
+    for x in S do
+        y := f(x);
+        if IsDefined(A, y) then
+            Append(~A[y], x);
+        else
+            A[y] := [x];
+        end if;
+    end for;
+    return A;
+end intrinsic;
+
 intrinsic AssociativeArrayToMap(xs :: Assoc, codomain) -> Map
   {The map from Keys(xs) to codomain implied by xs.}
   return map<Keys(xs) -> codomain | k :-> xs[k]>;
@@ -184,4 +198,9 @@ intrinsic sprint(X::.) -> MonStgElt
 { Sprints object X with spaces and carraige returns stripped. }
     if Type(X) eq Assoc then return Join(Sort([ $$(k) cat "=" cat $$(X[k]) : k in Keys(X)]),":"); end if;
     return strip(Sprintf("%o",X));
+end intrinsic;
+
+intrinsic find_process_id(N::RngIntElt, i::RngIntElt : Nlower:=1) -> RngIntElt
+{The overall index of a given group N.i among groups of all orders}
+    return &+[NumberOfSmallGroups(m) : m in [Nlower..N-1]] + i;
 end intrinsic;
