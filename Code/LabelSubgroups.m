@@ -331,14 +331,15 @@ intrinsic LabelSubgroups(S::SubgroupLat)
                 for anum in [1..#by_anum] do
                     if autjugacy then
                         sub := by_anum[anum][1];
+                        label := IntegerToString(index) * "." * CremonaCode(acode) * IntegerToString(anum);
                         if #suffix eq 0 then
                             // Normal labeling
                             sub`aut_label := [index, acode, anum];
                             sub`full_label := [index, acode, anum];
-                            sub`label := IntegerToString(index) * "." * CremonaCode(acode) * IntegerToString(anum);
+                            sub`label := label;
                         else
                             // We don't set aut_label or full_label since they won't be used recursively in labeling (for maximal subgroups because there are no supergroups, and for normal subgroups since the Gassman class is enough)
-                            Append(~sub`special_labels, IntegerToString(index) * "." * CremonaCode(acode) * IntegerToString(anum) * suffix);
+                            Append(~sub`special_labels, label * suffix);
                         end if;
                     else
                         aclass := by_anum[anum];
@@ -356,10 +357,17 @@ intrinsic LabelSubgroups(S::SubgroupLat)
                                 by_cnum := SortGClass(csubs, false);
                             end if;
                             for cnum in [1..#by_cnum] do
-                                sub := by_cnum[cnum];
-                                sub`aut_label := [index, acode, anum];
-                                sub`full_label := [index, acode, anum, ccode, cnum];
-                                sub`label := IntegerToString(index) * "." * CremonaCode(acode) * IntegerToString(anum) * "." * CremonaCode(ccode) * IntegerToString(cnum);
+                                label := IntegerToString(index) * "." * CremonaCode(acode) * IntegerToString(anum) * "." * CremonaCode(ccode) * IntegerToString(cnum);
+                                if #suffix eq 0 then
+                                    // Normal labeling
+                                    sub := by_cnum[cnum];
+                                    sub`aut_label := [index, acode, anum];
+                                    sub`full_label := [index, acode, anum, ccode, cnum];
+                                    sub`label := label;
+                                else
+                                    // As above, don't need to set aut_label or full_label
+                                    Append(~sub`special_labels, label * suffix);
+                                end if;
                             end for;
                         end for;
                     end if;
