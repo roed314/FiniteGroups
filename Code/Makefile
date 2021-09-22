@@ -2,7 +2,7 @@ FOLDER = DATA
 LMFDB = LMFDB
 
 data: glnc glnq cchar qchar ccs groups subs
-	
+
 diagramx:
 	cat $(LMFDB)/grdata? > $(LMFDB)/grdata.out
 
@@ -25,22 +25,22 @@ upload: data diagramx
 	cd ..
 
 groups:
-	cat $(FOLDER)/groups/*.txt | sort -u | cat LMFDBGrp.header  - > $(LMFDB)/groups.data
+	cat $(FOLDER)/groups/* | sort -u | cat LMFDBGrp.header  - > $(LMFDB)/groups.data
 
 subs:
-	cat $(FOLDER)/subgroups/*.txt | sort -u | cat LMFDBSubGrp.header - > $(LMFDB)/subs.data
+	cat $(FOLDER)/subgroups/* | sort -u | cat LMFDBSubGrp.header - > $(LMFDB)/subs.data
 
 glnc:
-	cat $(FOLDER)/glnc/*.txt | sort -u |  cat LMFDBRepCC.header - > $(LMFDB)/glnc.data
+	cat $(FOLDER)/glnc/* | sort -u |  cat LMFDBRepCC.header - > $(LMFDB)/glnc.data
 
 glnq:
-	cat $(FOLDER)/glnq/*.txt | sort -u | cat LMFDBRepQQ.header - > $(LMFDB)/glnq.data
+	cat $(FOLDER)/glnq/* | sort -u | cat LMFDBRepQQ.header - > $(LMFDB)/glnq.data
 
 qchar:
-	cat $(FOLDER)/characters_qq/*.txt | sort -u | cat LMFDBGrpChtrQQ.header - > $(LMFDB)/qchar.data
+	cat $(FOLDER)/characters_qq/* | sort -u | cat LMFDBGrpChtrQQ.header - > $(LMFDB)/qchar.data
 
 cchar:
-	cat $(FOLDER)/characters_cc/*.txt  | sort -u |cat LMFDBGrpChtrCC.header - > $(LMFDB)/cchar.data
+	cat $(FOLDER)/characters_cc/*  | sort -u |cat LMFDBGrpChtrCC.header - > $(LMFDB)/cchar.data
 
 ccs:
-	cat $(FOLDER)/groups_cc/*.txt | sort -u | cat LMFDBGrpConjCls.header - > $(LMFDB)/ccs.data
+	cat $(FOLDER)/groups_cc/* | sort -u | cat LMFDBGrpConjCls.header - > $(LMFDB)/ccs.data
