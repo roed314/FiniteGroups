@@ -67,7 +67,6 @@ procedure WriteSmallGroupGLnx(N, i) // May use later
     PrintFile(timingfile, Sprintf("GLn small group %o.%o took %o s", N, i, t1-t0));
 end procedure;
 
-// We have processes do every-Nth group rather than consecutive blocks in order to balance the time between different processes.
 for N in [Nlower..(Nupper-1)] do
     I := NumberOfSmallGroups(N);
     if i le I then

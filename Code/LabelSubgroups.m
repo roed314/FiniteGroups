@@ -318,9 +318,9 @@ intrinsic LabelSubgroups(S::SubgroupLat)
             elif #subs eq 1 then
                 by_acode := aaa(subs, 0);
             else
-                avecs := {@ Get(x[1], "aut_gassman_vec") : x in subs @};
+                avecs := {@ <not IsNormal(G`MagmaGrp, x[1]`subgroup), Get(x[1], "aut_gassman_vec")> : x in subs @};
                 Sort(~avecs);
-                by_acode := IndexFibers(subs, func<x|Index(avecs, Get(x[1], "aut_gassman_vec"))-1>);
+                by_acode := IndexFibers(subs, func<x|Index(avecs, <not IsNormal(G`MagmaGrp, x[1]`subgroup), Get(x[1], "aut_gassman_vec")>)-1>);
             end if;
             for acode -> asubs in by_acode do
                 if #asubs eq 1 then
