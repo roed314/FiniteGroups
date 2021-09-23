@@ -187,7 +187,7 @@ intrinsic monomial(G::LMFDBGrp) -> BoolElt
     elif Get(G,"solvable") and Get(G,"Agroup") then
         return true;
     else
-        ct:=CharacterTable(g);
+        ct:=Get(G,"MagmaCharacterTable");
         maxd := Integers() ! Degree(ct[#ct]); // Crazy that coercion is needed
         stat:=[false : c in ct];
         ls:= LowIndexSubgroups(G, maxd);
@@ -319,7 +319,7 @@ intrinsic faithful_reps(G::LMFDBGrp) -> Any
   end if;
   A := AssociativeArray();
   g := G`MagmaGrp;
-  ct := CharacterTable(g);
+  ct := Get(G,"MagmaCharacterTable");
   for j:=1 to #ct do
     ch := ct[j];
     if IsFaithful(ch) then
@@ -1076,8 +1076,9 @@ intrinsic Characters(G::LMFDBGrp) ->  Tup
   //cc:=Classes(g);
   cchars:=[New(LMFDBGrpChtrCC) : c in ct];
   rchars:=[New(LMFDBGrpChtrQQ) : c in rct];
-  vprint User2: "A", t;
-  t := Cputime(t);
+  vprint User1: "Magma character information found in", Cputime() - t;
+  t0 := Cputime();
+  t := t0;
   for j:=1 to #cchars do
     cchars[j]`Grp:=G;
     cchars[j]`MagmaChtr:=ct[j];
@@ -1097,9 +1098,11 @@ intrinsic Characters(G::LMFDBGrp) ->  Tup
     cchars[j]`Image_object:=New(LMFDBRepCC);
     cchars[j]`indicator:=FrobeniusSchur(ct[j]);
     cchars[j]`label:="placeholder";
-    vprint User2: "B", j, t;
-    t := Cputime(t);
+    vprint User2: "B", j, Cputime() - t;
+    t := Cputime();
   end for;
+  vprint User1: "LMFDB complex character information computed in", Cputime() - t0;
+  t0 := Cputime();
   for j:=1 to #rchars do
     rchars[j]`Grp:=G; // These don't have a group?
     //rchars[j]`MagmaChtr:=ct[matching[j][1]];
@@ -1113,12 +1116,13 @@ intrinsic Characters(G::LMFDBGrp) ->  Tup
     rchars[j]`faithful:=IsFaithful(rct[j]);
     // Character may not be irreducible, so value might not be in 1,0,-1
     rchars[j]`label:="placeholder";
-    vprint User2: "C", j, t;
-    t := Cputime(t);
+    vprint User2: "C", j, Cputime() - t;
+    t := Cputime();
   end for;
+  vprint User1: "LMFDB rational character information computed in", Cputime() - t0;
   /* This still needs labels and ordering for both types */
   sortdata:=characters_add_sort_and_labels(G, cchars, rchars);
-
+  vprint User1: "Characters sorted and labeled in", Cputime() - t;
   return <cchars, rchars>;
 end intrinsic;
 

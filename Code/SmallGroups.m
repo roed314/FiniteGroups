@@ -28,7 +28,8 @@ end intrinsic;
 //  SetSubgroupParameters (mostly SubGrpLstAut and SubGrpLst),
 //  Subgroups (inclusions and labeling),
 //  Characters (esp. characters_add_sort_and_labels),
-//  writing the rest of the attributes
+//  faithful_reps,
+//  computing and writing the rest of the attributes
 intrinsic MakeSmallGroupData(N::RngIntElt, i::RngIntElt) -> Tup, SeqEnum
 {Create the information for saving a small group to several files.  Returns a triple (one for each file) of lists of strings (one for each entry to be saved), together with a sequence of timings}
     t0 := Cputime();
@@ -38,7 +39,7 @@ intrinsic MakeSmallGroupData(N::RngIntElt, i::RngIntElt) -> Tup, SeqEnum
     SetSubgroupParameters(G);
     vprint User1: "Subgroup parameters set";
     Append(~ts, Cputime() - t0);
-    for task in ["Subgroups", "Characters"] do
+    for task in ["Subgroups", "Characters", "faithful_reps"] do
         t0 := Cputime();
         val := Get(G, task);
         Append(~ts, Cputime() - t0);
