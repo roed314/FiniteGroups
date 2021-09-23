@@ -277,12 +277,9 @@ function SortGClass(L, aut)
     by_supergroups := IndexFibers(L, f);
     for supers in Sort([k : k in Keys(by_supergroups)]) do
         subs := by_supergroups[supers];
+        //print aut, [<access(s), IsNormal(GG`MagmaGrp, access(s)`subgroup), Get(access(s), "characteristic_closure"), Get(access(s), "aut_gassman_vec")> : s in subs];
         if #subs gt 1 then
-            if aut then
-                sorter := [Min([sort_key(H) : H in s]) : s in subs];
-            else
-                sorter := [sort_key(s) : s in subs];
-            end if;
+            sorter := [sort_key(access(s), aut) : s in subs];
             ParallelSort(~sorter, ~subs);
         end if;
         ans cat:= subs;
