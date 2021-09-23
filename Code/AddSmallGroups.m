@@ -55,18 +55,16 @@ procedure WriteSmallGroupGLnx(N, i) // May use later
     files := [Sprintf("%oglnc/%o", Folder, label),
               Sprintf("%oglnq/%o", Folder, label)];
     timingfile := Sprintf("%ologs/GLN%o", Folder, label);
-    if not label in skip then
-        PrintFile(logfile, Sprintf("Starting GLn small group %o", label));
-        t0 := Cputime();
-        print_data := MakeSmallGroupGLnData(N, i);
-        t1 := Cputime();
-        for j in [1..2] do
-            for line in print_data[j] do
-                PrintFile(files[j], line);
-            end for;
+    PrintFile(logfile, Sprintf("Starting GLn small group %o", label));
+    t0 := Cputime();
+    print_data := MakeSmallGroupGLnData(N, i);
+    t1 := Cputime();
+    for j in [1..2] do
+        for line in print_data[j] do
+            PrintFile(files[j], line);
         end for;
-        PrintFile(timingfile, Sprintf("GLn small group %o.%o took %o s", N, i, t1-t0));
-    end if;
+    end for;
+    PrintFile(timingfile, Sprintf("GLn small group %o.%o took %o s", N, i, t1-t0));
 end procedure;
 
 // We have processes do every-Nth group rather than consecutive blocks in order to balance the time between different processes.
