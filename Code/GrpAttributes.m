@@ -1318,7 +1318,7 @@ intrinsic rank(G::LMFDBGrp) -> Any
     if not G`subgroup_inclusions_known then return None(); end if;
     subs := Get(G, "Subgroups");
     for r in [2..Get(G, "order")] do
-        if &+[Get(s, "subgroup_order")^r * s`mobius_function : s in subs] gt 0 then
+        if &+[Get(s, "subgroup_order")^r * s`mobius_function * s`count : s in subs] gt 0 then
             return r;
         end if;
     end for;
@@ -1332,7 +1332,7 @@ intrinsic eulerian_function(G::LMFDBGrp) -> Any
     tot := &+[Get(s, "subgroup_order")^r * s`mobius_function * s`count : s in Get(G, "Subgroups")];
     aut := Get(G, "aut_order");
     //print "tot", tot, "aut", aut;
-    assert IsDivisibleBy(tot, aut);
+    assert tot ne 0 and IsDivisibleBy(tot, aut);
     return tot div aut;
 end intrinsic;
 
