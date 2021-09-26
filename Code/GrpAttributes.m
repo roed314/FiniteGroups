@@ -501,7 +501,13 @@ end intrinsic;
 intrinsic composition_factors(G::LMFDBGrp) -> Any
     {labels for composition factors}
     // see https://magma.maths.usyd.edu.au/magma/handbook/text/625#6962
-    labels := [label(composition_factor_decode(tup)) : tup in Sort(CompositionFactors(G`MagmaGrp))];
+    data := [];
+    for tup in CompositionFactors(G`MagmaGrp) do
+        H := composition_factor_decode(tup);
+        Append(~data, <#H, tup, label(H)>);
+    end for;
+    Sort(~data);
+    return [datum[3] : datum in data];
 end intrinsic;
 
 intrinsic composition_length(G::LMFDBGrp) -> Any
