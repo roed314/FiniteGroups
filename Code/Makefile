@@ -25,22 +25,22 @@ upload: data diagramx
 	cd ..
 
 groups:
-	cat $(FOLDER)/groups/* | sort -u | cat LMFDBGrp.header  - > $(LMFDB)/groups.data
+	ls $(FOLDER)/groups/* | xargs cat | sort -u | cat LMFDBGrp.header  - > $(LMFDB)/groups.data
 
 subs:
-	cat $(FOLDER)/subgroups/* | sort -u | cat LMFDBSubGrp.header - > $(LMFDB)/subs.data
+	ls $(FOLDER)/subgroups/* | xargs cat | sort -u | cat LMFDBSubGrp.header - > $(LMFDB)/subs.data
 
 glnc:
-	cat $(FOLDER)/glnc/* | sort -u |  cat LMFDBRepCC.header - > $(LMFDB)/glnc.data
+	ls $(FOLDER)/glnc/* | xargs cat | sort -u |  cat LMFDBRepCC.header - > $(LMFDB)/glnc.data
 
 glnq:
-	cat $(FOLDER)/glnq/* | sort -u | cat LMFDBRepQQ.header - > $(LMFDB)/glnq.data
+	ls $(FOLDER)/glnq/* | xargs cat | sort -u | cat LMFDBRepQQ.header - > $(LMFDB)/glnq.data
 
 qchar:
-	cat $(FOLDER)/characters_qq/* | sort -u | cat LMFDBGrpChtrQQ.header - > $(LMFDB)/qchar.data
+	ls $(FOLDER)/characters_qq/* | xargs cat | sort -u | cat LMFDBGrpChtrQQ.header - > $(LMFDB)/qchar.data
 
 cchar:
-	cat $(FOLDER)/characters_cc/*  | sort -u |cat LMFDBGrpChtrCC.header - > $(LMFDB)/cchar.data
+	ls $(FOLDER)/characters_cc/* | xargs cat  | sort -u |cat LMFDBGrpChtrCC.header - > $(LMFDB)/cchar.data
 
 ccs:
-	cat $(FOLDER)/groups_cc/* | sort -u | cat LMFDBGrpConjCls.header - > $(LMFDB)/ccs.data
+	ls $(FOLDER)/groups_cc/* | xargs cat | sort -u | cat LMFDBGrpConjCls.header - > $(LMFDB)/ccs.data
