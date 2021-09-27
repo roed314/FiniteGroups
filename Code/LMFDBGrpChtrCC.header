@@ -1,3 +1,3 @@
 center|counter|cyclotomic_n|dim|faithful|field|group|image|indicator|kernel|label|nt|q_character|values
-text|smallint|integer|smallint|boolean|bigint[]|text|text|smallint|text|text|integer[]|text|jsonb
+text|smallint|integer|smallint|boolean|numeric[]|text|text|smallint|text|text|integer[]|text|jsonb
 
