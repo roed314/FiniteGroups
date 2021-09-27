@@ -219,6 +219,7 @@ declare attributes LMFDBSubGrp:
   //generator_images,
   standard_generators,
   diagram_x,
+  diagram_aut_x,
   projective_image,
   subgroup_tex,
   ambient_tex,

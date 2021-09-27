@@ -351,6 +351,11 @@ intrinsic diagram_x(H::LMFDBSubGrp) -> RngIntElt
     return 0;
 end intrinsic;
 
+intrinsic diagram_aut_x(H::LMFDBSubGrp) -> RngIntElt
+{integer from 1 to 10000 indicating the x-coordinate for plotting the subgroup in the lattice, 0 if not computed--will be computed elsewhere}
+    return 0;
+end intrinsic;
+
 intrinsic subgroup_tex(H::LMFDBSubGrp) -> Any
   {Returns Magma's name for the subgroup.}
   g:=H`MagmaSubGrp;

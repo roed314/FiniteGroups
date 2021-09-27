@@ -40,7 +40,7 @@ qchar:
         find $(FOLDER)/characters_qq -type f -exec cat '{}' ';' | sort -u | cat LMFDBGrpChtrQQ.header - > $(LMFDB)/qchar.data
 
 cchar:
-        find $(FOLDER)/characters_cc -type f -exec cat '{}' ';' | sort -u |cat LMFDBGrpChtrCC.header - > $(LMFDB)/cchar.data
+        find $(FOLDER)/characters_cc -type f -exec cat '{}' ';' | sort -u | cat LMFDBGrpChtrCC.header - > $(LMFDB)/cchar.data
 
 ccs:
         find $(FOLDER)/groups_cc -type f -exec cat '{}' ';' | sort -u | cat LMFDBGrpConjCls.header - > $(LMFDB)/ccs.data
