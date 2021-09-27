@@ -25,22 +25,22 @@ upload: data diagramx
 	cd ..
 
 groups:
-	ls $(FOLDER)/groups/* | xargs cat | sort -u | cat LMFDBGrp.header  - > $(LMFDB)/groups.data
+	find $(FOLDER)/groups -type f -exec cat '{}' ';' | sort -u | cat LMFDBGrp.header  - > $(LMFDB)/groups.data
 
 subs:
-	ls $(FOLDER)/subgroups/* | xargs cat | sort -u | cat LMFDBSubGrp.header - > $(LMFDB)/subs.data
+        find $(FOLDER)/subgroups -type f -exec cat '{}' ';' | sort -u | cat LMFDBSubGrp.header - > $(LMFDB)/subs.data
 
 glnc:
-	ls $(FOLDER)/glnc/* | xargs cat | sort -u |  cat LMFDBRepCC.header - > $(LMFDB)/glnc.data
+        find $(FOLDER)/glnc -type f -exec cat '{}' ';' | sort -u | cat LMFDBRepCC.header - > $(LMFDB)/glnc.data
 
 glnq:
-	ls $(FOLDER)/glnq/* | xargs cat | sort -u | cat LMFDBRepQQ.header - > $(LMFDB)/glnq.data
+        find $(FOLDER)/glnq -type f -exec cat '{}' ';' | sort -u | cat LMFDBRepQQ.header - > $(LMFDB)/glnq.data
 
 qchar:
-	ls $(FOLDER)/characters_qq/* | xargs cat | sort -u | cat LMFDBGrpChtrQQ.header - > $(LMFDB)/qchar.data
+        find $(FOLDER)/characters_qq -type f -exec cat '{}' ';' | sort -u | cat LMFDBGrpChtrQQ.header - > $(LMFDB)/qchar.data
 
 cchar:
-	ls $(FOLDER)/characters_cc/* | xargs cat  | sort -u |cat LMFDBGrpChtrCC.header - > $(LMFDB)/cchar.data
+        find $(FOLDER)/characters_cc -type f -exec cat '{}' ';' | sort -u |cat LMFDBGrpChtrCC.header - > $(LMFDB)/cchar.data
 
 ccs:
-	ls $(FOLDER)/groups_cc/* | xargs cat | sort -u | cat LMFDBGrpConjCls.header - > $(LMFDB)/ccs.data
+        find $(FOLDER)/groups_cc -type f -exec cat '{}' ';' | sort -u | cat LMFDBGrpConjCls.header - > $(LMFDB)/ccs.data
