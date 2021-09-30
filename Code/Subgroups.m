@@ -469,7 +469,7 @@ intrinsic SubGrpLstAut(X::LMFDBGrp) -> SubgroupLat
             if acnt eq 1 then nchar +:= 1; end if;
             nsubs +:= acnt;
             ccnt := Index(G, Normalizer(G, x`subgroup));
-            if ccnt eq 1 then nnorm +:= 1; end if;
+            if ccnt eq 1 then nnorm +:= acnt; end if;
             nconj +:= acnt div ccnt;
         end for;
         X`number_characteristic_subgroups := nchar;
