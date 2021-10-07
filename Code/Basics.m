@@ -58,7 +58,8 @@ intrinsic GetBasicAttributesSubGrp(pair::BoolElt) -> Any
      ["IsCyclic" , "cyclic"],
      ["IsAbelian" , "abelian"],
      ["IsSolvable" , "solvable"],
-     ["IsPerfect" , "perfect"]
+     ["IsPerfect" , "perfect"],
+     ["IsNilpotent", "nilpotent"]
       ];
   end if;
 end intrinsic;

@@ -77,6 +77,45 @@ intrinsic supersolvable(G::LMFDBGrp) -> BoolElt
     return true;
 end intrinsic;
 
+intrinsic solvability_type(G::LMFDBGrp) -> RngIntElt
+{An encoding of where this group falls along the spectrum from cyclic to nonsolvable}
+    if Get(G, "cyclic") then
+        return 0;
+    elif Get(G, "abelian") then
+        if Get(G, "metacyclic") then
+            return 1;
+        else
+            return 2;
+        end if;
+    elif Get(G, "nilpotent") then
+        if Get(G, "metacyclic") then
+            return 3;
+        elif Get(G, "metabelian") then
+            return 4;
+        else
+            return 5;
+        end if;
+    elif Get(G, "metacyclic") then
+        return 6;
+    elif Get(G, "metabelian") then
+        if Get(G, "supersolvable") then
+            return 7;
+        elif Get(G, "monomial") then
+            return 8;
+        else
+            return 9;
+        end if;
+    elif Get(G, "supersolvable") then
+        return 10;
+    elif Get(G, "monomial") then
+        return 11;
+    elif Get(G, "solvable") then
+        return 12;
+    else
+        return 13;
+    end if;
+end intrinsic;
+
 // for LMFDBGrp
 // Next 3 intrinsics are helpers for metacyclic
 intrinsic EasyIsMetacyclic(G::LMFDBGrp) -> BoolElt
@@ -169,6 +208,13 @@ intrinsic factors_of_order(G::LMFDBGrp) -> Any
     {Prime factors of the order of the group}
     gord:=Get(G,"order");
     return [z[1] : z in Factorization(gord)];
+end intrinsic;
+
+intrinsic exponents_of_order(G::LMFDBGrp) -> Any
+{Exponents of the distinct prime factors of the order of the group, sorted in reverse order}
+    exps := [-z[2] : z in Factorization(Get(G, "order"))];
+    Sort(~exps);
+    return [-e : e in exps];
 end intrinsic;
 
 intrinsic metabelian(G::LMFDBGrp) -> BoolElt
@@ -576,6 +622,10 @@ intrinsic outer_group(G::LMFDBGrp) -> Any
     end try;
 end intrinsic;
 
+intrinsic complete(G::LMFDBGrp) -> BoolElt
+{}
+    return (#Get(G, "MagmaCenter") eq 1 and Get(G, "outer_order") eq 1);
+end intrinsic;
 
 intrinsic center_label(G::LMFDBGrp) -> Any
    {Label string for Center}
@@ -1228,18 +1278,47 @@ end intrinsic;
 
 
 intrinsic wreath_product(G::LMFDBGrp) -> Any
-  {Returns true if G is a wreath product; otherwise returns false.}
-  if Get(G, "abelian") then return false; end if; // abelian groups can't be nontrivial wreath products
-  GG := Get(G, "MagmaGrp");
-  // Need GrpPerm for IsWreathProduct function call below. Check and convert if not GrpPerm.
-  if Type(GG) ne GrpPerm then
-       // We find an efficient permutation representation.
-       ts:=Get(G, "MagmaTransitiveSubgroup");
-       GG:=CosetImage(GG,ts);
-  end if;
-  return IsWreathProduct(GG);
+{Returns true if G is a wreath product; otherwise returns false.}
+    G`wreath_data := None();
+    if Get(G, "abelian") then return false; end if; // abelian groups can't be nontrivial wreath products
+    GG := Get(G, "MagmaGrp");
+    // Need GrpPerm for IsWreathProduct function call below. Check and convert if not GrpPerm.
+    if Type(GG) ne GrpPerm then
+        // We find an efficient permutation representation.
+        ts := Get(G, "MagmaTransitiveSubgroup");
+        if Type(ts) eq NoneType then
+            return None();
+        end if;
+        phi, GG := CosetAction(GG, ts);
+    else
+        phi := IdentityHomomorphism(GG);
+    end if;
+    isw := IsWreathProduct(GG);
+    if isw then
+        // For some reason, Magma doesn't return 4 values when isw is false
+        isw, A, B, C := IsWreathProduct(GG);
+        BC := CosetImage(B, C);
+        n, d := TransitiveGroupIdentification(BC);
+        T := Sprintf("%oT%o", d, n);
+        if G`all_subgroups_known or (Index(GG, A) le G`subgroup_index_bound and Index(GG, C) le G`subgroup_index_bound) then
+            S := Get(G, "Subgroups"); // triggers labeling of subgroups
+            L := BestSubgroupLat(G);
+            A := L`subs[SubgroupIdentify(L, A @@ phi)];
+            B := L`subs[SubgroupIdentify(L, B @@ phi)];
+            C := L`subs[SubgroupIdentify(L, C @@ phi)];
+            G`wreath_data := [A`label, B`label, C`label, T];
+        else
+            G`wreath_data := [GroupName(A: TeX:=true), GroupName(B: TeX:=true), T];
+        end if;
+    end if;
+    return isw;
 end intrinsic;
 
+intrinsic wreath_data(G::LMFDBGrp) -> SeqEnum
+{}
+    _ := Get(G, "wreath_product");
+    return G`wreath_data;
+end intrinsic;
 
 intrinsic counter(G::LMFDBGrp) -> RngIntElt
 {Second entry in label}

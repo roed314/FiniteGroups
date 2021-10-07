@@ -391,7 +391,7 @@ intrinsic quotient_cyclic(H::LMFDBSubGrp) -> Any
     Q := quo< GG | HH >;
     return IsCyclic(Q);
   else
-    return false;
+    return None();
   end if;
 end intrinsic;
 
@@ -403,7 +403,7 @@ intrinsic quotient_abelian(H::LMFDBSubGrp) -> Any
     Q := quo< GG | HH >;
     return IsAbelian(Q);
   else
-    return false;
+    return None();
   end if;
 end intrinsic;
 
@@ -415,7 +415,7 @@ intrinsic quotient_solvable(H::LMFDBSubGrp) -> Any
     Q := quo< GG | HH >;
     return IsSolvable(Q);
   else
-    return false;
+    return None();
   end if;
 end intrinsic;
 

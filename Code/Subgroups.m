@@ -1738,24 +1738,29 @@ intrinsic LMFDBSubgroup(H::SubgroupLatElt) -> LMFDBSubGrp
     return res;
 end intrinsic;
 
+intrinsic BestSubgroupLat(G::LMFDBGrp) -> SubgroupLat
+{}
+    if G`outer_equivalence then
+        if G`subgroup_inclusions_known then
+            return Get(G, "SubGrpLatAut");
+        else
+            return Get(G, "SubGrpLstAut");
+        end if;
+    else
+        if G`subgroup_inclusions_known then
+            return Get(G, "SubGrpLat");
+        else
+            return Get(G, "SubGrpLst");
+        end if;
+    end if;
+end intrinsic;
+
 intrinsic Subgroups(G::LMFDBGrp) -> SeqEnum
     {The list of LMFDBSubGrps computed for this group}
     t0 := Cputime();
     S := [];
     GG := G`MagmaGrp;
-    if G`outer_equivalence then
-        if G`subgroup_inclusions_known then
-            L := Get(G, "SubGrpLatAut");
-        else
-            L := Get(G, "SubGrpLstAut");
-        end if;
-    else
-        if G`subgroup_inclusions_known then
-            L := Get(G, "SubGrpLat");
-        else
-            L := Get(G, "SubGrpLst");
-        end if;
-    end if;
+    L := BestSubgroupLat(G);
     LabelSubgroups(L);
     S := [LMFDBSubgroup(H) : H in L`subs];
     /*if G`all_subgroups_known and not G`outer_equivalence then // Remove G`outer_equivalence once Magma bugs around automorphisms are fixed or worked around
