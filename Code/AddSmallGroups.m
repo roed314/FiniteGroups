@@ -69,7 +69,7 @@ procedure WriteSmallGroupGLnx(N, i) // May use later
 end procedure;
 
 for N in [Nlower..(Nupper-1)] do
-    if N in Skip then continue;
+    if N in Skip then continue; end if;
     I := NumberOfSmallGroups(N);
     if i le I then
         WriteSmallGroup(N, i);
