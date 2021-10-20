@@ -1,7 +1,10 @@
 from lmfdb import db as mydb
 from lmfdb.groups.abstract.web_groups import *
 from sage.all import *
-import sys
+import sys, os
+
+HOME=os.path.expanduser("~")
+sys.path.append(os.path.join(HOME, 'lmfdb'))
 
 
 which = 'conj'

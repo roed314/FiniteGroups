@@ -1,6 +1,10 @@
 import sys
+import os
 import json
 from sage.all import *
+
+HOME=os.path.expanduser("~")
+sys.path.append(os.path.join(HOME, 'lmfdb'))
 
 fn = "grdata"
 fn1 = "grdata1"
