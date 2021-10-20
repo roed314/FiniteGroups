@@ -899,7 +899,7 @@ intrinsic ConjugacyClasses(G::LMFDBGrp) ->  SeqEnum
     G`ClassMap := cm*permmap; // Magma does composition backwards!
     magccs:=[ New(LMFDBGrpConjCls) : j in cc];
     gord:=Order(g);
-    plist:=[z[1] : z in Factorization(gord)];
+    plist:=[z[1] : z in Factorization(gord) * Factorization(EulerPhi(Get(G, "exponent")))];
     //gord:=Get(G, 'Order');
     for j:=1 to #cc do
         ix:=perm[j];
@@ -909,7 +909,6 @@ intrinsic ConjugacyClasses(G::LMFDBGrp) ->  SeqEnum
         magccs[j]`size := cc[ix][2];
         magccs[j]`counter := j;
         magccs[j]`order := cc[ix][1];
-        // Not sure of which other powers are desired
         magccs[j]`powers := [perm[pm(ix,p)] : p in plist];
         magccs[j]`representative := cc[ix][3];
     end for;
@@ -1386,7 +1385,7 @@ intrinsic rank(G::LMFDBGrp) -> Any
     if not G`subgroup_inclusions_known then return None(); end if;
     subs := Get(G, "Subgroups");
     for r in [2..Get(G, "order")] do
-        if &+[Get(s, "subgroup_order")^r * s`mobius_function * s`count : s in subs] gt 0 then
+        if &+[Get(s, "subgroup_order")^r * s`mobius_sub * s`count : s in subs] gt 0 then
             return r;
         end if;
     end for;
@@ -1397,7 +1396,7 @@ intrinsic eulerian_function(G::LMFDBGrp) -> Any
 {Calculates the Eulerian function of G for n = rank(G)}
     if Get(G, "order") eq 1 then return 1; end if;
     r := Get(G,"rank");
-    tot := &+[Get(s, "subgroup_order")^r * s`mobius_function * s`count : s in Get(G, "Subgroups")];
+    tot := &+[Get(s, "subgroup_order")^r * s`mobius_sub * s`count : s in Get(G, "Subgroups")];
     aut := Get(G, "aut_order");
     //print "tot", tot, "aut", aut;
     assert tot ne 0 and IsDivisibleBy(tot, aut);

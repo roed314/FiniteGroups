@@ -1,5 +1,7 @@
 *~
 data/
+Code/DATA/
+Code/LMFDB/*.data
 *.swp
 *.sig
 *DS_Store

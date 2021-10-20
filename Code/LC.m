@@ -1,7 +1,7 @@
 /*
 These have been moved to Subgroups.m and GrpAttributes.m
 
-intrinsic mobius_function(G::LMFDBGrp) -> Any
+intrinsic mobius_sub(G::LMFDBGrp) -> Any
 {Calculates the images of the subgroup-Mobius function on subgroups of G}
     if G`all_subgroups_known and G`subgroup_inclusions_known then
         L := G`outer_equivalence select Get(G, "SubGrpLatAut") else Get(G, "SubGrpLat");
@@ -27,7 +27,7 @@ intrinsic mobius_function(G::LMFDBGrp) -> Any
         for m in MobiusImages do
           if IsConjugate(G`MagmaGrp,H,L[m[1]]) then
             Append(~conj_mobii,[*s,m[2]*]);
-            s_new`mobius_function := m[2];
+            s_new`mobius_sub := m[2];
             Append(~subgps_new,s_new);
             break m;
           end if;
@@ -45,15 +45,15 @@ end intrinsic;
 
 intrinsic eulerian_function(G::LMFDBGrp) -> Any
   {Calculates the Eulerian function of G for n = rank(G)}
-  if not assigned G`mobius_function then 
-    fix:=mobius_function(G);
+  if not assigned G`mobius_sub then 
+    fix:=mobius_sub(G);
   end if;
   if Get(G, "order") eq 1 then return 1; end if;
   n:=Get(G,"rank");
   sum:=0;
   subs:=G`Subgroups;
   for s in subs do
-    sum+:=(#s`MagmaSubGrp)^n * s`mobius_function * #Conjugates(G`MagmaGrp,s`MagmaSubGrp);
+    sum+:=(#s`MagmaSubGrp)^n * s`mobius_sub * #Conjugates(G`MagmaGrp,s`MagmaSubGrp);
   end for;
   aut := G`aut_order;
   assert sum mod aut eq 0;
@@ -73,7 +73,7 @@ intrinsic rank(G::LMFDBGrp) -> Any
     while r le #G`MagmaGrp+1 do
       sum := 0;
       for s in subs do
-        sum +:= (#s`MagmaSubGrp)^r * s`mobius_function;
+        sum +:= (#s`MagmaSubGrp)^r * s`mobius_sub;
       end for;
       if sum gt 0 then
         return r;

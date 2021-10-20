@@ -262,19 +262,11 @@ end intrinsic;
 
 intrinsic QuotientActionMap(H::LMFDBSubGrp) -> Any
 {if not normal, None; if split or N abelian, Q -> Aut(N); otherwise, Q -> Out(N)}
-    if Get(H, "normal") then
+    if Get(H, "normal") and Get(H, "subgroup_order") ne 1 and Get(H, "quotient_order") ne 1 then
         G := H`Grp;
         GG := G`MagmaGrp;
         N := H`MagmaSubGrp;
-        if Type(N) eq GrpPC then
-            try
-                A := AutomorphismGroupSolubleGroup(N);
-            catch e;
-                A := AutomorphismGroup(N);
-            end try;
-        else
-            A := AutomorphismGroup(N);
-        end if;
+        A := AutomorphismGroup(N);
         if Get(H, "split") then
             Q := Get(H, "complements")[1];
             //print "split", H`label;
@@ -299,7 +291,6 @@ end intrinsic;
 intrinsic quotient_action_image(H::LMFDBSubGrp) -> Any
 {the label for Q/K as an abstract group, where K is the quotient action kernel (NULL if H is not normal)}
     // Taking the image of the QuotientActionMap can cause segfaults (e.g. 336.172) so we disable it for now.
-    return None();
     f := Get(H, "QuotientActionMap");
     if Type(f) eq NoneType then
         return None();
@@ -312,7 +303,6 @@ end intrinsic;
 intrinsic quotient_action_kernel(H::LMFDBSubGrp) -> Any
 {the label of the kernel of the map from Q to A, as an abstract group (NULL if H is not normal). }
     // Taking the kernel of the QuotientActionMap can cause segfaults (e.g. 336.172) so we disable it for now.
-    return None();
     f := Get(H, "QuotientActionMap");
     if Type(f) eq NoneType then
         return None();
@@ -324,7 +314,6 @@ end intrinsic;
 intrinsic quotient_action_kernel_order(H::LMFDBSubGrp) -> Any
 {the label of the kernel of the map from Q to A, as an abstract group (NULL if H is not normal). }
     // Taking the kernel of the QuotientActionMap can cause segfaults (e.g. 336.172) so we disable it for now.
-    return None();
     f := Get(H, "QuotientActionMap");
     if Type(f) eq NoneType then
         return None();

@@ -70,7 +70,8 @@ declare attributes SubgroupLatElt:
         special_labels, // other labels (normal, maximal, special; omitting the N.i)
         unders, // other subs this sub contains maximally, as an associative array i->cnt, where i is the index in subs and cnt is the number of reps in that class contained in a single rep of this class
         overs, // other subs this sub is contained in minimally, in the same format
-        mobius, // value of the mobius function on this node of the lattice
+        mobius_sub, // value of the mobius subgroup function on this node of the lattice
+        mobius_quo, // value of the mobius quotient function on this node of the lattice
         aut_unders, // as above, but up to automorphism
         aut_overs, // as above, but up to automorphism
         subgroup_count, // the number of subgroups in this conjugacy class of subgroups
@@ -1137,16 +1138,6 @@ function SubgroupLattice(GG, aut)
             KK`unders[HH`i] := KK`subgroup_count*v div HH`subgroup_count;
         end for;
     end for;
-    // Set the mobius function
-    /*Lat`subs[1]`mobius := 1; //μ_G(G) = 1
-    for i in [2..#Lat`subs] do
-        x := Lat`subs[i];
-        x`mobius := 0;
-        for j in half_interval(x, "overs", {}) do
-            y := Lat`subs[j];
-            x`mobius -:= (y`subgroup_count * NumberOfInclusions(x, y) * y`mobius) div x`subgroup_count;
-        end for;
-    end for;*/
     AddSpecialSubgroups(Lat); // just adds the labels since the subgroups already present
     return Lat;
 end function;
@@ -1294,20 +1285,41 @@ function SubgroupLattice_edges(G, aut)
         end for;
     end for;
 
-    // Set the mobius function
-    L`subs[1]`mobius := 1; //μ_G(G) = 1
+    // Set the mobius functions
+    L`subs[1]`mobius_sub := 1; //μ_G(G) = 1
+    noi := AssociativeArray();
     for i in [2..#L] do
         x := L`subs[i];
-        x`mobius := 0;
+        x`mobius_sub := 0;
         //print "x", x`i;
         for j in half_interval(x, "overs", {}) do
             y := L`subs[j];
             if x`i eq y`i then continue; end if;
-            //print x`i, y`i, Get(y, "subgroup_count"), NumberOfInclusions(x, y), y`mobius, Get(x, "subgroup_count");
-            x`mobius -:= (Get(y, "subgroup_count") * NumberOfInclusions(x, y) * y`mobius) div Get(x, "subgroup_count");
+            n := NumberOfInclusions(x, y);
+            if Get(x, "subgroup_count") eq Get(x, "cc_count") and Get(y, "subgroup_count") eq Get(y, "cc_count") then // both normal
+                noi[[x`i,y`i]] := n;
+            end if;
+            //print x`i, y`i, y`subgroup_count, n, y`mobius_sub, x`subgroup_count;
+            x`mobius_sub -:= (y`subgroup_count * n * y`mobius_sub) div x`subgroup_count;
         end for;
-        //print "mobius", x`mobius;
+        //print "mobius_sub", x`mobius_sub;
     end for;
+    if L`index_bound eq 0 then
+        L`subs[#L]`mobius_quo := 1;
+        for i in [#L-1..1 by -1] do
+            x := L`subs[i];
+            if x`subgroup_count eq x`cc_count then
+                x`mobius_quo := 0;
+                for j in half_interval(x, "unders", {}) do
+                    y := L`subs[j];
+                    if x`i eq y`i or y`subgroup_count ne y`cc_count then continue; end if;
+                    x`mobius_quo -:= noi[[y`i, x`i]] * y`mobius_quo;
+                end for;
+            else
+                x`mobius_quo := None();
+            end if;
+        end for;
+    end if;
     vprint User1: "Mobius function computed";
     L`inclusions_known := true;
     return L;
@@ -1724,11 +1736,18 @@ intrinsic LMFDBSubgroup(H::SubgroupLatElt) -> LMFDBSubGrp
     if Lat`inclusions_known then
         res`contains := [Lat`subs[k]`label : k in Keys(H`unders)]; // Sort
         res`contained_in := [Lat`subs[k]`label : k in Keys(H`overs)]; // Sort
-        res`mobius_function := H`mobius;
+        res`mobius_sub := H`mobius_sub;
+        if Lat`index_bound eq 0 then
+            res`mobius_quo := H`mobius_quo;
+        else
+            // We could compute mobius_quo in this case as well, when we're storing all normal subgroups
+            res`mobius_quo := None();
+        end if;
     else
         res`contains := None();
         res`contained_in := None();
-        res`mobius_function := None();
+        res`mobius_sub := None();
+        res`mobius_quo := None();
     end if;
     res`normalizer := Lat`subs[Get(H, "normalizer")]`label;
     res`normal_closure := Lat`subs[Get(H, "normal_closure")]`label;

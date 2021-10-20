@@ -28,6 +28,3 @@ G`maximal_subgroups_known:=true;
 G`all_subgroups_known:=true;
 G`subgroup_inclusions_known:=true;
 Get(G,"Subgroups");
-
-mobius_function(G);
-

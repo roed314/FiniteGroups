@@ -25,6 +25,7 @@
 * Improve DirectFactorization so that it doesn't need to create LMFDBGrps and compute their subgroup lattices
 * Speed up IsWreathProduct to use the already computed list of subgroups
 * Add complete as a property (trivial center and outer automorphism group).  More generally, check out https://en.wikipedia.org/wiki/Category:Properties_of_groups for things we might add.
+* We currently compute the power map for conjugacy classes for p dividing the order of the group, but our schema suggested also including p dividing phi(exponent of G).  I'm struggling to figure out why this is sufficient to find the power map for all integers.
 
 ## Frontend
 
@@ -44,7 +45,8 @@
 * Evaluate sort order for split and non-split products, don't just hide one (ie it should never say "Show all 5")
 * Look at spacing/highlighting for split and non-split products (Jen)
 * Add feature where user can type in a list of permutations and we try to figure out what group they generate.  This could just use GAP's `IdGroup` function in small cases, or compute a hash/do other stuff for larger cases.
-
+* Improve the subgroup diagram layouts, via Tim's suggestions or https://sporkjs.github.io/stuff/drawlat.html for example.
+* Large svgs for group pictures
 
 ## Last Stage
 

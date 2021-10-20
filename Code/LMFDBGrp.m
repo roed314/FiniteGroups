@@ -199,7 +199,8 @@ declare attributes LMFDBSubGrp:
   maximal_normal,
   minimal,
   minimal_normal,
-  mobius_function,
+  mobius_sub,
+  mobius_quo,
   split,
   complements,
   direct,
@@ -214,6 +215,7 @@ declare attributes LMFDBSubGrp:
   normal_closure,
   QuotientActionMap, // if split, Q -> Aut(N); otherwise Q -> Out(N)
   quotient_action_kernel,
+  quotient_action_kernel_order,
   quotient_action_image,
   contains,
   contained_in,
