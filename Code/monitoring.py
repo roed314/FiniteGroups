@@ -16,9 +16,10 @@ def check_missing():
         for line in F:
             started.append(line.strip().split()[3])
     Ns = sorted(set(ZZ(label.split(".")[0]) for label in started))
-    maxi = max(ZZ(label.split(".")[1]) for label in started if ZZ(label.split(".")[0]) == max(Ns))
+    maxN = max(Ns)
+    maxi = max(ZZ(label.split(".")[1]) for label in started if ZZ(label.split(".")[0]) == maxN)
     for N in Ns:
-        imax = num_groups(N) if N != maxpair[0] else maxi
+        imax = num_groups(N) if N != maxN else maxi
         for i in range(1, imax+1):
             label = "%s.%s" % (N, i)
             if not ope(opj("groups", label)):
