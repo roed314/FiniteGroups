@@ -260,28 +260,40 @@ intrinsic stem(H::LMFDBSubGrp) -> BoolElt
    end if;
 end intrinsic;
 
-intrinsic QuotientActionMap(H::LMFDBSubGrp) -> Any
+intrinsic QuotientActionMap(H::LMFDBSubGrp : use_solv:=false) -> Any
 {if not normal, None; if split or N abelian, Q -> Aut(N); otherwise, Q -> Out(N)}
     if Get(H, "normal") and Get(H, "subgroup_order") ne 1 and Get(H, "quotient_order") ne 1 then
         G := H`Grp;
         GG := G`MagmaGrp;
         N := H`MagmaSubGrp;
-        A := AutomorphismGroup(N);
-        if Get(H, "split") then
-            Q := Get(H, "complements")[1];
-            //print "split", H`label;
-            return hom<Q -> A| [<q, hom<N -> N | [<n, n^q> : n in Generators(N)]>> : q in Generators(Q)]>;
+        if use_solv then
+            A := AutomorphismGroupSolubleGroup(N);
         else
-            Q, Qproj := quo< G`MagmaGrp | N >;
-            if IsAbelian(N) then
-                //print "abelian", H`label;
-                return hom<Q -> A | [<q, hom<N -> N | [<n, n^(q@@Qproj)> : n in Generators(N)]>> : q in Generators(Q)]>;
-            else
-                return None();
-                // Out, Oproj := OuterFPGroup(A);
-                // return hom<Q -> Out | [hom<N -> N | [n^(q@@Qproj) : n in Generators(N)]>@Oproj : q in Generators(Q)]>;
-            end if;
+            A := AutomorphismGroup(N);
         end if;
+        try
+            if Get(H, "split") then
+                Q := Get(H, "complements")[1];
+                //print "split", H`label;
+                return hom<Q -> A| [<q, hom<N -> N | [<n, n^q> : n in Generators(N)]>> : q in Generators(Q)]>;
+            else
+                Q, Qproj := quo< G`MagmaGrp | N >;
+                if IsAbelian(N) then
+                    //print "abelian", H`label;
+                    return hom<Q -> A | [<q, hom<N -> N | [<n, n^(q@@Qproj)> : n in Generators(N)]>> : q in Generators(Q)]>;
+                else
+                    return None();
+                    // Out, Oproj := OuterFPGroup(A);
+                    // return hom<Q -> Out | [hom<N -> N | [n^(q@@Qproj) : n in Generators(N)]>@Oproj : q in Generators(Q)]>;
+                end if;
+            end if;
+        catch e;
+            if use_solv then
+                return None();
+            else
+                return QuotientActionMap(H : use_solv:=true);
+            end if;
+        end try;
     else
         return None();
     end if;

@@ -39,16 +39,22 @@ procedure WriteSmallGroup(N, i)
               Sprintf("%ogroups_cc/%o", Folder, label),
               Sprintf("%ocharacters_cc/%o", Folder, label),
               Sprintf("%ocharacters_qq/%o", Folder, label)];
-    timingfile := Sprintf("%ologs/%o", Folder, label);
-    print label;
-    PrintFile(logfile, "Starting small group "*label);
-    print_data, timings := MakeSmallGroupData(N, i);
-    for j in [1..5] do
-        for line in print_data[j] do
-            PrintFile(files[j], line);
+    existing := OpenTest(files[1], "r");
+    print files[1], existing;
+    if existing then
+        print label, "already complete";
+    else
+        timingfile := Sprintf("%ologs/%o", Folder, label);
+        print label;
+        PrintFile(logfile, "Starting small group "*label);
+        print_data, timings := MakeSmallGroupData(N, i);
+        for j in [1..5] do
+            for line in print_data[j] do
+                PrintFile(files[j], line);
+            end for;
         end for;
-    end for;
-    PrintFile(timingfile, Sprintf("%o %o", label, Join([Sprint(t) : t in timings], " ")));
+        PrintFile(timingfile, Sprintf("%o %o", label, Join([Sprint(t) : t in timings], " ")));
+    end if;
 end procedure;
 
 procedure WriteSmallGroupGLnx(N, i) // May use later
