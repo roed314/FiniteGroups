@@ -40,7 +40,6 @@ procedure WriteSmallGroup(N, i)
               Sprintf("%ocharacters_cc/%o", Folder, label),
               Sprintf("%ocharacters_qq/%o", Folder, label)];
     existing := OpenTest(files[1], "r");
-    print files[1], existing;
     if existing then
         print label, "already complete";
     else
