@@ -1412,3 +1412,64 @@ intrinsic MagmaRadical(G::LMFDBGrp) -> Grp
 {}
     return Radical(G`MagmaGrp);
 end intrinsic;
+
+intrinsic MinPermDeg(G::LMFDBGrp) -> RngSerPowElt
+{}
+    R<x> := PowerSeriesRing(Integers() : Precision:=100);
+    m := Get(G, "order");
+    N0 := NormalSubgroups(G);
+    print [N`mobius_quo : N in N0];
+    if G`outer_equivalence then
+        L := SubGrpLatAut(G);
+        Normals := [N : N in L`subs | N`cc_count eq Get(N, "subgroup_count")];
+        Ambient := Get(G, "Holomorph");
+        inj := Get(G, "HolInj");
+        f := &+[N`mobius_quo * N`cc_count * &*[(1 - x^(m div H`order))^(-NumberOfInclusions(N, H) * H`subgroup_count div N`subgroup_count) : H in L`subs | IsConjugateSubgroup(Ambient, inj(Core(G`MagmaGrp, H`subgroup)), inj(N`subgroup))] : N in Normals];
+        /*for N in Normals do
+            print Get(N, "subgroup_order"), N`mobius_quo, N`conjugacy_class_count;
+            print [(1 - x^(m div Get(H, "subgroup_order")))^(-H`conjugacy_class_count) : H in S | IsConjugateSubgroup(Ambient, inj(H`core), inj(N`MagmaSubGrp))];
+        end for;
+        f := &+[N`mobius_quo * N`conjugacy_class_count * &*[(1 - x^(m div Get(H, "subgroup_order")))^(-H`conjugacy_class_count) : H in S | IsConjugateSubgroup(Ambient, inj(H`core), inj(N`MagmaSubGrp))] : N in NormalSubgroups(G)];*/
+    else
+        S := Get(G, "Subgroups");
+        f := &+[N`mobius_quo * &*[(1 - x^(m div Get(H, "subgroup_order")))^(-1) : H in S | N`MagmaSubGrp subset H`core] : N in N0];
+    end if;
+    return f;
+end intrinsic;
+
+intrinsic MinPermDegSplit(G::LMFDBGrp, K::LMFDBSubGrp) -> RngSerPowElt, RngSerPowElt, RngSerPowElt
+{K should be normal in G}
+    R<x> := PowerSeriesRing(Integers() : Precision:=100);
+    assert not G`outer_equivalence;
+    S := Get(G, "Subgroups");
+    m := Get(G, "order");
+    N0 := NormalSubgroups(G);
+    N1 := [N : N in N0 | K`MagmaSubGrp subset N`MagmaSubGrp];
+    print [N`mobius_quo : N in N1];
+    N2 := [N : N in N0 | not K`MagmaSubGrp subset N`MagmaSubGrp];
+    print [N`mobius_quo : N in N2];
+    f1 := &+[N`mobius_quo * &*[(1 - x^(m div Get(H, "subgroup_order")))^(-1) : H in S | N`MagmaSubGrp subset H`core] : N in N1];
+    f2 := &+[N`mobius_quo * &*[(1 - x^(m div Get(H, "subgroup_order")))^(-1) : H in S | N`MagmaSubGrp subset H`core] : N in N2];
+    GK := NewLMFDBGrp(G`MagmaGrp / K`MagmaSubGrp, "G/K");
+    AssignBasicAttributes(GK);
+    SetSubgroupParameters(GK);
+    f3 := MinPermDeg(GK);
+    return f1, f2, f3;
+end intrinsic;
+
+intrinsic MinPermDegAbSplits(G::LMFDBGrp) -> RngIntElt
+{}
+    R<x> := PowerSeriesRing(Integers() : Precision:=100);
+    S := Get(G, "Subgroups");
+    f := MinPermDeg(G);
+    prec := Valuation(f) + 2;
+    print f + BigO(x^prec);
+    for K in S do
+        if Get(K, "subgroup_order") ne 1 and Get(K, "quotient_order") ne 1 and Get(K, "normal") and Get(K, "quotient_abelian") then
+            f1, f2, f3 := MinPermDegSplit(G, K);
+            print K`label;
+            print f1+BigO(x^prec), f2+BigO(x^prec), f3+BigO(x^prec);
+        end if;
+    end for;
+    return 0;
+end intrinsic;

@@ -1,6 +1,6 @@
 AttachSpec("spec");
 
-// Call using gnu parallel as follows, for computing groups of order up to 511, using a total of 128 processes and timing out after an hour, into the folder DATA (which will create subfolders as necessary)
+// Call using gnu parallel as follows, for computing groups of order up to 1023 (skipping 512 and 768), using a total of 128 processes and timing out after an hour, into the folder DATA (which will create subfolders as necessary)
 // values are processed by magma in the order given, so the file must come last
 // parallel -j128 --timeout 3600 magma Folder:=DATA Nlower:=1 Nupper:=1024 Skip:=[512,768] Proc:={1} AddSmallGroups.m ::: {1..175444}
 
@@ -8,6 +8,7 @@ AttachSpec("spec");
 // Folder: folder for containing the results
 // Nlower: an overall lower bound for the order of the groups being added in this run
 // Nupper: an overall upper bound for the order of the groups being added in this run (upper bound not included)
+// Skip: an list of integers to skip
 // Proc: the current process (determines which N, i will be computed by this process)
 
 //System("mkdir -p " * Folder * "/labels");

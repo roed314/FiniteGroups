@@ -260,7 +260,7 @@ intrinsic stem(H::LMFDBSubGrp) -> BoolElt
    end if;
 end intrinsic;
 
-intrinsic QuotientActionMap(H::LMFDBSubGrp : use_solv:=false) -> Any
+intrinsic QuotientActionMap(H::LMFDBSubGrp : use_solv:=true) -> Any
 {if not normal, None; if split or N abelian, Q -> Aut(N); otherwise, Q -> Out(N)}
     if Get(H, "normal") and Get(H, "subgroup_order") ne 1 and Get(H, "quotient_order") ne 1 then
         G := H`Grp;
