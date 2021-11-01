@@ -18,9 +18,11 @@ def check_missing():
     Ns = sorted(set(ZZ(label.split(".")[0]) for label in started))
     maxN = max(Ns)
     maxi = max(ZZ(label.split(".")[1]) for label in started if ZZ(label.split(".")[0]) == maxN)
+    unfinished = []
     for N in Ns:
         imax = num_groups(N) if N != maxN else maxi
         for i in range(1, imax+1):
             label = "%s.%s" % (N, i)
             if not ope(opj("groups", label)):
-                print(label, "not finished")
+                unfinished.append(label)
+    return unfinished

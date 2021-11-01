@@ -325,7 +325,7 @@ This function is only safe to call on a newly created group, since it changes Ma
         // Magma has a descending filtration, so we switch to that here.
         Reverse(~filled);
         gens_used := [#filled - i : i in gens_used];
-        //print "filled", [<tup[1], tup[2], #tup[3]> : tup in filled];
+        vprint User1: "filled", [<tup[1], tup[2], #tup[3]> : tup in filled];
         F := FreeGroup(#filled);
         rels := {};
         one := Identity(F);
@@ -367,7 +367,7 @@ This function is only safe to call on a newly created group, since it changes Ma
                 end if;
             end for;
         end for;
-        //print "rels", rels;
+        vprint User1: "rels", rels;
         H := quo< GrpPC : F | rels >;
         //print sprint([x : x in GetAttributes(LMFDBGrp) | assigned G``x]);
         //[CCAutCollapse,CCpermutation,CCpermutationInv]
@@ -378,7 +378,9 @@ This function is only safe to call on a newly created group, since it changes Ma
         // prone to errors since it keeps the old group around
         //print "MagmaAutGroup", Get(G, "pc_code");
         if reset_attrs then
+            print "preaut";
             G`MagmaAutGroup := MagmaAutGroup(G);
+            print "postaut";
             G`Holomorph := Holomorph(G);
             G`HolInj := HolInj(G);
             // Various conjugacy class attributes were set in determining an ordering on conjugacy classes for Gassman vectors
