@@ -3,7 +3,7 @@
 
 from sage.misc.cachefunc import cached_function
 from sage.all import RR, ZZ
-from collection import defaultdict
+from collections import defaultdict
 import os
 opj = os.path.join
 ope = os.path.exists
