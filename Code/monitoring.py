@@ -27,7 +27,7 @@ def check_missing():
             label = "%s.%s" % (N, i)
             if not ope(opj("groups", label)):
                 unfinished.append(label)
-    return unfinished, Ns
+    return unfinished
 
 def write_rerun_input(filename, skip=[512,640,768,896,1024,1152,1280,1408,1536,1664,1792,1920], Nlower=None, Nupper=None):
     """
@@ -40,20 +40,20 @@ def write_rerun_input(filename, skip=[512,640,768,896,1024,1152,1280,1408,1536,1
 
     parallel -j192 -a inputs.txt --timeout 3600 magma Folder:=DATA Nlower:=576 Nupper:=2001 Skip:=[512,640,768,896,1024,1152,1280,1408,1536,1664,1792,1920] Proc:={1} AddSmallGroups.m
     """
-    labels, Ns = check_missing()
-    if Nlower is None:
-        Nlower = min(Ns)
-    else:
-        assert Nlower <= min(Ns)
-    if Nupper is None:
-        Nupper = max(Ns) + 1
-    else:
-        assert Nupper > max(Ns)
+    labels = check_missing()
     by_N = defaultdict(list)
     for label in labels:
         N, i = label.split(".")
         N, i = ZZ(N), ZZ(i)
         by_N[N].append(i)
+    if Nlower is None:
+        Nlower = min(by_N)
+    else:
+        assert Nlower <= min(by_N)
+    if Nupper is None:
+        Nupper = max(by_N) + 1
+    else:
+        assert Nupper > max(by_N)
     Procs = []
     sofar = 0
     for N in range(Nlower, Nupper):
@@ -64,3 +64,4 @@ def write_rerun_input(filename, skip=[512,640,768,896,1024,1152,1280,1408,1536,1
         sofar += num_groups(N)
     with open(filename, 'w') as F:
         F.write("\n".join(Procs))
+    return Nlower, Nupper
