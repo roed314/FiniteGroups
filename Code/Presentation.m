@@ -378,9 +378,7 @@ This function is only safe to call on a newly created group, since it changes Ma
         // prone to errors since it keeps the old group around
         //print "MagmaAutGroup", Get(G, "pc_code");
         if reset_attrs then
-            print "preaut";
             G`MagmaAutGroup := MagmaAutGroup(G);
-            print "postaut";
             G`Holomorph := Holomorph(G);
             G`HolInj := HolInj(G);
             // Various conjugacy class attributes were set in determining an ordering on conjugacy classes for Gassman vectors
