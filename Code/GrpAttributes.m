@@ -369,14 +369,7 @@ intrinsic faithful_reps(G::LMFDBGrp) -> Any
   for j:=1 to #ct do
     ch := ct[j];
     if IsFaithful(ch) then
-      if IsOrthogonalCharacter(ch) then
-        s := 1;
-      elif IsSymplecticCharacter(ch) then
-        s := -1;
-      else
-        s := 0;
-      end if;
-      v := <Degree(ch), s>;
+      v := <Degree(ch), Indicator(ch)>;
       if not IsDefined(A, v) then
         A[v] := 0;
       end if;
