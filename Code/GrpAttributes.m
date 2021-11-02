@@ -369,7 +369,7 @@ intrinsic faithful_reps(G::LMFDBGrp) -> Any
   for j:=1 to #ct do
     ch := ct[j];
     if IsFaithful(ch) then
-      v := <Degree(ch), Indicator(ch)>;
+      v := <Degree(ch), Integers()!Indicator(ch)>;
       if not IsDefined(A, v) then
         A[v] := 0;
       end if;
@@ -1130,7 +1130,7 @@ intrinsic Characters(G::LMFDBGrp) ->  Tup
     cchars[j]`field:=Coefficients(thepoly);
     cchars[j]`Image_object:=New(LMFDBRepCC);
     t1 := Cputime();
-    cchars[j]`indicator:=Indicator(ct[j]);
+    cchars[j]`indicator:=Integers()!Indicator(ct[j]);
     vprint User2: "FrobSchur", j, Cputime() - t1;
     cchars[j]`label:="placeholder";
     vprint User2: "B", j, Cputime() - t;
