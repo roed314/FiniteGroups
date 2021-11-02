@@ -48,6 +48,14 @@ intrinsic SetSubgroupParameters(G::LMFDBGrp)
     G`maximal_subgroups_known := true;
     G`sylow_subgroups_known := true;
     G`subgroup_inclusions_known := (#byA lt LAT_CUTOFF and byA`index_bound eq 0);
+    // Now determine whether we compute characters
+    F := Factorization(Get(G, "order"));
+    G`AllCharactersKnown := true;
+    for pe in F do
+        if pe[1] gt 512 then
+            G`AllCharactersKnown := false;
+        end if;
+    end for;
 end intrinsic;
 
 RF := recformat<subgroup, order, length>;

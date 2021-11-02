@@ -26,6 +26,7 @@
 * Speed up IsWreathProduct to use the already computed list of subgroups
 * Add complete as a property (trivial center and outer automorphism group).  More generally, check out https://en.wikipedia.org/wiki/Category:Properties_of_groups for things we might add.
 * We currently compute the power map for conjugacy classes for p dividing the order of the group, but our schema suggested also including p dividing phi(exponent of G).  I'm struggling to figure out why this is sufficient to find the power map for all integers.
+* Speed up monomial by using cached computations
 
 ## Frontend
 

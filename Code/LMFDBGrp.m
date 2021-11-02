@@ -34,6 +34,7 @@ declare attributes LMFDBGrp:
   CCReps,
   QQRepsAsCC,
   Characters,
+  AllCharactersKnown, // this should be renamed to a lower case variable once this computation run is done
   label,
   old_label,
   name,

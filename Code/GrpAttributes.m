@@ -574,7 +574,11 @@ intrinsic MagmaAutGroup(G::LMFDBGrp) -> Grp
         catch e;
         end try;
     end if;*/
-    return AutomorphismGroup(G`MagmaGrp);
+    vprint User1: "Starting MagmaAutGroup";
+    t := Cputime();
+    A := AutomorphismGroup(G`MagmaGrp);
+    vprint User1: "Complete in", Cputime() - t;
+    return A;
 end intrinsic;
 
 intrinsic aut_group(G::LMFDBGrp) -> MonStgElt
@@ -955,15 +959,22 @@ intrinsic complexconjindex(ct::Any, gorb::Any, achar::Any) -> Any
 end intrinsic;
 
 intrinsic QQCharacters(G::LMFDBGrp) -> Any
-  { Compute and return Q characters }
-  dummy := Get(G, "Characters");
-  return G`QQCharacters;
+{ Compute and return Q characters }
+    if G`AllCharactersKnown then
+        dummy := Get(G, "Characters");
+        return G`QQCharacters;
+    end if;
+    return []; // don't compute characters
 end intrinsic;
 
 intrinsic CCCharacters(G::LMFDBGrp) -> Any
-  { Compute and return Q characters }
-  dummy := Get(G, "Characters");
-  return G`CCCharacters;
+{ Compute and return Q characters }
+    if G`AllCharactersKnown then
+        print "Computing characters!";
+        dummy := Get(G, "Characters");
+        return G`CCCharacters;
+    end if;
+    return []; // don't compute characters
 end intrinsic;
 
 declare type CyclotomicCache;
@@ -1121,7 +1132,9 @@ intrinsic Characters(G::LMFDBGrp) ->  Tup
     cchars[j]`Grp:=G;
     cchars[j]`MagmaChtr:=ct[j];
     cchars[j]`dim:= Integers() ! Degree(ct[j]);
+    t1 := Cputime();
     cchars[j]`faithful:=IsFaithful(ct[j]);
+    vprint User2: "Faithful", j, Cputime() - t1;
     cchars[j]`group:=Get(G,"label");
     thepoly:=DefiningPolynomial(CharacterField(ct[j]));
     // Sometimes the type is Cyclotomic field, in which case thepoly is a different type
@@ -1134,7 +1147,9 @@ intrinsic Characters(G::LMFDBGrp) ->  Tup
     thepoly:=polredabscache[thepoly];
     cchars[j]`field:=Coefficients(thepoly);
     cchars[j]`Image_object:=New(LMFDBRepCC);
+    t1 := Cputime();
     cchars[j]`indicator:=FrobeniusSchur(ct[j]);
+    vprint User2: "FrobSchur", j, Cputime() - t1;
     cchars[j]`label:="placeholder";
     vprint User2: "B", j, Cputime() - t;
     t := Cputime();

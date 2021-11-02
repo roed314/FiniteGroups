@@ -2,7 +2,7 @@ AttachSpec("spec");
 
 // Call using gnu parallel as follows, for computing groups of order up to 1023 (skipping 512 and 768), using a total of 128 processes and timing out after an hour, into the folder DATA (which will create subfolders as necessary)
 // values are processed by magma in the order given, so the file must come last
-// parallel -j128 --timeout 3600 magma Folder:=DATA Nlower:=1 Nupper:=1024 Skip:=[512,768] Proc:={1} AddSmallGroups.m ::: {1..175444}
+// parallel -j128 --timeout 3600 "magma Folder:=DATA Nlower:=1 Nupper:=1024 Skip:=[512,768] Proc:={1} AddSmallGroups.m ::: {1..175444} | tee output/{}"
 
 // We use the following variables passed in from the command line
 // Folder: folder for containing the results
@@ -44,6 +44,7 @@ procedure WriteSmallGroup(N, i)
     if existing then
         print label, "already complete";
     else
+        SetVerbose("User1", 1); // for use while many runs are timing out, together with teeing to an output file
         timingfile := Sprintf("%ologs/%o", Folder, label);
         print label;
         PrintFile(logfile, "Starting small group "*label);

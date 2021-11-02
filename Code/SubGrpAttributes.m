@@ -266,27 +266,34 @@ intrinsic QuotientActionMap(H::LMFDBSubGrp : use_solv:=true) -> Any
         G := H`Grp;
         GG := G`MagmaGrp;
         N := H`MagmaSubGrp;
+        vprint User1: "Starting QuotientActionMap with", use_solv, Get(H, "split");
+        t := Cputime();
         if use_solv then
             A := AutomorphismGroupSolubleGroup(N);
         else
             A := AutomorphismGroup(N);
         end if;
+        vprint User1: "Aut complete in", Cputime() - t;
+        t := Cputime();
         try
             if Get(H, "split") then
                 Q := Get(H, "complements")[1];
                 //print "split", H`label;
-                return hom<Q -> A| [<q, hom<N -> N | [<n, n^q> : n in Generators(N)]>> : q in Generators(Q)]>;
+                f := hom<Q -> A| [<q, hom<N -> N | [<n, n^q> : n in Generators(N)]>> : q in Generators(Q)]>;
             else
                 Q, Qproj := quo< G`MagmaGrp | N >;
                 if IsAbelian(N) then
                     //print "abelian", H`label;
-                    return hom<Q -> A | [<q, hom<N -> N | [<n, n^(q@@Qproj)> : n in Generators(N)]>> : q in Generators(Q)]>;
+                    f := hom<Q -> A | [<q, hom<N -> N | [<n, n^(q@@Qproj)> : n in Generators(N)]>> : q in Generators(Q)]>;
                 else
+                    vprint User1: "Not split or abelian";
                     return None();
                     // Out, Oproj := OuterFPGroup(A);
                     // return hom<Q -> Out | [hom<N -> N | [n^(q@@Qproj) : n in Generators(N)]>@Oproj : q in Generators(Q)]>;
                 end if;
             end if;
+            vprint User1: "Hom complete in", Cputime() - t;
+            return f;
         catch e;
             if use_solv then
                 return None();
