@@ -919,17 +919,6 @@ intrinsic ConjugacyClasses(G::LMFDBGrp) ->  SeqEnum
     return magccs;
 end intrinsic;
 
-intrinsic FrobeniusSchur(ch::Any) -> Any
-  {Frobenius Schur indicator of a Magma character}
-  assert IsIrreducible(ch);
-  if IsOrthogonalCharacter(ch) then
-    return 1;
-  elif IsSymplecticCharacter(ch) then
-    return -1;
-  end if;
-  return 0;
-end intrinsic;
-
 intrinsic MagmaCharacterTable(G::LMFDBGrp) -> Any
   {Return Magma's character table.}
   return CharacterTable(G`MagmaGrp);
@@ -1148,7 +1137,7 @@ intrinsic Characters(G::LMFDBGrp) ->  Tup
     cchars[j]`field:=Coefficients(thepoly);
     cchars[j]`Image_object:=New(LMFDBRepCC);
     t1 := Cputime();
-    cchars[j]`indicator:=FrobeniusSchur(ct[j]);
+    cchars[j]`indicator:=Indicator(ct[j]);
     vprint User2: "FrobSchur", j, Cputime() - t1;
     cchars[j]`label:="placeholder";
     vprint User2: "B", j, Cputime() - t;
