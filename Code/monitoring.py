@@ -81,4 +81,4 @@ def show_failures(Nlower, skip=[512,640,768,896,1024,1152,1280,1408,1536,1664,17
             proc = sofar + i
             with open(f"output/{proc}") as F:
                 print("{N}.{i}")
-                print "".join(list(F)[-3:])
+                print("".join(list(F)[-3:]))
