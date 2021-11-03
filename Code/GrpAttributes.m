@@ -263,14 +263,30 @@ end intrinsic;
 
 
 intrinsic rational(G::LMFDBGrp) -> BoolElt
-  {Determine if a group is rational, i.e., all characters are rational}
-  szs := Get(G, "MagmaCharacterMatching");
-  for s in szs do
-    if #s gt 1 then
-        return false;
+{Determine if a group is rational, i.e., all characters are rational}
+    if not G`AllCharactersKnown then
+        n := Get(G, "order");
+        if Get(G, "cyclic") then
+            return n eq 2;
+        end if;
+        F := Factorization(n);
+        if #F eq 1 and F[1][2] eq 2 then
+            return F[1][1] eq 2;
+        end if;
+        if #F eq 2 and F[1][2] eq 1 and F[2][2] eq 1 then // C_p \rtimes C_q
+            q := F[1][1];
+            p := F[2][1];
+            return q eq 2 and p eq 3;
+        end if;
+        return None();
     end if;
-  end for;
-  return true;
+    szs := Get(G, "MagmaCharacterMatching");
+    for s in szs do
+        if #s gt 1 then
+            return false;
+        end if;
+    end for;
+    return true;
 end intrinsic;
 
 intrinsic elementary(G::LMFDBGrp) -> Any
@@ -362,6 +378,26 @@ intrinsic faithful_reps(G::LMFDBGrp) -> Any
   {Dimensions and Frobenius-Schur indicators of faithful irreducible representations}
   if not IsCyclic(Get(G, "MagmaCenter")) then
     return [];
+  end if;
+  // We try to compute the faithful reps for the cases where we're not computing the character table
+  if not G`AllCharactersKnown then
+      n := Get(G, "order");
+      assert n ne 2;
+      if Get(G, "cyclic") then
+          return [[1, 0, EulerPhi(n)]];
+      end if;
+      F := Factorization(n);
+      if #F eq 2 and F[1][2] eq 1 and F[2][2] eq 1 then // C_p \rtimes C_q with p = 1 (mod q)
+          q := F[1][1];
+          p := F[2][1];
+          // There are q 1-dim irreps that are not faithful, and (p-1)/q irreps of dimension q that are
+          if q eq 2 then // dihedral
+              return [[2, 1, (p-1) div 2]];
+          else
+              return [[q, 0, (p-1) div q]];
+          end if;
+      end if;
+      return None();
   end if;
   A := AssociativeArray();
   g := G`MagmaGrp;

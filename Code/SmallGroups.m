@@ -39,7 +39,8 @@ intrinsic MakeSmallGroupData(N::RngIntElt, i::RngIntElt) -> Tup, SeqEnum
     SetSubgroupParameters(G);
     vprint User1: "Subgroup parameters set";
     Append(~ts, Cputime() - t0);
-    for task in ["Subgroups", "Characters", "faithful_reps"] do
+    tasks := G`AllCharactersKnown select ["Subgroups", "Characters", "faithful_reps"] else ["Subgroups"];
+    for task in tasks do
         vprint User1: "Starting", task;
         t0 := Cputime();
         val := Get(G, task);
