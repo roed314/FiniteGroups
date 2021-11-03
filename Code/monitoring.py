@@ -79,6 +79,10 @@ def show_failures(Nlower, skip=[512,640,768,896,1024,1152,1280,1408,1536,1664,17
             continue
         for i in by_N[N]:
             proc = sofar + i
-            with open(f"output/{proc}.txt") as F:
-                print("{N}.{i}")
-                print("".join(list(F)[-3:]))
+            filename = f"output/{proc}.txt"
+            if os.path.exists(filename):
+                with open(filename) as F:
+                    print(f"{N}.{i}")
+                    print("".join(list(F)[-3:]))
+            else:
+                print(f"No output file for {N}.{i}")
