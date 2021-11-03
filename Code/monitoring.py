@@ -38,7 +38,7 @@ def write_rerun_input(filename, skip=[512,640,768,896,1024,1152,1280,1408,1536,1
     sage: write_parallel_input('inputs.txt')
     (576, 2001)
 
-    parallel -j192 -a inputs.txt --timeout 3600 "magma Folder:=DATA Nlower:=576 Nupper:=2001 Skip:=[512,640,768,896,1024,1152,1280,1408,1536,1664,1792,1920] Proc:={1} AddSmallGroups.m | tee output/{1}"
+    parallel -j192 -a inputs.txt --timeout 3600 "magma Folder:=DATA Nlower:=576 Nupper:=2001 Skip:=[512,640,768,896,1024,1152,1280,1408,1536,1664,1792,1920] Proc:={1} AddSmallGroups.m | tee output/{1}.txt"
     """
     labels = check_missing()
     by_N = defaultdict(list)
@@ -79,6 +79,6 @@ def show_failures(Nlower, skip=[512,640,768,896,1024,1152,1280,1408,1536,1664,17
             continue
         for i in by_N[N]:
             proc = sofar + i
-            with open(f"output/{proc}") as F:
+            with open(f"output/{proc}.txt") as F:
                 print("{N}.{i}")
                 print("".join(list(F)[-3:]))
