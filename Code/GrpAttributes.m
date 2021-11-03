@@ -262,7 +262,7 @@ end intrinsic;
 
 
 
-intrinsic rational(G::LMFDBGrp) -> BoolElt
+intrinsic rational(G::LMFDBGrp) -> Any
 {Determine if a group is rational, i.e., all characters are rational}
     if not G`AllCharactersKnown then
         n := Get(G, "order");
