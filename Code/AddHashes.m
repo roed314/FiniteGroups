@@ -1,6 +1,6 @@
 AttachSpec("hashspec");
 
-// parallel -j128 magma N:=512 Span:=10000 Proc:={1} AddHashes.m ::: {0..1049}
+// parallel -j100 magma N:=512 Span:=10000 Proc:={1} AddHashes.m ::: {0..1049}
 
 SetColumns(0);
 

@@ -231,7 +231,7 @@ def collate_hashes(N, span=10000):
     D = {int(h) : len(L) for h, L in by_hash.items()}
     M = max(D.values())
     attain = [h for h, v in D.items() if v == M]
-    print(f"Max collision count {M} at {len(attain)} (eg {attain[0]})")
+    print(f"Max collision count {M}, at {len(attain)} hash values (eg {attain[0]})")
     many = len([h for h, v in D.items() if v > M/2])
     print(f"{many} hash values with at least {M//2} collisions")
     return D
