@@ -214,3 +214,24 @@ def collate_all(code_dir):
                 Fout.write(F.read())
 
 #collate_all(os.getcwd())
+
+def collate_hashes(N, span=10000):
+    rundir = opj("DATA", "hash", f"run{N}.{span}")
+    odir = opj("DATA", "hash", str(N))
+    by_hash = defaultdict(list)
+    for fname in os.listdir(rundir):
+        with open(opj(rundir, fname)) as F:
+            for line in F:
+                i, h = line.strip().split()
+                by_hash[h].append(int(i))
+    for h, L in by_hash.items():
+        L.sort()
+        with open(opj(odir, h), "w") as F:
+            F.write("\n".join([str(i) for i in L]))
+    D = {int(h) : len(L) for h, L in by_hash.items()}
+    M = max(D.values())
+    attain = [h for h, v in D.items() if v == M]
+    print(f"Max collision count {M} at {len(attain)} (eg {attain[0]})")
+    many = len([h for h, v in D.items() if v > M/2])
+    print(f"{many} hash values with at least {M//2} collisions")
+    return D
