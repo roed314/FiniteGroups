@@ -1470,6 +1470,24 @@ intrinsic MinPermDeg(G::LMFDBGrp) -> RngSerPowElt
     return f;
 end intrinsic;
 
+intrinsic MinLinDeg(G::LMFDBGrp) -> RngSerPowElt
+{}
+    R<x> := PowerSeriesRing(Integers() : Precision:=100);
+    CT := Get(G, "MagmaCharacterTable");
+    N0 := NormalSubgroups(G);
+    if G`outer_equivalence then
+        assert false;
+        L := SubGrpLatAut(G);
+        Normals := [N : N in L`subs | N`cc_count eq Get(N, "subgroup_count")];
+        Ambient := Get(G, "Holomorph");
+        inj := Get(G, "HolInj");
+        f := &+[N`mobius_quo * N`cc_count * &*[(1 - x^Degree(chi))^(-1) : chi in CT | IsConjugateSubgroup(Ambient, inj(Kernel(chi)), inj(N`subgroup))]: N in Normals];
+    else
+        f := &+[N`mobius_quo * &*[(1 - x^Degree(chi))^(-1) : chi in CT | N`MagmaSubGrp subset Kernel(chi)] : N in N0];
+    end if;
+    return f;
+end intrinsic;
+
 intrinsic MinPermDegSplit(G::LMFDBGrp, K::LMFDBSubGrp) -> RngSerPowElt, RngSerPowElt, RngSerPowElt
 {K should be normal in G}
     R<x> := PowerSeriesRing(Integers() : Precision:=100);
