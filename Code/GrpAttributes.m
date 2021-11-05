@@ -1476,16 +1476,71 @@ intrinsic MinLinDeg(G::LMFDBGrp) -> RngSerPowElt
     CT := Get(G, "MagmaCharacterTable");
     N0 := NormalSubgroups(G);
     if G`outer_equivalence then
-        assert false;
         L := SubGrpLatAut(G);
         Normals := [N : N in L`subs | N`cc_count eq Get(N, "subgroup_count")];
         Ambient := Get(G, "Holomorph");
         inj := Get(G, "HolInj");
-        f := &+[N`mobius_quo * N`cc_count * &*[(1 - x^Degree(chi))^(-1) : chi in CT | IsConjugateSubgroup(Ambient, inj(Kernel(chi)), inj(N`subgroup))]: N in Normals];
+        f := &+[N`mobius_quo * N`cc_count * &*[(1 - x^Degree(chi))^(-1) : chi in CT | N`subgroup subset Kernel(chi)]: N in Normals];
     else
         f := &+[N`mobius_quo * &*[(1 - x^Degree(chi))^(-1) : chi in CT | N`MagmaSubGrp subset Kernel(chi)] : N in N0];
     end if;
     return f;
+end intrinsic;
+
+intrinsic ZGramified(G::LMFDBGrp) -> RngIntElt
+{}
+    F := Factorization(Get(G, "order"));
+    if #F ne 1 or F[1][1] ne 2 then
+        return 0;
+    end if;
+    GG := G`MagmaGrp;
+    S := Socle(GG);
+    Z := Center(GG);
+    if S ne Z or Exponent(Z) ne 2 then
+        return 0;
+    end if;
+    if #Z ne G`order then
+        CT := Get(G, "MagmaCharacterTable");
+        C := Get(G, "MagmaConjugacyClasses");
+        center_spots := [i : i in [1..#C] | C[i][2] eq 1];
+        b, e := IsSquare(Index(GG, Z));
+        if not b then
+            return 0;
+        end if;
+        for chi in CT do
+            if &and[chi[i] eq chi[1] : i in center_spots] then continue; end if;
+            if &and[(chi[i] eq e or chi[i] eq -e) : i in center_spots] then continue; end if;
+            return 0;
+        end for;
+    end if;
+    F := Factorization(#Z);
+    return F[1][2];
+end intrinsic;
+
+intrinsic CheckZGConj() -> SeqEnum, SeqEnum
+{}
+    zgram := [];
+    bad := [];
+    for N in [8, 16, 32, 64, 128, 256] do
+        for i in [1..NumberOfSmallGroups(N)] do
+            G := MakeSmallGroup(N, i : represent:=false);
+            zgr := ZGramified(G);
+            rdim := Valuation(MinLinDeg(G));
+            if zgr in [2,3,4] then
+                Append(~zgram, <G, rdim, (rdim^2 ge N)>);
+                print "ZGR", N, i, zgr, rdim, (rdim^2 ge N) select "big" else "failure";
+            end if;
+            if zgr eq 0 and (rdim^2 ge N) then
+                Append(~bad, <G, rdim>);
+                print "Big without ZGR!", N, i;
+            end if;
+            if i mod 100 eq 0 then
+                print "Progress:", N, i;
+            end if;
+        end for;
+        print "Finished", N;
+    end for;
+    return zgram, bad;
 end intrinsic;
 
 intrinsic MinPermDegSplit(G::LMFDBGrp, K::LMFDBSubGrp) -> RngSerPowElt, RngSerPowElt, RngSerPowElt
