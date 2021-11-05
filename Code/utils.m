@@ -113,6 +113,31 @@ intrinsic Polredabs(f::Any) -> Any
   return f;
 end intrinsic;
 
+intrinsic GAP_ID(G::Grp) -> Tup
+{Use GAP to identify the group}
+    vprint User1: "Using GAP to identify group of order", #G;
+    out := Sprintf("/tmp/gap%o.out", Random(10^30));
+    txt := Sprintf("/tmp/gap%o.txt", Random(10^30));
+    if Category(G) eq GrpPC then
+        desc := Sprintf("PcGroupCode(%o,%o)", SmallGroupEncoding(G), #G);
+    elif Category(G) eq GrpPerm then
+        desc := Sprintf("Group(%o)", Join([DelSpaces(Sprintf("%o", g)) : g in Generators(G)], ","));
+    else
+        error Sprintf("Category %o not yet supported", Category(G));
+    end if;
+    write(txt,Sprintf("IdGroup(%o);quit;", desc));
+    System("which sage>"*out);
+    sagepath := DelSpaces(Read(out));
+    System("rm "*out);
+    System(sagepath*" --gap -b -q <"*txt*">"*out);
+    pair := eval DelSpaces(Read(out));
+    System("rm "*out);
+    System("rm "*txt);
+    assert #pair eq 2;
+    assert pair[1] eq #G;
+    return <#G, pair[2]>;
+end intrinsic;
+
 intrinsic write(filename::MonStgElt,str::MonStgElt: console:=false, rewrite:=false)
   {Write str to file filename as a line
    rewrite:= true means we overwrite the file, default is to append to it

@@ -135,6 +135,33 @@ subs          | jsonb    | If `K` is a degree `n` field with this Galois group, 
 quotients     | jsonb    | Low degree resolvents, up to isomorphism, for a field with this Galois group
 generators    | numeric[] | generators for this transitive group
 
+
+`gps_perm`: Permutation groups, both transitive and intransitive
+
+Column        | Type     | Notes
+--------------|----------|------
+label         | text     | Label of this permutation group
+group         | text     | The label for the abstract group
+sn_subgroup   | text     | The short label for the corresponding subgroup of `S_n` in the gps_subgroups table
+n             | smallint | The degree (`n` from `S_n`)
+t             | integer  | The `t`-number, a standard index for conjugacy classes of transitive subgroups of `S_n`.   NULL if not transitive.
+order         | numeric  | The size of the group
+parity        | smallint | 1 if the group is a subgroup of A_n, otherwise -1
+orbits        | smallint | the number of orbits in the natural action on `{1,...,n}`; will be 1 for transitive groups
+transitive    | boolean  | whether this group is transitive
+primitive     | boolean  | preserves no nontrivial partition of `{1,...,n}`
+abelian       | boolean  | whether this group is abelian
+cyclic        | boolean  | whether this group is cyclic
+solvable      | boolean  | whether this group is solvable
+nilpotency_class | smallint | the nilpotency class of this group
+auts          | smallint | The number of automorphisms of a degree `n` field with this as its Galois group. NULL if not transitive
+arith_equiv   | smallint | Number of arithmetically equivalent fields for number fields with this Galois group. NULL if not transitive
+sibling_completeness | smallint | index bound up to which siblings are complete
+quotients_complenetess | smallint | index bound up to which quotients are complete
+subs          | jsonb    | If `K` is a degree `n` field with this Galois group, this gives the subfields up to isomorphism in terms of their Galois groups.  NULL if not transitive
+quotients     | jsonb    | Low degree resolvents, up to isomorphism, for a field with this Galois group
+generators    | numeric[] | generators, as encoded permutations of degree n
+
 ## Subgroups
 
 `gps_subgroups`: subgroups/short exact sequences of finite groups

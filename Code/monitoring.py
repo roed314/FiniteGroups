@@ -82,7 +82,7 @@ def show_failures(Nlower, skip=[512,640,768,896,1024,1152,1280,1408,1536,1664,17
             filename = f"output/{proc}.txt"
             if os.path.exists(filename):
                 with open(filename) as F:
-                    print(f"{N}.{i}")
+                    print(f"{N}.{i} = {proc}")
                     print("".join(list(F)[-3:]))
             else:
                 print(f"No output file for {N}.{i}")

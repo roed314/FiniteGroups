@@ -97,9 +97,13 @@ intrinsic sylow(H::LMFDBSubGrp) -> RngIntElt // Need to be subgroup attribute fi
 end intrinsic;
 
 intrinsic subgroup(H::LMFDBSubGrp) -> MonStgElt // Need to be together with all the labels
-  {Determine label of subgroup}
-  HH := H`MagmaSubGrp;
-  return label(HH);
+{Determine label of subgroup}
+    HH := H`MagmaSubGrp;
+    // Work around a magma bug in IdentifyGroup
+    if Get(H, "quotient_order") eq 1 then
+        return label(H`Grp`MagmaGrp);
+    end if;
+    return label(HH);
 end intrinsic;
 
 intrinsic subgroup_order(H::LMFDBSubGrp) -> RngIntElt // Need to be subgroup attribute file
