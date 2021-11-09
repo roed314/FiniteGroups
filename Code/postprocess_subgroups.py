@@ -25,24 +25,27 @@ def label_sortkey(label):
     return tuple(letters2num(c) for c in label.split("."))
 
 latex_res = [
-    (re.compile(r"(?:\{\\rm |^)(SD|OD|He)\}?_"), r"\\\1_"),
-    (re.compile(r"(?:\{\\rm |^)(AGL|ASL|PGL|PSL|GL|SL|PSU|SU|PSO|SO|PGO|GO|PSp|Sp|AGammaL|ASigmaL|PGammaL|PSigmaL|PGammaU|PSigmaU|POmega|PSigmaSp)\}?"), r"\\\1"),
-    (re.compile(r"\{\\rm wr(C|S|A|D|F|Q)\}_"), r"\\wr \1_"),
-    (re.compile(r"\{\\rm wr\}"), r"\\wr "),
-    (re.compile(r"Z/4"), r"\\Z/4"),
+    (re.compile(r"(?:\{\\\\rm |^)(SD|OD|He)\}?_"), r"\\\\\1_"),
+    (re.compile(r"(?:\{\\\\rm |^)(AGL|ASL|PGL|PSL|GL|SL|PSU|SU|PSO|SO|PGO|GO|PSp|Sp|AGammaL|ASigmaL|PGammaL|PSigmaL|PGammaU|PSigmaU|POmega|PSigmaSp)\}?"), r"\\\\\1"),
+    (re.compile(r"\{\\\\rm wr(C|S|A|D|F|Q)\}_"), r"\\\\wr \1_"),
+    (re.compile(r"\{\\\\rm wr\}"), r"\\\\wr "),
+    (re.compile(r"Z/4"), r"\\\\Z/4"),
     (re.compile(r"\+"), "^+"), # for PSO+ and Omega+
     (re.compile(r"\-"), "^-"), # for PGO-, etc
-    (re.compile(r"\\times"), r"\\times"), # for checking
+    (re.compile(r"\\\\times"), r"\\\\times"), # for checking
     (re.compile(r"(C|S|A|D|F|Q)_"), r"\1_"), # for checking
 ]
 check_re = re.compile(r"^[0-9\{\}\(\),^:\. ]*$") # what should be left after replacing all of the above regular expressions with empty strings instead of their normal replacement
 
 def fix_latex(inp, badfile):
+    if inp == r"\N":
+        return inp
     check = out = inp
     for matcher, repl in latex_res:
         out = matcher.sub(repl, out)
         check = matcher.sub("", check)
     if not check_re.match(check):
+        print(f"Bad latex: {inp} -> {out}")
         with open(badfile, "a") as F:
             F.write(inp + "\n")
     return out
