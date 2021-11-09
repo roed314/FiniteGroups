@@ -95,7 +95,7 @@ def aut_graph(sdata):
     seen = set()
     for sdatum in sdata:
         alabel = aut_label(sdatum[0])
-        if label in seen: continue
+        if alabel in seen: continue
         new_datum = list(sdatum)
         new_datum[0] = alabel
         new_datum[3] = final[alabel]
