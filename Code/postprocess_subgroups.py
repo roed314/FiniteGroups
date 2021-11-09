@@ -189,3 +189,5 @@ def process_all_lines():
                 x = [str(G[sdatum[0]]) for G in graphs[0:len(graphs):2]]
             line = fixed_lines[sdatum[0]] + "|{%s}\n" % (",".join(x))
             F.write(line)
+
+process_all_lines()
