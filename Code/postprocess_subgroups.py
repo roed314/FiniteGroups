@@ -1,5 +1,7 @@
 #!/usr/bin/env python3
 
+# You need to first install graphviz, eg `sudo apt install graphviz`
+
 import sys, os, re, subprocess
 opj = os.path.join
 from collections import defaultdict
@@ -150,8 +152,9 @@ splines=line;
         os.remove(outfile)
         yield xcoord
 
-def process_all_lines():
-    label = sys.argv[1]
+def process_all_lines(label=None):
+    if label is None:
+        label = sys.argv[1]
     with open("LMFDBSubGrp.header") as F:
         header = F.read().split("\n")[0].split("|")
     infile = opj("DATA", "subgroups", label)
@@ -190,4 +193,4 @@ def process_all_lines():
             line = fixed_lines[sdatum[0]] + "|{%s}\n" % (",".join(x))
             F.write(line)
 
-process_all_lines()
+#process_all_lines()
