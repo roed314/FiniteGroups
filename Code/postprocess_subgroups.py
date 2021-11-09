@@ -3,7 +3,7 @@
 # You need to first install graphviz, eg `sudo apt install graphviz`
 # Call with `ls DATA/subgroups | parallel -j128 --timeout 3600 "./postprocess_subgroups.py {0}"`
 
-import sys, os, re, subprocess
+import sys, os, re, subprocess, time
 opj = os.path.join
 from collections import defaultdict
 
@@ -110,7 +110,9 @@ def find_xcoords(label, sdata):
     # Make 2 or 4 graphs, depending on the value of outer_equivalence
     # Either (subs up to aut, normals up to aut) or
     #        (subs up to aut, normals up to aut, subs up to conj, normals)
+    t = time.time()
     ndata = induced_normal_graph(sdata)
+    print(f"Normal graph computed in {time.time() - t:.3f}s")
     ida = lambda x: x
     if out_equiv:
         graphs = [(sdata, ida), (ndata, ida)]
@@ -139,7 +141,9 @@ splines=line;
         outfile = f"/tmp/graph{label}.out"
         with open(infile, "w") as F:
             F.write(graph)
+        t = time.time()
         subprocess.run(["dot", "-Tplain", "-o", outfile, infile], check=True)
+        print(f"Graphvis ran in {time.time() - t:.3f}s")
         xcoord = {}
         with open(outfile) as F:
             for line in F:
@@ -157,6 +161,7 @@ splines=line;
 def process_all_lines(label=None):
     if label is None:
         label = sys.argv[1]
+    print(f"Starting {label}")
     with open("LMFDBSubGrp.header") as F:
         header = F.read().split("\n")[0].split("|")
     infile = opj("DATA", "subgroups", label)
