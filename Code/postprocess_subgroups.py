@@ -86,9 +86,9 @@ def induced_normal_graph(sdata):
             ndata.append(sdatum)
     return ndata
 
+def aut_label(label):
+    return ".".join(label.split(".")[:-1])
 def aut_graph(sdata):
-    def aut_label(label):
-        return ".".join(label.split(".")[:-1])
     final = defaultdict(set)
     for sdatum in sdata:
         alabel = aut_label(sdatum[0])
@@ -110,11 +110,12 @@ def find_xcoords(label, sdata):
     # Either (subs up to aut, normals up to aut) or
     #        (subs up to aut, normals up to aut, subs up to conj, normals)
     ndata = induced_normal_graph(sdata)
+    ida = lambda x: x
     if out_equiv:
-        graphs = [sdata, ndata]
+        graphs = [(sdata, ida), (ndata, ida)]
     else:
-        graphs = [aut_graph(sdata), aut_graph(ndata), sdata, ndata]
-    for data in graphs:
+        graphs = [(aut_graph(sdata), aut_label), (aut_graph(ndata), aut_label), (sdata, ida), (ndata, ida)]
+    for data, accessor in graphs:
         nodes = []
         edges = []
         ranks = defaultdict(list)
@@ -146,11 +147,11 @@ splines=line;
                 elif line.startswith("node"):
                     pieces = line.split()
                     short_label = pieces[1].replace('"', '')
-                    diagram_x = round(10000 * float(pieces[2]) / scale)
+                    diagram_x = int(round(10000 * float(pieces[2]) / scale))
                     xcoord[short_label] = diagram_x
         os.remove(infile)
         os.remove(outfile)
-        yield xcoord
+        yield xcoord, accessor
 
 def process_all_lines(label=None):
     if label is None:
@@ -183,13 +184,13 @@ def process_all_lines(label=None):
             sdatum[4] = (sdatum[4] == 't') # normal
             sdatum[5] = (sdatum[5] == 't') # outer_equivalence
             sdata.append(sdatum)
-    graphs = find_xcoords(label, sdata)
+    graphs = list(find_xcoords(label, sdata))
     with open(outfile, "w") as F:
         for sdatum in sdata:
             if sdatum[4]: # normal
-                x = [str(G[sdatum[0]]) for G in graphs]
+                x = [str(G[access(sdatum[0])]) for G,access in graphs]
             else:
-                x = [str(G[sdatum[0]]) for G in graphs[0:len(graphs):2]]
+                x = [str(G[access(sdatum[0])]) for G,access in graphs[0:len(graphs):2]]
             line = fixed_lines[sdatum[0]] + "|{%s}\n" % (",".join(x))
             F.write(line)
 
