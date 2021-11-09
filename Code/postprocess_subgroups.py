@@ -76,7 +76,7 @@ def induced_normal_graph(sdata):
                 cur.remove(label)
                 cur.update(subs)
         if normal:
-            pos[label] = subs
+            pos[label] = set(subs)
     ndata = []
     for sdatum in sdata:
         if sdatum[4]:
