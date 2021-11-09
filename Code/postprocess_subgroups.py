@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 
 # You need to first install graphviz, eg `sudo apt install graphviz`
+# Call with `ls DATA/subgroups | parallel -j128 --timeout 3600 "./postprocess_subgroups.py {0}"`
 
 import sys, os, re, subprocess
 opj = os.path.join
@@ -194,4 +195,4 @@ def process_all_lines(label=None):
             line = fixed_lines[sdatum[0]] + "|{%s}\n" % (",".join(x))
             F.write(line)
 
-#process_all_lines()
+process_all_lines()
