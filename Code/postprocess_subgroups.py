@@ -3,9 +3,11 @@
 # You need to first install graphviz, eg `sudo apt install graphviz`
 # Call with `ls DATA/subgroups | parallel -j128 --timeout 3600 "./postprocess_subgroups.py {0}"`
 
-import sys, os, re, subprocess, time
+import sys, os, re, subprocess, time, pathlib
 opj = os.path.join
 from collections import defaultdict
+
+pathlib.Path("DATA/subgroups_fixed").mkdir(parents=True, exist_ok=True)
 
 # Modified from lmfdb/utils/utilities.py
 def letters2num(s):
