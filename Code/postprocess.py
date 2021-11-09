@@ -4,6 +4,8 @@
 
 # It should only be called after all data has been been computed, and currently isn't parallelized, so don't do anything too expensive
 
+# It is superceded by postprocess_subgroups and postprocess_groups, which can be parallelized and don't do the computation of minimal degrees (that will be done separately)
+
 group_header_addition = [
     "faithful_cdim",
     "faithful_rdim",
@@ -216,6 +218,7 @@ def collate_all(code_dir):
 #collate_all(os.getcwd())
 
 def collate_hashes(N, span=10000):
+    # DO NOT CALL THIS FOR 1536: it will use 1.6TB of space and take a long time
     rundir = opj("DATA", "hash", f"run{N}.{span}")
     odir = opj("DATA", "hash", str(N))
     by_hash = defaultdict(list)

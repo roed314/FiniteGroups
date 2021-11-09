@@ -1,3 +1,7 @@
+"""
+This file is used for experimenting with the Graphviz program for graph layout
+"""
+
 from lmfdb import db
 from collections import defaultdict
 
