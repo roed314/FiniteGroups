@@ -128,7 +128,7 @@ def size_chars():
                 continue
             if ncc_cutoff is not None and attr["number_conjugacy_classes"] > ncc_cutoff:
                 continue
-            if maxp_cutoff is not None and max(attr["factors_of_order"]) > maxp_cutoff:
+            if maxp_cutoff is not None and attr["factors_of_order"] and max(attr["factors_of_order"]) > maxp_cutoff:
                 continue
             if label in size:
                 total += size[label]
