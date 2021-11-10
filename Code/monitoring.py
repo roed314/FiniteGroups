@@ -114,7 +114,7 @@ def size_chars():
     labi, _ = extract.pop("label")
     gdata = defaultdict(dict)
     with open(opj("LMFDB", "groups.data")) as F:
-        for i, line in F:
+        for i, line in enumerate(F):
             if i < 3: continue
             if i%10000 == 0:
                 print(i)
