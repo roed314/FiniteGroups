@@ -107,7 +107,7 @@ def size_chars():
     clist = {"label": None,
              "exponent": int,
              "number_conjugacy_classes": int,
-             "factors_of_order": lambda x: [int(c) for c in x[1:-1].split(",")]}
+             "factors_of_order": lambda x: [int(c) for c in x[1:-1].split(",") if c]}
     for i, col in enumerate(groups_header):
         if col in clist:
             extract[col] = (i, clist[col])
