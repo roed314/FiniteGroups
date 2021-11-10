@@ -89,6 +89,7 @@ def show_failures(Nlower, skip=[512,640,768,896,1024,1152,1280,1408,1536,1664,17
         sofar += num_groups(N)
 
 groups_header = "Agroup|Zgroup|elt_rep_type|transitive_degree|abelian|abelian_quotient|all_subgroups_known|almost_simple|aut_group|aut_order|center_label|central_product|central_quotient|commutator_count|commutator_label|complete|composition_factors|composition_length|counter|cyclic|derived_length|direct_factorization|direct_product|elementary|eulerian_function|exponent|exponents_of_order|factors_of_aut_order|factors_of_order|faithful_reps|finite_matrix_group|frattini_label|frattini_quotient|gens_used|hash|hyperelementary|label|maximal_subgroups_known|metabelian|metacyclic|monomial|name|ngens|nilpotency_class|nilpotent|normal_subgroups_known|number_autjugacy_classes|number_characteristic_subgroups|number_conjugacy_classes|number_divisions|number_normal_subgroups|number_subgroup_autclasses|number_subgroup_classes|number_subgroups|old_label|order|order_stats|outer_equivalence|outer_group|outer_order|pc_code|perfect|perm_gens|pgroup|primary_abelian_invariants|quasisimple|rank|rational|schur_multiplier|semidirect_product|simple|smallrep|smith_abelian_invariants|solvability_type|solvable|subgroup_inclusions_known|subgroup_index_bound|supersolvable|sylow_subgroups_known|tex_name|wreath_data|wreath_product".split("|")
+subgroups_header = "abelian|ambient|ambient_order|ambient_tex|aut_centralizer_order|aut_label|aut_weyl_group|aut_weyl_index|central|centralizer|characteristic|complements|conjugacy_class_count|contained_in|contains|core|coset_action_label|count|cyclic|diagram_aut_x|diagram_x|direct|generators|hall|label|maximal|maximal_normal|minimal|minimal_normal|mobius_quo|mobius_sub|nilpotent|normal|normal_closure|normalizer|outer_equivalence|perfect|projective_image|proper|quotient|quotient_abelian|quotient_action_image|quotient_action_kernel|quotient_action_kernel_order|quotient_cyclic|quotient_fusion|quotient_order|quotient_solvable|quotient_tex|short_label|solvable|special_labels|split|standard_generators|stem|subgroup|subgroup_fusion|subgroup_order|subgroup_tex|sylow|weyl_group".split("|")
 
 def update_groups():
     # Goal: update to include char_stats
@@ -97,6 +98,35 @@ def update_groups():
 def update_subgroups():
     # Goal: update to include diagram_x/diagram_aut_x from current data
     from lmfdb import db
+    diagram = defaultdict(dict)
+    for rec in db.gps_subgroups.search({}, ["label", "diagram_x", "diagram_aut_x"]):
+        diagram[rec["label"]]["diagram_x"] = rec["diagram_x"]
+        diagram[rec["label"]]["diagram_aut_x"] = rec["diagram_aut_x"]
+    clist = ["label", "diagram_x", "diagram_aut_x"]
+    spots = {}
+    for i, col in enumerate(subgroups_header):
+        if col in clist:
+            spots[col] = i
+    labi = spots["label"]
+    dxi = spots["diagram_x"]
+    daxi = spots["diagram_aut_x"]
+    print("DB lookup finished")
+    with open(opj("LMFDB", "subs.data")) as Fin:
+        with open(opj("LMFDB", "subs_fixed.data"), "w") as Fout:
+            for i, line in enumerate(Fin):
+                if i < 3:
+                    Fout.write(line)
+                else:
+                    pieces = line.split("|")
+                    label = pieces[labi]
+                    if label in diagram:
+                        pieces[dxi] = str(diagram[label]["diagram_x"])
+                        pieces[daxi] = str(diagram[label]["diagram_aut_x"])
+                        Fout.write("|".join(pieces))
+                    else:
+                        Fout.write(line)
+                    if i % 100000 == 0:
+                        print(i)
 
 def size_chars():
     base = opj("DATA", "characters_cc")
