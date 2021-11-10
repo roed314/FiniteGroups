@@ -134,6 +134,7 @@ def size_chars():
                 total += size[label]
             else:
                 print(f"no data for {label}")
+        return total
     return size, gdata, cutoff
 
 def count_chars():
