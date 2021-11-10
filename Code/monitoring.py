@@ -4,7 +4,7 @@
 from sage.misc.cachefunc import cached_function
 from sage.all import RR, ZZ
 from collections import defaultdict
-import os
+import os, shutil, pathlib
 opj = os.path.join
 ope = os.path.exists
 
@@ -134,9 +134,13 @@ def size_chars():
                 total += size[label]
             else:
                 print(f"no data for {label}")
-        return total
+        return total / (1 << 30)
     return size, gdata, cutoff
 
-def count_chars():
-    # Goal: figure out how to trim character tables
-    pass
+def mv_chars(gdata):
+    old = opj("DATA", "characters_cc")
+    new = opj("DATA", "characters_cc_fixed")
+    pathlib.Path(new).mkdir(parents=True, exist_ok=True)
+    for label in os.listdir(old):
+        if gdata[label]["number_conjugacy_classes"] < 128:
+            shutil.copy(opj(old, label), opj(new, label))
