@@ -105,6 +105,7 @@ declare attributes LMFDBGrp:
   smith_abelian_invariants,
   schur_multiplier,
   order_stats,
+  irrep_stats,
   elt_rep_type,
   perm_gens,
   hash,
