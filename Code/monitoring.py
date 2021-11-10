@@ -114,7 +114,10 @@ def size_chars():
     labi, _ = extract.pop("label")
     gdata = defaultdict(dict)
     with open(opj("LMFDB", "groups.data")) as F:
-        for line in F:
+        for i, line in F:
+            if i < 3: continue
+            if i%10000 == 0:
+                print(i)
             pieces = line.split("|")
             for col, (i, typer) in extract.items():
                 gdata[pieces[labi]][col] = typer(pieces[i])
