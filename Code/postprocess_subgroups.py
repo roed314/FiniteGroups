@@ -7,8 +7,6 @@ import sys, os, re, subprocess, time, pathlib
 opj = os.path.join
 from collections import defaultdict
 
-pathlib.Path("DATA/subgroups_fixed").mkdir(parents=True, exist_ok=True)
-
 # Modified from lmfdb/utils/utilities.py
 def letters2num(s):
     r"""
@@ -110,19 +108,26 @@ def aut_graph(sdata):
         adata.append(new_datum)
     return adata
 
-def find_xcoords(label, sdata):
+def find_xcoords(label, sdata, alt=False):
     out_equiv = sdata[0][-1]
     # Make 2 or 4 graphs, depending on the value of outer_equivalence
     # Either (subs up to aut, normals up to aut) or
     #        (subs up to aut, normals up to aut, subs up to conj, normals)
     t = time.time()
-    ndata = induced_normal_graph(sdata)
-    print(f"Normal graph computed in {time.time() - t:.3f}s")
+    if not alt:
+        ndata = induced_normal_graph(sdata)
+        print(f"Normal graph computed in {time.time() - t:.3f}s")
     ida = lambda x: x
-    if out_equiv:
-        graphs = [(sdata, ida), (ndata, ida)]
+    if alt:
+        if out_equiv:
+            graphs = [(sdata, ida)]
+        else:
+            graphs = [(aut_graph(sdata), aut_label), (sdata, ida)]
     else:
-        graphs = [(aut_graph(sdata), aut_label), (aut_graph(ndata), aut_label), (sdata, ida), (ndata, ida)]
+        if out_equiv:
+            graphs = [(sdata, ida), (ndata, ida)]
+        else:
+            graphs = [(aut_graph(sdata), aut_label), (aut_graph(ndata), aut_label), (sdata, ida), (ndata, ida)]
     for data, accessor in graphs:
         nodes = []
         edges = []
@@ -131,8 +136,18 @@ def find_xcoords(label, sdata):
             nodes.append((rec[0], rec[1]))
             edges.append((rec[0], '","'.join(rec[3])))
             ranks[rec[2]].append(rec[0])
-        edges = ";\n".join(f'"{a}" -> {{"{b}"}} [dir=none]' for (a, b) in edges)
-        nodes = ";\n".join(f'"{name}" [label="{tex}",shape=plaintext]' for (name, tex) in nodes)
+        nodes = [f'"{name}" [label="{tex}",shape=plaintext]' for (name, tex) in nodes]
+        edges = [f'"{a}" -> {{"{b}"}} [dir=none]' for (a, b) in edges]
+        if alt:
+            R = sorted(ranks)
+            for i in range(len(R)):
+                order = R[i]
+                nodes.append(f'"order{order}" [style="invis"]')
+                if i > 0:
+                    edges.append(f'"order{order}" -> "order{R[i-1]}" [style="invis"]')
+                ranks[order].append(f'order{order}')
+        nodes = ";\n".join(nodes)
+        edges = ";\n".join(edges)
         ranks = ";\n".join('{rank=same; "%s"}' % ('" "'.join(labs)) for labs in ranks.values())
         graph = f"""strict digraph "{label}" {{
 rankdir=TB;
@@ -151,25 +166,43 @@ splines=line;
         print(f"Graphvis ran in {time.time() - t:.3f}s")
         xcoord = {}
         with open(outfile) as F:
+            maxx = 0
+            minx = 10000
             for line in F:
                 if line.startswith("graph"):
                     scale = float(line.split()[2])
                 elif line.startswith("node"):
                     pieces = line.split()
                     short_label = pieces[1].replace('"', '')
-                    diagram_x = int(round(10000 * float(pieces[2]) / scale))
-                    xcoord[short_label] = diagram_x
+                    if not short_label.startswith("order"):
+                        diagram_x = int(round(10000 * float(pieces[2]) / scale))
+                        xcoord[short_label] = diagram_x
+                        if diagram_x > maxx:
+                            maxx = diagram_x
+                        if diagram_x < minx:
+                            minx = diagram_x
+        if alt:
+            # We have to remove the phantom nodes used to set the ranks
+            margin = min(minx, 10000-maxx)
+            minx -= margin
+            maxx += margin
+            rescale = 10000 / (maxx - minx)
+            for short_label, x in xcoord.items():
+                xcoord[short_label] = int(round((x - minx) * rescale))
         os.remove(infile)
         os.remove(outfile)
         yield xcoord, accessor
+    if alt and out_equiv:
+        yield {sdatum[0]: 0 for sdatum in sdata}, ida
 
-def process_all_lines(label=None):
+def process_all_lines(label=None, alt=True):
     if label is None:
         label = sys.argv[1]
     print(f"Starting {label}")
     with open("LMFDBSubGrp.header") as F:
         header = F.read().split("\n")[0].split("|")
     infile = opj("DATA", "subgroups", label)
+    pathlib.Path(opj("DATA", "subgroups_fixed")).mkdir(parents=True, exist_ok=True)
     outfile = opj("DATA", "subgroups_fixed", label)
     badfile = opj("DATA", "badlatex")
     tex_spots = []
@@ -183,9 +216,6 @@ def process_all_lines(label=None):
     extract_spots = [extract_spots[col] for col in clist]
     fixed_lines = {}
     sdata = []
-    nodes = []
-    edges = []
-    ranks = defaultdict(list)
     with open(infile) as F:
         for line in F:
             fixed_line, sdatum = process_subgroups_line(line, tex_spots, extract_spots, badfile)
@@ -195,14 +225,19 @@ def process_all_lines(label=None):
             sdatum[4] = (sdatum[4] == 't') # normal
             sdatum[5] = (sdatum[5] == 't') # outer_equivalence
             sdata.append(sdatum)
-    graphs = list(find_xcoords(label, sdata))
+    graphs = list(find_xcoords(label, sdata, alt=alt))
     with open(outfile, "w") as F:
         for sdatum in sdata:
-            if sdatum[4]: # normal
-                x = [str(G[access(sdatum[0])]) for G,access in graphs]
+            if alt:
+                label = sdatum[0]
+                line = "|".join(str(G[access(label)]) for G,access in graphs)
+                line = f"{label}|{line}\n"
             else:
-                x = [str(G[access(sdatum[0])]) for G,access in graphs[0:len(graphs):2]]
-            line = fixed_lines[sdatum[0]] + "|{%s}\n" % (",".join(x))
+                if sdatum[4]: # normal
+                    x = [str(G[access(sdatum[0])]) for G,access in graphs]
+                else:
+                    x = [str(G[access(sdatum[0])]) for G,access in graphs[0:len(graphs):2]]
+                line = fixed_lines[sdatum[0]] + "|{%s}\n" % (",".join(x))
             F.write(line)
 
 process_all_lines()
