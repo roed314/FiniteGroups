@@ -140,27 +140,27 @@ end intrinsic;
 declare verbose LMFDBGrpPerm, 1;
 declare type LMFDBGrpPerm;
 declare attributes LMFDBGrpPerm:
-  label,
-  group,
-  sn_subgroup,
-  n,
-  t,
-  order,
-  parity,
-  orbits,
-  transitive,
-  primitive,
-  abelian,
-  cyclic,
-  solvable,
-  nilpotency_class,
-  auts,
-  arith_equiv,
+  label, // label like 9.3T2x3.12.a
+  group, // abstract label like 2048.a
+  sn_subgroup, // short label as subgroup of S_n, like 10.a1.a1
+  n, // the degree
+  t, // if transitive, the T-number.  If not, NULL
+  order, // order of the group
+  parity, // 1 if contained in A_n, -1 otherwise
+  orbits, // number of orbits for the standard action on {1..n}
+  transitive, // whether transitive
+  primitive, // whether primitive
+  abelian, // whether abelian
+  cyclic, // whether cyclic
+  solvable, // whether solvable
+  nilpotency_class, // -1 for not nilpotent
+  auts, // the number of automorphisms of a degree n etale algebra with this as its Galois group
+  arith_equiv, // number of arithmetically equivalent fields for number fields with this Galois group
   sibling_completeness,
   quotients_completeness,
-  subs,
-  quotients,
-  generators;
+  subs, // Galois groups of proper non-trivial subgroups of a field with this Galois group given as a list of pairs, the group and its multiplicity
+  quotients, // List of Galois groups of subfields which are proper quotients of this group, given as pairs of the group and the multiplicity
+  generators; // encoded generators
 
 intrinsic Print(G::LMFDBGrpPerm)
   {Print LMFDBGrpPerm}

@@ -308,7 +308,7 @@ intrinsic elementary(G::LMFDBGrp) -> Any
 end intrinsic;
 
 intrinsic hyperelementary(G::LMFDBGrp) -> Any
-  {Product of all primes p such that G is an extension of a p-group by a group of order prime to p}
+  {Product of all primes p such that G is an extension of a p-group by a cyclic group of order prime to p}
   ans := 1;
   if Get(G,"solvable") and Get(G,"order") gt 1 then
     g:=G`MagmaGrp;
