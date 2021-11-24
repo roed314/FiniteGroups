@@ -27,7 +27,7 @@ for N in Ns do
         PrintFile(ofile, Join(hashes, "\n"));
         break;
     end if;
-    Proc -:= ((I-1) div Span + 1) * Span;
+    Proc -:= ((I-1) div Span + 1);
 end for;
 
 exit;
