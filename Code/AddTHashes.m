@@ -1,18 +1,19 @@
 AttachSpec("hashspec");
 
 // parallel -j100 magma Span:=100 Proc:={1} AddTHashes.m ::: {0..5126}
+// parallel -j220 magma Proc:={1} AddTHashes.m ::: {0..999}
 
-System("mkdir -p DATA/hash");
-System(Sprintf("mkdir -p DATA/hash/trun%o", Span));
 
 SetColumns(0);
 Proc := StringToInteger(Proc);
 //Span := StringToInteger(Span);
+Span := 1;
 //start := 1+Proc*Span;
+System("mkdir -p DATA/hash");
+System(Sprintf("mkdir -p DATA/hash/trun%o", Span));
 
 skipped := [409, 1621, 1622, 1625, 4784, 4879, 4899, 4900, 5003, 5009, 5010];
 start := skipped[1 + (Proc div 100)] * 100 + (Proc mod 100);
-Span := 1;
 
 hashes := [];
 cur := 0;
