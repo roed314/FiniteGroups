@@ -140,6 +140,7 @@ end intrinsic;
 declare verbose LMFDBGrpPerm, 1;
 declare type LMFDBGrpPerm;
 declare attributes LMFDBGrpPerm:
+  MagmaGrp,
   label, // label like 9.3T2x3.12.a
   group, // abstract label like 2048.a
   sn_subgroup, // short label as subgroup of S_n, like 10.a1.a1
