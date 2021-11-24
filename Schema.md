@@ -474,8 +474,12 @@ faithful       | boolean    | Whether the corresponding homomorphism is injectiv
 nt             | int[]   | the pair [n,t] where nTt is the smallest permutation representation containing the character
 qvalues        | int[]      | a list character values
 
+## Hashes
 
+`gps_smallhash`: Hash values for small groups to use in idenfication
 
-Questions for Drew
-
-- How will this link to other parts of the LMFDB?
+Column         | Type       | Notes
+---------------|------------|------
+order          | integer    | order of the group supports up to 73^5 (217 groups), 31^6 (4540 groups) or 11^7 (750,735 groups)
+counter        | integer    | counter for groups of this order.  1-indexed for SmallGroups, 0-indexed for orders not in the SmallGroup database
+hash           | bigint     | the hash value
