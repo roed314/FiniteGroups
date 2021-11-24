@@ -5,7 +5,7 @@ AttachSpec("hashspec");
 
 SetColumns(0);
 
-Ns := [StringToInteger(N) : N in Split(Ns, ",")};
+Ns := [StringToInteger(N) : N in Split(Ns, ",")];
 Proc := StringToInteger(Proc);
 Span := StringToInteger(Span);
 System("mkdir -p DATA/hash");
