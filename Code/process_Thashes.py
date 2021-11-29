@@ -94,9 +94,13 @@ def process_clusters(data):
                         bnd[msib] = max(bnd[msib], bnd.pop(check))
                         V.update(clusters.pop(check))
             maxn = max(n for (n,t) in clusters)
-            # clusters where the bound is large enough that we can rule out merging with any other cluster
-            done = {msib: clusters[msib] for (msib, b) in bnd.items() if b >= maxn}
-            undone = {msib: clusters[msib] for (msib, b) in bnd.items() if b < maxn}
+            if len(clusters) == 1:
+                done = clusters
+                undone = {}
+            else:
+                # clusters where the bound is large enough that we can rule out merging with any other cluster
+                done = {msib: clusters[msib] for (msib, b) in bnd.items() if b >= maxn}
+                undone = {msib: clusters[msib] for (msib, b) in bnd.items() if b < maxn}
             for msib, osibs in done.items():
                 osibs = ["T".join(str(c) for c in osib) for osib in sorted(osibs) if osib != msib]
                 msib = "T".join(str(c) for c in msib)
@@ -107,4 +111,4 @@ def process_clusters(data):
                         b = bnd[msib]
                         osibs = ["T".join(str(c) for c in osib) for osib in sorted(osibs) if osib != msib]
                         msib = "T".join(str(c) for c in msib)
-                        Fsep.write(f"{msib} {b} {' '.join(osibs)}")
+                        Fsep.write(f"{msib} {b} {' '.join(osibs)}\n")
