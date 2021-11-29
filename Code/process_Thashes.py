@@ -2,7 +2,7 @@ import os
 opj = os.path.join
 from collections import defaultdict
 from sage.libs.gap.libgap import libgap
-from sage.rings.integer import ZZ
+from sage.rings.integer_ring import ZZ
 
 def load_db():
     sib_dict = defaultdict(lambda: defaultdict(set))
