@@ -37,6 +37,7 @@ def load_hashes():
         clusters[factorial(n)//2,-1] = [f"{n}T{tmax-1}"] # An
         seen[n].update(set([tmax-1,tmax]))
     clusters[73123168801259520,-1] = ["45T10340"]
+    seen[45].add(10340)
     clusters[216862434431944426122117120000,818067353932353174] = ["46T50"]
     clusters[334163384733794511232410592146672844800000000,-1] = ["46T51"]
     clusters[668326769467589022464821184293345689600000000,-1] = ["46T52"]
@@ -101,9 +102,9 @@ def process_clusters(data):
                 msib = "T".join(str(c) for c in msib)
                 F.write(f"{msib} {hsh} {' '.join(osibs)}")
             if undone:
-                with open(f"DATA/hash/tsep/{N}.{hsh}", "w") as F:
+                with open(f"DATA/hash/tsep/{N}.{hsh}", "w") as Fsep:
                     for msib, osibs in undone.items():
                         b = bnd[msib]
                         osibs = ["T".join(str(c) for c in osib) for osib in sorted(osibs) if osib != msib]
                         msib = "T".join(str(c) for c in msib)
-                        F.write(f"{msib} {b} {' '.join(osibs)}")
+                        Fsep.write(f"{msib} {b} {' '.join(osibs)}")
