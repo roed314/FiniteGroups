@@ -3,6 +3,7 @@ opj = os.path.join
 from collections import defaultdict
 from sage.libs.gap.libgap import libgap
 from sage.rings.integer_ring import ZZ
+from sage.functions.other import factorial
 
 def load_db():
     sib_dict = defaultdict(lambda: defaultdict(set))
@@ -29,6 +30,18 @@ def load_hashes():
             seen[n].add(t)
             if N == 1024 or N > 2000 and not libgap.SmallGroupsAvailable(N):
                 clusters[N,hsh].append(f"{n}T{t}")
+    # We manually add some groups where we didn't succeed in computing the hash, but know that they are unique up to isomorphism
+    for n in range(39, 48):
+        tmax = ZZ(libgap.NrTransitiveGroups(n))
+        clusters[factorial(n),-1] = [f"{n}T{tmax}"] # Sn
+        clusters[factorial(n)//2,-1] = [f"{n}T{tmax-1}"] # An
+        seen[n].update(set([tmax-1,tmax]))
+    clusters[216862434431944426122117120000,-1] = ["46T50"]
+    clusters[334163384733794511232410592146672844800000000,-1] = ["46T51"]
+    clusters[668326769467589022464821184293345689600000000,-1] = ["46T52"]
+    clusters[668326769467589022464821184293345689600000000,-2] = ["46T53"]
+    clusters[1336653538935178044929642368586691379200000000,-1] = ["46T54"]
+    seen[46].update(set(range(50,55)))
     for n in range(1, 47):
         if n not in seen:
             print("Missing degree", n)
