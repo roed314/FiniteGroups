@@ -95,12 +95,12 @@ def process_clusters(data):
                         V.update(clusters.pop(check))
             maxn = max(n for (n,t) in clusters)
             # clusters where the bound is large enough that we can rule out merging with any other cluster
-            done = {msib: clusters[msib] for (msib, b) in bnd.items() if b < maxn}
-            undone = {msib: clusters[msib] for (msib, b) in bnd.items() if b >= maxn}
+            done = {msib: clusters[msib] for (msib, b) in bnd.items() if b >= maxn}
+            undone = {msib: clusters[msib] for (msib, b) in bnd.items() if b < maxn}
             for msib, osibs in done.items():
                 osibs = ["T".join(str(c) for c in osib) for osib in sorted(osibs) if osib != msib]
                 msib = "T".join(str(c) for c in msib)
-                F.write(f"{msib} {hsh} {' '.join(osibs)}")
+                F.write(f"{msib} {hsh} {' '.join(osibs)}\n")
             if undone:
                 with open(f"DATA/hash/tsep/{N}.{hsh}", "w") as Fsep:
                     for msib, osibs in undone.items():
