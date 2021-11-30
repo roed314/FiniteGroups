@@ -35,5 +35,5 @@ for i in [2..#input] do
     end if;
 end for;
 
-PrintFile("DATA/hash/tsepout/" * OrdHash, Join([x[3] : x in output], "\n"));
+PrintFile("DATA/hash/tsepout/" * OrdHash, Join([x[3][1] * " " * hsh * " " * Join(x[3][2..#x[3]], " ") : x in output], "\n"));
 print "Done in", Cputime() - t;
