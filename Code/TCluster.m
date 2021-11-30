@@ -12,7 +12,7 @@ end function;
 
 hsh := Split(OrdHash, ".")[2];
 input := [Split(s, " ") : s in Split(Read("DATA/hash/tsep/" * OrdHash))];
-input := [<nTt(s[1]), StringToInteger(s[2]), s[1..1] cat s[3..#L]> : s in input];
+input := [<nTt(s[1]), StringToInteger(s[2]), s[1..1] cat s[3..#input]> : s in input];
 output := [input[1]];
 for i in [2..#input] do
     found := false;
