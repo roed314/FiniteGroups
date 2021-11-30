@@ -1,4 +1,4 @@
-// ls DATA/hash/tsep | parallel -j100 --timeout 86400 magma OrdHash:="{1}"
+// ls DATA/hash/tsep | parallel -j100 --timeout 86400 magma OrdHash:="{1}" TCluster.m
 
 SetColumns(0);
 
@@ -36,4 +36,4 @@ for i in [2..#input] do
 end for;
 
 PrintFile("DATA/hash/tsepout/" * OrdHash, Join([x[3][1] * " " * hsh * " " * Join(x[3][2..#x[3]], " ") : x in output], "\n"));
-print "Done in", Cputime() - t;
+print "Done in", Cputime() - t0;
