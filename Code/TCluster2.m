@@ -73,6 +73,6 @@ while #unassigned gt 0 do
     Append(~classes, Join(this_class[1..1] cat [hsh] cat this_class[2..#this_class], " "));
 end while;
 
-PrintFile("DATA/sibs/" * OrdHash, Join(sibcnts, "\n") * "\n");
-PrintFile("DATA/hash/tsepout/" * OrdHash, Join(classes, "\n") * "\n");
+PrintFile("DATA/sibs/" * OrdHash, Join(sibcnts, "\n"));
+PrintFile("DATA/hash/tsepout/" * OrdHash, Join(classes, "\n"));
 print "Done in", Cputime() - t0;
