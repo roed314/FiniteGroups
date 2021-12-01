@@ -33,7 +33,7 @@ while #unassigned gt 0 do
     n, t := Explode(groups[i][1]);
     G := TransitiveGroup(n, t);
     b := bound[i];
-    this_class := groups[i]; // all transitive ids isomorphic to G
+    this_class := {@ gp : gp in groups[i] @}; // all transitive ids isomorphic to G
     altreps := AssociativeArray(); // keep track of sibling counts for degrees that we check
     checked := {}; // degrees that have already been checked
     remaining_degrees := &join[degrees[j] : j in unassigned]; // multiset of degrees that need to be checked
@@ -58,7 +58,9 @@ while #unassigned gt 0 do
                 altreps[[d,t]] +:= 1;
             else
                 i := lookup[[d,t]];
-                this_class cat:= groups[i];
+                for gp in groups[i] do
+                    Include(~this_class, gp);
+                end for;
                 for dd in degrees[i] do
                     Exclude(~remaining_degrees, dd);
                 end for;
@@ -76,3 +78,5 @@ end while;
 PrintFile("DATA/sibs/" * OrdHash, Join(sibcnts, "\n"));
 PrintFile("DATA/hash/tsepout/" * OrdHash, Join(classes, "\n"));
 print "Done in", Cputime() - t0;
+
+exit;
