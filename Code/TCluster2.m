@@ -25,6 +25,7 @@ for s in Split(Read("DATA/hash/tsep/" * OrdHash)) do
 end for;
 
 unassigned := [1..#groups];
+classes := [];
 sibcnts := [];
 while #unassigned gt 0 do
     i := unassigned[1];
@@ -74,3 +75,4 @@ end while;
 
 PrintFile("DATA/sibs/" * OrdHash, Join(sibcnts, "\n") * "\n");
 PrintFile("DATA/hash/tsepout/" * OrdHash, Join(classes, "\n") * "\n");
+print "Done in", Cputime() - t0;
