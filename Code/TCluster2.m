@@ -10,6 +10,7 @@ order, hsh := Explode(Split(OrdHash, "."));
 lookup := AssociativeArray();
 bound := [];
 groups := [];
+degrees := [];
 i := 1;
 for s in Split(Read("DATA/hash/tsep/" * OrdHash)) do
     pieces := Split(s, " ");
