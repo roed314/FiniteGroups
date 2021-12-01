@@ -37,45 +37,50 @@ while #unassigned gt 0 do
     altreps := AssociativeArray(); // keep track of sibling counts for degrees that we check
     checked := {}; // degrees that have already been checked
     remaining_degrees := &join[degrees[j] : j in unassigned]; // multiset of degrees that need to be checked
-    while true do
-        max_cnt := 0;
-        d := 0;
-        for dd -> cnt in remaining_degrees do
-            if dd gt b and not dd in checked and cnt gt max_cnt then
-                max_cnt := cnt;
-                d := dd;
-            end if;
-        end for;
-        if d eq 0 then break; end if;
-        Include(~checked, d);
-        S := Subgroups(G : IndexEqual:=d);
-        // We only need subgroups with trivial core, since they yield transitive coset actions
-        S := [H`subgroup : H in S | #Core(G, H`subgroup) eq 1];
-        for H in S do
-            _, T := CosetAction(G, H);
-            t := TransitiveGroupIdentification(T);
-            if IsDefined(altreps, [d,t]) then
-                altreps[[d,t]] +:= 1;
-            else
-                i := lookup[[d,t]];
-                for gp in groups[i] do
-                    Include(~this_class, gp);
-                end for;
-                for dd in degrees[i] do
-                    Exclude(~remaining_degrees, dd);
-                end for;
-                b := Max(b, bound[i]);
-                altreps[[d,t]] := 1;
-                Exclude(~unassigned, i);
-            end if;
-        end for;
-    end while;
-    Append(~sibcnts, Join([Sprint(b)] cat [Sprintf("%oT%o:%o", k[1], k[2], v) : k -> v in altreps], " "));
+    // could be an empty list of there are no unassigned degrees
+    if #remaining_degrees gt 0 then
+        while true do
+            max_cnt := 0;
+            d := 0;
+            for dd -> cnt in remaining_degrees do
+                if dd gt b and not dd in checked and cnt gt max_cnt then
+                    max_cnt := cnt;
+                    d := dd;
+                end if;
+            end for;
+            if d eq 0 then break; end if;
+            Include(~checked, d);
+            S := Subgroups(G : IndexEqual:=d);
+            // We only need subgroups with trivial core, since they yield transitive coset actions
+            S := [H`subgroup : H in S | #Core(G, H`subgroup) eq 1];
+            for H in S do
+                _, T := CosetAction(G, H);
+                t := TransitiveGroupIdentification(T);
+                if IsDefined(altreps, [d,t]) then
+                    altreps[[d,t]] +:= 1;
+                else
+                    i := lookup[[d,t]];
+                    for gp in groups[i] do
+                        Include(~this_class, gp);
+                    end for;
+                    for dd in degrees[i] do
+                        Exclude(~remaining_degrees, dd);
+                    end for;
+                    b := Max(b, bound[i]);
+                    altreps[[d,t]] := 1;
+                    Exclude(~unassigned, i);
+                end if;
+            end for;
+        end while;
+        Append(~sibcnts, Join([Sprint(b)] cat [Sprintf("%oT%o:%o", k[1], k[2], v) : k -> v in altreps], " "));
+    end if;
     this_class := [Sprintf("%oT%o", pair[1], pair[2]) : pair in this_class];
     Append(~classes, Join(this_class[1..1] cat [hsh] cat this_class[2..#this_class], " "));
 end while;
 
-PrintFile("DATA/sibs/" * OrdHash, Join(sibcnts, "\n"));
+if #sibcnts gt 0 then
+    PrintFile("DATA/sibs/" * OrdHash, Join(sibcnts, "\n"));
+end if;
 PrintFile("DATA/hash/tsepout/" * OrdHash, Join(classes, "\n"));
 print "Done in", Cputime() - t0;
 
