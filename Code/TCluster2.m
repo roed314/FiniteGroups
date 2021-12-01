@@ -68,7 +68,7 @@ while #unassigned gt 0 do
         end for;
     end while;
     Append(~sibcnts, Join([Sprint(b)] cat [Sprintf("%oT%o:%o", k[1], k[2], v) : k -> v in altreps], " "));
-    this_class := [Sprintf("%oT%o", pair[1], pair[2]) : pair in this_class]
+    this_class := [Sprintf("%oT%o", pair[1], pair[2]) : pair in this_class];
     Append(~classes, Join(this_class[1..1] cat [hsh] cat this_class[2..#this_class], " "));
 end while;
 
