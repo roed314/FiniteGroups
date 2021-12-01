@@ -1,3 +1,4 @@
+// Uses IsIsomorphic to merge clusters of transitive groups with the same order and hash into isomorphism classes
 // ls DATA/hash/tsep | parallel -j100 --timeout 86400 magma OrdHash:="{1}" TCluster.m
 
 SetColumns(0);
