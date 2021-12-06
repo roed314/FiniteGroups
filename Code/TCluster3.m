@@ -30,12 +30,12 @@ function SmallJump(G, H, N, M)
                 C := Core(G, K);
             end while;
             if #C eq 1 then
-                print "Small jump successful, #K", #K, "#N", #N1;
+                //print "Small jump successful, #K", #K, "#N", #N1;
                 return K, N1;
             end if;
         end if;
     end for;
-    print "Small jump failed";
+    //print "Small jump failed";
     return H, N;
 end function;
 
@@ -53,11 +53,11 @@ function BigJump(G, H, N, M)
         K := sub<G|H,g>;
         if #K gt #H and IsDivisibleBy(M, #K) and #Core(G, K) eq 1 then
             N := Normalizer(G, K);
-            print "Big jump successful, #K", #K, "#N", #N;
+            //print "Big jump successful, #K", #K, "#N", #N;
             return K, N;
         end if;
     end for;
-    print "Big jump failed";
+    //print "Big jump failed";
     return H, N;
 end function;
 
@@ -76,12 +76,12 @@ intrinsic RandomCorelessSubgroup(G::Grp, m::RngIntElt) -> UserProgram
                 K, N := BigJump(G, H, N, M);
                 if #K eq #H then
                     //big jump also failed, so start anew
-                    print "Restarting";
+                    //print "Restarting";
                     break;
                 end if;
             end if;
             if #K eq M then
-                print "All done!";
+                //print "All done!";
                 return K;
             end if;
             H := K;
