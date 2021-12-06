@@ -1,3 +1,4 @@
+// ls DATA/hash/tsep | parallel -j100 --timeout 7200 magma OrdHash:="{1}" TCluster2.m
 
 SMALL_TRIES := 40;
 function SmallJump(G, H, N, M)
@@ -61,8 +62,7 @@ function BigJump(G, H, N, M)
     return H, N;
 end function;
 
-intrinsic RandomCorelessSubgroup(G::Grp, m::RngIntElt) -> UserProgram
-    {A random subgroup of G with trivial core and index m}
+function RandomCorelessSubgroup(G, m)
     assert IsDivisibleBy(#G, m);
     M := #G div m;
     while true do
@@ -87,7 +87,7 @@ intrinsic RandomCorelessSubgroup(G::Grp, m::RngIntElt) -> UserProgram
             H := K;
         end while;
     end while;
-end intrinsic;
+end function;
 
 SetColumns(0);
 
