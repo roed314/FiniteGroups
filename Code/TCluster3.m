@@ -139,7 +139,7 @@ while #active gt 1 do
             end if;
         end for;
         bound[i] := Max(bound[i], bound[j]);
-        Remove(~active, j);
+        Exclude(~active, j);
         lines := Join([Sprintf("%oT%o %o %o", groups[k][1][1], groups[k][1][2], bound[k], Join([Sprintf("%oT%o", tgp[1], tgp[2]) : tgp in groups[k][2..#groups[k]]], " ")) : k in active], "\n");
         PrintFile("DATA/hash/tsep/" * OrdHash, lines : Overwrite:=true);
         print "Isomorphism found, ", #active, "clusters remaining";
