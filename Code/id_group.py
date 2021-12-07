@@ -22,6 +22,7 @@ def _id_group(G):
         return ZZ(G.IdentifyGroup()[2])
 
 def collapse_int_list(L):
+    REDP = ZZ(9223372036854775783) # largest prime below 2^63
     if isinstance(L, (int, Integer)):
         return L % REDP
     L = [collapse_int_list(x) for x in L]
@@ -62,7 +63,6 @@ def Hash(G):
     """
     The hash of G is a 63-bit positive integer invariant under isomorphism
     """
-    REDP = ZZ(9223372036854775783) # largest prime below 2^63
     def smith_invariants(H):
         """
         The sequence of integers, each dividing the next, so that H is isomorphic to the corresponding product of cyclic groups.
