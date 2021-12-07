@@ -21,35 +21,32 @@ def _id_group(G):
     else: # magma group
         return ZZ(G.IdentifyGroup()[2])
 
-def Hash(G):
-    """
-    The hash of G is a 63-bit positive integer invariant under isomorphism
-    """
-    REDP = ZZ(9223372036854775783) # largest prime below 2^63
-    def collapse_int_list(L):
-        if isinstance(L, (int, Integer)):
-            return L % REDP
-        L = [collapse_int_list(x) for x in L]
-        res = 997 * len(L)
-        for x in L:
-            res = x.__xor__((1000003 * res) % REDP)
-        return res
-    def easy_hash_gap(H):
-        M = H.Order()
-        # We treat 1152 and 1920 as not identifiable so that we can produce the same hash both here and in magma, which cannot identify those orders
-        if M not in [1152, 1920] and libgap.IdGroupsAvailable(M):
-            return _id_group(H)
-        data = defaultdict(int)
-        for c in H.ConjugacyClasses():
-            data[ZZ(c.Representative().Order()), ZZ(c.Size())] += 1
-        data = sorted([o, s, cnt] for ((o, s), cnt) in data.items())
-        return collapse_int_list(data)
-    def easy_hash_magma(H):
-        M = ZZ(H.Order())
-        if M not in [1152, 1920] and libgap.IdGroupsAvailable(M):
-            return _id_group(H)
-        data = magma.AssociativeArray()
-        magma.eval(f"""
+def collapse_int_list(L):
+    if isinstance(L, (int, Integer)):
+        return L % REDP
+    L = [collapse_int_list(x) for x in L]
+    res = 997 * len(L)
+    for x in L:
+        res = x.__xor__((1000003 * res) % REDP)
+    return res
+
+def easy_hash_gap(H):
+    M = H.Order()
+    # We treat 1152 and 1920 as not identifiable so that we can produce the same hash both here and in magma, which cannot identify those orders
+    if M not in [1152, 1920] and libgap.IdGroupsAvailable(M):
+        return _id_group(H)
+    data = defaultdict(int)
+    for c in H.ConjugacyClasses():
+        data[ZZ(c.Representative().Order()), ZZ(c.Size())] += 1
+    data = sorted([o, s, cnt] for ((o, s), cnt) in data.items())
+    return collapse_int_list(data)
+
+def easy_hash_magma(H):
+    M = ZZ(H.Order())
+    if M not in [1152, 1920] and libgap.IdGroupsAvailable(M):
+        return _id_group(H)
+    data = magma.AssociativeArray()
+    magma.eval(f"""
 for C in ConjugacyClasses({H.name()}) do
     if not IsDefined({data.name()}, <C[1], C[2]>) then
         {data.name()}[<C[1], C[2]>] := 0;
@@ -58,8 +55,14 @@ for C in ConjugacyClasses({H.name()}) do
 end for;
 {data.name()} := Sort([[k[1], k[2], v] : k -> v in {data.name()}]);
 """)
-        data = [[ZZ(c) for c in piece] for piece in data]
-        return collapse_int_list(data)
+    data = [[ZZ(c) for c in piece] for piece in data]
+    return collapse_int_list(data)
+
+def Hash(G):
+    """
+    The hash of G is a 63-bit positive integer invariant under isomorphism
+    """
+    REDP = ZZ(9223372036854775783) # largest prime below 2^63
     def smith_invariants(H):
         """
         The sequence of integers, each dividing the next, so that H is isomorphic to the corresponding product of cyclic groups.
