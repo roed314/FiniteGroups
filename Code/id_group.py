@@ -59,29 +59,44 @@ end for;
     data = [[ZZ(c) for c in piece] for piece in data]
     return collapse_int_list(data)
 
+def smith_invariants(H):
+    """
+    The sequence of integers, each dividing the next, so that H is isomorphic to the corresponding product of cyclic groups.
+
+    INPUT:
+
+    - ``H`` -- a Gap or Magma abelian group
+    """
+    if isinstance(H, MagmaElement):
+        return [ZZ(m) for m in H.AbelianInvariants()]
+    invs = [ZZ(q) for q in H.AbelianInvariants()]
+    by_p = defaultdict(list)
+    for q in invs:
+        p, _ = q.is_prime_power(get_data=True)
+        by_p[p].append(q)
+    M = max(len(qs) for qs in by_p.values())
+    for p, qs in by_p.items():
+        by_p[p] = [1] * (M - len(qs)) + qs
+    return [prod(qs) for qs in zip(*by_p.values())]
+
+def EasyHash(G):
+    if not isinstance(G, (GapElement, MagmaElement)):
+        G = G._libgap_()
+    N = ZZ(G.Order())
+    # See note above about 1152 and 1920
+    if N not in [1152, 1920] and libgap.IdGroupsAvailable(N):
+        return _id_group(G)
+    elif G.IsAbelian():
+        return collapse_int_list(smith_invariants(G))
+    elif isinstance(G, GapElement):
+        return easy_hash_gap(G)
+    else: # magma group
+        return easy_hash_magma(G)
+
 def Hash(G):
     """
     The hash of G is a 63-bit positive integer invariant under isomorphism
     """
-    def smith_invariants(H):
-        """
-        The sequence of integers, each dividing the next, so that H is isomorphic to the corresponding product of cyclic groups.
-
-        INPUT:
-
-        - ``H`` -- a Gap or Magma abelian group
-        """
-        if isinstance(H, MagmaElement):
-            return [ZZ(m) for m in H.AbelianInvariants()]
-        invs = [ZZ(q) for q in H.AbelianInvariants()]
-        by_p = defaultdict(list)
-        for q in invs:
-            p, _ = q.is_prime_power(get_data=True)
-            by_p[p].append(q)
-        M = max(len(qs) for qs in by_p.values())
-        for p, qs in by_p.items():
-            by_p[p] = [1] * (M - len(qs)) + qs
-        return [prod(qs) for qs in zip(*by_p.values())]
     if not isinstance(G, (GapElement, MagmaElement)):
         G = G._libgap_()
     N = ZZ(G.Order())
