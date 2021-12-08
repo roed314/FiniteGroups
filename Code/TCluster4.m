@@ -1,4 +1,4 @@
-// cat DATA/hash/tseptest.txt | parallel -j180 --timeout 7200 --colsep ' ' magma OrdHash:="{1}" method:="{2}" TCluster2.m
+// cat DATA/hash/tseptest.txt | parallel -j180 --timeout 7200 --colsep ' ' magma OrdHash:="{1}" method:="{2}" TCluster4.m
 
 AttachSpec("hashspec");
 SetColumns(0);
@@ -32,6 +32,7 @@ function Zact(G)
     return [* Kernel(f), Image(f) *];
 end function;
 */
+all_methods = ["frat", "fit", "rad", "soc", "cent", "syl", "nsyl", "derS", "centL", "centU", "minN", "degs"]
 
 smethods := AssociativeArray();
 smethods["frat"] := FrattiniSubgroup;
@@ -81,7 +82,11 @@ if IsDefined(smethods, method) then
         Append(~H, hsh);
         Append(~Ts, Cputime() - t0);
         t0 := Cputime();
-        hsh := hash(quo<G | K>);
+        if Index(G, K) le 10000 then
+            hsh := hash(quo<G | K>);
+        else
+            hsh := -3;
+        end if;
         Append(~Q, hsh);
         Append(~Ts, Cputime() - t0);
         t0 := Cputime();
@@ -114,14 +119,17 @@ elif IsDefined(lmethods, method) then
                 Append(~Ts, Cputime() - t0);
                 t0 := Cputime();
                 if IsNormal(G, K) then
-                    hsh := hash(quo<G | K>);
-                    Append(~Q[#Q], hsh);
-                    Append(~Ts, Cputime() - t0);
-                    t0 := Cputime();
+                    if Index(G, K) le 10000 then
+                        hsh := hash(quo<G | K>);
+                    else
+                        hsh := -3;
+                    end if;
                 else
-                    Append(~Q[#Q], -2);
-                    Append(~Ts, 0);
+                    hsh := -2;
                 end if;
+                Append(~Q[#Q], hsh);
+                Append(~Ts, Cputime() - t0);
+                t0 := Cputime();
             end for;
         end for;
         success := (#{x : x in H} gt 1) or (#{x : x in Q} gt 1);
