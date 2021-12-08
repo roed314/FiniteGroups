@@ -32,7 +32,6 @@ function Zact(G)
     return [* Kernel(f), Image(f) *];
 end function;
 */
-all_methods = ["frat", "fit", "rad", "soc", "cent", "syl", "nsyl", "derS", "centL", "centU", "minN", "degs"]
 
 smethods := AssociativeArray();
 smethods["frat"] := FrattiniSubgroup;
