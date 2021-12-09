@@ -110,15 +110,30 @@ function NQ(G, H)
     end if;
 end function;
 
+// The following sequence of hash functions includes more and more information in an attempt to distinguish groups.
+
 intrinsic hash2(G::Grp) -> RngIntElt
 {
-This function is designed to distinguish between nonisomorphic groups with the same hash by incorporating more invariants.
+This function aims to distinguish between nonisomorphic groups with the same hash by incorporating more invariants.
+}
+    S := [SylowSubgroup(G, p) : p in PrimeDivisors(Order(G))];
+    S cat:= [Normalizer(G, P) : P in S | not IsNormal(G, P)];
+    S cat:= DerivedSeries(G);
+    S cat:= MinimalNormalSubgroups(G);
+    //S cat:= [NQ(G, H) : H in S];
+    E := [EasySubHash(G, H) : H in S];// cat [CollapseIntList(pair) : pair in CharacterDegrees(G)];
+    return CollapseIntList(E);
+end intrinsic;
+
+intrinsic hash3(G::Grp) -> RngIntElt
+{
+This function aims to distinguish between nonisomorphic groups with the same hash and hash2 by incorporating more invariants and using hash for subgroups rather than EasySubHash.
 }
     S := [SylowSubgroup(G, p) : p in PrimeDivisors(Order(G))];
     S cat:= DerivedSeries(G);
     S cat:= MinimalNormalSubgroups(G);
     S cat:= [NQ(G, H) : H in S];
-    E := [EasySubHash(G, H) : H in S] cat [CollapseIntList(pair) : pair in CharacterDegrees(G)];
+    E := [hash(H) : H in S] cat [CollapseIntList(pair) : pair in CharacterDegrees(G)];
     return CollapseIntList(E);
 end intrinsic;
 

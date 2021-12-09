@@ -1,4 +1,4 @@
-// cat DATA/hash/tseptest.txt | parallel -j180 --timeout 3600 magma OrdHash:="{1}" Hash2Test.m
+// cat DATA/hash/tseptest.txt | parallel -j180 --timeout 3600 magma OrdHash:="{1}" Hash3Test.m
 
 AttachSpec("hashspec");
 SetColumns(0);
@@ -12,11 +12,11 @@ for s in Split(Read(ifile)) do
     n, t := Explode([StringToInteger(c) : c in Split(Split(s, " ")[1], "T")]);
     Append(~groups, TransitiveGroup(n, t));
 end for;
-hshs := {hash2(G) : G in groups};
+hshs := {hash3(G) : G in groups};
 if #hshs gt 1 then
-    fname := Sprintf("DATA/hash/hash2_succ/%o", OrdHash);
+    fname := Sprintf("DATA/hash/hash3_succ/%o", OrdHash);
 else
-    fname := Sprintf("DATA/hash/hash2_fail/%o", OrdHash);
+    fname := Sprintf("DATA/hash/hash3_fail/%o", OrdHash);
 end if;
 PrintFile(fname, Sprintf("%o\n", #hshs));
 exit;
