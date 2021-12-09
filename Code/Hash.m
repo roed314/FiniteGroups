@@ -32,6 +32,16 @@ intrinsic CollapseIntList(L::SeqEnum) -> RngIntElt
     return res;
 end intrinsic;
 
+intrinsic CollapseIntList(L::Tup) -> RngIntElt
+{Combine a tuple of integers into a single integer}
+    L := [CollapseIntList(x) : x in L];
+    res := 997 * #L;
+    for x in L do
+        res := BitwiseXor(x, (1000003*res) mod REDP);
+    end for;
+    return res;
+end intrinsic;
+
 intrinsic CollapseIntList(L::RngIntElt) -> RngIntElt
     {Base case}
     return L mod REDP;
@@ -51,6 +61,17 @@ intrinsic EasyHash(GG::Grp) -> RngIntElt
         end for;
         data := Sort([[k[1], k[2], v] : k -> v in data]);
         return CollapseIntList(data);
+    end if;
+end intrinsic;
+
+intrinsic EasySubHash(Amb::Grp, G:Grp) -> RngIntElt
+{A modification of EasyHash to better handle abelian groups and the case where G is the full ambient group}
+    if #G eq #Amb then
+        return -1;
+    elif IsAbelian(G) then
+        return CollapseIntList(AbelianInvariants(G));
+    else
+        return EasyHash(G);
     end if;
 end intrinsic;
 
@@ -75,6 +96,30 @@ Estimates on how long it will take to run for the small group orders
     else
         return CollapseIntList(Sort([[Order(G), EasyHash(G)]] cat [[H`order, EasyHash(H`subgroup)] : H in MaximalSubgroups(G)]));
     end if;
+end intrinsic;
+
+function NQ(G, H)
+    if IsNormal(G, H) then
+        if Index(G, H) lt 1000000 then
+            return G / H;
+        else
+            return G;
+        end if;
+    else
+        return Normalizer(G, H);
+    end if;
+end function;
+
+intrinsic hash2(G::Grp) -> RngIntElt
+{
+This function is designed to distinguish between nonisomorphic groups with the same hash by incorporating more invariants.
+}
+    S := [SylowSubgroup(G, p) : p in PrimeDivisors(Order(G))];
+    S cat:= DerivedSeries(G);
+    S cat:= MinimalNormalSubgroups(G);
+    S cat:= [NQ(G, H) : H in S];
+    E := [EasySubHash(G, H) : H in S] cat [CollapseIntList(pair) : pair in CharacterDegrees(G)];
+    return CollapseIntList(E);
 end intrinsic;
 
 intrinsic hash(HD::LMFDBHashData) -> RngIntElt

@@ -48,6 +48,7 @@ lmethods["centU"] := UpperCentralSeries;
 lmethods["minN"] := MinimalNormalSubgroups;
 nmethods := AssociativeArray();
 nmethods["degs"] := CharacterDegrees;
+nmethods["aut"] := AutOrd;
 
 order, hsh := Explode(Split(OrdHash, "."));
 file_exists, ifile := OpenTest("DATA/hash/tsepout/" * OrdHash, "r"); // NOTE tsepout!
