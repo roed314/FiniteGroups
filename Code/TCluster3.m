@@ -1,4 +1,4 @@
-// ls DATA/hash/tsep | parallel -j100 --timeout 7200 magma OrdHash:="{1}" TCluster2.m
+// ls DATA/hash/tsep | parallel -j100 --timeout 7200 magma OrdHash:="{1}" TCluster3.m
 
 SMALL_TRIES := 40;
 function SmallJump(G, H, N, M)

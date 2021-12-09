@@ -99,6 +99,7 @@ Estimates on how long it will take to run for the small group orders
 end intrinsic;
 
 function NQ(G, H)
+    // Either the normalizer or the quotient (or G if index too large)
     if IsNormal(G, H) then
         if Index(G, H) lt 1000000 then
             return G / H;
@@ -114,26 +115,36 @@ end function;
 
 intrinsic hash2(G::Grp) -> RngIntElt
 {
-This function aims to distinguish between nonisomorphic groups with the same hash by incorporating more invariants.
+Hash from Sylow subgroups, derived series and minimal normal subgroups.
 }
     S := [SylowSubgroup(G, p) : p in PrimeDivisors(Order(G))];
-    // S cat:= [Normalizer(G, P) : P in S | not IsNormal(G, P)];
     S cat:= DerivedSeries(G);
     S cat:= MinimalNormalSubgroups(G);
-    //S cat:= [NQ(G, H) : H in S];
-    E := [EasySubHash(G, H) : H in S];// cat [CollapseIntList(pair) : pair in CharacterDegrees(G)];
+    E := [EasySubHash(G, H) : H in S];
     return CollapseIntList(E);
 end intrinsic;
 
 intrinsic hash3(G::Grp) -> RngIntElt
 {
-This function aims to distinguish between nonisomorphic groups with the same hash and hash2 by incorporating more invariants and using hash for subgroups rather than EasySubHash.
+Hash from Sylow normalizers, quotients by derived series, maximal quotients, and character degrees.
+}
+    S := [SylowSubgroup(G, p) : p in PrimeDivisors(Order(G))];
+    S cat:= DerivedSeries(G);
+    S cat:= MinimalNormalSubgroups(G);
+    S := [NQ(G, H) : H in S];
+    E := [EasySubHash(G, H) : H in S] cat [CollapseIntList(pair) : pair in CharacterDegrees(G)];
+    return CollapseIntList(E);
+end intrinsic;
+
+intrinsic hash4(G::Grp) -> RngIntElt
+{
+Hash using ingredients of both hash2 and hash3 but with a finer distinction (hash rather than EasySubHash).
 }
     S := [SylowSubgroup(G, p) : p in PrimeDivisors(Order(G))];
     S cat:= DerivedSeries(G);
     S cat:= MinimalNormalSubgroups(G);
     S cat:= [NQ(G, H) : H in S];
-    E := [hash(H) : H in S] cat [CollapseIntList(pair) : pair in CharacterDegrees(G)];
+    E := [hash(H) : H in S];
     return CollapseIntList(E);
 end intrinsic;
 
