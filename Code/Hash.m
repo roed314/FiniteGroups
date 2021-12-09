@@ -148,6 +148,46 @@ Hash using ingredients of both hash2 and hash3 but with a finer distinction (has
     return CollapseIntList(E);
 end intrinsic;
 
+intrinsic power_hash(G::Grp) -> RngIntElt
+{
+Hash using the power map on conjugacy classes.
+}
+    // Conjugacy classes together with the power map gives a graph, with vertices labeled
+    // by order/size and edges labeled by integers.  This allows us to refine the
+    // order/size pair associated to a conjugacy class into [order, size, [p1, sizeA, sizeB], [p2, sizeC, ...],...]
+    // declaring that there is a conjugacy class of size sizeA and order order*p1
+    // whose p1th power is this class, etc.
+    pm := PowerMap(G);
+    cc := ConjugacyClasses(G);
+    incoming := AssociativeArray();
+    for i in [2..#cc] do
+        incoming[i] := AssociativeArray();
+    end for;
+    for i in [2..#cc] do
+        order := cc[i][1];
+        size := cc[i][2];
+        if IsPrime(order) then continue; end if;
+        for p in PrimeDivisors(order) do
+            A := incoming[pm(i,p)];
+            if not IsDefined(A, p) then
+                A[p] := [];
+            end if;
+            Append(~A[p], size);
+        end for;
+    end for;
+    // Now recursively count as in EasyHash
+    counts := AssociativeArray();
+    for i in [2..#cc] do
+        key := <cc[i][1], cc[i][2], Sort([[p] cat Sort(sizes) : p -> sizes in incoming[i]])>;
+        if not IsDefined(counts, key) then
+            counts[key] := 0;
+        end if;
+        counts[key] +:= 1;
+    end for;
+    data := Sort([<k[1], k[2], k[3], v> : k -> v in counts]);
+    return CollapseIntList(data);
+end intrinsic;
+
 intrinsic hash(HD::LMFDBHashData) -> RngIntElt
 {}
     return hash(HD`MagmaGrp);
