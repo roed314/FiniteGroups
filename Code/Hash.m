@@ -117,7 +117,7 @@ intrinsic hash2(G::Grp) -> RngIntElt
 This function aims to distinguish between nonisomorphic groups with the same hash by incorporating more invariants.
 }
     S := [SylowSubgroup(G, p) : p in PrimeDivisors(Order(G))];
-    S cat:= [Normalizer(G, P) : P in S | not IsNormal(G, P)];
+    // S cat:= [Normalizer(G, P) : P in S | not IsNormal(G, P)];
     S cat:= DerivedSeries(G);
     S cat:= MinimalNormalSubgroups(G);
     //S cat:= [NQ(G, H) : H in S];
