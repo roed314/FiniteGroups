@@ -51,6 +51,8 @@ intrinsic EasyHash(GG::Grp) -> RngIntElt
     {Hash that's not supposed to take a long time}
     if CanIdentifyGroup(Order(GG)) then
         return IdentifyGroup(GG)[2];
+    elif IsAbelian(G) then
+        return CollapseIntList(AbelianInvariants(G));
     else
         data := AssociativeArray();
         for C in ConjugacyClasses(GG) do
@@ -68,8 +70,6 @@ intrinsic EasySubHash(Amb::Grp, G:Grp) -> RngIntElt
 {A modification of EasyHash to better handle abelian groups and the case where G is the full ambient group}
     if #G eq #Amb then
         return -1;
-    elif IsAbelian(G) then
-        return CollapseIntList(AbelianInvariants(G));
     else
         return EasyHash(G);
     end if;
@@ -120,6 +120,7 @@ Hash from Sylow subgroups, derived series and minimal normal subgroups.
     S := [SylowSubgroup(G, p) : p in PrimeDivisors(Order(G))];
     S cat:= DerivedSeries(G);
     S cat:= MinimalNormalSubgroups(G);
+    S := [H : H in S | #H ne 1 and #H ne #G];
     E := [EasySubHash(G, H) : H in S];
     return CollapseIntList(E);
 end intrinsic;
@@ -132,6 +133,7 @@ Hash from Sylow normalizers, quotients by derived series, maximal quotients, and
     S cat:= DerivedSeries(G);
     S cat:= MinimalNormalSubgroups(G);
     S := [NQ(G, H) : H in S];
+    S := [H : H in S | #H ne 1 and #H ne #G];
     E := [EasySubHash(G, H) : H in S] cat [CollapseIntList(pair) : pair in CharacterDegrees(G)];
     return CollapseIntList(E);
 end intrinsic;
@@ -144,13 +146,14 @@ Hash using ingredients of both hash2 and hash3 but with a finer distinction (has
     S cat:= DerivedSeries(G);
     S cat:= MinimalNormalSubgroups(G);
     S cat:= [NQ(G, H) : H in S];
+    S := [H : H in S | #H ne 1 and #H ne #G];
     E := [hash(H) : H in S];
     return CollapseIntList(E);
 end intrinsic;
 
 intrinsic power_hash(G::Grp) -> RngIntElt
 {
-Hash using the power map on conjugacy classes.
+Hash using the power map on conjugacy classes.  Unfortunately this is both slow and not very helpful (after several hours, only 6 cases of interest complete and in none of them was power_hash able to distinguish non-isomorphic groups).
 }
     // Conjugacy classes together with the power map gives a graph, with vertices labeled
     // by order/size and edges labeled by integers.  This allows us to refine the
