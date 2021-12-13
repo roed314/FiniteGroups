@@ -4,6 +4,7 @@ AttachSpec("hashspec");
 SetColumns(0);
 
 print OrdHash, gps;
+t0 := Cputime();
 groups := [];
 tgps := [];
 for nTt in Split(gps, "_") do
@@ -42,4 +43,5 @@ for hashfunc in [hash2, hash3, hash4] do
     end if;
 end for;
 
-PrintFile(fname, Join([Join([tgps[i] : i in C], " ") : C in clusters], "\n") * "\n");
+PrintFile(fname, Join([Join([tgps[i] : i in C], " ") : C in clusters], "\n"));
+print Cputime() - t0;
