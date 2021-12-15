@@ -5,4 +5,4 @@ AttachSpec("hashspec");
 SetColumns(0);
 n, t := Explode([StringToInteger(c) : c in Split(nTt, "T")]);
 G := TransitiveGroup(n, t);
-PrintFile("DATA/hash/trun.extra/" * nTt, Sprint(hash(G)));
+PrintFile("DATA/hash/trun.extra/" * nTt, Sprintf("%o.%o", Order(G), hash(G)));
