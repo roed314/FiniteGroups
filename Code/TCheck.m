@@ -6,9 +6,8 @@ nTts := Split(Cluster, "_");
 ordhash := nTts[1];
 nTts := nTts[2..#nTts];
 cl, HC := MakeClusters(nTts);
-if #cl eq #nTts then // fully split, as expected
-    PrintFile("DATA/hash/hashcert/" * ordhash, Join([Sprintf("%o %o", nTts[i], Join([Sprint(hsh) : hsh in HC`hashes[i]], ",")) : i in [1..#nTts]], "\n"));
-else
-    PrintFile("DATA/hash/certproblem/" * ordhash, Join([Sprintf("%o %o", nTts[i], Join([Sprint(hsh) : hsh in HC`hashes[i]], ",")) : i in [1..#nTts]], "\n"));
+PrintFile("DATA/hash/hashcert/" * ordhash, Join([Sprintf("%o %o", nTts[i], Join([Sprint(hsh) : hsh in HC`hashes[i]], ",")) : i in [1..#nTts]], "\n"));
+if #cl ne #nTts then // not fully split
+    PrintFile("DATA/hash/certproblem/" * ordhash, Join([Join(C, " ") : C in cl | #C gt 1], "\n"));
 end if;
 exit;
