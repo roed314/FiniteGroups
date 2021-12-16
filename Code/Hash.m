@@ -14,13 +14,11 @@ declare attributes LMFDBHashData:
     gens_fixed, // whether the list of generators has been fixed in the database
     hard_hash; // a list of integers designed to break up hash collisions; possibly tailored to groups in this hash cluster, only computed when needed (initially set to [])
 
-intrinsic SmallLMFDBGroup(n::RngIntElt, i::RngIntElt) -> LMFDBGrp
-    {Make an LMFDB group from the small group database}
-    G := New(LMFDBGrp);
-    G`Label := Sprint(n) cat "." cat Sprint(i);
-    G`MagmaGrp := SmallGroup(n, i);
-    return G;
-end intrinsic;
+declare type LMFDBHashCluster;
+declare attributes LMFDBHashCluster:
+    nTts,
+    Grps,
+    hashes;
 
 intrinsic CollapseIntList(L::SeqEnum) -> RngIntElt
     {Combine a list of integers into a single integer}
@@ -121,7 +119,7 @@ Hash from Sylow subgroups, derived series and minimal normal subgroups.
     S cat:= DerivedSeries(G);
     S cat:= MinimalNormalSubgroups(G);
     S := [H : H in S | #H ne 1 and #H ne #G];
-    E := [EasySubHash(G, H) : H in S];
+    E := Sort([EasySubHash(G, H) : H in S]);
     return CollapseIntList(E);
 end intrinsic;
 
@@ -134,7 +132,7 @@ Hash from Sylow normalizers, quotients by derived series, maximal quotients, and
     S cat:= MinimalNormalSubgroups(G);
     S := [NQ(G, H) : H in S];
     S := [H : H in S | #H ne 1 and #H ne #G];
-    E := [EasySubHash(G, H) : H in S] cat [CollapseIntList(pair) : pair in CharacterDegrees(G)];
+    E := Sort([EasySubHash(G, H) : H in S]) cat [CollapseIntList(pair) : pair in CharacterDegrees(G)];
     return CollapseIntList(E);
 end intrinsic;
 
@@ -147,8 +145,104 @@ Hash using ingredients of both hash2 and hash3 but with a finer distinction (has
     S cat:= MinimalNormalSubgroups(G);
     S cat:= [NQ(G, H) : H in S];
     S := [H : H in S | #H ne 1 and #H ne #G];
-    E := [hash(H) : H in S];
+    E := Sort([hash(H) : H in S]);
     return CollapseIntList(E);
+end intrinsic;
+
+// The goal of hash(G) is to produce a single integer, allowing for the clustering of groups into smaller collections
+// Within each small cluster, we want to compute invariants iteratively, only going as far as neccessary to distinguish the groups.
+
+intrinsic HashCluster(nTts::[MonStgElt]) -> LMFDBHashCluster
+{}
+    HC := New(LMFDBHashCluster);
+    assert #nTts gt 0;
+    Grps := [];
+    for nTt in nTts do
+        n, t := Explode([StringToInteger(c) : c in Split(nTt, "T")]);
+        Append(~Grps, TransitiveGroup(n, t));
+    end for;
+    HC`nTts := nTts;
+    HC`Grps := Grps;
+    HC`hashes := [[] : _ in Grps];
+    return HC;
+end intrinsic;
+
+intrinsic Refine(H::LMFDBHashCluster)
+{Compute hashes until all groups are distinguished or the hashes run out}
+    // We use ElementaryAbelianSeriesCanonical
+    N := #H`Grps[1];
+    n := #H`hashes[1];
+    active := { 1..#H`Grps };
+    EA := [];
+    EAcnt := [];
+    hashers := [];
+    collator := AssociativeArray();
+    for i in active do
+        EA[i] := [A : A in ElementaryAbelianSeriesCanonical(H`Grps[i]) | #A ne 1 and #A ne N];
+        EAcnt[i] := CollapseIntList([#H : H in EA[i]]);
+        if not IsDefined(collator, EAcnt[i]) then
+            collator[EAcnt[i]] := 0;
+        end if;
+        collator[EAcnt[i]] +:= 1;
+    end for;
+    NEA := 0;
+    for i in active do
+        if collator[EAcnt[i]] eq 1 then
+            Exclude(~active, i);
+        else
+            NEA := Max(NEA, #EA[i]);
+        end if;
+    end for;
+    for j in [1..NEA] do
+        function hsher(i)
+            if j gt #EA[i] then return 0; end if;
+            K := EA[i][j];
+            G := H`Grps[i];
+            g := 1;
+            while #G div #K gt 1000000 do
+                G := EA[i][g];
+                g +:= 1;
+            end while;
+            if #G eq #K then return 1; end if;
+            GK := G / K;
+            print i, j, #GK, hash(GK), hash4(GK);
+            return CollapseIntList([hash(GK), hash4(GK)]);
+        end function;
+        Append(~hashers, hsher);
+    end for;
+    hashers cat:= [func<i|hash2(H`Grps[i])>, func<i|hash3(H`Grps[i])>, func<i|hash4(H`Grps[i])>];
+    while #active gt 0 and n lt #hashers do
+        n +:= 1;
+        collator := AssociativeArray();
+        for i in active do
+            Append(~H`hashes[i], hashers[n](i));
+            if not IsDefined(collator, H`hashes[i]) then
+                collator[H`hashes[i]] := 0;
+            end if;
+            collator[H`hashes[i]] +:= 1;
+        end for;
+        for i in active do
+            print i, H`hashes[i];
+            if collator[H`hashes[i]] eq 1 then
+                Exclude(~active, i);
+            end if;
+        end for;
+    end while;
+end intrinsic;
+
+intrinsic MakeClusters(nTts::[MonStgElt]) -> SeqEnum, LMFDBHashCluster
+{}
+    H := HashCluster(nTts);
+    Refine(H);
+    collator := AssociativeArray();
+    for i in [1..#nTts] do
+        if not IsDefined(collator, H`hashes[i]) then
+            collator[H`hashes[i]] := [];
+        end if;
+        Append(~collator[H`hashes[i]], nTts[i]);
+    end for;
+    clusters := [v : k -> v in collator];
+    return clusters, H;
 end intrinsic;
 
 intrinsic power_hash(G::Grp) -> RngIntElt
