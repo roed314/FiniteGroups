@@ -67,8 +67,8 @@ for label in Normals do
                 g *:= Invs[d];
             end for;
         end for;
+        f +:= mu*g;
     end if;
-    f +:= mu*g;
 end for;
 print f;
 print Cputime() - t0;
