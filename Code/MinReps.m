@@ -38,17 +38,17 @@ for x in Split(Read("DATA/subgroups/" * Grp)) do
     if m eq 1 then
         NormalsAbove[short_label] := {};
     end if;
-    N := NormalsAbove[short_label];
+    Norms := NormalsAbove[short_label];
     if normal then
         Append(~Normals, short_label);
         mobius[short_label] := StringToInteger(Sdata[30]);
-        N join:= {short_label};
+        Norms join:= {short_label};
     end if;
     for sub in contains do
         if not IsDefined(NormalsAbove, sub) then
             NormalsAbove[sub] := {};
         end if;
-        NormalsAbove[sub] join:= N;
+        NormalsAbove[sub] join:= Norms;
     end for;
     // have to remove normals from Active[short_label] that contain another in the list
 end for;
