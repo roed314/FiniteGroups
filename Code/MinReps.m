@@ -35,7 +35,7 @@ for x in Split(Read("DATA/subgroups/" * Grp)) do
     end if;
     contains := Sdata[15];
     contains := Split(contains[2..#contains-1], ",");
-    if m eq then
+    if m eq 1 then
         NormalsAbove[short_label] := {};
     end if;
     N := NormalsAbove[short_label];
