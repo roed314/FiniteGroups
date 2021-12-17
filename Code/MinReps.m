@@ -73,5 +73,5 @@ end for;
 print f;
 print Cputime() - t0;
 t0 := Cputime();
-print Degree(MinimalDegreePermutationRepresentation(SmallGroup(N, i)));
+print Degree(Image(MinimalDegreePermutationRepresentation(SmallGroup(N, i))));
 print Cputime() - t0;
