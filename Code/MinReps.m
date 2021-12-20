@@ -40,7 +40,7 @@ for x in Split(Read("DATA/subgroups/" * Grp)) do
     end if;
     Norms := NormalsAbove[short_label];
     if normal then
-        Include(~NormalsAbove, short_label);
+        Include(~NormalsAbove[short_label], short_label);
         Append(~Normals, short_label);
         mobius[short_label] := StringToInteger(Sdata[30]);
         Norms join:= {short_label};
