@@ -60,6 +60,7 @@ for label in Normals do
     if mu ne 0 then
         g := R!1;
         for N in NormalsAbove[label] do
+            print "inner", label, N, Core[N];
             for d in Core[N] do
                 if not IsDefined(Invs, d) then
                     Invs[d] := (1 - x^d)^(-1);
