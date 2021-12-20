@@ -67,6 +67,7 @@ for label in Normals do
                 g *:= Invs[d];
             end for;
         end for;
+        print label, mu, g;
         f +:= mu*g;
     end if;
 end for;
