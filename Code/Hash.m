@@ -205,7 +205,7 @@ intrinsic Refine(H::LMFDBHashCluster)
             end while;
             if #G eq #K then return 1; end if;
             GK := G / K;
-            print i, j, #GK, hash(GK), hash4(GK);
+            //print i, j, #GK, hash(GK), hash4(GK);
             return CollapseIntList([hash(GK), hash4(GK)]);
         end function;
         Append(~hashers, hsher);
@@ -222,7 +222,7 @@ intrinsic Refine(H::LMFDBHashCluster)
             collator[H`hashes[i]] +:= 1;
         end for;
         for i in active do
-            print i, H`hashes[i];
+            //print i, H`hashes[i];
             if collator[H`hashes[i]] eq 1 then
                 Exclude(~active, i);
             end if;
