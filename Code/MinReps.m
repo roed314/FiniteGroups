@@ -95,7 +95,7 @@ if outer_equivalence then
             H := Injed[supergroup];
             conj, elt := IsConjugateSubgroup(Ambient, H, N);
             assert conj;
-            H := H^(c^-1);
+            H := H^(elt^-1);
             NH := Normalizer(Ambient, H);
             if #NH ge NN then
                 cnt := #[1: g in RightTransversal(Ambient, NH) | N subset H^g];
