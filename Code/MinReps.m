@@ -10,8 +10,8 @@ t0 := Cputime();
 Gdata := Split(Read("DATA/groups/" * Grp), "|");
 outer_equivalence := (Gdata[58] eq "t");
 solvable := (Gdata[75] eq "t");
+G := New(LMFDBGrp);
 if outer_equivalence then
-    G := New(LMFDBGrp);
     if solvable then
         G`pc_code := StringToInteger(Gdata[61]);
         G`order := StringToInteger(Gdata[56]);
