@@ -99,9 +99,9 @@ function NumberInclusions(supergroup, subgroup)
         print "A", cnt;
     else
         ind := #[1: g in RightTransversal(Ambient, NK) | K^g subset H];
-        assert IsDivisibleBy(ind * Scount[supergroup], Scount[label]);
-        cnt := ind * Scount[supergroup] div Scount[label];
-        print "B", cnt, ind, Scount[supergroup], Scount[label];
+        assert IsDivisibleBy(ind * Scount[supergroup], Scount[subgroup]);
+        cnt := ind * Scount[supergroup] div Scount[subgroup];
+        print "B", cnt, ind, Scount[supergroup], Scount[subgroup];
     end if;
     return cnt;
 end function;
