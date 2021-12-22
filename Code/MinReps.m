@@ -29,6 +29,7 @@ if outer_equivalence then
     inj := Get(G, "HolInj");
 end if;
 Core := AssociativeArray();
+CoreLabels := AssociativeArray();
 MinTransitiveDegree := N; // permutation precision
 Normals := [];
 NormalsAbove := AssociativeArray();
@@ -42,6 +43,7 @@ for x in Split(Read("DATA/subgroups/" * Grp)) do
     core := Sdata[16]; // short label for core
     if not IsDefined(Core, core) then
         Core[core] := AssociativeArray();
+        CoreLabels[core] := [];
     end if;
     m := StringToInteger(Sdata[47]); // index
     Index[short_label] := m;
@@ -74,7 +76,7 @@ for x in Split(Read("DATA/subgroups/" * Grp)) do
         gens := Split(gens[2..#gens-1], ",");
         H := inj(sub<G`MagmaGrp|[LoadElt(g, G) : g in gens]>);
         Injed[short_label] := H;
-        Append(~Core[core], short_label);
+        Append(~CoreLabels[core], short_label);
         Scount[short_label] := StringToInteger(Sdata[18]);
     else
         if not IsDefined(Core[core], m) then
@@ -89,7 +91,7 @@ if outer_equivalence then
         indexes := [];
         N := Injed[label];
         NN := Normalizer(Ambient, N);
-        for supergroup in Core[label] do
+        for supergroup in CoreLabels[label] do
             H := Injed[supergroup];
             conj, elt := IsConjugateSubgroup(Ambient, H, N);
             assert conj;
