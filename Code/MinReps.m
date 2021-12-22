@@ -98,6 +98,7 @@ if outer_equivalence then
             assert conj;
             H := H^(elt^-1);
             NH := Normalizer(Ambient, H);
+            print "Normalizers", #H, #NH, #K, #NK;
             if #NH ge #NK then
                 cnt := #[1: g in RightTransversal(Ambient, NH) | K subset H^g];
                 print "A", cnt;
