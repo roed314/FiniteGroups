@@ -11,6 +11,7 @@ Gdata := Split(Read("DATA/groups/" * Grp), "|");
 outer_equivalence := (Gdata[58] eq "t");
 solvable := (Gdata[75] eq "t");
 G := New(LMFDBGrp);
+inj := 0; // Magma can't deal with inj not being defined in the non-outer-equivalence case
 if outer_equivalence then
     if solvable then
         G`pc_code := StringToInteger(Gdata[61]);
