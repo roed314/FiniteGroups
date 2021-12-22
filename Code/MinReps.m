@@ -98,7 +98,7 @@ if outer_equivalence then
             assert conj;
             H := H^(elt^-1);
             NH := Normalizer(Ambient, H);
-            if #NH ge NN then
+            if #NH ge #NN then
                 cnt := #[1: g in RightTransversal(Ambient, NH) | N subset H^g];
             else
                 ind := #[1: g in RightTransversal(Ambient, NN) | N^g subset H];
