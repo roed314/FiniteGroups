@@ -1,4 +1,4 @@
-// cat DATA/hash/hashin.txt | parallel -j64 --timeout 1800 --colsep ' ' magma OrdHash:="{1}" gps:="{2}" TCluster5.m
+// cat DATA/hash/hashin.txt | parallel -j64 --timeout 1800 --colsep ' ' magma OrdHash:="{1}" gps:="{2}" TCluster6.m
 
 AttachSpec("hashspec");
 SetColumns(0);
