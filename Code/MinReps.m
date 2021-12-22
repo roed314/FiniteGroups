@@ -100,10 +100,12 @@ if outer_equivalence then
             NH := Normalizer(Ambient, H);
             if #NH ge #NK then
                 cnt := #[1: g in RightTransversal(Ambient, NH) | K subset H^g];
+                print "A", cnt;
             else
                 ind := #[1: g in RightTransversal(Ambient, NK) | K^g subset H];
                 assert IsDivisibleBy(ind * Scount[supergroup], Scount[label]);
                 cnt := ind * Scount[supergroup] div Scount[label];
+                print "B", cnt, ind, Scount[supergroup], Scount[label];
             end if;
             m := Index[supergroup];
             if not IsDefined(Core[label], m) then
@@ -121,7 +123,7 @@ for label in Normals do
     if mu ne 0 then
         g := R!1;
         for H in NormalsAbove[label] do
-            print "inner", label, H, [[k,v] : k->v in Core[H]];
+            print "inner", label, H, sprint([[k,v] : k->v in Core[H]]);
             for d -> cnt in Core[H] do
                 if not IsDefined(Invs, d) then
                     Invs[d] := (1 - x^d)^(-1);
