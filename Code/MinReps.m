@@ -149,6 +149,7 @@ for label in Normals do
                 else
                     cnt := 1;
                 end if;
+                d := Index[supergroup];
                 if not IsDefined(Invs, d) then
                     Invs[d] := (1 - x^d)^(-1);
                 end if;
