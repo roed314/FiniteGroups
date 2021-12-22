@@ -90,18 +90,18 @@ end for;
 if outer_equivalence then
     for label in Normals do
         indexes := [];
-        N := Injed[label];
-        NN := Normalizer(Ambient, N);
+        K := Injed[label];
+        NK := Normalizer(Ambient, K);
         for supergroup in CoreLabels[label] do
             H := Injed[supergroup];
-            conj, elt := IsConjugateSubgroup(Ambient, H, N);
+            conj, elt := IsConjugateSubgroup(Ambient, H, K);
             assert conj;
             H := H^(elt^-1);
             NH := Normalizer(Ambient, H);
-            if #NH ge #NN then
-                cnt := #[1: g in RightTransversal(Ambient, NH) | N subset H^g];
+            if #NH ge #NK then
+                cnt := #[1: g in RightTransversal(Ambient, NH) | K subset H^g];
             else
-                ind := #[1: g in RightTransversal(Ambient, NN) | N^g subset H];
+                ind := #[1: g in RightTransversal(Ambient, NK) | K^g subset H];
                 assert IsDivisibleBy(ind * Scount[supergroup], Scount[label]);
                 cnt := ind * Scount[supergroup] div Scount[label];
             end if;
