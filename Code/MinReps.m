@@ -163,3 +163,5 @@ end for;
 print Valuation(f), Cputime() - t0;
 t0 := Cputime();
 print Degree(Image(MinimalDegreePermutationRepresentation(SmallGroup(N, i)))), Cputime() - t0;
+
+exit;
