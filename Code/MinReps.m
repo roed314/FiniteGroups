@@ -96,12 +96,12 @@ function NumberInclusions(supergroup, subgroup)
     H := H^(elt^-1);
     if #NH ge #NK then
         cnt := #[1: g in RightTransversal(Ambient, NH) | K subset H^g];
-        //print "A", cnt;
+        print "A", cnt;
     else
         ind := #[1: g in RightTransversal(Ambient, NK) | K^g subset H];
         assert IsDivisibleBy(ind * Scount[supergroup], Scount[subgroup]);
         cnt := ind * Scount[supergroup] div Scount[subgroup];
-        //print "B", cnt, ind, Scount[supergroup], Scount[subgroup];
+        print "B", cnt, ind, Scount[supergroup], Scount[subgroup];
     end if;
     return cnt;
 end function;
@@ -142,7 +142,7 @@ for label in Normals do
     if mu ne 0 then
         g := R!1;
         for H in NormalsAbove[label] do
-            //print "inner", label, H, CoreLabels[H];
+            print "inner", label, H, CoreLabels[H];
             for supergroup in CoreLabels[H] do
                 if outer_equivalence then
                     cnt := NumberInclusions(supergroup, label);
@@ -156,7 +156,7 @@ for label in Normals do
                 g *:= Invs[d]^cnt;
             end for;
         end for;
-        //print label, mu, g;
+        print label, mu, g;
         f +:= Scount[label]*mu*g;
     end if;
 end for;
