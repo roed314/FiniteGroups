@@ -121,7 +121,7 @@ for label in Normals do
     if mu ne 0 then
         g := R!1;
         for H in NormalsAbove[label] do
-            print "inner", label, H, [[k,v] for k->v in Core[H]];
+            print "inner", label, H, [[k,v] : k->v in Core[H]];
             for d -> cnt in Core[H] do
                 if not IsDefined(Invs, d) then
                     Invs[d] := (1 - x^d)^(-1);
