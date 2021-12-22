@@ -72,7 +72,7 @@ for x in Split(Read("DATA/subgroups/" * Grp)) do
     if outer_equivalence then
         gens := Sdata[23];
         gens := Split(gens[2..#gens-1], ",");
-        H := inj(sub<G`MagmaGrp|[DecodePerm(StringToInteger(g), G`transitive_degree) : g in gens]>);
+        H := inj(sub<G`MagmaGrp|[LoadElt(g, G) : g in gens]>);
         Injed[short_label] := H;
         Append(~Core[core], short_label);
         Scount[short_label] := StringToInteger(Sdata[18]);
