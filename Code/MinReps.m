@@ -120,9 +120,9 @@ for label in Normals do
     mu := mobius[label];
     if mu ne 0 then
         g := R!1;
-        for N in NormalsAbove[label] do
-            print "inner", label, N, Core[N];
-            for d -> cnt in Core[N] do
+        for H in NormalsAbove[label] do
+            print "inner", label, H, [[k,v] for k->v in Core[H]];
+            for d -> cnt in Core[H] do
                 if not IsDefined(Invs, d) then
                     Invs[d] := (1 - x^d)^(-1);
                 end if;
