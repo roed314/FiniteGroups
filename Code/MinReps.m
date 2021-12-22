@@ -43,9 +43,9 @@ for x in Split(Read("DATA/subgroups/" * Grp)) do
     short_label := Sdata[50]; // short label of this subgroup
     core := Sdata[16]; // short label for core
     if not IsDefined(Core, core) then
-        Core[core] := AssociativeArray();
         CoreLabels[core] := [];
     end if;
+    Append(~CoreLabels[core], short_label);
     m := StringToInteger(Sdata[47]); // index
     Index[short_label] := m;
     trivial_core := (StringToInteger(Split(core, ".")[1]) eq N);
@@ -77,17 +77,35 @@ for x in Split(Read("DATA/subgroups/" * Grp)) do
         gens := Split(gens[2..#gens-1], ",");
         H := inj(sub<G`MagmaGrp|[LoadElt(g, G) : g in gens]>);
         Injed[short_label] := H;
-        Append(~CoreLabels[core], short_label);
         Scount[short_label] := StringToInteger(Sdata[18]);
     else
-        if not IsDefined(Core[core], m) then
+        /*if not IsDefined(Core[core], m) then
             Core[core][m] := 0;
         end if;
-        Core[core][m] +:= 1;
+        Core[core][m] +:= 1;*/
         Scount[short_label] := 1;
     end if;
 end for;
-if outer_equivalence then
+function NumberInclusions(supergroup, subgroup)
+    K := Injed[subgroup];
+    H := Injed[supergroup];
+    NK := Normalizer(Ambient, K);
+    NH := Normalizer(Ambient, H);
+    conj, elt := IsConjugateSubgroup(Ambient, H, K);
+    assert conj;
+    H := H^(elt^-1);
+    if #NH ge #NK then
+        cnt := #[1: g in RightTransversal(Ambient, NH) | K subset H^g];
+        print "A", cnt;
+    else
+        ind := #[1: g in RightTransversal(Ambient, NK) | K^g subset H];
+        assert IsDivisibleBy(ind * Scount[supergroup], Scount[label]);
+        cnt := ind * Scount[supergroup] div Scount[label];
+        print "B", cnt, ind, Scount[supergroup], Scount[label];
+    end if;
+    return cnt;
+end function;
+/*if outer_equivalence then
     for label in Normals do
         indexes := [];
         K := Injed[label];
@@ -115,7 +133,7 @@ if outer_equivalence then
             Core[label][m] +:= cnt;
         end for;
     end for;
-end if;
+end if;*/
 R<x> := PowerSeriesRing(Integers(), MinTransitiveDegree);
 f := R!0;
 Invs := AssociativeArray();
@@ -125,7 +143,12 @@ for label in Normals do
         g := R!1;
         for H in NormalsAbove[label] do
             print "inner", label, H, sprint([[k,v] : k->v in Core[H]]);
-            for d -> cnt in Core[H] do
+            for supergroup in CoreLabels[H] do
+                if outer_equivalence then
+                    cnt := NumberInclusions(supergroup, label);
+                else
+                    cnt := 1;
+                end if;
                 if not IsDefined(Invs, d) then
                     Invs[d] := (1 - x^d)^(-1);
                 end if;
