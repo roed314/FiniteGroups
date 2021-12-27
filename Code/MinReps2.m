@@ -26,7 +26,10 @@ catch e
     G := MakeSmallGroup(G`order, StringToInteger(Gdata[19]));
 end try;
 
+t0 := Cputime();
 phi := MinimalDegreePermutationRepresentation(G`MagmaGrp);
+t := Cputime() - t0;
+
 if solvable then
     gens := SetToSequence(PCGenerators(G`MagmaGrp));
     gens := [gens[i] : i in G`gens_used];
@@ -36,5 +39,5 @@ end if;
 d := Degree(Image(phi));
 print d;
 
-PrintFile("DATA/minreps/"*Grp, Sprintf("%o|{%o}", d, Join([Sprint(EncodePerm(phi(g))) : g in gens], ",")));
+PrintFile("DATA/minreps/"*Grp, Sprintf("%o|{%o}|%o", d, Join([Sprint(EncodePerm(phi(g))) : g in gens], ","), t));
 exit;
