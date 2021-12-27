@@ -34,5 +34,7 @@ else
     gens := SetToSequence(Generators(G`MagmaGrp));
 end if;
 d := Degree(Image(phi));
+print d;
 
 PrintFile("DATA/minreps/"*Grp, Sprintf("%o|{%o}", d, Join([Sprint(EncodePerm(phi(g))) : g in gens], ",")));
+exit;
