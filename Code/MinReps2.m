@@ -31,7 +31,7 @@ if solvable then
     gens := SetToSequence(PCGenerators(G`MagmaGrp));
     gens := [gens[i] : i in G`gens_used];
 else
-    gens := SetTotSequence(Generators(G`MagmaGrp));
+    gens := SetToSequence(Generators(G`MagmaGrp));
 end if;
 d := Degree(Image(phi));
 
