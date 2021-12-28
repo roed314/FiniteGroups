@@ -154,9 +154,9 @@ for label in Normals do
                 end if;
                 g *:= Invs[d]^cnt;
             end for;
-            print "inner", label, H, CoreLabels[H], cnt;
+            print "inner", label, H, CoreLabels[H];
         end for;
-        print label, mu, g;
+        print label, mu, Scount[label], g;
         f +:= Scount[label]*mu*g;
     end if;
 end for;
