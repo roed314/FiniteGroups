@@ -142,7 +142,6 @@ for label in Normals do
     if mu ne 0 then
         g := R!1;
         for H in NormalsAbove[label] do
-            print "inner", label, H, CoreLabels[H];
             for supergroup in CoreLabels[H] do
                 if outer_equivalence then
                     cnt := NumberInclusions(supergroup, label);
@@ -155,6 +154,7 @@ for label in Normals do
                 end if;
                 g *:= Invs[d]^cnt;
             end for;
+            print "inner", label, H, CoreLabels[H], cnt;
         end for;
         print label, mu, g;
         f +:= Scount[label]*mu*g;
