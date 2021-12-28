@@ -27,7 +27,7 @@ catch e
 end try;
 
 t0 := Cputime();
-phi := MinimalDegreePermutationRepresentation(G`MagmaGrp);
+phi := MinimalDegreePermutationRepresentation(G`MagmaGrp : UseAutGrp:=false);
 t := Cputime() - t0;
 
 if solvable then
