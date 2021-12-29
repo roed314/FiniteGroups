@@ -222,7 +222,7 @@ intrinsic LoadAttr(attr::MonStgElt, inp::MonStgElt, obj::Any) -> Any
         return None();
     elif attr in TextCols then
         return inp;
-    elif attr in IntegerCols or attr in SmallintCols or attr in NumericCols then
+    elif attr in IntegerCols or attr in SmallintCols or attr in BigintCols or attr in NumericCols then
         return StringToInteger(inp);
     elif attr in BoolCols then
         return LoadBool(inp);
@@ -262,7 +262,7 @@ intrinsic SaveAttr(attr::MonStgElt, val::Any, obj::Any) -> MonStgElt
         return "\\N";
     elif attr in TextCols then
         return val;
-    elif attr in IntegerCols or attr in SmallintCols or attr in NumericCols then
+    elif attr in IntegerCols or attr in SmallintCols or attr in BigintCols or attr in NumericCols then
         return IntegerToString(val);
     elif attr in BoolCols then
         return SaveBool(val);
