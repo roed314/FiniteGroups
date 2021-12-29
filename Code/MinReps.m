@@ -137,6 +137,9 @@ end if;*/
 R<x> := PowerSeriesRing(Integers(), MinTransitiveDegree);
 f := R!0;
 Invs := AssociativeArray();
+//function autlab(x)
+//    return Join(Split(x, ".")[1..2], ".");
+//end function;
 for label in Normals do
     mu := mobius[label];
     if mu ne 0 then
@@ -153,11 +156,14 @@ for label in Normals do
                     Invs[d] := (1 - x^d)^(-1);
                 end if;
                 g *:= Invs[d]^cnt;
+                if d eq 2 and Split(label, ".")[2] eq "a1" and Split(label, ".")[1] ne "64" then
+                    print label, supergroup, Scount[label], mu, cnt;
+                end if;
             end for;
             //print "inner", label, H, CoreLabels[H];
         end for;
         //print label, mu, Scount[label], g;
-        print label, Scount[label]*mu*g + O(x^3);
+        //print label, Scount[label]*mu*g + O(x^3);
         f +:= Scount[label]*mu*g;
     end if;
 end for;
