@@ -89,18 +89,18 @@ end for;
 function NumberInclusions(supergroup, subgroup)
     K := Injed[subgroup];
     H := Injed[supergroup];
-    NK := Normalizer(Ambient, K);
-    NH := Normalizer(Ambient, H);
     conj, elt := IsConjugateSubgroup(Ambient, H, K);
     assert conj;
     H := H^(elt^-1);
+    NK := Normalizer(Ambient, K);
+    NH := Normalizer(Ambient, H);
     if #NH ge #NK then
         cnt := #[1: g in RightTransversal(Ambient, NH) | K subset H^g];
         //print "A", cnt;
     else
         ind := #[1: g in RightTransversal(Ambient, NK) | K^g subset H];
         assert IsDivisibleBy(ind * Scount[supergroup], Scount[subgroup]);
-        cnt := ind * Scount[supergroup] div Scount[subgroup];
+        cnt := (ind * Scount[supergroup]) div Scount[subgroup];
         //print "B", cnt, ind, Scount[supergroup], Scount[subgroup];
     end if;
     return cnt;
