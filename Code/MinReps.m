@@ -6,6 +6,8 @@
 SetColumns(0);
 AttachSpec("spec");
 
+ZZ := Integers();
+
 print Grp;
 N, i := Explode([StringToInteger(c) : c in Split(Grp, ".")]);
 phiN := EulerPhi(N);
@@ -140,7 +142,11 @@ else
         if ind ne "1" then d *:= 2; end if;
         if not IsDefined(Rdegs, ker) then Rdegs[ker] := AssociativeArray(); end if;
         if not IsDefined(Rdegs[ker], d) then Rdegs[ker][d] := 0; end if;
-        Rdegs[ker][d] +:= 1;
+        if ind eq "-1" then
+            Rdegs[ker][d] +:= 1/2; // count character and its conjugate once
+        else
+            Rdegs[ker][d] +:= 1;
+        end if;
         if faithful and d lt prR then prR := d+1; end if;
     end for;
 
@@ -267,7 +273,7 @@ else
                 end for;
                 //print "inner", label, H, CoreLabels[H];
             end for;
-            //print label, mu, Scount[label], g;
+            print label, mu, Scount[label], g;
             fP +:= Scount[label]*mu*gP;
             fC +:= Scount[label]*mu*gC;
             fR +:= Scount[label]*mu*gR;
