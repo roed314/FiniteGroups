@@ -1,15 +1,31 @@
 // ls DATA/groups | sort -g | parallel -j 128 --timeout 86400 magma Grp:={1} MinReps.m
 // TODO: MAKE THIS WORK FOR outer_equivalence=True
 
+// UGH: Have no kernels when outer_equivalence is True
+
 SetColumns(0);
 AttachSpec("spec");
 
 print Grp;
 N, i := Explode([StringToInteger(c) : c in Split(Grp, ".")]);
+phiN := EulerPhi(N);
+F := Factorization(N);
+p := 0;
+q := 0;
+N_is_p := false;
+N_is_pq := false;
+if #F eq 1 then
+    N_is_p := true;
+elif #F eq 2 and F[1][2] eq 1 and F[2][2] eq 1 then
+    N_is_pq := true;
+    p := F[2][1];
+    q := F[1][1];
+end if;
 t0 := Cputime();
 Gdata := Split(Read("DATA/groups/" * Grp), "|");
 outer_equivalence := (Gdata[58] eq "t");
 solvable := (Gdata[75] eq "t");
+cyclic := (Gdata[20] eq "t");
 G := New(LMFDBGrp);
 inj := 0; // Magma can't deal with inj not being defined in the non-outer-equivalence case
 if outer_equivalence then
@@ -31,7 +47,7 @@ if outer_equivalence then
 end if;
 Core := AssociativeArray();
 CoreLabels := AssociativeArray();
-MinTransitiveDegree := N; // permutation precision
+prP := N+1; // permutation precision
 Normals := [];
 NormalsAbove := AssociativeArray();
 Injed := AssociativeArray();
@@ -51,8 +67,8 @@ for x in Split(Read("DATA/subgroups/" * Grp)) do
     trivial_core := (StringToInteger(Split(core, ".")[1]) eq N);
     //conjugacy_class_count := StringToInteger(Sdata[13]);
     normal := (Sdata[33] eq "t");
-    if trivial_core and m lt MinTransitiveDegree then
-        MinTransitiveDegree := m;
+    if trivial_core and m lt prP then
+        prP := m+1;
     end if;
     contains := Sdata[15];
     contains := Split(contains[2..#contains-1], ",");
@@ -86,6 +102,59 @@ for x in Split(Read("DATA/subgroups/" * Grp)) do
         Scount[short_label] := 1;
     end if;
 end for;
+
+Cdegs := AssociativeArray();
+Rdegs := AssociativeArray();
+Qdegs := AssociativeArray();
+Kernel := AssociativeArray();
+if cyclic and (N_is_p or N_is_pq) then
+    prC := 2;
+    prR := (N eq 2) select 2 else 3;
+    prQ := phiN + 1;
+elif N_is_pq then
+    prC := q + 1;
+    prR := 2*q + 1;
+    prQ := p;
+else
+    prC := N+1;
+    prR := N+1;
+    prQ := N+1;
+    for x in Split(Read("DATA/characters_cc/" * Grp)) do
+        Cdata := Split(x, "|");
+        ker := Cdata[10];
+        faithful := (StringToInteger(Split(ker, ".")[1]) eq N);
+        ind := Cdata[9];
+        qchar := Cdata[13];
+        Kernel[qchar] := ker;
+
+        d := StringToInteger(Cdata[4]);
+        if not IsDefined(Cdegs, ker) then Cdegs[ker] := AssociativeArray(); end if;
+        if not IsDefined(Cdegs[ker], d) then Cdegs[ker][d] := 0; end if;
+        Cdegs[ker][d] +:= 1;
+        if faithful and d lt prC then prC := d+1; end if;
+
+        if ind ne "1" then d *:= 2; end if;
+        if not IsDefined(Rdegs, ker) then Rdegs[ker] := AssociativeArray(); end if;
+        if not IsDefined(Rdegs[ker], d) then Rdegs[ker][d] := 0; end if;
+        Rdegs[ker][d] +:= 1;
+        if faithful and d lt prR then prR := d+1; end if;
+    end for;
+
+    for x in Split(Read("DATA/characters_qq/" * Grp)) do
+        Qdata := Split(x, "|");
+        qchar := Qdata[6];
+        ker := Kernel[qchar];
+        faithful := (StringToInteger(Split(ker, ".")[1]) eq N);
+        qdim := StringToInteger(Qdata[9]);
+        sch_ind := StringToInteger(Qdata[11]);
+        d := qdim * sch_ind;
+        if not IsDefined(Qdegs, ker) then Qdegs[ker] := AssociativeArray(); end if;
+        if not IsDefined(Qdegs[ker], d) then Qdegs[ker][d] := 0; end if;
+        Qdegs[ker][d] +:= 1;
+        if faithful and d lt prQ then prQ := d+1; end if;
+    end for;
+end if;
+
 function NumberInclusions(supergroup, subgroup)
     K := Injed[subgroup];
     H := Injed[supergroup];
@@ -134,41 +203,79 @@ end function;
         end for;
     end for;
 end if;*/
-R<x> := PowerSeriesRing(Integers(), MinTransitiveDegree);
-f := R!0;
-Invs := AssociativeArray();
-//function autlab(x)
-//    return Join(Split(x, ".")[1..2], ".");
-//end function;
-for label in Normals do
-    mu := mobius[label];
-    if mu ne 0 then
-        g := R!1;
-        for H in NormalsAbove[label] do
-            for supergroup in CoreLabels[H] do
-                if outer_equivalence then
-                    cnt := NumberInclusions(supergroup, label);
-                else
-                    cnt := 1;
-                end if;
-                d := Index[supergroup];
-                if not IsDefined(Invs, d) then
-                    Invs[d] := (1 - x^d)^(-1);
-                end if;
-                g *:= Invs[d]^cnt;
-                if d eq 2 and Split(label, ".")[2] eq "a1" and Split(label, ".")[1] ne "64" then
-                    print label, supergroup, Scount[label], mu, cnt;
-                end if;
+ZZx<x> := PowerSeriesRing(Integers(), Max([prP, prC, prR, prQ]));
+
+// We have to do some of these by hand since we didn't compute all of the characters
+if cyclic and (N_is_p or N_is_pq) then
+    if N_is_p then // cyclic, prime
+        fP := x^N + O(x^(N+1)); // permutation representation is regular
+    else
+        fP := x^(p + q) + O(x^(p+q+1)); // direct product of two cyclic reps
+    end if;
+    fC := phiN * x + O(x^2); // phi(N) 1-dimensional faithful reps
+    if N eq 2 then
+        fR := x + O(x^2); // sign rep faithful
+    else
+        fR := (phiN div 2) * x^2 + O(x^3);
+    end if;
+    fQ := x^phiN + O(x^prQ); // sum of all of the nontrivial characters
+elif N_is_pq then
+    fP := x^p + O(x^(p+1)); // semidirect product of C_p and C_q, and the C_q has trivial core.
+    fC := ((p-1) div q) * x^q + O(x^(q+1));
+    fR := ((p-1) div (2*q)) * x^(2*q) + O(x^(2*q+1));
+    fQ := x^(p-1) + O(x^p);
+else
+    fP := ZZx!0;
+    fC := ZZx!0;
+    fR := ZZx!0;
+    fQ := ZZx!0;
+    Invs := AssociativeArray();
+    for label in Normals do
+        mu := mobius[label];
+        if mu ne 0 then
+            gP := ZZx!1;
+            gC := ZZx!1;
+            gR := ZZx!1;
+            gQ := ZZx!1;
+            for H in NormalsAbove[label] do
+                for supergroup in CoreLabels[H] do
+                    d := Index[supergroup];
+                    if d ge prP then continue; end if;
+                    if outer_equivalence then
+                        cnt := NumberInclusions(supergroup, label);
+                    else
+                        cnt := 1;
+                    end if;
+                    if not IsDefined(Invs, d) then Invs[d] := (1 - x^d)^(-1); end if;
+                    gP *:= (Invs[d] + O(x^prP))^cnt;
+                end for;
+                for d -> cnt in Cdegs[H] do
+                    if not IsDefined(Invs, d) then Invs[d] := (1 - x^d)^(-1); end if;
+                    gC *:= (Invs[d] + O(x^prC))^cnt;
+                end for;
+                for d -> cnt in Rdegs[H] do
+                    if not IsDefined(Invs, d) then Invs[d] := (1 - x^d)^(-1); end if;
+                    gR *:= (Invs[d] + O(x^prR))^cnt;
+                end for;
+                for d -> cnt in Qdegs[H] do
+                    if not IsDefined(Invs, d) then Invs[d] := (1 - x^d)^(-1); end if;
+                    gR *:= (Invs[d] + O(x^prQ))^cnt;
+                end for;
             end for;
             //print "inner", label, H, CoreLabels[H];
-        end for;
+        end if;
         //print label, mu, Scount[label], g;
-        //print label, Scount[label]*mu*g + O(x^3);
-        f +:= Scount[label]*mu*g;
-    end if;
-end for;
-print Valuation(f), Cputime() - t0;
-t0 := Cputime();
-print Degree(Image(MinimalDegreePermutationRepresentation(SmallGroup(N, i)))), Cputime() - t0;
-
-
+        fP +:= Scount[label]*mu*gP;
+        fC +:= Scount[label]*mu*gC;
+        fR +:= Scount[label]*mu*gR;
+        fQ +:= Scount[label]*mu*gQ;
+    end for;
+end if;
+fP := fP + O(x^(Valuation(fP)+1));
+fC := fC + O(x^(Valuation(fC)+1));
+fR := fR + O(x^(Valuation(fR)+1));
+fQ := fQ + O(x^(Valuation(fQ)+1));
+print "Permutation", fP;
+print "Cdim", fC;
+print "Rdim", fR;
+print "Qdim", fQ;
