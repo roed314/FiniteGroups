@@ -124,7 +124,11 @@ else
         ker := Cdata[10];
         faithful := (StringToInteger(Split(ker, ".")[1]) eq N);
         ind := Cdata[9];
-        qchar := Cdata[13];
+        //qchar := Cdata[13]; // would be nice, but currently NULL
+        label := Cdata[11];
+        labre := "^([0-9]+.[0-9]+.[0-9]+[a-z]+)[0-9]+$";
+        ok, ignored, qchar := Regexp(labre, label);
+        qchar := qchar[1];
         Kernel[qchar] := ker;
 
         d := StringToInteger(Cdata[4]);
