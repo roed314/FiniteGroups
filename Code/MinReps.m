@@ -261,18 +261,24 @@ else
                     if not IsDefined(Invs, d) then Invs[d] := (1 - x^d)^(-1); end if;
                     gP *:= (Invs[d] + O(x^prP))^cnt;
                 end for;
-                for d -> cnt in Cdegs[H] do
-                    if not IsDefined(Invs, d) then Invs[d] := (1 - x^d)^(-1); end if;
-                    gC *:= (Invs[d] + O(x^prC))^cnt;
-                end for;
-                for d -> cnt in Rdegs[H] do
-                    if not IsDefined(Invs, d) then Invs[d] := (1 - x^d)^(-1); end if;
-                    gR *:= (Invs[d] + O(x^prR))^(ZZ!cnt);
-                end for;
-                for d -> cnt in Qdegs[H] do
-                    if not IsDefined(Invs, d) then Invs[d] := (1 - x^d)^(-1); end if;
-                    gQ *:= (Invs[d] + O(x^prQ))^cnt;
-                end for;
+                if IsDefined(Cdegs, H) then
+                    for d -> cnt in Cdegs[H] do
+                        if not IsDefined(Invs, d) then Invs[d] := (1 - x^d)^(-1); end if;
+                        gC *:= (Invs[d] + O(x^prC))^cnt;
+                    end for;
+                end if;
+                if IsDefined(Rdegs, H) then
+                    for d -> cnt in Rdegs[H] do
+                        if not IsDefined(Invs, d) then Invs[d] := (1 - x^d)^(-1); end if;
+                        gR *:= (Invs[d] + O(x^prR))^(ZZ!cnt);
+                    end for;
+                end if;
+                if IsDefined(Qdegs, H) then
+                    for d -> cnt in Qdegs[H] do
+                        if not IsDefined(Invs, d) then Invs[d] := (1 - x^d)^(-1); end if;
+                        gQ *:= (Invs[d] + O(x^prQ))^cnt;
+                    end for;
+                end if;
                 print "inner", label, H, CoreLabels[H];
             end for;
             print label, mu, Scount[label], gP;
