@@ -273,7 +273,7 @@ else
                 end for;
                 //print "inner", label, H, CoreLabels[H];
             end for;
-            print label, mu, Scount[label], g;
+            print label, mu, Scount[label], gP;
             fP +:= Scount[label]*mu*gP;
             fC +:= Scount[label]*mu*gC;
             fR +:= Scount[label]*mu*gR;
