@@ -265,7 +265,7 @@ else
                 end for;
                 for d -> cnt in Rdegs[H] do
                     if not IsDefined(Invs, d) then Invs[d] := (1 - x^d)^(-1); end if;
-                    gR *:= (Invs[d] + O(x^prR))^cnt;
+                    gR *:= (Invs[d] + O(x^prR))^(ZZ!cnt);
                 end for;
                 for d -> cnt in Qdegs[H] do
                     if not IsDefined(Invs, d) then Invs[d] := (1 - x^d)^(-1); end if;
