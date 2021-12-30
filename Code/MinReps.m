@@ -142,7 +142,7 @@ else
         if ind ne "1" then d *:= 2; end if;
         if not IsDefined(Rdegs, ker) then Rdegs[ker] := AssociativeArray(); end if;
         if not IsDefined(Rdegs[ker], d) then Rdegs[ker][d] := 0; end if;
-        if ind eq "-1" then
+        if ind eq "0" then
             Rdegs[ker][d] +:= 1/2; // count character and its conjugate once
         else
             Rdegs[ker][d] +:= 1;
