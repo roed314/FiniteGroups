@@ -47,7 +47,7 @@ if outer_equivalence then
     Ambient := Get(G, "Holomorph");
     inj := Get(G, "HolInj");
 end if;
-Core := AssociativeArray();
+//Core := AssociativeArray();
 CoreLabels := AssociativeArray();
 prP := N+1; // permutation precision
 Normals := [];
@@ -60,7 +60,7 @@ for line in Split(Read("DATA/subgroups/" * Grp)) do
     Sdata := Split(line, "|");
     short_label := Sdata[50]; // short label of this subgroup
     core := Sdata[16]; // short label for core
-    if not IsDefined(Core, core) then
+    if not IsDefined(CoreLabels, core) then
         CoreLabels[core] := [];
     end if;
     Append(~CoreLabels[core], short_label);
