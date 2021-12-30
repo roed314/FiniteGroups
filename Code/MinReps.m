@@ -271,7 +271,7 @@ else
                     if not IsDefined(Invs, d) then Invs[d] := (1 - x^d)^(-1); end if;
                     gR *:= (Invs[d] + O(x^prQ))^cnt;
                 end for;
-                //print "inner", label, H, CoreLabels[H];
+                print "inner", label, H, CoreLabels[H];
             end for;
             print label, mu, Scount[label], gP;
             fP +:= Scount[label]*mu*gP;
