@@ -64,6 +64,7 @@ for line in Split(Read("DATA/subgroups/" * Grp)) do
         CoreLabels[core] := [];
     end if;
     Append(~CoreLabels[core], short_label);
+    print "Core of", short_label, "is", core;
     m := StringToInteger(Sdata[47]); // index
     Index[short_label] := m;
     trivial_core := (StringToInteger(Split(core, ".")[1]) eq N);
