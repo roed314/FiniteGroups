@@ -54,8 +54,8 @@ Injed := AssociativeArray();
 Index := AssociativeArray();
 Scount := AssociativeArray();
 mobius := AssociativeArray();
-for x in Split(Read("DATA/subgroups/" * Grp)) do
-    Sdata := Split(x, "|");
+for line in Split(Read("DATA/subgroups/" * Grp)) do
+    Sdata := Split(line, "|");
     short_label := Sdata[50]; // short label of this subgroup
     core := Sdata[16]; // short label for core
     if not IsDefined(Core, core) then
@@ -119,8 +119,8 @@ else
     prC := N+1;
     prR := N+1;
     prQ := N+1;
-    for x in Split(Read("DATA/characters_cc/" * Grp)) do
-        Cdata := Split(x, "|");
+    for line in Split(Read("DATA/characters_cc/" * Grp)) do
+        Cdata := Split(line, "|");
         ker := Cdata[10];
         faithful := (StringToInteger(Split(ker, ".")[1]) eq N);
         ind := Cdata[9];
@@ -144,8 +144,8 @@ else
         if faithful and d lt prR then prR := d+1; end if;
     end for;
 
-    for x in Split(Read("DATA/characters_qq/" * Grp)) do
-        Qdata := Split(x, "|");
+    for line in Split(Read("DATA/characters_qq/" * Grp)) do
+        Qdata := Split(line, "|");
         qchar := Qdata[6];
         ker := Kernel[qchar];
         faithful := (StringToInteger(Split(ker, ".")[1]) eq N);
