@@ -162,7 +162,7 @@ else
         if not IsDefined(Qdegs, ker) then Qdegs[ker] := AssociativeArray(); end if;
         if not IsDefined(Qdegs[ker], d) then Qdegs[ker][d] := 0; end if;
         Qdegs[ker][d] +:= 1;
-        print "Qdata", qchar, ker, qdim, sch_ind, faithful
+        print "Qdata", qchar, ker, qdim, sch_ind, faithful;
         if faithful and d lt prQ then prQ := d+1; end if;
     end for;
 end if;
