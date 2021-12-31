@@ -1,7 +1,4 @@
 // ls DATA/groups | sort -g | parallel -j 128 --timeout 86400 magma Grp:={1} MinReps.m
-// TODO: MAKE THIS WORK FOR outer_equivalence=True
-
-// UGH: Have no kernels when outer_equivalence is True
 
 SetColumns(0);
 AttachSpec("spec");
@@ -46,8 +43,8 @@ if outer_equivalence then
     end try;
     Ambient := Get(G, "Holomorph");
     inj := Get(G, "HolInj");
+    G`SubByGass := AssociativeArray();
 end if;
-//Core := AssociativeArray();
 CoreLabels := AssociativeArray();
 prP := N+1; // permutation precision
 Normals := [];
@@ -56,6 +53,7 @@ Injed := AssociativeArray();
 Index := AssociativeArray();
 Scount := AssociativeArray();
 mobius := AssociativeArray();
+SubBySize := AssociativeArray();
 for line in Split(Read("DATA/subgroups/" * Grp)) do
     Sdata := Split(line, "|");
     short_label := Sdata[50]; // short label of this subgroup
@@ -64,7 +62,6 @@ for line in Split(Read("DATA/subgroups/" * Grp)) do
         CoreLabels[core] := [];
     end if;
     Append(~CoreLabels[core], short_label);
-    print "Core of", short_label, "is", core;
     m := StringToInteger(Sdata[47]); // index
     Index[short_label] := m;
     trivial_core := (StringToInteger(Split(core, ".")[1]) eq N);
@@ -94,14 +91,13 @@ for line in Split(Read("DATA/subgroups/" * Grp)) do
     if outer_equivalence then
         gens := Sdata[23];
         gens := Split(gens[2..#gens-1], ",");
-        H := inj(sub<G`MagmaGrp|[LoadElt(g, G) : g in gens]>);
-        Injed[short_label] := H;
+        H := sub<G`MagmaGrp|[LoadElt(g, G) : g in gens]>;
+        Injed[short_label] := inj(H);
         Scount[short_label] := StringToInteger(Sdata[18]);
+        size := N div m;
+        if not IsDefined(SubBySize, size) then SubBySize[size] := []; end if;
+        Append(~SubBySize[size], <short_label, H>);
     else
-        /*if not IsDefined(Core[core], m) then
-            Core[core][m] := 0;
-        end if;
-        Core[core][m] +:= 1;*/
         Scount[short_label] := 1;
     end if;
 end for;
@@ -110,6 +106,59 @@ Cdegs := AssociativeArray();
 Rdegs := AssociativeArray();
 Qdegs := AssociativeArray();
 Kernel := AssociativeArray();
+KerId := AssociativeArray();
+function KerClass(ker_spots)
+    collapse := Get(G, "CCAutCollapse");
+    CCs := Get(G, "ConjugacyClasses");
+    T := AssociativeArray();
+    for i in ker_spots do
+        k := collapse(i);
+        if not IsDefined(T, k) then T[k] := 0; end if;
+        T[k] +:= CCs[i]`size;
+    end for;
+    return Sort([[k, v] : k -> v in T]);
+end function;
+function MakeKernel(ker_spots, size);
+    CCs := Get(G, "ConjugacyClasses");
+    GG := G`MagmaGrp;
+    for i in [#ker_spots..1 by -1] do
+        K := NormalClosure(G, sub<GG|[CCs[ker_spots[j]] : j in [i..#ker_spots]]>);
+        if #K eq size then
+            return K;
+        end if;
+    end for;
+end function;
+function IdentifyKernel(ker_spots, G)
+    CCs := Get(G, "ConjugacyClasses");
+    acm := AutClassMap(G);
+    size := &+[CCs[i]`size : i in ker_spots];
+    poss := SubBySize[size];
+    if #poss eq 1 then
+        return poss[1][1];
+    end if;
+    if not IsDefined(G`SubByGass, size) then
+        G`SubByGass[size] := AssociativeArray();
+        for pair in poss do
+            label, H := Explode(pair);
+            gvec := SubgroupClass(H, acm);
+            if not IsDefined(G`SubByGass[size], gvec) then G`SubByGass[size][gvec] := []; end if;
+            Append(~G`SubByGass[size][gvec], pair);
+        end for;
+    end if;
+    gvec := KerClass(ker_spots);
+    poss := G`SubByGass[size][gvec];
+    if #poss eq 1 then
+        return poss[1][1];
+    end if;
+    K := MakeKernel(ker_spots, size);
+    for pair in poss do
+        label, H := Explode(pair);
+        if IsConjugate(Ambient, inj(H), inj(K)) then
+            return label;
+        end if;
+    end for;
+end function;
+
 if cyclic and (N_is_p or N_is_pq) then
     prC := 2;
     prR := (N eq 2) select 2 else 3;
@@ -119,20 +168,35 @@ elif N_is_pq then
     prR := 2*q + 1;
     prQ := p;
 else
+    if outer_equivalence then
+        // Load the values here, since it's easier to compute the kernel from the rational character
+        for line in Split(Read("DATA/characters_qq/" * Grp)) do
+            Qdata := Split(line, "|");
+            vals := LoadIntegerList(Qdata[10]);
+            qchar := Qdata[6];
+            Ker := [i : i in [1..#vals] | vals[i] eq vals[1]];
+            if not IsDefined(KerId, Ker) then KerId[Ker] := IdentifyKernel(Ker, G); end if;
+            Kernel[qchar] := KerId[Ker];
+        end for;
+    end if;
     prC := N+1;
     prR := N+1;
     prQ := N+1;
     for line in Split(Read("DATA/characters_cc/" * Grp)) do
         Cdata := Split(line, "|");
-        ker := Cdata[10];
-        faithful := (StringToInteger(Split(ker, ".")[1]) eq N);
-        ind := Cdata[9];
         //qchar := Cdata[13]; // would be nice, but currently NULL
         label := Cdata[11];
         labre := "^([0-9]+.[0-9]+.[0-9]+[a-z]+)[0-9]*$";
         ok, ignored, qchar := Regexp(labre, label);
         qchar := qchar[1];
-        Kernel[qchar] := ker;
+        if outer_equivalence then
+            ker := Kernel[qchar];
+        else
+            ker := Cdata[10];
+            Kernel[qchar] := ker;
+        end if;
+        faithful := (StringToInteger(Split(ker, ".")[1]) eq N);
+        ind := Cdata[9];
 
         d := StringToInteger(Cdata[4]);
         if not IsDefined(Cdegs, ker) then Cdegs[ker] := AssociativeArray(); end if;
@@ -162,7 +226,7 @@ else
         if not IsDefined(Qdegs, ker) then Qdegs[ker] := AssociativeArray(); end if;
         if not IsDefined(Qdegs[ker], d) then Qdegs[ker][d] := 0; end if;
         Qdegs[ker][d] +:= 1;
-        print "Qdata", qchar, ker, qdim, sch_ind, faithful;
+        //print "Qdata", qchar, ker, qdim, sch_ind, faithful;
         if faithful and d lt prQ then prQ := d+1; end if;
     end for;
 end if;
@@ -186,35 +250,6 @@ function NumberInclusions(supergroup, subgroup)
     end if;
     return cnt;
 end function;
-/*if outer_equivalence then
-    for label in Normals do
-        indexes := [];
-        K := Injed[label];
-        NK := Normalizer(Ambient, K);
-        for supergroup in CoreLabels[label] do
-            H := Injed[supergroup];
-            conj, elt := IsConjugateSubgroup(Ambient, H, K);
-            assert conj;
-            H := H^(elt^-1);
-            NH := Normalizer(Ambient, H);
-            print "Normalizers", #H, #NH, #K, #NK;
-            if #NH ge #NK then
-                cnt := #[1: g in RightTransversal(Ambient, NH) | K subset H^g];
-                print "A", cnt;
-            else
-                ind := #[1: g in RightTransversal(Ambient, NK) | K^g subset H];
-                assert IsDivisibleBy(ind * Scount[supergroup], Scount[label]);
-                cnt := ind * Scount[supergroup] div Scount[label];
-                print "B", cnt, ind, Scount[supergroup], Scount[label];
-            end if;
-            m := Index[supergroup];
-            if not IsDefined(Core[label], m) then
-                Core[label][m] := 0;
-            end if;
-            Core[label][m] +:= cnt;
-        end for;
-    end for;
-end if;*/
 ZZx<x> := PowerSeriesRing(Integers(), Max([prP, prC, prR, prQ]));
 
 // We have to do some of these by hand since we didn't compute all of the characters
@@ -279,9 +314,9 @@ else
                         gQ *:= (Invs[d] + O(x^prQ))^cnt;
                     end for;
                 end if;
-                print "inner", label, H, CoreLabels[H];
+                //print "inner", label, H, CoreLabels[H];
             end for;
-            print label, mu, Scount[label], gP;
+            //print label, mu, Scount[label], gP;
             fP +:= Scount[label]*mu*gP;
             fC +:= Scount[label]*mu*gC;
             fR +:= Scount[label]*mu*gR;

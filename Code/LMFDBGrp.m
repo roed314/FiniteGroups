@@ -35,6 +35,7 @@ declare attributes LMFDBGrp:
   QQRepsAsCC,
   Characters,
   AllCharactersKnown, // this should be renamed to a lower case variable once this computation run is done
+  SubByGass, // used in MinReps.m
   label,
   old_label,
   name,
