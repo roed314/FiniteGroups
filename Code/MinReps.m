@@ -123,7 +123,7 @@ function MakeKernel(ker_spots, size);
     CCs := Get(G, "ConjugacyClasses");
     GG := G`MagmaGrp;
     for i in [#ker_spots..1 by -1] do
-        K := NormalClosure(G, sub<GG|[CCs[ker_spots[j]] : j in [i..#ker_spots]]>);
+        K := NormalClosure(G, sub<GG|[CCs[ker_spots[j]]`representative : j in [i..#ker_spots]]>);
         if #K eq size then
             return K;
         end if;
