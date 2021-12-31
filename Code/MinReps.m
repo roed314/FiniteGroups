@@ -37,6 +37,7 @@ if outer_equivalence then
     end if;
     try
         SetGrp(G);
+        AssignBasicAttributes(G);
     catch e
         // Bug in Magma's SmallGroupDecoding
         G := MakeSmallGroup(G`order, StringToInteger(Gdata[19]));
