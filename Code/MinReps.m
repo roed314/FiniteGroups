@@ -146,13 +146,13 @@ function IdentifyKernel(ker_spots, G)
             Append(~G`SubByGass[size][gvec], pair);
         end for;
     end if;
-    gvec := KerClass(ker_spots);
+    K := MakeKernel(ker_spots, size);
+    gvec := SubgroupClass(K, acm);
     print "IdKer", size, gvec;
     poss := G`SubByGass[size][gvec];
     if #poss eq 1 then
         return poss[1][1];
     end if;
-    K := MakeKernel(ker_spots, size);
     for pair in poss do
         label, H := Explode(pair);
         if IsConjugate(Ambient, inj(H), inj(K)) then
