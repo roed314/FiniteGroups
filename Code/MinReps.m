@@ -147,6 +147,7 @@ function IdentifyKernel(ker_spots, G)
         end for;
     end if;
     gvec := KerClass(ker_spots);
+    print "IdKer", size, gvec;
     poss := G`SubByGass[size][gvec];
     if #poss eq 1 then
         return poss[1][1];
