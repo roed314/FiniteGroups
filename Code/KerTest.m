@@ -8,7 +8,7 @@ badies := [];
 function MakeKernel(ker_spots, G);
     CCs := Get(G, "ConjugacyClasses");
     GG := G`MagmaGrp;
-    return NormalClosure(GG, sub<GG|[CCs[ker_spots[j]]`representative : j in [i..#ker_spots]]>);
+    return NormalClosure(GG, sub<GG|[CCs[i]`representative : i in ker_spots]>);
 end function;
 
 for N in [4..64] do
