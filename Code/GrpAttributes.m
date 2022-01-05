@@ -1015,7 +1015,7 @@ intrinsic characters_add_sort_and_labels(G::LMFDBGrp, cchars::Any, rchars::Any) 
   ct:=Get(G,"MagmaCharacterTable");
   rct:=Get(G,"MagmaRationalCharacterTable");
   matching:=Get(G,"MagmaCharacterMatching");
-  perm:=Get(G, "CCpermutationInv"); // perm[j] is the a Magma index
+  perm:=Get(G, "CCpermutation"); // perm[j] is the a Magma index
   glabel:=Get(G, "label");
   // Need outer sort for rct, and then an inner sort for ct
   goodsubs:=getgoodsubs(g, ct); // gives <subs, tvals>
@@ -1139,7 +1139,7 @@ intrinsic Characters(G::LMFDBGrp) ->  Tup
   rct:=Get(G,"MagmaRationalCharacterTable");
   matching:=Get(G,"MagmaCharacterMatching");
   R<x>:=PolynomialRing(Rationals());
-  polredabscache:=LoadPolredabsCache();
+  polredabscaches:=AssociativeArray();
   //cc:=Classes(g);
   cchars:=[New(LMFDBGrpChtrCC) : c in ct];
   rchars:=[New(LMFDBGrpChtrQQ) : c in rct];
@@ -1157,12 +1157,16 @@ intrinsic Characters(G::LMFDBGrp) ->  Tup
     thepoly:=DefiningPolynomial(CharacterField(ct[j]));
     // Sometimes the type is Cyclotomic field, in which case thepoly is a different type
     if Type(thepoly) eq SeqEnum then thepoly:=thepoly[1]; end if;
-    if not IsDefined(polredabscache,thepoly) then
+    d := Degree(thepoly);
+    if not IsDefined(polredabscaches, d) then
+      polredabscaches[d] := LoadPolredabsCache(d);
+    end if;
+    if not IsDefined(polredabscaches[d],thepoly) then
       thepoly1:=Polredabs(thepoly);
-      polredabscache[thepoly] := thepoly1;
+      polredabscaches[d][thepoly] := thepoly1;
       PolredabsCache(thepoly, thepoly1);
     end if;
-    thepoly:=polredabscache[thepoly];
+    thepoly:=polredabscaches[d][thepoly];
     cchars[j]`field:=Coefficients(thepoly);
     cchars[j]`Image_object:=New(LMFDBRepCC);
     t1 := Cputime();

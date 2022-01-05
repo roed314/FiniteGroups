@@ -68,14 +68,14 @@ intrinsic PolredabsCache(f::Any, g::Any)
   { Write to a cache file of polredabs results }
   ff:= DelSpaces(Sprint(f));
   gg:= DelSpaces(Sprint(g));
-  write("Polredabs-cache", Sprintf("%o %o", ff, gg) : rewrite:=false);
+  write(Sprintf("Polredabs/%o", Degree(f)), Sprintf("%o %o", ff, gg) : rewrite:=false);
 end intrinsic;
 
-intrinsic LoadPolredabsCache() -> Any
-  {Load polredabs values from a file}
+intrinsic LoadPolredabsCache(n) -> Any
+  {Load polredabs values of degree n from a file}
   prac:= AssociativeArray();
   try
-    prastr:=Split(Read("Polredabs-cache"));
+    prastr:=Split(Read(Sprintf("Polredabs/%o", n)));
   catch e;
     return prac;
   end try;
