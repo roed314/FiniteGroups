@@ -31,7 +31,7 @@ twin := function(g,n,s)
 end function;
 
 G := TransitiveGroup(n, t);
-S := Subgroups(G : IndexEqual:=n);
+S := [H`subgroup : H in Subgroups(G : IndexEqual:=n)];
 //S := [H`subgroup : H in S | #Core(G, H`subgroup) eq 1];
 //S := [H : H in S | TransitiveGroupIdentification(Image(CosetAction(G, H))) eq t];
 cnt := twin(G, n, S);
