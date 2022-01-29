@@ -49,8 +49,8 @@ intrinsic EasyHash(GG::Grp) -> RngIntElt
     {Hash that's not supposed to take a long time}
     if CanIdentifyGroup(Order(GG)) then
         return IdentifyGroup(GG)[2];
-    //elif IsAbelian(GG) then
-    //    return CollapseIntList(AbelianInvariants(GG));
+    elif IsAbelian(GG) then
+        return CollapseIntList(AbelianInvariants(GG));
     else
         data := AssociativeArray();
         for C in ConjugacyClasses(GG) do
