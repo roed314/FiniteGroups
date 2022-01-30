@@ -175,7 +175,7 @@ intrinsic Refine(H::LMFDBHashCluster)
     active := { 1..#H`Grps };
     EA := [];
     EAcnt := [];
-    hashers := [];
+    hashers := [func<i|hash2(H`Grps[i])>, func<i|hash3(H`Grps[i])>];
     collator := AssociativeArray();
     for i in active do
         EA[i] := [A : A in ElementaryAbelianSeriesCanonical(H`Grps[i]) | #A ne 1 and #A ne N];
@@ -210,7 +210,7 @@ intrinsic Refine(H::LMFDBHashCluster)
         end function;
         Append(~hashers, hsher);
     end for;
-    hashers cat:= [func<i|hash2(H`Grps[i])>, func<i|hash3(H`Grps[i])>, func<i|hash4(H`Grps[i])>];
+    Append(~hashers, func<i|hash4(H`Grps[i])>);
     while #active gt 0 and n lt #hashers do
         n +:= 1;
         collator := AssociativeArray();
@@ -230,7 +230,7 @@ intrinsic Refine(H::LMFDBHashCluster)
     end while;
 end intrinsic;
 
-intrinsic MakeClusters(nTts::[MonStgElt]) -> SeqEnum, LMFDBHashCluster
+intrinsic DistinguishingHashes(nTts::[MonStgElt]) -> Assoc, LMFDBHashCluster
 {}
     H := HashCluster(nTts);
     Refine(H);
@@ -241,6 +241,12 @@ intrinsic MakeClusters(nTts::[MonStgElt]) -> SeqEnum, LMFDBHashCluster
         end if;
         Append(~collator[H`hashes[i]], nTts[i]);
     end for;
+    return collator, H;
+end intrinsic;
+
+intrinsic MakeClusters(nTts::[MonStgElt]) -> SeqEnum, LMFDBHashCluster
+{}
+    collator, H := DistinguishingHashes(nTts);
     clusters := [v : k -> v in collator];
     return clusters, H;
 end intrinsic;
