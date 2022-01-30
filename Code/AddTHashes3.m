@@ -5,7 +5,7 @@ AttachSpec("hashspec");
 SetColumns(0);
 // Check to see that this is a simple hash, rather than a refined hash
 pieces := Split(hsh, ".");
-if #pieces != 2 then
+if #pieces ne 2 then
     print hsh, "is not simple";
     exit;
 end if;
