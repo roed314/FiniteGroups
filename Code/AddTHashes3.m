@@ -3,6 +3,12 @@ AttachSpec("hashspec");
 // ls DATA/hashclusters/active | parallel -j128 magma hsh:="{1}" AddTHashes3.m
 
 SetColumns(0);
+// Check to see that this is a simple hash, rather than a refined hash
+pieces := Split(hsh, ".");
+if #pieces != 2 then
+    print hsh, "is not simple";
+    exit;
+end if;
 nTt_lookup := AssociativeArray();
 nTts := [];
 for cluster in Split(Read("DATA/hashclusters/active/" * hsh), "\n") do
