@@ -1,4 +1,4 @@
-// ls DATA/arith_equiv.in | parallel --timeout 7200 magma Grp:={1} ArithEquiv.m
+// cat DATA/arith_equiv.in | parallel --timeout 7200 magma Grp:={1} ArithEquiv.m
 
 n, t := Explode([StringToInteger(c) : c in Split(Grp, "T")]);
 

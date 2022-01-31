@@ -1,4 +1,4 @@
-// ls DATA/hash/tsep | parallel -j100 --timeout 7200 magma OrdHash:="{1}" TCluster3.m
+// ls DATA/hashclusters/active | parallel -j100 --timeout 7200 magma hsh:="{1}" TCluster3.m
 
 SMALL_TRIES := 40;
 function SmallJump(G, H, N, M)
@@ -62,9 +62,13 @@ function BigJump(G, H, N, M)
     return H, N;
 end function;
 
-function RandomCorelessSubgroup(G, m)
+function RandomCorelessSubgroup(G, m : max_tries:=40)
+    // If m was chosen incorrectly, there may be no coreless subgroups of index m
+    // Given that this is just part of a loop below where we try different G and m,
+    // we just give up after a certain number of tries
     assert IsDivisibleBy(#G, m);
     M := #G div m;
+    tries := 0;
     while true do
         // start at the trivial group
         H := sub<G|>;
@@ -77,12 +81,17 @@ function RandomCorelessSubgroup(G, m)
                 if #K eq #H then
                     //big jump also failed, so start anew
                     //print "Restarting";
+                    tries +:= 1;
+                    if tries ge max_tries then
+                        //printf "Giving up after %o tries\n", tries;
+                        return -1, tries;
+                    end if;
                     break;
                 end if;
             end if;
             if #K eq M then
-                //print "All done!";
-                return K;
+                //printf "Done after %o tries\n", tries;
+                return K, tries;
             end if;
             H := K;
         end while;
@@ -91,29 +100,23 @@ end function;
 
 SetColumns(0);
 
-print OrdHash;
-ofile_exists, ofile := OpenTest("DATA/hash/tsepout/" * OrdHash, "r");
-if ofile_exists then
-    print "Already complete; exiting";
+print hsh;
+file_exists, ifile := OpenTest("DATA/hashclusters/active/" * hsh, "r");
+if not file_exists then
+    print "File for", hsh, "does not exist!";
     exit;
 end if;
-
-t0 := Cputime();
-order, hsh := Explode(Split(OrdHash, "."));
-file_exists, ifile := OpenTest("DATA/hash/tsep/" * OrdHash, "r");
 lookup := AssociativeArray();
-bound := [];
 groups := [];
 degrees := [];
 i := 1;
 for s in Split(Read(ifile)) do
-    pieces := Split(s, " ");
-    Append(~bound, StringToInteger(pieces[2]));
-    tgps := [[StringToInteger(m) : m in Split(tgp, "T")] : tgp in [pieces[1]] cat pieces[3..#pieces]];
-    Append(~groups, tgps);
-    Append(~degrees, {tgp[1] : tgp in tgps}); // We will be joining these below, so want all multiplicity 1 but to take unions as a multiset
-    for tgp in tgps do
-        lookup[tgp] := i;
+    labels := Split(s, " ");
+    nTts := [[StringToInteger(m) : m in Split(label, "T")] : label in labels];
+    Append(~groups, nTts);
+    Append(~degrees, {nTt[1] : nTt in nTts});
+    for nTt in nTts do
+        lookup[nTt] := i;
     end for;
     i +:= 1;
 end for;
@@ -121,16 +124,28 @@ end for;
 degrees := [&join[degrees[j] : j in [1..#degrees] | j ne i] : i in [1..#degrees]];
 
 active := [1..#groups]; // As we find isomorphisms, we'll choose only one i from each pair of isomorphic groups
-while #active gt 1 do
+t0 := Cputime();
+progress_ctr := 0;
+max_tries := 40;
+failures := 0;
+total_restarts := 0;
+while true do
+    progress_ctr +:= 1;
     i := Random(active);
     n, t := Explode(groups[i][1]);
     G := TransitiveGroup(n, t);
     m := Random(degrees[i]);
-    H := RandomCorelessSubgroup(G, m);
+    H, restarts := RandomCorelessSubgroup(G, m : max_tries:=max_tries);
+    total_restarts +:= restarts;
+    if H cmpeq -1 then
+        failures +:= 1;
+        continue;
+    end if;
     s := TransitiveGroupIdentification(Image(CosetAction(G, H)));
     j := lookup[[m, s]];
     if i ne j then
         i, j := Explode([Min(i,j), Max(i,j)]);
+        PrintFile("DATA/hashclusters/merge.timings/" * hsh, Sprintf("%oT%o=%oT%o %o %o %o %o", groups[i][1][1], groups[i][1][2], groups[j][1][1], groups[j][1][2], progress_ctr, failures, total_restarts, Cputime() - t0));
         groups[i] := Sort(groups[i] cat groups[j]);
         groups[j] := [];
         for k -> v in lookup do
@@ -138,12 +153,29 @@ while #active gt 1 do
                 lookup[k] := i;
             end if;
         end for;
-        bound[i] := Max(bound[i], bound[j]);
         Exclude(~active, j);
-        lines := Join([Sprintf("%oT%o %o %o", groups[k][1][1], groups[k][1][2], bound[k], Join([Sprintf("%oT%o", tgp[1], tgp[2]) : tgp in groups[k][2..#groups[k]]], " ")) : k in active], "\n");
-        PrintFile("DATA/hash/tsep/" * OrdHash, lines : Overwrite:=true);
-        print "Isomorphism found, ", #active, "clusters remaining";
+        lines := Join([Join([Sprintf("%oT%o", tgp[1], tgp[2]) : tgp in groups[k]], " ") : k in active], "\n");
+        activefile := "DATA/hashclusters/active/" * hsh;
+        if #active eq 1 then
+            PrintFile("DATA/hashclusters/merge_finished/" * hsh, lines);
+            System("rm " * activefile);
+            print "Finished!";
+            break;
+        else
+            tmp := "DATA/hashclusters/tmp/" * hsh;
+            PrintFile(tmp, lines);
+            System("mv " * tmp * " " * activefile); // mv is atomic
+        end if;
+        printf "Isomorphism found after %o tries and %o seconds, %o clusters remaining\n", progress_ctr, Cputime() - t0, #active;
+        progress_ctr := 0;
+        t0 := Cputime();
+        failures +:= 0;
+        total_restarts := 0;
+        max_tries := 40;
+    elif progress_ctr mod 10 eq 0 then
+        printf "Not yet successful; on loop %o\n", progress_ctr;
+        max_tries +:= 1;
     end if;
 end while;
-line := Join([Sprintf("%oT%o %o %o", groups[k][1][1], groups[k][1][2], hsh, Join([Sprintf("%oT%o", tgp[1], tgp[2]) : tgp in groups[k][2..#groups[k]]], " ")) : k in active], "\n");
-PrintFile("DATA/hash/tsepout/" * OrdHash, line : Overwrite:=true);
+
+exit;

@@ -1,6 +1,6 @@
 AttachSpec("hashspec");
 
-// ls DATA/hashclusters/active | parallel -j128 magma hsh:="{1}" AddTHashes3.m
+// ls DATA/hashclusters/active | parallel -j128 --timeout 14400 magma hsh:="{1}" AddTHashes3.m
 
 SetColumns(0);
 // Check to see that this is a simple hash, rather than a refined hash
@@ -18,7 +18,7 @@ for cluster in Split(Read("DATA/hashclusters/active/" * hsh), "\n") do
 end for;
 t0 := Cputime();
 collator := DistinguishingHashes(nTts);
-PrintFile("DATA/hash/refining.times/" * hsh, Sprint(Cputime() - t0));
+PrintFile("DATA/hashclusters/refining.times/" * hsh, Sprint(Cputime() - t0));
 for hashes -> gps in collator do
     newhsh := hsh * "." * Sprint(CollapseIntList(hashes));
     folder := (#gps eq 1) select "refined_unique/" else "active/";
