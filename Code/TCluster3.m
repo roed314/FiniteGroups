@@ -1,4 +1,4 @@
-// ls DATA/hashclusters/active | parallel -j100 --timeout 7200 magma hsh:="{1}" TCluster3.m
+// ls DATA/hashclusters/active | parallel -j96 --timeout 900 magma hsh:="{1}" timeout:=900 TCluster3.m
 
 SMALL_TRIES := 40;
 function SmallJump(G, H, N, M)
@@ -106,6 +106,14 @@ if not file_exists then
     print "File for", hsh, "does not exist!";
     exit;
 end if;
+cfname := "DATA/hashclusters/merge_check/" * hsh;
+file_exists, cfile := OpenTest(cfname, "r");
+if file_exists then
+    if timeout in Split(Read(cfile)) then
+        exit;
+    end if;
+end if;
+PrintFile(cfname, timeout);
 lookup := AssociativeArray();
 groups := [];
 degrees := [];
