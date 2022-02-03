@@ -18,9 +18,9 @@ for cluster in Split(Read("DATA/hashclusters/active/" * hsh), "\n") do
 end for;
 t0 := Cputime();
 collator := DistinguishingHashes(nTts);
-PrintFile("DATA/hashclusters/refining.times/" * hsh, Sprint(Cputime() - t0));
+PrintFile("DATA/hashclusters/refining.times/" * hsh * "no4", Sprint(Cputime() - t0));
 for hashes -> gps in collator do
-    newhsh := hsh * "." * Sprint(CollapseIntList(hashes));
+    newhsh := hsh * "." * Sprint(CollapseIntList(hashes)) * "no4";
     folder := (#gps eq 1) select "refined_unique/" else "active/";
     PrintFile("DATA/hashclusters/" * folder * newhsh, Join([nTt_lookup[gp] : gp in gps], "\n"));
 end for;

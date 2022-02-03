@@ -206,11 +206,12 @@ intrinsic Refine(H::LMFDBHashCluster)
             if #G eq #K then return 1; end if;
             GK := G / K;
             //print i, j, #GK, hash(GK), hash4(GK);
-            return CollapseIntList([hash(GK), hash4(GK)]);
+            //return CollapseIntList([hash(GK), hash4(GK)]);
+            return hash(GK);
         end function;
         Append(~hashers, hsher);
     end for;
-    Append(~hashers, func<i|hash4(H`Grps[i])>);
+    //Append(~hashers, func<i|hash4(H`Grps[i])>);
     while #active gt 0 and n lt #hashers do
         n +:= 1;
         collator := AssociativeArray();
