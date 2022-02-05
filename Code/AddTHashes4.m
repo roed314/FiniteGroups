@@ -14,6 +14,13 @@ for cluster in Split(Read(activefile), "\n") do
     G_lookup[first] := TransitiveGroup(n, t);
     Append(~nTts, first);
 end for;
+
+if #nTts gt 3 then
+    // Skip bigger clusters
+    print "Exiting since", #nTts, "clusters";
+    exit;
+end if;
+
 while #nTts gt 0 do
     t0 := Cputime();
     G := G_lookup[nTts[1]];
