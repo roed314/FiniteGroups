@@ -63,12 +63,18 @@ while #nTts gt 0 do
     nocount := Join([Sprintf("%oT%o", x[1][1], x[1][2]) : x in sibs], " ");
     PrintFile("DATA/hashclusters/sibs_finished/" * hsh * "." * label, nocount);
     PrintFile("DATA/hashclusters/sibs_with_count/" * hsh * "." * label, withcount);
-    if #nTts gt 0 then
+    if #nTts gt 1 then
         tmp := "DATA/hashclusters/tmp/" * hsh;
         PrintFile(tmp, Join([cluster_lookup[nTt] : nTt in nTts], "\n"));
         System("mv " * tmp * " " * activefile); // mv is atomic
     else
+        if #nTts eq 1 then
+            print "Writing last";
+            PrintFile("DATA/hashclusters/sibs.times/" * hsh, "One cluster left");
+            PrintFile("DATA/hashclusters/sibs_finished/" * hsh * "." * nTts[1], cluster_lookup[nTts[1]]);
+        end if;
         System("rm " * activefile);
+        break;
     end if;
 end while;
 exit;
