@@ -23,8 +23,8 @@ end if;
 
 while #nTts gt 0 do
     t0 := Cputime();
-    G := G_lookup[nTts[1]];
     label := nTts[1];
+    G := G_lookup[label];
     cluster := [nTt_lookup[label]];
     nTts := nTts[2..#nTts];
     i := 1;
