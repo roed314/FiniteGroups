@@ -56,7 +56,13 @@ while #nTts gt 0 do
     end for;
     // Since this process may get killed, we want to write output now
     print "Writing progress";
-    PrintFile("DATA/hashclusters/sibs.times/" * hsh, Sprintf("Subs(%o) -> %o -> %o -> %o in %o", label, cnt1, cnt2, #sibs, Cputime() - t0));
+    mem := GetMaximumMemoryUsage();
+    if mem lt 2^30 then
+        mem := Sprintf("%oMB", RealField(4)!(mem / 2^20));
+    else
+        mem := Sprintf("%oGB", RealField(4)!(mem / 2^30));
+    end if;
+    PrintFile("DATA/hashclusters/sibs.times/" * hsh, Sprintf("Subs(%o) -> %o -> %o -> %o in %os using %oMB", label, cnt1, cnt2, #sibs, Cputime() - t0, mem));
     sibs := [<k, v> : k -> v in sibs];
     Sort(~sibs);
     withcount := Join([Sprintf("%oT%o:%o", x[1][1], x[1][2], x[2]) : x in sibs], " ");
