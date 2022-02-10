@@ -1,6 +1,6 @@
 AttachSpec("hashspec");
 
-// ls DATA/hashclusters/active | parallel -j96 --timeout 7200 --memfree 100G --joblog DATA/hashclusters/sibs.log magma hsh:="{1}" AddTHashes5.m
+// ls DATA/hashclusters/active | parallel -j24 --timeout 3600 --memfree 100G --joblog DATA/hashclusters/sibs.log magma hsh:="{1}" AddTHashes5.m
 
 SetColumns(0);
 cluster_lookup := AssociativeArray();
@@ -62,7 +62,7 @@ while #nTts gt 0 do
     else
         mem := Sprintf("%oGB", RealField(4)!(mem / 2^30));
     end if;
-    PrintFile("DATA/hashclusters/sibs.times/" * hsh, Sprintf("Subs(%o) -> %o -> %o -> %o in %os using %oMB", label, cnt1, cnt2, #sibs, Cputime() - t0, mem));
+    PrintFile("DATA/hashclusters/sibs.times/" * hsh, Sprintf("Subs(%o) -> %o -> %o -> %o in %os using %o", label, cnt1, cnt2, #sibs, Cputime() - t0, mem));
     sibs := [<k, v> : k -> v in sibs];
     Sort(~sibs);
     withcount := Join([Sprintf("%oT%o:%o", x[1][1], x[1][2], x[2]) : x in sibs], " ");

@@ -1,6 +1,6 @@
 AttachSpec("hashspec");
 
-// ls DATA/hashclusters/active | parallel -j128 --timeout 3600 magma hsh:="{1}" AddTHashes4.m
+// ls DATA/hashclusters/active | parallel -j64 --timeout 3600 --memfree 100G --joblog DATA/hashclusters/isotest.log magma hsh:="{1}" AddTHashes4.m
 
 SetColumns(0);
 nTt_lookup := AssociativeArray();
@@ -15,7 +15,7 @@ for cluster in Split(Read(activefile), "\n") do
     Append(~nTts, first);
 end for;
 
-if #nTts gt 3 then
+if #nTts gt 6 then
     // Skip bigger clusters
     print "Exiting since", #nTts, "clusters";
     exit;
