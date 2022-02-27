@@ -1,5 +1,8 @@
 // Given a transitive group as input, set up the files used to find all core-free subgroups of specific indexes (40 or 44).  Used in trying to resolve the last few outstanding cases.
 
+if nTt[1] eq "\n" then
+    nTt := nTt[2..#nTt];
+end if;
 n, t := Explode([StringToInteger(c) : c in Split(nTt, "T")]);
 G := TransitiveGroup(n, t);
 P := SylowSubgroup(G, 2);
@@ -33,4 +36,6 @@ for i in [1..#Hs] do
     PrintFile(F, "    end if;");
     PrintFile(F, "end for;");
     PrintFile(F, "PrintFile(\"../last.times\", Sprintf(\"Finished checking %o subgroups within " * slab * " in %o\", #S, Cputime() - t0));");
+    PrintFile(F, "exit;");
 end for;
+exit;
