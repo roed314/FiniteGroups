@@ -14,7 +14,7 @@ else
     m := 2;
 end if;
 for i in [1..#Hs] do
-    slab := nTt * "." Sprint(i);
+    slab := nTt * "." * Sprint(i);
     F := "DATA/hashclusters/last/" * slab * ".m";
     PrintFile(F, Sprintf("G := TransitiveGroup(%o, %o);", n, t));
     PrintFile(F, Sprintf("H := %m;", Hs[i]));
