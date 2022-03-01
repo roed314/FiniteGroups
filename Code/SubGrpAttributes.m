@@ -124,6 +124,11 @@ intrinsic ambient_order(H::LMFDBSubGrp) -> RngIntElt // Need to be subgroup attr
   return Order(GG);
 end intrinsic;
 
+intrinsic core_order(H::LMFDBSubGrp) -> RngIntElt
+{}
+    return Order(H`core);
+end intrinsic;
+
 /*
 intrinsic Quotient(H::LMFDBSubGrp) -> LMFDBGrp
     {returns the quotient as an abstract group and sets QuotientMap}

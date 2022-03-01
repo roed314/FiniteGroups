@@ -217,9 +217,12 @@ declare attributes LMFDBSubGrp:
   count,
   conjugacy_class_count,
   core,
+  core_order,
   coset_action_label,
   normalizer,
+  normalizer_index, // index since it more clearly measures how far away from normal
   centralizer,
+  centralizer_order,
   normal_closure,
   QuotientActionMap, // if split, Q -> Aut(N); otherwise Q -> Out(N)
   quotient_action_kernel,

@@ -1757,10 +1757,13 @@ intrinsic LMFDBSubgroup(H::SubgroupLatElt) -> LMFDBSubGrp
         res`mobius_sub := None();
         res`mobius_quo := None();
     end if;
-    res`normalizer := Lat`subs[Get(H, "normalizer")]`label;
+    N := Get(H, "normalizer");
+    res`normalizer := Lat`subs[N]`label;
+    res`normalizer_index := Get(G, "order") div Lat`subs[N]`order;
     res`normal_closure := Lat`subs[Get(H, "normal_closure")]`label;
     C := Get(H, "centralizer");
     res`centralizer := (Type(C) eq NoneType) select None() else Lat`subs[C]`label;
+    res`centralizer_order := (Type(C) eq NoneType) select None() else Lat`subs[C]`order;
     AssignBasicAttributes(res);
     return res;
 end intrinsic;
@@ -1834,19 +1837,13 @@ intrinsic LookupSubgroupLabel(G::LMFDBGrp, HH::Any) -> Any
         // already labeled
         return HH;
     else
-        S := Get(G, "Subgroups");
-        GG := Get(G, "MagmaGrp");
-        for K in S do
-            KK := Get(K, "MagmaSubGrp");
-            if IsConjugate(GG, HH, KK) then
-                v := Get(K, "short_label");
-                if Type(v) eq NoneType then
-                    v := Get(K, "special_label")[1];
-                end if;
-                return v;
-            end if;
-        end for;
-        return "\\N";
+        L := BestSubgroupLat(G);
+        try
+            x := SubgroupIdentify(L, HH);
+        catch e
+            return "\\N";
+        end try;
+        return x`label;
     end if;
 end intrinsic;
 

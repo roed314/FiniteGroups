@@ -3,7 +3,7 @@ TextCols := ["abelian_quotient", "acted", "actor", "ambient", "aut_group", "brav
 IntegerCols := ["alias_spot", "arith_equiv", "aut_counter", "auts", "cdim", "commutator_count", "counter", "counter_by_index", "cyc_order_mat", "cyc_order_traces", "cyclotomic_n", "degree", "diagram_x", "diagram_aut_x", "dim", "elementary", "exponent", "extension_counter", "hyperelementary", "indicator", "multiplicity", "n", "number_characteristic_subgroups", "number_conjugacy_classes", "number_autjugacy_classes", "number_divisions", "number_normal_subgroups", "number_subgroup_classes", "number_subgroup_autclasses", "number_subgroups", "parity", "priority", "q", "qdim", "quotients_complenetess", "rep", "schur_index", "sibling_completeness", "size", "smallrep", "t", "transitive_degree", "hash"];
 SmallintCols := ["elt_rep_type", "composition_length", "derived_length", "ngens", "nilpotency_class", "pgroup", "sylow", "rank", "subgroup_index_bound", "solvability_type"];
 BigintCols := ["mobius_sub", "mobius_quo"];
-NumericCols := ["hall", "eulerian_function", "order", "aut_order", "outer_order", "ambient_order", "subgroup_order", "quotient_order", "quotient_action_kernel_order", "aut_centralizer_order", "aut_weyl_index", "count", "conjugacy_class_count", "pc_code"];
+NumericCols := ["hall", "eulerian_function", "order", "aut_order", "outer_order", "ambient_order", "subgroup_order", "quotient_order", "quotient_action_kernel_order", "aut_centralizer_order", "aut_weyl_index", "count", "conjugacy_class_count", "pc_code", "core_order", "normalizer_index", "centralizer_order"];
 
 TextListCols := ["composition_factors", "special_labels", "wreath_data"];
 

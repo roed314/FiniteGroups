@@ -55,22 +55,27 @@ Index := AssociativeArray();
 Scount := AssociativeArray();
 mobius := AssociativeArray();
 SubBySize := AssociativeArray();
+compute_permdeg := true;
 for line in Split(Read("DATA/subgroups/" * Grp)) do
     Sdata := Split(line, "|");
     short_label := Sdata[50]; // short label of this subgroup
-    core := Sdata[16]; // short label for core
-    if not IsDefined(CoreLabels, core) then
-        CoreLabels[core] := [];
-    end if;
-    Append(~CoreLabels[core], short_label);
     m := StringToInteger(Sdata[47]); // index
     Index[short_label] := m;
-    trivial_core := (StringToInteger(Split(core, ".")[1]) eq N);
-    //conjugacy_class_count := StringToInteger(Sdata[13]);
-    normal := (Sdata[33] eq "t");
-    if trivial_core and m lt prP then
-        prP := m+1;
+    core := Sdata[16]; // short label for core
+    if core eq "\\N" then
+        compute_permdeg := false;
+    else
+        if not IsDefined(CoreLabels, core) then
+            CoreLabels[core] := [];
+        end if;
+        Append(~CoreLabels[core], short_label);
+        trivial_core := (StringToInteger(Split(core, ".")[1]) eq N);
+        //conjugacy_class_count := StringToInteger(Sdata[13]);
+        if trivial_core and m lt prP then
+            prP := m+1;
+        end if;
     end if;
+    normal := (Sdata[33] eq "t");
     contains := Sdata[15];
     contains := Split(contains[2..#contains-1], ",");
     if m eq 1 then
@@ -169,18 +174,17 @@ elif N_is_pq then
     prC := q + 1;
     prR := 2*q + 1;
     prQ := p;
+elif outer_equivalence then
+    // Load the values here, since it's easier to compute the kernel from the rational character
+    for line in Split(Read("DATA/characters_qq/" * Grp)) do
+        Qdata := Split(line, "|");
+        vals := LoadIntegerList(Qdata[10]);
+        qchar := Qdata[6];
+        Ker := [i : i in [1..#vals] | vals[i] eq vals[1]];
+        if not IsDefined(KerId, Ker) then KerId[Ker] := IdentifyKernel(Ker, G); end if;
+        Kernel[qchar] := KerId[Ker];
+    end for;
 else
-    if outer_equivalence then
-        // Load the values here, since it's easier to compute the kernel from the rational character
-        for line in Split(Read("DATA/characters_qq/" * Grp)) do
-            Qdata := Split(line, "|");
-            vals := LoadIntegerList(Qdata[10]);
-            qchar := Qdata[6];
-            Ker := [i : i in [1..#vals] | vals[i] eq vals[1]];
-            if not IsDefined(KerId, Ker) then KerId[Ker] := IdentifyKernel(Ker, G); end if;
-            Kernel[qchar] := KerId[Ker];
-        end for;
-    end if;
     prC := N+1;
     prR := N+1;
     prQ := N+1;

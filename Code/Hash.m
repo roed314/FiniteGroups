@@ -339,3 +339,44 @@ intrinsic description(HD::LMFDBHashData) -> MonStgElt
 {}
     return ReplaceString(Sprintf("%m", HD`MagmaGrp), ["\n", " "], ["", ""]);
 end intrinsic;
+
+
+// Testing whether we can find core-free subgroups using SubgroupsLift and filtering each time faster than filtering at the end
+
+intrinsic CoreFreeSubs(G::Grp, index::RngIntElt : show:=true) -> SeqEnum
+{}
+    E := ElementaryAbelianSeriesCanonical(G);
+    subs := Subgroups(sub<G|> : Presentation:=true);
+    N := #G div index;
+    for i in [1..#E-1] do
+        nlow := N div Gcd(N, #E[i+1]);
+        subs := SubgroupsLift(G, E[i], E[i+1], subs : OrderMultipleOf:=nlow, OrderDividing:=N);
+        subs := [S : S in subs | Core(G, S`subgroup) subset E[i+1]];
+    end for;
+    if show and #subs gt 0 then
+        Ts := [TransitiveGroupIdentification(Image(CosetAction(G, H`subgroup))) : H in subs];
+        Sort(~Ts);
+        ctr := [[Ts[1],1]];
+        for i in [2..#Ts] do
+            if Ts[i] eq Ts[i-1] then
+                ctr[#ctr][2] +:= 1;
+            else
+                Append(~ctr, [Ts[i], 1]);
+            end if;
+        end for;
+        print Join([p[2] gt 1 select Sprintf("%oT%o x%o", index, p[1], p[2]) else Sprintf("%oT%o", index, p[1]) : p in ctr], ", ");
+    end if;
+    return subs;
+end intrinsic;
+
+intrinsic SpeedTest(G::Grp, index::RngIntElt) -> SeqEnum, SeqEnum, BoolElt
+{}
+    t0 := Cputime();
+    sub1 := CoreFreeSubs(G, index : show:=false);
+    print "Iterative", Cputime() - t0;
+    t0 := Cputime();
+    sub2 := Subgroups(G : IndexEqual := index);
+    sub2 := [H : H in sub2 | #Core(G, H`subgroup) eq 1];
+    print "Post", Cputime() - t0;
+    return sub1, sub2, (#sub1 eq #sub2);
+end intrinsic;

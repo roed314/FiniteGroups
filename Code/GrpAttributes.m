@@ -337,7 +337,7 @@ intrinsic MagmaTransitiveSubgroup(G::LMFDBGrp) -> Any
         if m ne 0 and Get(S[j], "quotient_order") gt m then
             return None();
         end if;
-        if #Core(g, S[j]`MagmaSubGrp) eq 1 then
+        if #Get(S[j], "core") eq 1 then
             return S[j]`MagmaSubGrp;
         end if;
     end for;
@@ -351,19 +351,26 @@ intrinsic transitive_degree(G::LMFDBGrp) -> Any
     return Get(G, "order") div Order(ts);
 end intrinsic;
 
+//intrinsic permutation_degree(G::LMFDBGrp) -> Any
+//{Smallest degree for a faithful permutation representation}
+
 intrinsic perm_gens(G::LMFDBGrp) -> Any
-  {Generators of a minimal degree transitive faithful permutation representation}
-  ts := Get(G, "MagmaTransitiveSubgroup");
-  g := G`MagmaGrp;
-  gg := CosetImage(g,ts);
-  return [z : z in Generators(gg)];
+{Generators of a minimal degree transitive faithful permutation representation}
+    ert := Get(G, "elt_rep_type");
+    if ert eq 0 then
+        return None();
+    end if;
+    return [z : z in Generators(G`MagmaGrp)];
+    /*ts := Get(G, "MagmaTransitiveSubgroup");
+    g := G`MagmaGrp;
+    gg := CosetImage(g,ts);
+    return [z : z in Generators(gg)];*/
 end intrinsic;
 
 intrinsic Generators(G::LMFDBGrp) -> Any
     {Returns the chosen generators of the underlying group}
     ert := Get(G, "elt_rep_type");
     if ert eq 0 then
-        print "inside Generators(G)";
         gu := Get(G, "gens_used");
         gens := SetToSequence(PCGenerators(G`MagmaGrp));
         if Type(gu) ne NoneType then
@@ -1368,9 +1375,7 @@ intrinsic elt_rep_type(G:LMFDBGrp) -> Any
     if Type(G`MagmaGrp) eq GrpPC then
         return 0;
     elif Type(G`MagmaGrp) eq GrpPerm then
-      deg:=Get(G,"transitive_degree");
-      return -deg;
-      /* return -Degree(G`MagmaGrp);  */
+      return -Degree(G`MagmaGrp);
     elif Type(G`MagmaGrp) eq GrpMat then
         R := CoefficientRing(G);
         if R eq Integers() then
