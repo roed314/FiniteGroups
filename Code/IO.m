@@ -366,7 +366,7 @@ intrinsic DefaultAttributes(c::Cat) -> SeqEnum
                       // which are difficult for large groups
                       "transitive_degree", // should be set in advance for the actual transitive groups
                       "almost_simple", // NormalSubgroups -> Subgroups
-                      //"aut_group", // Sometimes MagmaAutGroup is slow
+                      "aut_group", // Sometimes MagmaAutGroup is slow
                       "aut_order", // Sometimes MagmaAutGroup is slow
                       "central_product", // NormalSubgroups -> Subgroups
                       "central_quotient", // can't take large quotients or identify large groups
