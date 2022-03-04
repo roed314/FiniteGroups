@@ -7,6 +7,9 @@ SetColumns(0);
 nTt := Split(gp, " ")[2];
 n, t := Explode([StringToInteger(c) : c in Split(nTt, "T")]);
 G := TransitiveGroup(n, t);
+if IsSolvable(G) then
+    G := PCGroup(G);
+end if;
 
 // Fast:
 // order|solvable|simple|derived_length|index of derived sub|index of center
@@ -15,6 +18,42 @@ G := TransitiveGroup(n, t);
 // Slower:
 // num max subs|num large max subs|num normal subs|num large normal subs
 // iterative closure ordhashes
+
+function MyQuo(H, K)
+    if #K eq 1 then
+        return H;
+    elif #K eq #H then
+        return sub<H|>;
+    elif Type(G) eq GrpPC or Index(H, K) lt 1000000 then
+        return quo<H|K>;
+    else
+        S := Subgroups(H : IndexEqual := #K);
+        for X in S do
+            if #(X`subgroup meet K) eq 1 then
+                return X`subgroup;
+            end if;
+        end for;
+    end if;
+end function;
+
+function CentQuo(H)
+    return MyQuo(H, Center(H));
+end function;
+
+function FratQuo(H)
+    return MyQuo(H, FrattiniSubgroup(H));
+end function;
+
+function FitQuo(H)
+    return MyQuo(H, FittingSubgroup(H));
+end function;
+
+function SocQuo(H)
+    if #FittingSubgroup(H) eq 1 then
+        return SocleQuotient(H);
+    end if;
+    return MyQuo(H, Socle(H));
+end function;
 
 N := Order(G);
 solv := IsSolvable(G) select "t" else "f";
@@ -25,14 +64,19 @@ Const := [""];
 FuncToStr := AssociativeArray();
 FuncToStr[DerivedSubgroup] := "D";
 FuncToStr[Center] := "Z";
+FuncToStr[CentQuo] := "ZQ";
 FuncToStr[FrattiniSubgroup] := "P";
+FuncToStr[FratQuo] := "PQ";
 FuncToStr[FittingSubgroup] := "F";
+FuncToStr[FitQuo] := "FQ";
 FuncToStr[Radical] := "R";
+FuncToStr[RadicalQuotient] := "RQ";
 FuncToStr[Socle] := "S";
+FuncToStr[SocQuo] := "SQ";
 i := 1;
 while i le #Subs do
     H := Subs[i];
-    for F in [DerivedSubgroup, Center, FrattiniSubgroup, FittingSubgroup, Radical, Socle] do
+    for F in [DerivedSubgroup, Center, CentQuo, FrattiniSubgroup, FratQuo, FittingSubgroup, FitQuo, Radical, RadicalQuotient, Socle, SocQuo] do
         K := F(H);
         if not IsInSmallGroupDatabase(#K) or #K lt 2000 and #K ge 512 and Valuation(#K, 2) ge 7 then
             m := #Subs;
@@ -56,5 +100,6 @@ while i le #Subs do
 end while;
 PrintFile("DATA/TExplore/" * nTt, Sprint(#Subs - 1));
 PrintFile("DATA/TExplore/" * nTt, Join([Sprint(#H) : H in Subs[2..#Subs]], "|"));
+PrintFile("DATA/TExplore/" * nTt, Join([Sprintf("%o.%o", #H, hash(H)) : H in Subs[2..#Subs]]));
 PrintFile("DATA/TExplore/" * nTt, Join([x[2..#x] : x in Const[2..#Const]], "|"));
 exit;

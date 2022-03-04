@@ -10,6 +10,9 @@
 - [ ] Update `gps_special_names` to add more families (Sam)
 - [ ] Come up with a numerical rating scheme for how interesting a group is
 - [ ] Gather statistics on how many new groups we would need to store under various schemes (David)
+- [ ] Rewrite direct_factorization to not recurse (Sam)
+- [ ] Restructure the code to be able to run in multiple passes (David)
+- [ ] Change NormalSubgroups so that it can be called without needing to compute all subgroups (David)
 
 ### Uploading data
 * Fix bug in Magma's SmallGroupDecoding
