@@ -24,6 +24,21 @@ function AllSubgroupsOk(G)
     return true;
 end function;
 
+intrinsic SetBigSubgroupParameters(G::LMFDBGrp)
+{Set the parameters assuming that everything is hard (for example if G is very large)}
+    G`outer_equivalence := false; // automorphism group is hard
+    G`subgroup_index_bound := 3; // Maybe we can get a few
+    G`all_subgroups_known := false; // trillions of subgroups
+    G`normal_subgroups_known := true; // let us hope!
+    G`maximal_subgroups_known := true; // let us hope!
+    G`sylow_subgroups_known := true; // this is actually doable even for large groups
+    G`subgroup_inclusions_known := false; // there are no inclusions if we're only going up to index 3
+    print "Computing conjugacy classes";
+    C := Get(G, "MagmaConjugacyClasses");
+    print "Done!";
+    G`AllCharactersKnown := (#C lt 512);
+end intrinsic;
+
 intrinsic SetSubgroupParameters(G::LMFDBGrp)
     {Set the parameters for which subgroups to compute (and do some initial computations)}
     GG := G`MagmaGrp;

@@ -147,7 +147,7 @@ intrinsic SaveJsonb(out::SeqEnum) ->  MonStgElt
 end intrinsic;
 
 
-intrinsic LoadPerms(inp::MonStgElt, n::RngInt) -> SeqEnum
+intrinsic LoadPerms(inp::MonStgElt, n::RngIntElt) -> SeqEnum
     {}
     return [DecodePerm(elt, n) : elt in LoadIntegerList(inp)];
 end intrinsic;
@@ -317,10 +317,29 @@ intrinsic LoadGrp(line::MonStgElt, attrs::SeqEnum : sep:="|") -> LMFDBGrp
     return G;
 end intrinsic;
 
+intrinsic TransitiveLMFDBGrp(n::RngIntElt, t::RngIntElt) -> LMFDBGrp
+{}
+    G := NewLMFDBGrp(TransitiveGroup(n, t), "TEST.1");
+    AssignBasicAttributes(G);
+    SetBigSubgroupParameters(G);
+    return G;
+end intrinsic;
+
+intrinsic TestTransitive(n::RngIntElt, cnt::RngIntElt)
+{}
+    M := NumberOfTransitiveGroups(n);
+    for x in [1..cnt] do
+        t := Random(1,M);
+        printf "%oT%o\n", n, t;
+        G := TransitiveLMFDBGrp(n, t);
+        s := SaveLMFDBObject(G);
+    end for;
+end intrinsic;
+
 intrinsic DefaultAttributes(c::Cat) -> SeqEnum
     {List of attributes that should be saved to disc for postgres}
     if c eq LMFDBGrp then
-        defaults := ["Agroup", "Zgroup", "elt_rep_type", "transitive_degree"]; // need transitive_degree, elt_rep_type early
+        defaults := ["Agroup", "Zgroup"]; // need transitive_degree, elt_rep_type early
     else
         defaults := [];
     end if;
@@ -334,13 +353,58 @@ intrinsic DefaultAttributes(c::Cat) -> SeqEnum
                       // Subgroup attributes
                       "alias_spot",
                       "aut_counter",
-		      "extension_counter"
+		      "extension_counter",
 		      //  "diagram_x", returns 0 now
 		      //"generators",
 		      //"standard_generators"
 
                       // Conjugacy class attributes
                       //"representative" // Need to be able to encode GrpPCElts - DR
+
+
+                      // This attributes are TEMPORARILY blacklisted while we try to figure out
+                      // which are difficult for large groups
+                      "transitive_degree", // should be set in advance for the actual transitive groups
+                      "almost_simple", // NormalSubgroups -> Subgroups
+                      //"aut_group", // Sometimes MagmaAutGroup is slow
+                      "aut_order", // Sometimes MagmaAutGroup is slow
+                      "central_product", // NormalSubgroups -> Subgroups
+                      "central_quotient", // can't take large quotients or identify large groups
+                      "commutator_count", // Don't have a character table
+                      "commutator_label", // CommutatorSubgroup was slow AND can't identify large groups
+                      "complete", // Requires outer_order
+                      "composition_factors", // Can't compute label for large factors
+                      "composition_length", // Current implementation calls composition_factors
+                      "direct_factorization", // Needs NormalSubgroups -> Subgroups, also recursive in an unfortunate way
+                      "direct_product", // NormalSubgroups -> Subgroups
+                      "eulerian_function", // hopeless: needs full subgroup lattice with mobius function
+                      "factors_of_aut_order", // Sometimes MagmaAutGroup is slow
+                      "faithful_reps", // can be slow, though usually finishes in a few seconds
+                      "frattini_label", // Can't label large groups
+                      "frattini_quotient", // can't take large quotients or identify large groups
+                      "gens_used", // didn't call RePresent
+                      "hash", // should get set in advance since we've already computed it
+                      "monomial", // requires character table except in easy cases
+                      "name", // GroupName can be very slow
+                      "number_autjugacy_classes", // CCAutCollapse -> Holomorph
+                      "number_characteristic_subgroups", // supposed to be set in SubGrpLstAut
+                      "number_divisions", // ConjugacyClasses does more than just compute this
+                      "number_normal_subgroups", // supposed to be set in SubGrpLstAut
+                      "number_subgroup_autclasses", // supposed to be set in SubGrpLstAut
+                      "number_subgroup_classes", // supposed to be set in SubGrpLstAut
+                      "number_subgroups", // supposed to be set in SubGrpLstAut
+                      "outer_group", // Sometimes MagmaAutGroup is slow
+                      "outer_order", // Sometimes MagmaAutGroup is slow
+                      "pc_code", // Need to switch to a PC group for transitive groups (but RePresent will probably be infeasible)
+                      "quasisimple", // Can't quotient by center since quotient is too large
+                      "rational", // Rational character table can be slow even if few characters.  Example: 44T1485 and 44T1538 took about a minute each
+                      "schur_multiplier", // pMultiplicator: Cohomology failed
+                      "semidirect_product", // Subgroups
+                      "solvability_type", // Can fail on monomial
+                      "smallrep", // faithful_reps None
+                      "tex_name", // GroupName can be very slow
+                      "wreath_data", // IsWreathProduct is slow
+                      "wreath_product" // IsWreathProduct is slow
                       ];
 
         greylist := [

@@ -1363,11 +1363,24 @@ intrinsic wreath_data(G::LMFDBGrp) -> SeqEnum
     return G`wreath_data;
 end intrinsic;
 
+function letters2num(s)
+    letters := [StringToCode(x) - 96 : x in Eltseq(s)];
+    ssum := 0;
+    for c in letters do
+        ssum := ssum*26 + c;
+    end for;
+    return ssum;
+end function;
+
 intrinsic counter(G::LMFDBGrp) -> RngIntElt
 {Second entry in label}
    lab:= Get(G,"label");
    spl:=Split(lab,".");
-   return eval spl[2];
+   if Regexp("[0-9]+", spl[2]) then
+       return StringToInteger(spl[2]);
+   else
+       return letters2num(spl[2]);
+   end if;
 end intrinsic;
 
 intrinsic elt_rep_type(G:LMFDBGrp) -> Any
