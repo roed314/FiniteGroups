@@ -7,9 +7,9 @@
 
 ### Large groups
 
-[ ] - Update `gps_special_names` to add more families (Sam)
-[ ] - Come up with a numerical rating scheme for how interesting a group is
-[ ] - Gather statistics on how many new groups we would need to store under various schemes (David)
+- [ ] Update `gps_special_names` to add more families (Sam)
+- [ ] Come up with a numerical rating scheme for how interesting a group is
+- [ ] Gather statistics on how many new groups we would need to store under various schemes (David)
 
 ### Uploading data
 * Fix bug in Magma's SmallGroupDecoding
