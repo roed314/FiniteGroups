@@ -61,28 +61,28 @@ simp := IsSimple(G) select "t" else "f";
 PrintFile("DATA/TExplore/" * nTt, Sprintf("%o|%o|%o|%o|%o|%o", Order(G), solv, simp, DerivedLength(G), Index(G, DerivedSubgroup(G)), Index(G, Center(G))));
 Subs := {@ G @};
 Const := [""];
-FuncToStr := AssociativeArray();
-FuncToStr[DerivedSubgroup] := "D";
-FuncToStr[Center] := "Z";
-FuncToStr[CentQuo] := "ZQ";
-FuncToStr[FrattiniSubgroup] := "P";
-FuncToStr[FratQuo] := "PQ";
-FuncToStr[FittingSubgroup] := "F";
-FuncToStr[FitQuo] := "FQ";
-FuncToStr[Radical] := "R";
-FuncToStr[RadicalQuotient] := "RQ";
-FuncToStr[Socle] := "S";
-FuncToStr[SocQuo] := "SQ";
+StrToFunc := AssociativeArray();
+StrToFunc["D"] := DerivedSubgroup;
+StrToFunc["Z"] := Center;
+StrToFunc["ZQ"] := CentQuo;
+StrToFunc["P"] := FrattiniSubgroup;
+StrToFunc["PQ"] := FratQuo;
+StrToFunc["F"] := FittingSubgroup;
+StrToFunc["FQ"] := FitQuo;
+StrToFunc["R"] := Radical;
+StrToFunc["RQ"] := RadicalQuotient;
+StrToFunc["S"] := Socle;
+StrToFunc["SQ"] := SocQuo;
 i := 1;
 while i le #Subs do
     H := Subs[i];
-    for F in [DerivedSubgroup, Center, CentQuo, FrattiniSubgroup, FratQuo, FittingSubgroup, FitQuo, Radical, RadicalQuotient, Socle, SocQuo] do
+    for const -> F in StrToFunc do
         K := F(H);
         if not IsInSmallGroupDatabase(#K) or #K lt 2000 and #K ge 512 and Valuation(#K, 2) ge 7 then
             m := #Subs;
             Include(~Subs, K);
             if #Subs gt m then
-                Append(~Const, Const[i] * "-" * FuncToStr[F]);
+                Append(~Const, Const[i] * "-" * const);
             end if;
         end if;
     end for;
