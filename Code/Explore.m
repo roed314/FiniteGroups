@@ -107,6 +107,6 @@ while i le #Subs do
 end while;
 PrintFile("DATA/TExplore/" * nTt, Sprint(#Subs - 1));
 PrintFile("DATA/TExplore/" * nTt, Join([Sprint(#H) : H in Subs[2..#Subs]], "|"));
-PrintFile("DATA/TExplore/" * nTt, Join([Sprintf("%o.%o", #H, hash(H)) : H in Subs[2..#Subs]]));
+PrintFile("DATA/TExplore/" * nTt, Join([Sprintf("%o.%o", #H, hash(H)) : H in Subs[2..#Subs]], "|"));
 PrintFile("DATA/TExplore/" * nTt, Join([x[2..#x] : x in Const[2..#Const]], "|"));
 exit;
