@@ -48,8 +48,15 @@ function FitQuo(H)
     return MyQuo(H, FittingSubgroup(H));
 end function;
 
+function RadQuo(H)
+    if Type(H) eq GrpPerm then
+        return RadicalQuotient(H);
+    end if;
+    return MyQuo(H, Radical(H));
+end function;
+
 function SocQuo(H)
-    if #FittingSubgroup(H) eq 1 then
+    if Type(H) eq GrpPerm and #FittingSubgroup(H) eq 1 then
         return SocleQuotient(H);
     end if;
     return MyQuo(H, Socle(H));
@@ -70,7 +77,7 @@ StrToFunc["PQ"] := FratQuo;
 StrToFunc["F"] := FittingSubgroup;
 StrToFunc["FQ"] := FitQuo;
 StrToFunc["R"] := Radical;
-StrToFunc["RQ"] := RadicalQuotient;
+StrToFunc["RQ"] := RadQuo;
 StrToFunc["S"] := Socle;
 StrToFunc["SQ"] := SocQuo;
 i := 1;
