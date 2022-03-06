@@ -83,7 +83,12 @@ StrToFunc["SQ"] := SocQuo;
 i := 1;
 while i le #Subs do
     H := Subs[i];
-    for const -> F in StrToFunc do
+    constructions := ["D", "Z", "P", "F", "R", "S"];
+    if i gt 1 then
+        constructions cat:= ["ZQ", "PQ", "FQ", "RQ", "SQ"];
+    end if;
+    for const in constructions do
+        F := StrToFunc[const];
         K := F(H);
         if not IsInSmallGroupDatabase(#K) or #K lt 2000 and #K ge 512 and Valuation(#K, 2) ge 7 then
             m := #Subs;
