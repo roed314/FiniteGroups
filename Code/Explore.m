@@ -4,7 +4,7 @@
 AttachSpec("hashspec");
 
 SetColumns(0);
-nTt := Split(gp, " ")[2];
+label, nTt, importance := Explode(Split(gp, " "));
 n, t := Explode([StringToInteger(c) : c in Split(nTt, "T")]);
 G := TransitiveGroup(n, t);
 if IsSolvable(G) then
@@ -69,6 +69,7 @@ PrintFile("DATA/TExplore/" * nTt, Sprintf("%o|%o|%o|%o|%o|%o", Order(G), solv, s
 Subs := {@ G @};
 Const := [""];
 StrToFunc := AssociativeArray();
+StrToFunc["A"] := AutomorphismGroup; // We don't actually compute this yet because it often takes a long time
 StrToFunc["D"] := DerivedSubgroup;
 StrToFunc["Z"] := Center;
 StrToFunc["ZQ"] := CentQuo;
@@ -84,7 +85,7 @@ i := 1;
 while i le #Subs do
     H := Subs[i];
     constructions := ["D", "Z", "P", "F", "R", "S"];
-    if i gt 1 then
+    if i eq 1 or importance eq "1" and not ("-" in Const[i][2..#Const[i]]) then
         constructions cat:= ["ZQ", "PQ", "FQ", "RQ", "SQ"];
     end if;
     for const in constructions do
@@ -112,6 +113,15 @@ while i le #Subs do
 end while;
 PrintFile("DATA/TExplore/" * nTt, Sprint(#Subs - 1));
 PrintFile("DATA/TExplore/" * nTt, Join([Sprint(#H) : H in Subs[2..#Subs]], "|"));
-PrintFile("DATA/TExplore/" * nTt, Join([Sprintf("%o.%o", #H, hash(H)) : H in Subs[2..#Subs]], "|"));
 PrintFile("DATA/TExplore/" * nTt, Join([x[2..#x] : x in Const[2..#Const]], "|"));
+hashes := [];
+timings := [];
+for H in Subs[2..#Subs] do
+    t0 := Cputime();
+    hsh := hash(H);
+    Append(~hashes, Sprintf("%o.%o", #H, hsh));
+    Append(~timings, Sprint(Cputime() - t0));
+end for;
+PrintFile("DATA/TExplore/" * nTt, Join(hashes, "|"));
+PrintFile("DATA/TExplore/" * nTt, Join(timings, "|"));
 exit;
