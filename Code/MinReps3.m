@@ -4,6 +4,13 @@ AttachSpec("spec");
 SetColumns(0);
 
 label, nTt, importance := Explode(Split(gp, " "));
+outfile := "DATA/minreps/" * label;
+timefile := "DATA/minrep.timings/" * label;
+done, F := OpenTest(outfile, "r");
+if done then
+    print "Already complete";
+    exit;
+end if;
 n, t := Explode([StringToInteger(c) : c in Split(nTt, "T")]);
 G := TransitiveGroup(n, t);
 t0 := Cputime();
@@ -12,6 +19,6 @@ if Degree(P) eq n then
     // Just use the original group
     P := G;
 end if;
-PrintFile("DATA/minreps/" * label, Sprintf("%o|%o|%o", nTt, Degree(P), SavePerms([g : g in Generators(P)])));
-PrintFile("DATA/minrep.timings/" * label, Cputime() - t0);
+PrintFile(outfile, Sprintf("%o|%o|%o", nTt, Degree(P), SavePerms([g : g in Generators(P)])));
+PrintFile(timefile, Cputime() - t0);
 exit;
