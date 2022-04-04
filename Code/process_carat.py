@@ -29,6 +29,7 @@ def load_file(filename, bigfile=None, mediumfile=None, smallfile=None):
                 small = (order in [128*k for k in [5,6,7,9,10,11,13,14,15]])
                 s = f"{dim},0Mat{','.join(entries)}"
                 if big and bigfile is not None or medium and mediumfile is not None or small and smallfile is not None:
+                    entries = [ZZ(c) for c in entries]
                     entries = [entries[i*dim**2:(i+1)*dim**2] for i in range(ngens)]
                     entries = [[mat[i*dim:(i+1)*dim] for i in range(dim)] for mat in entries]
                     G = libgap.Group(entries)
