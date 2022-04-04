@@ -18,6 +18,13 @@ def load_file(filename):
                 entries = []
                 reported = False
                 continue
+            if "=" in line:
+                if reported:
+                    raise RuntimeError(f"Two orders given")
+                order = ZZ(line.split("=")[1].split("%")[0].strip())
+                groups[order].append(f"{dim},0Mat{','.join(entries)}")
+                reported = True
+                continue
             if toread == 0:
                 n = int(line[0]) # All dimensions are one digit
                 if dim is None:
@@ -25,13 +32,6 @@ def load_file(filename):
                 elif dim != n:
                     raise RuntimeError(f"Dimension mismatch: {dim} vs {n}")
                 toread = n
-                continue
-            if "=" in line:
-                if reported:
-                    raise RuntimeError(f"Two orders given")
-                order = ZZ(line.split("=")[1].split("%")[0].strip())
-                groups[order].append(f"{dim},0Mat{','.join(entries)}")
-                reported = True
                 continue
             entries.extend(line.strip().split())
             toread -= 1
