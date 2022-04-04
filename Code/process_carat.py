@@ -8,7 +8,7 @@ def load_file(filename):
     with open(filename) as F:
         reported = True
         for line in F:
-            if line[0] == "#g":
+            if line[0] == "#":
                 # gives number of generators
                 if not reported:
                     print(f"No order shown for {dim}, {entries}")
