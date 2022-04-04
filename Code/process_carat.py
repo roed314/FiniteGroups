@@ -34,4 +34,5 @@ def load_file(filename):
                 reported = True
                 continue
             entries.extend(line.strip().split())
+            toread -= 1
     return groups
