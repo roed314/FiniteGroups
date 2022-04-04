@@ -19,7 +19,7 @@ def load_file(filename):
                 reported = False
                 continue
             if toread == 0:
-                n = int(line.strip().split("d")[0])
+                n = int(line[0]) # All dimensions are one digit
                 if dim is None:
                     dim = n
                 elif dim != n:
