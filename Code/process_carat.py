@@ -21,7 +21,7 @@ def load_file(filename, bigfile=None, mediumfile=None, smallfile=None):
             if "=" in line:
                 if reported:
                     raise RuntimeError(f"Two orders given")
-                if len(entries) != ngens * dim:
+                if len(entries) != ngens * dim**2:
                     raise RuntimeError(f"Incorrect number of entries: {len(entries)} but should be {ngens * dim}")
                 order = ZZ(line.split("=")[1].split("%")[0].strip())
                 big = (order > 2000 or order == 1024)
