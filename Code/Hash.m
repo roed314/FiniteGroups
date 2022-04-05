@@ -380,3 +380,105 @@ intrinsic SpeedTest(G::Grp, index::RngIntElt) -> SeqEnum, SeqEnum, BoolElt
     print "Post", Cputime() - t0;
     return sub1, sub2, (#sub1 eq #sub2);
 end intrinsic;
+
+
+
+
+
+intrinsic ReduceByOrbits(G::GrpPerm) -> GrpPerm
+{}
+    N := Degree(G);
+    singletons := [X[1] : X in Orbits(G) | #X eq 1];
+    if #singletons eq 0 then
+        return G;
+    end if;
+    smalls := [x : x in singletons | x le N-#singletons];
+    bigs := [x : x in [N-#singletons+1..N] | not x in singletons];
+    assert #smalls eq #bigs;
+    swap := Sym(N)!1;
+    for i in [1..#smalls] do
+        swap *:= Sym(N)!(smalls[i], bigs[i]);
+    end for;
+    n := N - #singletons;
+    H := sub<Sym(n)|[Eltseq(g^swap)[1..n] : g in Generators(G)]>;
+    return H;
+end intrinsic;
+
+intrinsic IdentifyGroups(Glist::SeqEnum : hashes:=0) -> SeqEnum
+{Identify groups if small it will use IdentifyGroup; if medium lookup in gps_smallhash; if large currently raise an error (eventually will use hashes stored in gps_groups)}
+    if hashes cmpeq 0 then
+        hashes := [hash(G) : G in Glist];
+    else
+        assert Type(hashes) eq SeqEnum and #hashes eq #Glist and &and[Type(hsh) eq RngIntElt : hsh in hashes];
+    end if;
+    // First use IdentifyGroup
+    ans := [];
+    translate := [];
+    toid := [];
+    for i in [1..#Glist] do
+        G := Glist[i];
+        if CanIdentifyGroup(#G) then
+            ans[i] := IdentifyGroup(G);
+        elif #G in [512, 1152, 1536, 1920] then
+            ordhsh := Sprintf("%o.%o", #G, hashes[i]);
+            j := Index(toid, ordhsh);
+            if j eq 0 then
+                Append(~toid, ordhsh);
+                translate[i] := #toid;
+            else
+                translate[i] := j;
+            end if;
+        else
+            error "IdentifyGroups does not yet support order", #G;
+        end if;
+    end for;
+    toid := [x : x in toid];
+    if #toid gt 0 then
+        fname := Sprintf("DATA/tmp%o", CollapseIntList(hashes));
+        PrintFile(fname, Join(toid, "\n"));
+        System(Sprintf("./identify.py --input %o --output %o.out", fname, fname));
+        possibilities := [[<StringToInteger(c) : c in Split(label, ".")> : label in Split(x, "|")] : x in Split(Read(fname * ".out"), "\n") | #x gt 0];
+        System(Sprintf("rm %o %o.out", fname, fname));
+        assert #possibilities eq #toid;
+        // This will need to be updated when we add support for large orders
+        for i in [1..#Glist] do
+            G := Glist[i];
+            if #G in [512, 1152, 1536, 1920] then
+                poss := possibilities[translate[i]];
+                if #poss eq 1 then
+                    assert poss[1][2] ne 0;
+                    ans[i] := poss[1];
+                else
+                    vprint User1: Sprintf("%o/%o: Iterating through %o possible groups", i, #Glist, #poss);
+                    if #G eq 512 then
+                        solv := true;
+                        if Category(G) ne GrpPC then
+                            G := PCGroup(G);
+                        end if;
+                        G := StandardPresentation(G);
+                    else
+                        solv := IsSolvable(G);
+                        if solv then
+                            if Category(G) ne GrpPC then
+                                G := PCGroup(G);
+                            end if;
+                        elif Category(G) ne GrpPerm then
+                            f, G := MinimalDegreePermutationRepresentation(G);
+                        end if;
+                    end if;
+                    for pair in poss do
+                        H := SmallGroup(pair[1], pair[2]);
+                        if #G eq 512 and IsIdenticalPresentation(G, H) or #G ne 512 and (solv and IsIsomorphicSolubleGroup(G, H) or not solv and IsIsomorphic(G, H)) then
+                            ans[i] := pair;
+                            break;
+                        end if;
+                    end for;
+                    if not IsDefined(ans, i) then
+                        print "WARNING, no id found for group of order", #G, "in position", i;
+                    end if;
+                end if;
+            end if;
+        end for;
+    end if;
+    return ans;
+end intrinsic;
