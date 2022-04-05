@@ -49,8 +49,8 @@ intrinsic EasyHash(GG::Grp) -> RngIntElt
     {Hash that's not supposed to take a long time}
     if CanIdentifyGroup(Order(GG)) then
         return IdentifyGroup(GG)[2];
-    elif IsAbelian(GG) then
-        return CollapseIntList(AbelianInvariants(GG));
+    //elif IsAbelian(GG) then
+    //    return CollapseIntList(AbelianInvariants(GG));
     else
         data := AssociativeArray();
         for C in ConjugacyClasses(GG) do
@@ -446,7 +446,10 @@ intrinsic IdentifyGroups(Glist::SeqEnum : hashes:=0) -> SeqEnum
             if #G in [512, 1152, 1536, 1920] then
                 poss := possibilities[translate[i]];
                 if #poss eq 1 then
-                    assert poss[1][2] ne 0;
+                    if poss[1][2] eq 0 then
+                        print G;
+                        error "Could not identify group";
+                    end if;
                     ans[i] := poss[1];
                 else
                     vprint User1: Sprintf("%o/%o: Iterating through %o possible groups", i, #Glist, #poss);
