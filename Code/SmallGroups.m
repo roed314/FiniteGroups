@@ -121,3 +121,16 @@ intrinsic CheckLogs(: Folder:="DATA")
     print s;
 end intrinsic;
 */
+
+intrinsic allrankslist(n::Any)->Any
+  {}
+  l:=[];
+  for j:=1 to n do
+    for k:=1 to NumberOfSmallGroups(j) do
+      [j,k];
+      g:=MakeSmallGroup(j,k);
+      Append(~l, <j,k,Get(g,"rank")>);
+    end for;
+  end for;
+  return l;
+end intrinsic;
