@@ -525,3 +525,99 @@ intrinsic PrintGLnData(G::LMFDBGrp: sep:="|") -> Tup
     return <[SaveLMFDBObject(qr: sep:=sep) : qr in qreps],
             [SaveLMFDBObject(cr: sep:=sep) : cr in creps]>;
 end intrinsic;
+
+
+
+// We encode groups using strings that allow for their reconstruction
+
+intrinsic StringToGroup(s::MonStgElt) -> Grp
+{}
+    if "Simp" in s then
+        N := StringToInteger(s[5..#s]);
+        return SimpleGroup(N);
+    elif "Perf" in s then
+        N := StringToInteger(s[5..#s]);
+        return PermutationGroup(PerfectGroupDatabase(), N);
+    elif "Mat" in s then
+        dR, L := Explode(Split(s, "Mat"));
+        L := [StringToInteger(c) : c in Split(L, ",")];
+        d, R := Explode(Split(dR, ","));
+        d := StringToInteger(d);
+        if R eq "0" then
+            R := Integers();
+        elif R[1] eq "q" then
+            q := StringToInteger(R[2..#R]);
+            R := GF(q);
+            k := Degree(R);
+            L := [R!L[i..i+k-1] : i in [1..#L by k]];
+        else
+            R := Integers(StringToInteger(R));
+        end if;
+        L := [L[i..i+d^2-1] : i in [1..#L by d^2]];
+        return MatrixGroup<d, R| L >;
+    elif "Perm" in s then
+        n, L := Explode(Split(s, "Perm"));
+        n := StringToInteger(n);
+        L := [DecodePerm(StringToInteger(c), n) : c in Split(L, ",")];
+        return PermutationGroup<n | L>;
+    elif "PC" in s then
+        N, code := Explode([StringToInteger(c) : c in Split(s, "PC")]);
+        return SmallGroupDecoding(code, N);
+    elif "." in s then
+        N, i := Explode([StringToInteger(c) : c in Split(s, ".")]);
+        return SmallGroup(N, i);
+    elif "T" in s then
+        n, t := Explode([StringToInteger(c) : c in Split(s, "T")]);
+        return TransitiveGroup(n, t);
+    else
+        error "Unrecognized format", s;
+    end if;
+end intrinsic;
+
+intrinsic GroupToString(G::Grp) -> MonStgElt
+{}
+    // This produces a string from which the group can be reconstructed, up to isomorphism
+    // Note that it does not guarantee the same presentation or choice of generators
+    N := #G;
+    if CanIdentifyGroup(N) then
+        return Sprintf("%o.%o", N, IdentifyGroup(G)[2]);
+    elif Type(G) eq GrpPerm then
+        if IsTransitive(G) then
+            t,n := TransitiveGroupIdentification(G);
+            return Sprintf("%oT%o", n, t);
+        else
+            return Sprintf("%oPerm%o", Degree(G), Join([Sprint(EncodePerm(g)) : g in Generators(G)], ","));
+        end if;
+    elif Type(G) eq GrpMat then
+        R := CoefficientRing(G);
+        L := &cat[Eltseq(g) : g in Generators(G)];
+        if Type(R) eq RngInt then
+            R := "0";
+        elif Type(R) eq RngIntRes then
+            R := Sprint(Modulus(R));
+        elif Type(R) eq FldFin then
+            p := Characteristic(R);
+            k := Degree(R);
+            if k eq 1 then
+                R := Sprint(p);
+            elif DefiningPolynomial(R) ne ConwayPolynomial(p, k) then
+                error "Matrix rings over finite fields not defined by a Conway polynomial are unsupported";
+            else
+                L := &cat[Eltseq(a) : a in L];
+                R := Sprintf("q%o", #R);
+            end if;
+        else
+            error "Unsupported coefficient ring", R;
+        end if;
+        return Sprintf("%o,%oMat%o", Dimension(G), R, Join([Sprint(c) : c in L], ","));
+    else
+        if Type(G) eq GrpAb then
+            G := PCGroup(G);
+        end if;
+        if Type(G) eq GrpPC then
+            code, N := SmallGroupEncoding(G);
+            return Sprintf("%oPC%o", N, code);
+        end if;
+        error Sprintf("Unsupported group type %o of order %o", Type(G), N);
+    end if;
+end intrinsic;
