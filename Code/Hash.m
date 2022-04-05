@@ -482,3 +482,11 @@ intrinsic IdentifyGroups(Glist::SeqEnum : hashes:=0) -> SeqEnum
     end if;
     return ans;
 end intrinsic;
+
+intrinsic IdentifyMediumFile(infile::MonStgElt, outfile::MonStgElt)
+{}
+    Gps := [StringToGroup(line) : line in Split(Read(infile), "\n")];
+    for gid in IdentifyGroups(Gps) do
+        PrintFile(outfile, Sprintf("%o.%o", gid[1], gid[2]));
+    end for;
+end intrinsic;
