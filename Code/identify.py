@@ -1,4 +1,4 @@
-#!/usr/bin/env sage -python
+#!/usr/bin/env -S sage -python
 import os
 import sys
 import argparse
