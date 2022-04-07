@@ -224,7 +224,61 @@ end intrinsic;
 
 intrinsic StringToGroup(s::MonStgElt) -> Grp
 {}
-    if "Simp" in s then
+    if "-" in s then
+        path := Split(s, "-");
+        G := StringToGroup(path[1]);
+        for zig in path[2..#path] do
+            if zig[1] eq "A" then
+                // Since computing the automorphism group can be expensive, we allow storage of the actual automorphisms
+                if #zig eq 1 then
+                    G := AutomorphismGroup(G);
+                else
+                    gens, auts := Explode(Split(zig[2..#zig], ";"));
+                    gens := [StringToInteger(c) : c in Split(gens, ",")];
+                    auts := [StringToInteger(c) : c in Split(auts, ",")];
+                    auts := [auts[i..i+#gens-1] : i in [1..#auts by #gens]];
+                    if Type(G) eq GrpPerm then
+                        n := Degree(G);
+                        gens := [DecodePerm(gen, n) : gen in gens];
+                        auts := [[DecodePerm(x, n) : x in imgs] : imgs in auts];
+                    elif Type(G) eq GrpMat then
+                        d := Dimension(G);
+                        R := CoefficientRing(G);
+                        if Type(R) eq FldFin and Degree(R) gt 1 then
+                            k := Degree(R);
+                            gens := [R!gens[i..i+k-1] : i in [1..#gens by k]];
+                            auts := [[R!imgs[i..i+k-1] : i in [1..#imgs by k]] : imgs in auts];
+                        end if;
+                        gens := [G!gens[i..i+d^2-1] : i in [1..#gens by d^2]];
+                        auts := [[G!imgs[i..i+d^2-1] : i in [1..#imgs by d^2]] : imgs in auts];
+                    elif Type(G) eq GrpPC then
+                        n := NumberOfPCGenerators(G);
+                        gens := [G!gens[i..i+n-1] : i in [1..#gens by n]];
+                        auts := [[G!imgs[i..i+n-1] : i in [1..#imgs by n]] : imgs in auts];
+                    else
+                        error "Unsupported group type", Type(G);
+                    end if;
+                    G := AutomorphismGroup(G, gens, auts);
+                end if;
+            elif zig eq "Z" then
+                G := Center(G);
+            elif zig eq "D" then
+                G := DerivedSubgroup(G);
+            elif zig eq "P" then
+                G := FrattiniSubgroup(G);
+            elif zig eq "F" then
+                G := FittingSubgroup(G);
+            elif zig eq "R" then
+                G := Radical(G);
+            elif zig eq "S" then
+                G := Socle(G);
+            else
+                // may want to add quotients here
+                error "Unrecognized group construction term", zig;
+            end if;
+        end for;
+        return G;
+    elif "Simp" in s then
         N := StringToInteger(s[5..#s]);
         return SimpleGroup(N);
     elif "Perf" in s then
@@ -271,7 +325,35 @@ intrinsic GroupToString(G::Grp) -> MonStgElt
     // This produces a string from which the group can be reconstructed, up to isomorphism
     // Note that it does not guarantee the same presentation or choice of generators
     N := #G;
-    if CanIdentifyGroup(N) then
+    if Type(G) eq GrpAuto then
+        A := G;
+        G := Group(G);
+        Gdesc := GroupToString(G);
+        if Type(G) eq GrpPC then
+            gens := PCGenerators(G);
+        else
+            gens := Generators(G);
+        end if;
+        auts := &cat[[phi(g) : g in gens] : phi in Generators(A)];
+        if Type(G) eq GrpPC then
+            gens := &cat[ElementToSequence(g) : g in gens];
+            auts := &cat[ElementToSequence(im) : im in auts];
+        elif Type(G) eq GrpPerm then
+            gens := [EncodePerm(g) : g in gens];
+            auts := [EncodePerm(im) : im in auts];
+        elif Type(G) eq GrpMat then
+            gens := &cat[Eltseq(g) : g in gens];
+            auts := &cat[Eltseq(im) : im in auts];
+            R := CoefficientRing(G);
+            if Type(R) eq FldFin and Degree(R) gt 1 then
+                gens := &cat[Eltseq(a) : a in gens];
+                auts := &cat[Eltseq(a) : a in auts];
+            end if;
+        else
+            error "Unsupported group type", Type(G);
+        end if;
+        return Sprintf("%o-A%o;%o", Gdesc, Join([Sprint(g) : g in gens], ","), Join([Sprint(a) : a in auts], ","));
+    elif CanIdentifyGroup(N) then
         return Sprintf("%o.%o", N, IdentifyGroup(G)[2]);
     elif Type(G) eq GrpPerm then
         if IsTransitive(G) then
