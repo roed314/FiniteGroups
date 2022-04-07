@@ -8,12 +8,12 @@ if "T" in desc then
     n, t := Explode([StringToInteger(c) : c in Split(desc, "T")]);
     maxt := NumberOfTransitiveGroups(n);
     if n ne 6 and t in [maxt-1, maxt] then // Sym(n) or Alt(n)
-        printf "%o %o %oT%o\n", desc, Factorial(n), n, maxt;
+        printf "%o %o \\N %oT%o\n", desc, Factorial(n), n, maxt;
         exit;
     end if;
 end if;
 G := StringToGroup(desc);
-A := AutomorphismGroup(G);
-P := PermutationGroup(A);
-printf "%o %o %o %o\n", desc, #A, GroupToString(A), GroupToString(P);
+//A := AutomorphismGroup(G);
+P := PermutationGroup(G);
+printf "%o %o %o %o\n", desc, #A, GroupToString(G), GroupToString(P);
 exit;
