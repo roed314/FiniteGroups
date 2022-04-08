@@ -5,7 +5,7 @@ AttachSpec("hashspec");
 
 // We know the answer for Alt(n) and Sym(n), so we do them separately since they get huge
 if "T" in desc then
-    n, t := Explode([StringToInteger(c) : c in Split(desc, "T")]);
+    n, t := Explode([StringToInteger(c) : c in Split(Split(desc, "-")[1], "T")]);
     maxt := NumberOfTransitiveGroups(n);
     if n ne 6 and t in [maxt-1, maxt] then // Sym(n) or Alt(n)
         printf "%o %o \\N %oT%o\n", desc, Factorial(n), n, maxt;
