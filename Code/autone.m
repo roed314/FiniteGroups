@@ -15,5 +15,5 @@ end if;
 G := StringToGroup(desc);
 //A := AutomorphismGroup(G);
 P := PermutationGroup(G);
-printf "%o %o %o %o\n", desc, #A, GroupToString(G), GroupToString(P);
+printf "%o %o %o %o\n", desc, #G, GroupToString(G), GroupToString(P);
 exit;
