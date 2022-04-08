@@ -356,7 +356,7 @@ intrinsic GroupToString(G::Grp) -> MonStgElt
     elif CanIdentifyGroup(N) then
         return Sprintf("%o.%o", N, IdentifyGroup(G)[2]);
     elif Type(G) eq GrpPerm then
-        if IsTransitive(G) then
+        if IsTransitive(G) and Degree(G) lt 48 then
             t,n := TransitiveGroupIdentification(G);
             return Sprintf("%oT%o", n, t);
         else
