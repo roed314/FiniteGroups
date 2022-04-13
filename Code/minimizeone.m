@@ -11,3 +11,4 @@ else
     M := Image(MinimalDegreePermutationRepresentation(G));
     print Join(pieces[1..#pieces-1], " ") * " " * GroupToString(M);
 end if;
+exit;
