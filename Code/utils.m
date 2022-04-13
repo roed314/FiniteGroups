@@ -222,9 +222,19 @@ end intrinsic;
 // We encode groups using strings that allow for their reconstruction
 // Moved from IO.m so that it could be used while just attaching hashspec
 
+function is_iterative_description(desc)
+    for i in [1..#desc - 1] do
+        if desc[i] eq "-" and not desc[i+1] in "123456789" then
+            return true;
+        end if;
+    end for;
+    return false;
+end function;
+
 intrinsic StringToGroup(s::MonStgElt) -> Grp
 {}
-    if "-" in s then
+    // We want to support iterated constructions separated by hyphens, but also need to handle negative signs
+    if is_iterative_description(s) then
         path := Split(s, "-");
         G := StringToGroup(path[1]);
         for zig in path[2..#path] do

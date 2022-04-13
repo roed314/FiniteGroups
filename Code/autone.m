@@ -14,6 +14,12 @@ if "T" in desc then
 end if;
 G := StringToGroup(desc);
 //A := AutomorphismGroup(G);
-P := PermutationGroup(G);
-printf "%o %o %o %o\n", desc, #G, GroupToString(G), GroupToString(P);
+try
+   P := PermutationGroup(G);
+catch e
+    print "ERROR", desc, #G;
+    exit;
+end try;
+M := Image(MinimalDegreePermutationRepresentation(P));
+printf "%o %o %o %o\n", desc, #G, GroupToString(G), GroupToString(M);
 exit;
