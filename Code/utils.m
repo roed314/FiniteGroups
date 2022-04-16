@@ -405,3 +405,163 @@ intrinsic GroupToString(G::Grp) -> MonStgElt
         error Sprintf("Unsupported group type %o of order %o", Type(G), N);
     end if;
 end intrinsic;
+
+intrinsic ConjClassTupAction(A::GrpAuto : n:=1, dbound:=5000, try_union:=false) -> Grp
+{G, a permutation group; reps, a list of elements of G in DISTINCT conjugacy classes}
+    dmin := 1;
+    dprod := 1;
+    while dprod lt #A do
+        dmin +:= 1;
+        dprod *:= dmin;
+    end while;
+    G := Group(A);
+    C := ConjugacyClasses(G);
+    S := Sym(#C);
+    f := ClassMap(G);
+    // Have to figure out which classes are joined by automorphisms
+    Cact := sub<S|[[f(a(C[i][3])) : i in [1..#C]] : a in Generators(A)]>;
+    O := Orbits(Cact);
+    O := [o : o in O | o[1] eq 1 or &+[C[i][2] : i in o] gt 1];
+    Osizes := [&+[C[i][2] : i in o] : o in O];
+    ParallelSort(~Osizes, ~O);
+    tups := [tup : tup in CartesianProduct([[1..#O] : _ in [1..n]]) | &and[tup[i] eq 1 or tup[i] lt tup[i+1] : i in [1..#tup-1]] and &*[Osizes[i] : i in tup] le dbound and &*[Osizes[i] : i in tup] ge dmin];
+    tupsizes := [&*[Osizes[i] : i in tup] : tup in tups];
+    ParallelSort(~tupsizes, ~tups);
+    //L := &join[{@ x : x in r^G @} : r in reps];
+    if try_union then
+        F := [[&join[C[j][3]^G : j in O[i]] : i in tup]: tup in tups];
+        L := &cat[[<facs[i][c[i]] : i in [1..#c]> : c in CartesianProduct([[1..#facs[i]] : i in [1..#facs]])] : facs in F];
+        S := Sym(#L);
+        print "Start", #L;
+        GG := [];
+        indexer := AssociativeArray();
+        for i in [1..#L] do
+            indexer[L[i]] := i;
+        end for;
+        GG := [[ indexer[<a(g) : g in gtup>] : gtup in L ] : a in Generators(A)];
+        print "End";
+        H := sub<S|GG>;
+        if #H eq #A then
+            print "success";
+            return H;
+        end if;
+        print "fail";
+        return G;
+    end if;
+    for tup in tups do
+        print [O[i] : i in tup];
+        facs := [&join[C[j][3]^G : j in O[i]] : i in tup];
+        L := [<facs[i][c[i]] : i in [1..#c]> : c in CartesianProduct([[1..#facs[i]] : i in [1..#facs]])];
+        S := Sym(#L);
+        GG := [[ Index(L, <a(g) : g in gtup>): gtup in L ] : a in Generators(A)];
+        H := sub<S|GG>;
+        if #H eq #A then
+            print "success";
+            return H;
+        end if;
+    end for;
+    print "fail";
+    return G;
+end intrinsic;
+
+intrinsic AutPermRep(A::GrpAuto : dbound:=1000, verbose:=false) -> GrpPerm, MonStgElt
+{Gives a permutation representation of A, either a transitive one of degree up to 47 or one of smallest degree}
+    t0 := Cputime();
+    G := Group(A);
+    if Type(G) ne GrpPerm then
+        error "AutoPermRep only available for permutation groups";
+    end if;
+    Sn := Sym(Degree(G));
+    N := Normalizer(Sn, G);
+    T := Centralizer(Sn, G);
+    //if #N eq #T * #A and (#T eq 1 or #A lt 1000000 or IsSolvable(A)) then
+    if false then
+        // have full automorphism group as N/T
+        if verbose then
+            print "Normalizer gives full automorphism group";
+        end if;
+        NtoA := hom<N -> A | [n -> A!hom<G -> G| [g -> n^-1*g*n : g in Generators(G)]> : n in Generators(N)]>;
+        AtoN := NtoA^-1;
+        if #T eq 1 then
+            if IsTransitive(N) and Degree(G) lt 48 then
+                M1 := Sprintf("%oPerm%o", Degree(N), Join([Sprint(EncodePerm(AtoN(a))) : a in Generators(N)], ","));
+                return N, M1;
+            else
+                R := N;
+                AtoR := AtoN;
+            end if;
+        elif #A lt 1000000 then
+            R, NtoR := quo<N | T>;
+            AtoR := AtoN * NtoR;
+        else
+            NP, NtoNP := PCGroup(N);
+            R, NPtoR := quo<NP | NtoNP(T)>;
+            AtoR := AtoN * NtoNP * NPtoR;
+        end if;
+        if verbose then
+            printf "Quotient constructed in %o seconds", Cputime() - t0;
+        end if;
+    else
+        Z := Center(G);
+        nOut := (#A * #Z) div #G;
+        rho := PermutationRepresentation(A);
+        P := Codomain(rho);
+        dlimit := Ceiling(Degree(P) / nOut);
+        if dbound gt dlimit then
+            dbound := dlimit;
+        end if;
+        if verbose then
+            printf "G of order %o, with %o inner automorphisms and %o outer classes\n", #G, #G div #Z, nOut;
+            printf "Initial permutation representation of degree %o found in %o seconds\n", Degree(P), Cputime() - t0;
+            t0 := Cputime();
+        end if;
+        Phom := hom<G -> P | [g -> rho(A!hom<G -> G| [e -> g^-1*e*g : e in Generators(G)]>) : g in Generators(G)]>;
+        dlow := 1;
+        while true do
+            S := [X : X in LowIndexSubgroups(G, <dlow, dbound>) | IsDivisibleBy(#X, #Z) and Z subset X and Core(G, X) eq Z];
+            if verbose then
+                printf "Found %o subgroups of index %o-%o with central core in %o seconds\n", #S, dlow, dbound, Cputime() - t0;
+                t0 := Cputime();
+            end if;
+            Sind := [Index(G, X) : X in S];
+            ParallelSort(~Sind, ~S);
+            broken := false;
+            for H in S do
+                K := Phom(H);
+                if #Core(P, K) eq 1 then
+                    if verbose then
+                        printf "Found a core-free subgroup with index %o in %o seconds\n", Index(P, K), Cputime() - t0;
+                        t0 := Cputime();
+                    end if;
+                    phi := CosetAction(P, K);
+                    R := Image(phi);
+                    AtoR := rho * phi;
+                    broken := true;
+                    break;
+                end if;
+            end for;
+            if broken then break; end if;
+            if dbound eq dlimit then
+                R := P;
+                AtoR := rho;
+                break;
+            end if;
+            dlow := dbound + 1;
+            dbound := Min(2*dbound, dlimit);
+        end while;
+    end if;
+    psi := MinimalDegreePermutationRepresentation(R);
+    M := Image(psi);
+    if verbose then
+        printf "Minimized representation in %o seconds; final degree %o\n", Cputime() - t0, Degree(M);
+        t0 := Cputime();
+    end if;
+    F := FewGenerators(M);
+    if verbose then
+        printf "Minimized number of generators in %o seconds; %o generators\n", Cputime() - t0, #F;
+        t0 := Cputime();
+    end if;
+    M0 := sub<Sym(Degree(M))|F>;
+    M1 := Sprintf("%oPerm%o", Degree(M), Join([Sprint(EncodePerm(psi(AtoR(a)))) : a in Generators(A)], ","));
+    return M0, M1;
+end intrinsic;

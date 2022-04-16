@@ -9,22 +9,6 @@ if desc[#desc-1..#desc] eq "-A" then
 end if;
 H := StringToGroup(desc);
 A := AutomorphismGroup(H);
-n := Degree(H);
-Sn := Sym(n);
-N := Normalizer(Sn, H);
-T := Centralizer(Sn, H);
-if #N eq #T * #A then
-    // got the full automorphism group as N/T
-    if #T eq 1 then
-        printf "%o-A %o\n", desc, GroupToString(N);
-    elif #A lt 1000000 then
-        Q := quo<N | T>;
-        printf "%o-A %o\n", desc, GroupToString(Q);
-    elif IsSolvable(N) then
-        N, phi := PCGroup(N);
-        T := phi(T);
-        Q := quo<N | T>;
-        printf "%o-A %o\n", desc, GroupToString(Q);
-    end if;
-end if;
+P, autdesc := AutPermRep(A);
+printf "%o-A %o %o\n", desc, autdesc, GroupToString(P);
 exit;
