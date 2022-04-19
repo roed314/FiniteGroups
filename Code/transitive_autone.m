@@ -4,6 +4,10 @@
 SetColumns(0);
 AttachSpec("hashspec");
 
+if #desc eq 0 then
+    // a blank line snuck into the input file
+    exit;
+end if;
 if desc[#desc-1..#desc] eq "-A" then
     desc := desc[1..#desc-2];
 end if;
