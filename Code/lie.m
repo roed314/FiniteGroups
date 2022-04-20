@@ -5,40 +5,67 @@
 SetColumns(0);
 AttachSpec("hashspec");
 
-// Format: family, list of pairs d, qhigh
-classical := [<GL, "GL", [<3, 16>, <4, 8>, <5, 5>, <6, 3>, <7, 3>]>,
-              <SL, "SL", [<3, 16>, <4, 8>, <5, 5>, <6, 3>, <7, 3>]>,
-              <PGL, "PGL", [<2, 32>, <3, 16>, <4, 8>, <5, 5>, <6, 3>]>, // PGL(7,3) has degree 1093
-              <AGL, "AGL", [<1, 43>, <2, 16>, <3, 8>, <4, 5>, <5, 3>]>, // AGL(6, 3) has degree 729
-              <ASL, "ASL", [<2, 16>, <3, 8>, <4, 5>, <5, 3>]>, // ASL(6, 3) has degree 729
-              <CU, "CU", [<2, 32>, <3, 16>, <4, 7>, <5, 4>, <6, 2>, <7, 2>]>, // <4,8>, <5,5>, <6,3> and <7,3> fail
-              <GU, "GU", [<2, 32>, <3, 16>, <4, 8>, <5, 4>, <6, 2>, <7, 2>]>, // CompFac <5,5>, <6,3> and <7,3> fail
-              <SU, "SU", [<2, 32>, <3, 16>, <4, 8>, <5, 5>, <6, 3>, <7, 3>]>,
-              <CSU, "CSU", [<2, 32>, <3, 16>, <4, 8>, <5, 4>, <6, 2>, <7, 2>]>, // CompFac for <5,5>, <7,3>; error for <6,3>
-              <CSp, "GSp", [<4, 16>, <6, 5>, <8, 3>]>, // CompFac for <6,7> and <6,8>
-              <Sp, "Sp", [<4, 16>, <6, 5>, <8, 3>]>, // <6,7> and <6,7> fail
-              <CO, "CO", [<3, 32>, <5, 16>, <7, 3>]>,
-              <GO, "GO", [<3, 23>, <5, 8>, <7, 3>]>, // <3, 25>, <3,27>, <5,9> fail; would have liked to go to <3, 32>, <5, 16>
-              <SO, "SO", [<3, 32>, <5, 16>, <7, 3>]>,
-              <CSO, "CSO", [<3, 32>, <5, 16>, <7, 3>]>,
-              <COPlus, "CO+", [<2, 32>, <4, 16>, <6, 8>, <8, 3>]>,
-              <GOPlus, "GO+", [<4, 8>, <6, 8>]>, // GO+(2, q) is D_{q-1}; <4,9> fails (would have liked to go to <4,16>)
-              <SOPlus, "SO+", [<4, 16>, <6, 8>]>, // SO+(2, q) is C_{q-1}
-              <CSOPlus, "CSO+", [<2, 997>, <4, 16>, <6, 8>]>,
-              <COMinus, "CO-", [<2, 32>, <4, 16>, <6, 8>, <8, 3>]>,
-              <GOMinus, "GO-", [<4, 16>, <6, 8>]>, // GO-(2, q) is D_{q+1}; <4,9> fails (would have liked to go to <4,16>)
-              <SOMinus, "SO-", [<4, 16>, <6, 8>]>, // SO-(2, q) is C_{q+1}
-              <CSOMinus, "CSO-", [<2, 997>, <4, 16>, <6, 8>]>,
-              <Omega, "Omega", [<3, 32>, <5, 16>, <7, 3>]>,
-              <OmegaPlus, "Omega+", [<4, 16>, <6, 8>]>,
-              <OmegaMinus, "Omega-", [<4, 16>, <6, 8>]>,
-              <Spin, "Spin", [<5, 16>, <7, 3>]>,
-              <SpinPlus, "Spin+", [<4, 16>, <6, 8>]>,
-              <SpinMinus, "Spin-", [<4, 16>, <6, 8>]>];
+LPairs := [<3, 16>, <4, 8>, <5, 5>, <6, 3>, <7, 3>];
+PLPairs := [<2, 32>, <3, 16>, <4, 8>, <5, 5>, <6, 3>, <7, 3>];
+UPairs := [<2, 32>, <3, 16>, <4, 8>, <5, 4>, <6, 3>, <7, 2>]; // CompFac <5,5>, <7,3>
+APairs := [<2, 16>, <3, 8>, <4, 5>, <5, 3>, <6, 3>]
+SpPairs := [<4, 16>, <6, 5>, <8, 3>]; // CompFac <6,7> and <6,8>
+O1Pairs := [<3, 32>, <5, 16>, <7, 3>];
+O0Pairs := [<4, 16>, <6, 8>, <8, 3>];
 
-semiclassical := [<SuzukiGroup, "Suz", [2, 8, 32]>]; // CompFac for 128, 512
-                  //<ReeGroup, "Ree", [27, 243, 2187]>, all fail
-                  //<LargeReeGroup, "Ree", [8]>]; all fail
+
+// Format: family, list of pairs d, qhigh
+classical := [<GL, "GL", LPairs>,
+              <SL, "SL", LPairs>,
+              <CU, "CU", UPairs>,
+              <GU, "GU", UPairs>,
+              <SU, "SU", UPairs>,
+              <CSU, "CSU", UPairs>,
+              <CSp, "GSp", SpPairs>,
+              <Sp, "Sp", SpPairs>,
+              <CO, "CO", O1Pairs>,
+              <GO, "GO", [<3, 23>, <5, 8>, <7, 3>]>, // <3, 25>, <3,27>, <5,9> fail; would have liked to go to <3, 32>, <5, 16>
+              <SO, "SO", O1Pairs>,
+              <CSO, "CSO", O1Pairs>,
+              <COPlus, "CO+", [<2, 32>] cat O0Pairs>,
+              <GOPlus, "GO+", [<4, 8>, <6, 8>]>, // GO+(2, q) is D_{q-1}; <4,9> and <8,3> fail (would have liked to go to <4,16>)
+              <SOPlus, "SO+", O0Pairs>, // SO+(2, q) is C_{q-1}
+              <CSOPlus, "CSO+", [<2, 997>] cat O0Pairs>,
+              <COMinus, "CO-", [<2, 32>] cat O0Pairs,
+              <GOMinus, "GO-", [<4, 8>, <6, 8>]>, // GO-(2, q) is D_{q+1}; <4,9> and <8,3> fail (would have liked to go to <4,16>)
+              <SOMinus, "SO-", O0Pairs>, // SO-(2, q) is C_{q+1}
+              <CSOMinus, "CSO-", [<2, 997>] cat O0Pairs>,
+              <Omega, "Omega", O1Pairs>,
+              <OmegaPlus, "Omega+", O0Pairs>,
+              <OmegaMinus, "Omega-", O0Pairs>,
+              <Spin, "Spin", [<5, 16>, <7, 3>]>, // Spin(3, -) errors
+              <SpinPlus, "Spin+", O0Pairs>,
+              <SpinMinus, "Spin-", O0Pairs>];
+
+classical_perm := [<PGL, "PGL", PLPairs>, // PGL(7,3) has degree 1093
+                   <PSL, "PSL", PLPairs>, // should all be simple
+                   <PGammaL, "PGammaL", PLPairs>, // same degrees as PGL and PSL; only differs from PGL for non-primes
+                   <PSigmaL, "PSigmaL", PLPairs>, // same degrees as PGL and PSL; only differs from PSL for non-primes
+                   <AGL, "AGL", [<1, 43>] cat APairs>, // AGL(6, 3) has degree 729
+                   <ASL, "ASL", APairs>, // ASL(6, 3) has degree 729
+                   <AGammaL, "AGammaL", [<1, 43>] cat APairs>,
+                   <ASigmaL, "ASigmaL", [<1, 43>] cat APairs>,
+                   <ASp, "ASp", SpPairs>, // These all have large degree: ASp(4,16) has degree 65536
+                   <ASigmaSp, "ASigmaSp", SpPairs>, // Same large degrees as ASp
+                   <PGU, "PGU", UPairs>, // Degree PGU(4,8) is 33345
+                   <PSU, "PSU", UPairs>, // same degrees
+                   <PGammaU, "PGammaU", UPairs>, // same degrees
+                   <PSp, "PSp", SpPairs>, // Degree PSp(4, 16) is 4369
+                   <PSigmaSp, "PSigmaSp", SpPairs>, // Degree PSp(4, 16) is 4369
+                   <PGO, "PGO", O1Pairs>, // Degree PGO(5, 16) is 4369
+                   <PGOPlus, "PGO+", O0Pairs>, // Degree PGO+(6,8) is 4745
+                   <PGOMinus, "PGO-", O0Pairs>, // Degree PGO-(6,8) is 4617
+                   <PSO, "PSO", O1Pairs>, // Degree PSO(5, 16) is 4369
+                   <PSOPlus, "PSO+", O0Pairs>, // Degree PGO+(6,8) is 4745
+                   <PSOMinus, "PSO-", O0Pairs>, // Degree PSO+(6,8) is 4617
+                   <POmega, "POmega", O1Pairs>,
+                   <POmegaPlus, "POmega+", O0Pairs>,
+                   <POmegaMinus, "POmega-", O0Pairs>];
 
 smallfile := outfolder * "SmallMedLie.txt";
 med := [];
