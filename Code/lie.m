@@ -147,8 +147,9 @@ for pair in groups do
             Append(~meddata, fullname);
         end if;
     else
-        if fullname[1] eq "P" and #G eq sizes[fullname[2..#fullname]] then
-            PrintFile(aliasfile, Sprintf("%o %o", fullname, fullname[2..#fullname]));
+        liftname := fullname[2..#fullname];
+        if fullname[1] eq "P" and IsDefined(sizes, liftname) and #G eq sizes[liftname] then
+            PrintFile(aliasfile, Sprintf("%o %o", fullname, liftname));
             continue;
         end if;
         s := GroupToString(G);
