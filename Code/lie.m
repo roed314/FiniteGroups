@@ -70,6 +70,8 @@ classical_perm := [<PGL, "PGL", PLPairs>, // PGL(7,3) has degree 1093
 smallfile := outfolder * "SmallMedLie.txt";
 med := [];
 meddata := [];
+medperm := [];
+medpermdata := [];
 bigfile := outfolder * "BigLie.txt";
 bigin := outfolder * "BigLie.in"; // input for hashing script
 biglies := {};
@@ -86,8 +88,13 @@ for idat in classical cat classical_perm do
                     gid := IdentifyGroup(G);
                     PrintFile(smallfile, Sprintf("%o(%o,%o) %o.%o", name, d, q, gid[1], gid[2]));
                 elif #G in [512, 1152, 1536, 1920] then
-                    Append(~med, G);
-                    Append(~meddata, Sprintf("%o(%o,%o)", name, d, q));
+                    if Type(G) eq GrpPerm then
+                        Append(~medperm, G);
+                        Append(~medpermdata, Sprintf("%o(%o,%o)", name, d, q));
+                    else
+                        Append(~med, G);
+                        Append(~meddata, Sprintf("%o(%o,%o)", name, d, q));
+                    end if;
                 else
                     s := GroupToString(G);
                     PrintFile(bigfile, Sprintf("%o(%o,%o) %o", name, d, q, s));
@@ -118,6 +125,10 @@ end for;
 medid := IdentifyGroups(med);
 for i in [1..#med] do
     PrintFile(smallfile, Sprintf("%o %o.%o", meddata[i], medid[i][1], medid[i][2]));
+end for;
+medid := IdentifyGroups(medperm);
+for i in [1..#medperm] do
+    PrintFile(smallfile, Sprintf("%o %o.%o", medpermdata[i], medpermid[i][1], medpermid[i][2]));
 end for;
 for s in biglies do
     PrintFile(bigin, s);
