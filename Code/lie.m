@@ -5,76 +5,85 @@
 SetColumns(0);
 AttachSpec("hashspec");
 
-LPairs := [<3, 16>, <4, 8>, <5, 5>, <6, 3>, <7, 3>];
-PLPairs := [<2, 32>, <3, 16>, <4, 8>, <5, 5>, <6, 3>, <7, 3>];
-UPairs := [<2, 32>, <3, 16>, <4, 8>, <5, 4>, <6, 3>, <7, 2>]; // CompFac <5,5>, <7,3>
-APairs := [<2, 16>, <3, 8>, <4, 5>, <5, 3>, <6, 3>];
-SpPairs := [<4, 16>, <6, 5>, <8, 3>]; // CompFac <6,7> and <6,8>
-O1Pairs := [<3, 32>, <5, 16>, <7, 3>];
-O0Pairs := [<4, 16>, <6, 8>, <8, 3>];
+LPairs := [<3, 19>, <4, 8>, <5, 5>, <6, 3>, <7, 3>];
+PLPairs := [<2, 2719>, <3, 19>, <4, 8>, <5, 5>, <6, 3>, <7, 3>];
+UPairs := [<2, 32>, <3, 19>, <4, 8>, <5, 4>, <6, 3>, <7, 2>, <8, 2>]; // CompFac <5,5>, <7,3>
+APairs := [<2, 19>, <3, 8>, <4, 5>, <5, 3>, <6, 3>];
+SpPairs := [<4, 19>, <6, 5>, <8, 3>, <10, 2>]; // CompFac <6,7> and <6,8>, we have Sp(4,2/3/5) elsewhere
+O1Pairs := [<3, 32>, <5, 16>, <7, 3>, <9, 3>];
+O0Pairs := [<4, 16>, <6, 8>, <8, 3>, <10, 2>];
 
-
-// Format: family, list of pairs d, qhigh
+// Format: family, list of pairs <d, qhigh>
+// Earlier entries will take priority when there are exceptional isomorphisms
 classical := [<GL, "GL", LPairs>,
               <SL, "SL", LPairs>,
-              <CU, "CU", UPairs>,
-              <GU, "GU", UPairs>,
-              <SU, "SU", UPairs>,
-              <CSU, "CSU", UPairs>,
-              <CSp, "GSp", SpPairs>,
               <Sp, "Sp", SpPairs>,
-              <CO, "CO", O1Pairs>,
-              <GO, "GO", [<3, 23>, <5, 8>, <7, 3>]>, // <3, 25>, <3,27>, <5,9> fail; would have liked to go to <3, 32>, <5, 16>
               <SO, "SO", O1Pairs>,
+              <SOPlus, "SOPlus", O0Pairs>, // SO+(2, q) is C_{q-1}
+              <SOMinus, "SOMinus", O0Pairs>, // SO-(2, q) is C_{q+1}
+              <SU, "SU", UPairs>,
+              <GO, "GO", [<3, 23>, <5, 8>, <7, 3>]>, // <3, 25>, <3,27>, <5,9> fail; would have liked to go to <3, 32>, <5, 16>
+              <GOPlus, "GOPlus", [<4, 8>, <6, 8>]>, // GO+(2, q) is D_{q-1}; <4,9> and <8,3> fail (would have liked to go to <4,16>)
+              <GOMinus, "GOMinus", [<4, 8>, <6, 8>]>, // GO-(2, q) is D_{q+1}; <4,9> and <8,3> fail (would have liked to go to <4,16>)
+              <GU, "GU", UPairs>,
+              <CSp, "GSp", SpPairs>,
               <CSO, "CSO", O1Pairs>,
-              <COPlus, "CO+", [<2, 32>] cat O0Pairs>,
-              <GOPlus, "GO+", [<4, 8>, <6, 8>]>, // GO+(2, q) is D_{q-1}; <4,9> and <8,3> fail (would have liked to go to <4,16>)
-              <SOPlus, "SO+", O0Pairs>, // SO+(2, q) is C_{q-1}
-              <CSOPlus, "CSO+", [<2, 997>] cat O0Pairs>,
-              <COMinus, "CO-", [<2, 32>] cat O0Pairs>,
-              <GOMinus, "GO-", [<4, 8>, <6, 8>]>, // GO-(2, q) is D_{q+1}; <4,9> and <8,3> fail (would have liked to go to <4,16>)
-              <SOMinus, "SO-", O0Pairs>, // SO-(2, q) is C_{q+1}
-              <CSOMinus, "CSO-", [<2, 997>] cat O0Pairs>,
+              <CSOPlus, "CSOPlus", [<2, 997>] cat O0Pairs>,
+              <CSOMinus, "CSOMinus", [<2, 997>] cat O0Pairs>,
+              <CSU, "CSU", UPairs>,
+              <CO, "CO", O1Pairs>,
+              <COPlus, "COPlus", [<2, 32>] cat O0Pairs>,
+              <COMinus, "COMinus", [<2, 32>] cat O0Pairs>,
+              <CU, "CU", UPairs>,
               <Omega, "Omega", O1Pairs>,
-              <OmegaPlus, "Omega+", O0Pairs>,
-              <OmegaMinus, "Omega-", O0Pairs>,
+              <OmegaPlus, "OmegaPlus", O0Pairs>,
+              <OmegaMinus, "OmegaMinus", O0Pairs>,
               <Spin, "Spin", [<5, 16>, <7, 3>]>, // Spin(3, -) errors
-              <SpinPlus, "Spin+", O0Pairs>,
-              <SpinMinus, "Spin-", O0Pairs>];
+              <SpinPlus, "SpinPlus", O0Pairs>,
+              <SpinMinus, "SpinMinus", O0Pairs>
+              ];
 
 classical_perm := [<PGL, "PGL", PLPairs>, // PGL(7,3) has degree 1093
                    <PSL, "PSL", PLPairs>, // should all be simple
+                   <PSp, "PSp", SpPairs>, // Degree PSp(4, 16) is 4369
+                   <PSO, "PSO", O1Pairs>, // Degree PSO(5, 16) is 4369
+                   <PSOPlus, "PSOPlus", O0Pairs>, // Degree PGO+(6,8) is 4745
+                   <PSOMinus, "PSOMinus", O0Pairs>, // Degree PSO+(6,8) is 4617
+                   <PSU, "PSU", UPairs>, // Degree PSU(4,8) is 33345
+                   <PGO, "PGO", O1Pairs>, // Degree PGO(5, 16) is 4369
+                   <PGOPlus, "PGOPlus", O0Pairs>, // Degree PGO+(6,8) is 4745
+                   <PGOMinus, "PGOMinus", O0Pairs>, // Degree PGO-(6,8) is 4617
+                   <PGU, "PGU", UPairs>, // Degree PGU(4,8) is 33345
+                   <POmega, "POmega", O1Pairs>,
+                   <POmegaPlus, "POmegaPlus", O0Pairs>,
+                   <POmegaMinus, "POmegaMinus", O0Pairs>,
                    <PGammaL, "PGammaL", PLPairs>, // same degrees as PGL and PSL; only differs from PGL for non-primes
                    <PSigmaL, "PSigmaL", PLPairs>, // same degrees as PGL and PSL; only differs from PSL for non-primes
+                   <PSigmaSp, "PSigmaSp", SpPairs>, // Degree PSp(4, 16) is 4369
+                   <PGammaU, "PGammaU", UPairs>, // same degrees as PGU
                    <AGL, "AGL", [<1, 43>] cat APairs>, // AGL(6, 3) has degree 729
                    <ASL, "ASL", APairs>, // ASL(6, 3) has degree 729
+                   <ASp, "ASp", SpPairs>, // These all have large degree: ASp(4,16) has degree 65536
                    <AGammaL, "AGammaL", [<1, 43>] cat APairs>,
                    <ASigmaL, "ASigmaL", [<1, 43>] cat APairs>,
-                   <ASp, "ASp", SpPairs>, // These all have large degree: ASp(4,16) has degree 65536
-                   <ASigmaSp, "ASigmaSp", SpPairs>, // Same large degrees as ASp
-                   <PGU, "PGU", UPairs>, // Degree PGU(4,8) is 33345
-                   <PSU, "PSU", UPairs>, // same degrees
-                   <PGammaU, "PGammaU", UPairs>, // same degrees
-                   <PSp, "PSp", SpPairs>, // Degree PSp(4, 16) is 4369
-                   <PSigmaSp, "PSigmaSp", SpPairs>, // Degree PSp(4, 16) is 4369
-                   <PGO, "PGO", O1Pairs>, // Degree PGO(5, 16) is 4369
-                   <PGOPlus, "PGO+", O0Pairs>, // Degree PGO+(6,8) is 4745
-                   <PGOMinus, "PGO-", O0Pairs>, // Degree PGO-(6,8) is 4617
-                   <PSO, "PSO", O1Pairs>, // Degree PSO(5, 16) is 4369
-                   <PSOPlus, "PSO+", O0Pairs>, // Degree PGO+(6,8) is 4745
-                   <PSOMinus, "PSO-", O0Pairs>, // Degree PSO+(6,8) is 4617
-                   <POmega, "POmega", O1Pairs>,
-                   <POmegaPlus, "POmega+", O0Pairs>,
-                   <POmegaMinus, "POmega-", O0Pairs>];
+                   <ASigmaSp, "ASigmaSp", SpPairs> // Same large degrees as ASp
+                   ];
 
-smallfile := outfolder * "SmallMedLie.txt";
+chevalley := ["ChevE,6,2", "ChevE,7,2", "ChevF,4,2", "ChevG,2,2", "ChevG,2,3", "ChevG,2,4", "ChevG,2,5", "Chev2B,2,2", "Chev2B,2,8", "Chev2B,2,32", "Chev3D,4,2", "Chev3D,4,3", "Chev2E,6,2", "Chev2F,4,2", "Chev2F,4,2-D", "Chev2G,2,3", "Chev2G,2,27"];
+sporadic := ["J1", "J2", "HS", "J3", "McL", "He", "Ru", "Co3", "Co2"]; // Can't compute order of Co1...
+// the Mathieu groups are in the transitive database
+// Could also include (in increasing order of ugliness) Suz, F22, Ly, J4, HN, ON, Th, E(8,2), Fi23; Fi24, B and M aren't really reasonable
+
+smallmedfile := outfolder * "SmallMedLie.txt";
+aliasfile := outfolder * "LieAliases.txt";
 med := [];
 meddata := [];
 medperm := [];
 medpermdata := [];
-bigfile := outfolder * "BigLie.txt";
-bigin := outfolder * "BigLie.in"; // input for hashing script
-biglies := {};
+bigfile := outfolder * "BigLie.txt"; // input for hashing script
+sizes := AssociativeArray();
+descriptions := AssociativeArray();
+groups := [* *];
 for idat in classical cat classical_perm do
     func := idat[1];
     name := idat[2];
@@ -82,55 +91,55 @@ for idat in classical cat classical_perm do
         d := pair[1];
         for q in [2..pair[2]] do
             if IsPrimePower(q) then
-                print name, d, q;
-                G := func(d, q);
-                if CanIdentifyGroup(#G) then
-                    gid := IdentifyGroup(G);
-                    PrintFile(smallfile, Sprintf("%o(%o,%o) %o.%o", name, d, q, gid[1], gid[2]));
-                elif #G in [512, 1152, 1536, 1920] then
-                    if Type(G) eq GrpPerm then
-                        Append(~medperm, G);
-                        Append(~medpermdata, Sprintf("%o(%o,%o)", name, d, q));
-                    else
-                        Append(~med, G);
-                        Append(~meddata, Sprintf("%o(%o,%o)", name, d, q));
-                    end if;
-                else
-                    s := GroupToString(G);
-                    PrintFile(bigfile, Sprintf("%o(%o,%o) %o", name, d, q, s));
-                    Include(~biglies, s);
-                end if;
+                fullname := Sprintf("%o(%o,%o)", name, d, q);
+                Append(~groups, <fullname, func(d, q)>);
             end if;
         end for;
     end for;
 end for;
-/*
-for idat in semiclassical do
-    func := idat[1];
-    name := idat[2];
-    for q in idat[3] do
-        G := func(q);
-        if CanIdentifyGroup(#G) then
-            gid := IdentifyGroup(G);
-            PrintFile(smallfile, Sprintf("%o(%o) %o.%o", name, q, gid[1], gid[2]));
-        elif #G in [512, 1152, 1536, 1920] then
-            Append(~med, G);
-            Append(~meddata, Sprintf("%o(%o)", name, q));
-        else
-            PrintFile(bigfile, Sprintf("%o(%o) %o", name, q, GroupToString(G)));
-        end if;
-    end for;
+for desc in chevalley cat sporadic do
+    Append(~groups, <desc, StringToGroup(desc)>);
 end for;
-*/
+for pair in groups do
+    fullname := pair[1];
+    G := pair[2];
+    print fullname;
+    if CanIdentifyGroup(#G) then
+        gid := IdentifyGroup(G);
+        gid := Sprintf("%o.%o", gid[1], gid[2]);
+        PrintFile(aliasfile,  Sprintf("%o %o", fullname, gid));
+        if #G gt 2000 or #G gt 500 and Valuation(#G,2) gt 6 then
+            PrintFile(smallmedfile, gid);
+        end if;
+    elif #G in [512, 1152, 1536, 1920] then
+        if Type(G) eq GrpPerm then
+            Append(~medperm, G);
+            Append(~medpermdata, Sprintf("%o(%o,%o)", name, d, q));
+        else
+            Append(~med, G);
+            Append(~meddata, Sprintf("%o(%o,%o)", name, d, q));
+        end if;
+    else
+        if fullname[1] eq "P" and #G eq sizes[fullname[2..#fullname]] then
+            PrintFile(aliasfile, Sprintf("%o %o", fullname, fullname[2..#fullname]));
+            continue;
+        end if;
+        sizes[fullname] := #G;
+        s := GroupToString(G);
+        if IsDefined(descriptions, s) then
+            PrintFile(aliasfile, Sprintf("%o %o", fullname, descriptions[s]));
+            continue;
+        end if;
+        descriptions[s] := fullname;
+        PrintFile(bigfile, fullname);
+    end if;
+end for;
 medid := IdentifyGroups(med);
 for i in [1..#med] do
     PrintFile(smallfile, Sprintf("%o %o.%o", meddata[i], medid[i][1], medid[i][2]));
 end for;
 medid := IdentifyGroups(medperm);
 for i in [1..#medperm] do
-    PrintFile(smallfile, Sprintf("%o %o.%o", medpermdata[i], medpermid[i][1], medpermid[i][2]));
-end for;
-for s in biglies do
-    PrintFile(bigin, s);
+    PrintFile(smallfile, Sprintf("%o %o.%o", medpermdata[i], medid[i][1], medid[i][2]));
 end for;
 exit;
