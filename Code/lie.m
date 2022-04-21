@@ -22,7 +22,7 @@ classical := [<GL, "GL", LPairs>,
               <SOPlus, "SOPlus", O0Pairs>, // SO+(2, q) is C_{q-1}
               <SOMinus, "SOMinus", O0Pairs>, // SO-(2, q) is C_{q+1}
               <SU, "SU", UPairs>,
-              <GO, "GO", [<3, 23>, <5, 8>, <7, 3>]>, // <3, 25>, <3,27>, <5,9> fail; would have liked to go to <3, 32>, <5, 16>
+              <GO, "GO", [<3, 23>, <5, 8>, <7, 3>, <9,3>]>, // <3, 25>, <3,27>, <5,9> fail; would have liked to go to <3, 32>, <5, 16>
               <GOPlus, "GOPlus", [<4, 8>, <6, 8>]>, // GO+(2, q) is D_{q-1}; <4,9> and <8,3> fail (would have liked to go to <4,16>)
               <GOMinus, "GOMinus", [<4, 8>, <6, 8>]>, // GO-(2, q) is D_{q+1}; <4,9> and <8,3> fail (would have liked to go to <4,16>)
               <GU, "GU", UPairs>,
@@ -43,8 +43,8 @@ classical := [<GL, "GL", LPairs>,
               <SpinMinus, "SpinMinus", O0Pairs>
               ];
 
-classical_perm := [<PGL, "PGL", PLPairs>, // PGL(7,3) has degree 1093
-                   <PSL, "PSL", PLPairs>, // should all be simple
+classical_perm := [<PSL, "PSL", PLPairs>, // should all be simple
+                   <PGL, "PGL", PLPairs>, // PGL(7,3) has degree 1093
                    <PSp, "PSp", SpPairs>, // Degree PSp(4, 16) is 4369
                    <PSO, "PSO", O1Pairs>, // Degree PSO(5, 16) is 4369
                    <PSOPlus, "PSOPlus", O0Pairs>, // Degree PGO+(6,8) is 4745
