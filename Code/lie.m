@@ -71,7 +71,9 @@ smallfile := outfolder * "SmallMedLie.txt";
 med := [];
 meddata := [];
 bigfile := outfolder * "BigLie.txt";
-for idat in classical do
+bigin := outfolder * "BigLie.in"; // input for hashing script
+biglies := {};
+for idat in classical cat classical_perm do
     func := idat[1];
     name := idat[2];
     for pair in idat[3] do
@@ -87,12 +89,15 @@ for idat in classical do
                     Append(~med, G);
                     Append(~meddata, Sprintf("%o(%o,%o)", name, d, q));
                 else
-                    PrintFile(bigfile, Sprintf("%o(%o,%o) %o", name, d, q, GroupToString(G)));
+                    s := GroupToString(G);
+                    PrintFile(bigfile, Sprintf("%o(%o,%o) %o", name, d, q, s));
+                    Include(~biglies, s);
                 end if;
             end if;
         end for;
     end for;
 end for;
+/*
 for idat in semiclassical do
     func := idat[1];
     name := idat[2];
@@ -109,8 +114,12 @@ for idat in semiclassical do
         end if;
     end for;
 end for;
+*/
 medid := IdentifyGroups(med);
 for i in [1..#med] do
     PrintFile(smallfile, Sprintf("%o %o.%o", meddata[i], medid[i][1], medid[i][2]));
+end for;
+for s in biglies do
+    PrintFile(bigin, s);
 end for;
 exit;
