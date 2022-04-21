@@ -116,10 +116,10 @@ for pair in groups do
     elif #G in [512, 1152, 1536, 1920] then
         if Type(G) eq GrpPerm then
             Append(~medperm, G);
-            Append(~medpermdata, Sprintf("%o(%o,%o)", name, d, q));
+            Append(~medpermdata, fullname);
         else
             Append(~med, G);
-            Append(~meddata, Sprintf("%o(%o,%o)", name, d, q));
+            Append(~meddata, fullname);
         end if;
     else
         if fullname[1] eq "P" and #G eq sizes[fullname[2..#fullname]] then
