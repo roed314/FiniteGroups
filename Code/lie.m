@@ -82,6 +82,30 @@ medperm := [];
 medpermdata := [];
 bigfile := outfolder * "BigLie.txt"; // input for hashing script
 sizes := AssociativeArray();
+// Fill in missing orders from the groups that we've skipped
+sizes["GO(3,25)"] := #GO(3,25);
+sizes["GO(3,27)"] := #GO(3,27);
+sizes["GO(3,29)"] := #GO(3,29);
+sizes["GO(3,31)"] := #GO(3,31);
+sizes["GO(3,32)"] := #GO(3,32);
+sizes["GO(5,9)"] := #GO(5,9);
+sizes["GO(5,11)"] := #GO(5,11);
+sizes["GO(5,13)"] := #GO(5,13);
+sizes["GO(5,16)"] := #GO(5,16);
+sizes["GOPlus(4,9)"] := #GOPlus(4,9);
+sizes["GOPlus(4,11)"] := #GOPlus(4,11);
+sizes["GOPlus(4,13)"] := #GOPlus(4,13);
+sizes["GOPlus(4,16)"] := #GOPlus(4,16);
+sizes["GOPlus(8,2)"] := #GOPlus(8,2);
+sizes["GOPlus(8,3)"] := #GOPlus(8,3);
+sizes["GOPlus(10,2)"] := #GOPlus(10,2);
+sizes["GOMinus(4,9)"] := #GOMinus(4,9);
+sizes["GOMinus(4,11)"] := #GOMinus(4,11);
+sizes["GOMinus(4,13)"] := #GOMinus(4,13);
+sizes["GOMinus(4,16)"] := #GOMinus(4,16);
+sizes["GOMinus(8,2)"] := #GOMinus(8,2);
+sizes["GOMinus(8,3)"] := #GOMinus(8,3);
+sizes["GOMinus(10,2)"] := #GOMinus(10,2);
 descriptions := AssociativeArray();
 groups := [* *];
 for idat in classical cat classical_perm do
@@ -106,6 +130,7 @@ for pair in groups do
     fullname := pair[1];
     G := pair[2];
     print fullname;
+    sizes[fullname] := #G;
     if CanIdentifyGroup(#G) then
         gid := IdentifyGroup(G);
         gid := Sprintf("%o.%o", gid[1], gid[2]);
@@ -126,7 +151,6 @@ for pair in groups do
             PrintFile(aliasfile, Sprintf("%o %o", fullname, fullname[2..#fullname]));
             continue;
         end if;
-        sizes[fullname] := #G;
         s := GroupToString(G);
         if IsDefined(descriptions, s) then
             PrintFile(aliasfile, Sprintf("%o %o", fullname, descriptions[s]));
