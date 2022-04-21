@@ -31,7 +31,7 @@ classical := [<GL, "GL", LPairs>,
               <GOPlus, "GO+", [<4, 8>, <6, 8>]>, // GO+(2, q) is D_{q-1}; <4,9> and <8,3> fail (would have liked to go to <4,16>)
               <SOPlus, "SO+", O0Pairs>, // SO+(2, q) is C_{q-1}
               <CSOPlus, "CSO+", [<2, 997>] cat O0Pairs>,
-              <COMinus, "CO-", [<2, 32>] cat O0Pairs,
+              <COMinus, "CO-", [<2, 32>] cat O0Pairs>,
               <GOMinus, "GO-", [<4, 8>, <6, 8>]>, // GO-(2, q) is D_{q+1}; <4,9> and <8,3> fail (would have liked to go to <4,16>)
               <SOMinus, "SO-", O0Pairs>, // SO-(2, q) is C_{q+1}
               <CSOMinus, "CSO-", [<2, 997>] cat O0Pairs>,
