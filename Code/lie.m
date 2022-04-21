@@ -92,12 +92,14 @@ for idat in classical cat classical_perm do
         for q in [2..pair[2]] do
             if IsPrimePower(q) then
                 fullname := Sprintf("%o(%o,%o)", name, d, q);
+                print "Const", fullname;
                 Append(~groups, <fullname, func(d, q)>);
             end if;
         end for;
     end for;
 end for;
 for desc in chevalley cat sporadic do
+    print "Const", desc;
     Append(~groups, <desc, StringToGroup(desc)>);
 end for;
 for pair in groups do
@@ -136,10 +138,10 @@ for pair in groups do
 end for;
 medid := IdentifyGroups(med);
 for i in [1..#med] do
-    PrintFile(smallfile, Sprintf("%o %o.%o", meddata[i], medid[i][1], medid[i][2]));
+    PrintFile(smallmedfile, Sprintf("%o %o.%o", meddata[i], medid[i][1], medid[i][2]));
 end for;
 medid := IdentifyGroups(medperm);
 for i in [1..#medperm] do
-    PrintFile(smallfile, Sprintf("%o %o.%o", medpermdata[i], medid[i][1], medid[i][2]));
+    PrintFile(smallmedfile, Sprintf("%o %o.%o", medpermdata[i], medid[i][1], medid[i][2]));
 end for;
 exit;
