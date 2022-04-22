@@ -7,9 +7,10 @@ AttachSpec("hashspec");
 
 LPairs := [<2, 2719>, <3, 19>, <4, 8>, <5, 5>, <6, 3>, <7, 3>];
 PLPairs := [<2, 2719>, <3, 19>, <4, 8>, <5, 5>, <6, 3>, <7, 3>];
-UPairs := [<2, 32>, <3, 19>, <4, 8>, <5, 4>, <6, 3>, <7, 2>, <8, 2>]; // CompFac <5,5>, <7,3>
+UPairs := [<2, 32>, <3, 19>, <4, 7>, <5, 4>, <6, 3>, <7, 2>, <8, 2>]; // CompFac <5,5>, <7,3>
 APairs := [<2, 19>, <3, 8>, <4, 5>, <5, 3>, <6, 3>];
 SpPairs := [<4, 19>, <6, 5>, <8, 3>, <10, 2>]; // CompFac <6,7> and <6,8>, we have Sp(4,2/3/5) elsewhere
+ASpPairs := [<4, 5>, <6, 3>, <8, 2>];
 O1Pairs := [<3, 32>, <5, 16>, <7, 3>, <9, 3>];
 O0Pairs := [<4, 16>, <6, 8>, <8, 3>, <10, 2>];
 
@@ -26,7 +27,7 @@ classical := [<GL, "GL", LPairs>,
               <GOPlus, "GOPlus", [<4, 8>, <6, 8>]>, // GO+(2, q) is D_{q-1}; <4,9> and <8,3> fail (would have liked to go to <4,16>)
               <GOMinus, "GOMinus", [<4, 8>, <6, 8>]>, // GO-(2, q) is D_{q+1}; <4,9> and <8,3> fail (would have liked to go to <4,16>)
               <GU, "GU", UPairs>,
-              <CSp, "GSp", SpPairs>,
+              <CSp, "CSp", SpPairs>,
               <CSO, "CSO", O1Pairs>,
               <CSOPlus, "CSOPlus", [<2, 997>] cat O0Pairs>,
               <CSOMinus, "CSOMinus", [<2, 997>] cat O0Pairs>,
@@ -63,13 +64,13 @@ classical_perm := [<PSL, "PSL", PLPairs>, // should all be simple
                    <PGammaU, "PGammaU", UPairs>, // same degrees as PGU
                    <AGL, "AGL", [<1, 43>] cat APairs>, // AGL(6, 3) has degree 729
                    <ASL, "ASL", APairs>, // ASL(6, 3) has degree 729
-                   <ASp, "ASp", SpPairs>, // These all have large degree: ASp(4,16) has degree 65536
+                   <ASp, "ASp", ASpPairs>, // These all have large degree: ASp(4,16) has degree 65536
                    <AGammaL, "AGammaL", [<1, 43>] cat APairs>,
                    <ASigmaL, "ASigmaL", [<1, 43>] cat APairs>,
-                   <ASigmaSp, "ASigmaSp", SpPairs> // Same large degrees as ASp
+                   <ASigmaSp, "ASigmaSp", ASpPairs> // Same large degrees as ASp
                    ];
 
-chevalley := ["ChevE,6,2", "ChevE,7,2", "ChevF,4,2", "ChevG,2,2", "ChevG,2,3", "ChevG,2,4", "ChevG,2,5", "Chev2B,2,2", "Chev2B,2,8", "Chev2B,2,32", "Chev3D,4,2", "Chev3D,4,3", "Chev2E,6,2", "Chev2F,4,2", "Chev2F,4,2-D", "Chev2G,2,3", "Chev2G,2,27"];
+chevalley := ["ChevE,6,2", "ChevE,7,2", "ChevF,4,2", "ChevG,2,2", "ChevG,2,3", "ChevG,2,4", "ChevG,2,5", "Chev2B,2,2", "Chev2B,2,8", "Chev2B,2,32", "Chev3D,4,2", "Chev2E,6,2", "Chev2F,4,2", "Chev2F,4,2-D", "Chev2G,2,3", "Chev2G,2,27"]; // CompFac Chev3D,4,3
 sporadic := ["J1", "J2", "HS", "J3", "McL", "He", "Ru", "Co3", "Co2"]; // Can't compute order of Co1...
 // the Mathieu groups are in the transitive database
 // Could also include (in increasing order of ugliness) Suz, F22, Ly, J4, HN, ON, Th, E(8,2), Fi23; Fi24, B and M aren't really reasonable
@@ -163,10 +164,14 @@ for pair in groups do
 end for;
 medid := IdentifyGroups(med);
 for i in [1..#med] do
-    PrintFile(smallmedfile, Sprintf("%o %o.%o", meddata[i], medid[i][1], medid[i][2]));
+    label := Sprintf("%o.%o", medid[i][1], medid[i][2]);
+    PrintFile(aliasfile, Sprintf("%o %o", meddata[i], label)
+    PrintFile(smallmedfile, label);
 end for;
 medid := IdentifyGroups(medperm);
 for i in [1..#medperm] do
-    PrintFile(smallmedfile, Sprintf("%o %o.%o", medpermdata[i], medid[i][1], medid[i][2]));
+    label := Sprintf("%o.%o", medid[i][1], medid[i][2]);
+    PrintFile(aliasfile, Sprintf("%o %o", medpermdata[i], label)
+    PrintFile(smallmedfile, label);
 end for;
 exit;
