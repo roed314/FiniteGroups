@@ -1,8 +1,17 @@
 import os
+import re
 import itertools
 from collections import defaultdict
 ope = os.path.exists
 opj = os.path.join
+
+nTt_re = re.compile(r"\d+T\d+")
+
+def nTt_checked(nTt):
+    n, t = [int(c) for c in nTt.split("T")]
+    if n == 32:
+        return t <= 9551 or t >= 2799324 or t in [11713, 11916, 12882, 12897, 14765, 22195, 34907, 37217, 96908, 96911, 96912, 96916, 96959, 97020, 97037, 205727]
+    return n < 48
 
 def collate(folder):
     # Naming conventions:
@@ -69,7 +78,10 @@ def collate(folder):
             for desc in V:
                 unh_probs.append(f"{desc} {order}")
     for ordhash, V in itertools.chain(big.items(), unh_ok.items()):
-        ofile = opj(done, ordhash) if len(V) == 1 else opj(active, ordhash)
+        if len(V) == 1 or all(nTt_re.fullmatch(desc) and nTt_checked(desc) for desc in V):
+            ofile = opj(done, ordhash)
+        else:
+            ofile = opj(active, ordhash)
         with open(ofile, "w") as F:
             _ = F.write("\n".join(V)+"\n")
     if unh_probs:
