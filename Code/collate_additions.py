@@ -39,7 +39,7 @@ def collate(folder):
     os.mkdir(active)
     os.mkdir(done)
     smed = set()
-    big = defaultdict(list)
+    big = defaultdict(set)
     orders = set()
     unhashed = defaultdict(list)
     for ifile in os.listdir(folder):
@@ -57,7 +57,7 @@ def collate(folder):
                     if line:
                         desc, ordhash = line.split()
                         order, hash = ordhash.split(".")
-                        big[ordhash].append(desc)
+                        big[ordhash].add(desc)
                         orders.add(order)
         elif ifile.startswith("Big") and ifile.endswith(".unhashed"):
             with open(opj(folder, ifile)) as F:
