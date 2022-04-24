@@ -2,6 +2,7 @@ import os
 import re
 import itertools
 from collections import defaultdict
+from sage.all import ZZ
 ope = os.path.exists
 opj = os.path.join
 
@@ -87,3 +88,20 @@ def collate(folder):
     if unh_probs:
         with open(probfile, "w") as F:
             _ = F.write("\n".join(unh_probs)+"\n")
+    print("Collated")
+
+def make_twopow_file(active_folder, outfile):
+    # Make a file for use with stanpresone.m for using StandardPresentation to find isomorphisms.
+    lines = []
+    if ope(outfile):
+        raise ValueError("Output file already exists")
+    for fname in os.listdir(active_folder):
+        N = ZZ(fname.split(".")[0])
+        if N.is_prime_power():
+            with open(opj(active_folder, fname)) as F:
+                for line in F:
+                    first = line.strip().split(" ")[0]
+                    lines.append(f"{fname} {first}")
+    with open(outfile, "w") as F:
+        _ = F.write("\n".join(lines)+"\n")
+    print("Success")
