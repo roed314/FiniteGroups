@@ -241,7 +241,7 @@ def collate_success(folder, include_tiny=True):
             n, t = desc.split("T")
             code = (ZZ(n), ZZ(t))
             return (3,) + code, (1,) + code
-        elif desc.endswith(")")
+        elif desc.endswith(")"):
             lie, params = disc[:-1].split("(")
             lie = lie_codes.index(lie)
             params = tuple(ZZ(c) for c in params.split(","))
