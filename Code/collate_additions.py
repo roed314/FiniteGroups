@@ -205,7 +205,7 @@ def collate_success(folder, include_tiny=True):
         for desc in list(extra)[:10]:
             print("   ", desc[:120])
     # Some "Big" groups were inappopriately classified, and actually can be identified.
-    canid = [ZZ(N) for N in magma(f"[N : N in [{','.join(by_iso)}] | CanIdentifyGroup(N)]")]
+    canid = [ZZ(N) for N in magma(f"[N : N in [{','.join(str(x) for x in by_iso)}] | CanIdentifyGroup(N)]")]
     for N in canid:
         for hsh, iso in by_iso[N]:
             label = f"{N}.{hsh}"
