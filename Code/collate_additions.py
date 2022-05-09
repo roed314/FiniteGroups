@@ -154,8 +154,11 @@ def collate_success(folder, include_tiny=True):
             prefile = ifile.replace(".identified", ".txt")
             with open(opj(folder, ifile)) as F:
                 labels = [x for x in F.read().strip().split("\n") if x]
-            with open(opj(folder, prefile)) as F:
-                descs = [x for x in F.read().strip().split("\n") if x]
+            if ope(opj(folder, prefile)):
+                with open(opj(folder, prefile)) as F:
+                    descs = [x for x in F.read().strip().split("\n") if x]
+            else:
+                descs = []
             if len(labels) == len(descs):
                 for label, desc in zip(labels, descs):
                     N = ZZ(label.split(".")[0])
