@@ -273,7 +273,7 @@ def collate_success(folder, include_tiny=True):
         comp_sorted = [sorted(cls, key=compute_key) for cls in disp_sorted]
         for i, (h, D, C) in enumerate(zip(hashes, disp_sorted, comp_sorted)):
             label = "{N}.{num2letters(i)}"
-            for desc in disp_sorted:
+            for desc in D:
                 aliases[N][label].append(desc)
                 for al in backaliases[desc]:
                     aliases[N][label].append(al)
