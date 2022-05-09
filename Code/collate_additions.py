@@ -231,7 +231,7 @@ def collate_success(folder, include_tiny=True):
             # These are permutation representations and have been optimized for degree
             return (0, ZZ(desc[4:])), (0, ZZ(desc[4:]))
         elif "Perm" in desc:
-            code = tuple(1000000 + ZZ(c) for c in desc[4:].split(",")) # Prefer transitive labels if same degree
+            code = tuple(1000000 + ZZ(c) for c in desc.split("Perm")[1].split(",")) # Prefer transitive labels if same degree
             return (3,) + code, (1,) + code
         elif "Mat" in desc:
             dR, gens = desc.split("Mat")
