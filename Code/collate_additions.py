@@ -250,6 +250,9 @@ def collate_success(folder, include_tiny=True):
             params = tuple(ZZ(c) for c in params.split(","))
             code = (lie,) + params
             return code, code
+        elif desc in ["J1", "J2", "HS", "J3", "McL", "He", "Ru", "Co3", "Co2"]:
+            # Sporadic: always preference this since we can adjust in code
+            return (-2,), (-2,)
         else:
             raise ValueError("Unrecognized description type", desc)
     def display_key(desc):
