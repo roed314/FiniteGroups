@@ -64,6 +64,21 @@ intrinsic EasyHash(GG::Grp) -> RngIntElt
     end if;
 end intrinsic;
 
+intrinsic CycleHash(GG:GrpPerm) -> RngIntElt
+{A variant on EasyHash that uses the cycle type rather than the order.  Note that this is NOT ISOMORPHISM INVARIANT,
+ but only invariant up to conjugacy within the ambient symmetric group.  It is used in RandomizedMerge.m}
+    data := AssociativeArray();
+    for C in ConjugacyClasses(GG) do
+        cs := CycleStructure(C[3]);
+        if not IsDefined(data, <cs, C[2]>) then
+            data[<cs, C[2]>] := 0;
+        end if;
+        data[<cs, C[2]>] +:= 1;
+    end for;
+    data := Sort([<k, v> : k -> v in data]);
+    return CollapseIntList(data);
+end intrinsic;
+
 intrinsic EasySubHash(Amb::Grp, G:Grp) -> RngIntElt
 {A modification of EasyHash to better handle abelian groups and the case where G is the full ambient group}
     if #G eq #Amb then
