@@ -191,7 +191,7 @@ def collate_success(folder, include_tiny=True):
             hsh = r"\N"
         with open(opj(folder, "clustered", ordhsh)) as F:
             for line in F:
-                descs = F.strip().split()
+                descs = line.strip().split()
                 by_iso[N].append((hsh, descs))
                 bigoutputs.update(descs)
     missing = biginputs.difference(bigoutputs)
