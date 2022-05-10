@@ -15,20 +15,26 @@ print desc;
 G0 := StringToGroup(desc);
 G := G0;
 t0 := Cputime();
-if Type(G0) eq GrpMat and not IsField(CoefficientRing(G0)) then
+if Type(G0) eq GrpMat and Type(CoefficientRing(G0)) eq RngIntRes then
     // MinimalDegreePermutationRepresentation fails
-    if IsSolvable(G0) then
-        G, psi := PCGroup(G0);
+    if IsField(CoefficientRing(G0)) then
+        G0 := ChangeRing(G0, GF(#CoefficientRing(G0)));
+        G := G0;
+        psi := IdentityHomomorphism(G);
     else
-        V := RSpace(G0);
-        x := Random(V);
-        T := {x};
-        psi, G, K := OrbitAction(G0, T);
-        while #K ne 1 do
+        if IsSolvable(G0) then
+            G, psi := PCGroup(G0);
+        else
+            V := RSpace(G0);
             x := Random(V);
-            Include(~T, x);
+            T := {x};
             psi, G, K := OrbitAction(G0, T);
-        end while;
+            while #K ne 1 do
+                x := Random(V);
+                Include(~T, x);
+                psi, G, K := OrbitAction(G0, T);
+            end while;
+        end if;
     end if;
 else
     psi := IdentityHomomorphism(G);
