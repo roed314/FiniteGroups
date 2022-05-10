@@ -1,6 +1,6 @@
 // USAGE: ls DATA/minrep.todo | parallel -j128 --timeout 600 magma -b label:={1} MinReps4.m
 
-AttachSpec("hashspec");
+AttachSpec("spec");
 SetColumns(0);
 infile := "DATA/minrep.todo/" * label;
 outfile := "DATA/minreps/" * label;
