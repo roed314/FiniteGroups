@@ -11,8 +11,7 @@ N := StringToInteger(Split(label, ".")[1]);
 ps := PrimeDivisors(N);
 done, F := OpenTest(outfile, "r");
 if done then
-    print done;
-    lines := Split(Read(F), "\n");
+    lines := Split(Read(outfile), "\n");
     doneps := {Factorization(StringToInteger(Split(line, "|")[1]))[1][1] : line in lines};
     ps := [p : p in ps | not p in doneps];
     if #ps eq 0 then
