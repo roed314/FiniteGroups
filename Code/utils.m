@@ -497,7 +497,11 @@ intrinsic SubgroupToString(G::Grp, H::Grp) -> MonStgElt
         return &*MatricesToHexlist([g : g in Generators(H)], CoefficientRing(H));
     elif Type(G) eq GrpPC then
         b := 1 + Ilog(16, Max(PCPrimes(G)));
-        return &*[IntegerToHex(c, b) : c in Eltseq(G!g), g in PCGenerators(H)];
+        if #H eq 1 then
+            return "";
+        else
+            return &*[IntegerToHex(c, b) : c in Eltseq(G!g), g in PCGenerators(H)];
+        end if;
     else
         error Sprintf("Unsupported subgroup type %o of order %o", Type(H), #H);
     end if;
