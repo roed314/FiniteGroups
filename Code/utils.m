@@ -398,6 +398,36 @@ intrinsic StringToGroup(s::MonStgElt) -> Grp
     end if;
 end intrinsic;
 
+intrinsic MatricesToHexlist(L::SeqEnum, R::Rng) -> SeqEnum, MonStgElt
+{}
+    L := &cat[Eltseq(g) : g in L];
+    if Type(R) eq RngInt then
+        R := "0";
+        b := Max([1 + Ilog(16, Integers()!(2*Abs(c+1/2))) : c in L]); // only need 1 digit for -8, but 2 for 8; deals with c=0 correctly
+        L := [IntegerToHex(c, b) : c in L];
+    elif Type(R) eq RngIntRes then
+        b := 1 + Ilog(16, Modulus(R) - 1);
+        L := [IntegerToHex(c, b) : c in L];
+        R := Sprint(Modulus(R));
+    elif Type(R) eq FldFin then
+        p := Characteristic(R);
+        b := 1 + Ilog(16, p-1);
+        k := Degree(R);
+        if k eq 1 then
+            R := Sprint(p);
+        elif DefiningPolynomial(R) ne ConwayPolynomial(p, k) then
+            error "Matrix rings over finite fields not defined by a Conway polynomial are unsupported";
+        else
+            L := &cat[Eltseq(a) : a in L];
+            R := Sprintf("q%o", #R);
+        end if;
+        L := [IntegerToHex(c, b) : c in L];
+    else
+        error "Unsupported coefficient ring", R;
+    end if;
+    return L, R;
+end intrinsic;
+
 intrinsic GroupToString(G::Grp) -> MonStgElt
 {}
     // This produces a string from which the group can be reconstructed, up to isomorphism
@@ -441,32 +471,7 @@ intrinsic GroupToString(G::Grp) -> MonStgElt
             return Sprintf("%oPerm%o", Degree(G), Join([Sprint(EncodePerm(g)) : g in Generators(G)], ","));
         end if;
     elif Type(G) eq GrpMat then
-        R := CoefficientRing(G);
-        L := &cat[Eltseq(g) : g in Generators(G)];
-        if Type(R) eq RngInt then
-            R := "0";
-            b := Max([1 + Ilog(16, Integers()!(2*Abs(c+1/2))) : c in L]); // only need 1 digit for -8, but 2 for 8; deals with c=0 correctly
-            L := [IntegerToHex(c, b) : c in L];
-        elif Type(R) eq RngIntRes then
-            b := 1 + Ilog(16, Modulus(R) - 1);
-            L := [IntegerToHex(c, b) : c in L];
-            R := Sprint(Modulus(R));
-        elif Type(R) eq FldFin then
-            p := Characteristic(R);
-            b := 1 + Ilog(16, p-1);
-            k := Degree(R);
-            if k eq 1 then
-                R := Sprint(p);
-            elif DefiningPolynomial(R) ne ConwayPolynomial(p, k) then
-                error "Matrix rings over finite fields not defined by a Conway polynomial are unsupported";
-            else
-                L := &cat[Eltseq(a) : a in L];
-                R := Sprintf("q%o", #R);
-            end if;
-            L := [IntegerToHex(c, b) : c in L];
-        else
-            error "Unsupported coefficient ring", R;
-        end if;
+        L, R := MatricesToHexlist([g : g in Generators(G)], CoefficientRing(G));
         return Sprintf("%o,%oMat%o", Dimension(G), R, &*[Sprint(c) : c in L]);
     else
         if Type(G) eq GrpAb then
@@ -479,6 +484,37 @@ intrinsic GroupToString(G::Grp) -> MonStgElt
         error Sprintf("Unsupported group type %o of order %o", Type(G), N);
     end if;
 end intrinsic;
+
+intrinsic SubgroupToString(G::Grp, H::Grp) -> MonStgElt
+{}
+    // H should be a subgroup of G
+    if Type(G) eq GrpAuto then
+        // Stripping out the ambient group description would require a lot of code duplication in decoding
+        return GroupToString(H);
+    elif Type(G) eq GrpPerm then
+        return Join([Sprint(EncodePerm(g)) : g in Generators(H)], ",");
+    elif Type(G) eq GrpMat then
+        return &*MatricesToHexlist([g : g in Generators(H)], CoefficientRing(H));
+    elif Type(G) eq GrpPC then
+        b := 1 + Ilog(16, Max(PCPrimes(G)));
+        return &*[IntegerToHex(c, b) : c in Eltseq(G!g), g in PCGenerators(H)];
+    else
+        error Sprintf("Unsupported subgroup type %o of order %o", Type(H), #H);
+    end if;
+end intrinsic;
+
+/*
+intrinsic StringToSubgroup(G::Grp, s::MontStgElt) -> Grp
+{}
+    if Type(G) eq GrpAuto then
+        return GroupToString(s);
+    elif Type(G) eq GrpPerm then
+        n := Degree(G);
+        L := [DecodePerm(StringToInteger(c), n) : c in Split(s, ",")];
+        return sub<G|L>;
+    elif Type(G) eq GrpMat then
+        
+*/
 
 intrinsic ConjClassTupAction(A::GrpAuto : n:=1, dbound:=5000, try_union:=false) -> Grp
 {G, a permutation group; reps, a list of elements of G in DISTINCT conjugacy classes}
