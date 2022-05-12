@@ -494,6 +494,9 @@ intrinsic SubgroupToString(G::Grp, H::Grp) -> MonStgElt
     elif Type(G) eq GrpPerm then
         return Join([Sprint(EncodePerm(g)) : g in Generators(H)], ",");
     elif Type(G) eq GrpMat then
+        if #H eq 1 then
+            return "";
+        end if;
         return &*MatricesToHexlist([g : g in Generators(H)], CoefficientRing(H));
     elif Type(G) eq GrpPC then
         b := 1 + Ilog(16, Max(PCPrimes(G)));
