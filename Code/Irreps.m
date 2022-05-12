@@ -8,6 +8,10 @@ infile := "DATA/irrep.todo/" * label;
 outfile := "DATA/irreps/" * label;
 timefile := "DATA/irrep.timings/" * label;
 N := StringToInteger(Split(label, ".")[1]);
+// For now, only try this for fairly small groups
+if N gt 10000 then
+    exit;
+end if;
 ps := PrimeDivisors(N);
 done, F := OpenTest(outfile, "r");
 if done then
