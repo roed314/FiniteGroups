@@ -25,6 +25,14 @@ if done then
 end if;
 desc := Read(infile);
 G := StringToGroup(desc);
+if Type(G) eq GrpMat and Type(CoefficientRing(G)) eq RngIntRes then
+    if IsField(CoefficientRing(G)) then
+        G := ChangeRing(G, GF(#CoefficientRing(G)));
+    else
+        // give up
+        exit;
+    end if;
+end if;
 for p in ps do
     t0 := Cputime();
     Ms := [AbsolutelyIrreducibleModule(M) : M in IrreducibleModules(G, GF(p))];
