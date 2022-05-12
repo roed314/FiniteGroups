@@ -57,5 +57,5 @@ for p in ps do
     end for;
     PrintFile(timefile, Sprintf("%o %o", p, Cputime() - t0));
 end for;
-//System("rm " * infile);
+System("rm " * infile);
 exit;
