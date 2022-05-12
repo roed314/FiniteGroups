@@ -28,17 +28,24 @@ G := StringToGroup(desc);
 for p in ps do
     t0 := Cputime();
     Ms := [AbsolutelyIrreducibleModule(M) : M in IrreducibleModules(G, GF(p))];
-    Ks := [Kernel(M) : M in Ms];
-    mats := [MatricesToHexlist(ActionGenerators(M), CoefficientRing(M)) : M in Ms];
+    //Ks := [Kernel(M) : M in Ms];
+    //mats := [MatricesToHexlist(ActionGenerators(M), CoefficientRing(M)) : M in Ms];
     //ds := [Dimension(Ms[i]) : i in [1..#Ms] | #Ks[i] eq 1];
     //dmin := #ds eq 0 select -1 else Min(ds);
-    for i in [1..#Ms] do
-        M := Ms[i];
-        K := Ks[i];
-        L := mats[i];
+    //for i in [1..#Ms] do
+        //M := Ms[i];
+        //K := Ks[i];
+        //L := mats[i];
+    for M in Ms do
+        if ExistsConwayPolynomial(p, Degree(CoefficientRing(M))) then
+            L := &*MatricesToHexlist(ActionGenerators(M), CoefficientRing(M));
+        else
+            L := "\\N";
+        end if;
+        K := Kernel(M);
         d := Dimension(M);
         q := #CoefficientRing(M);
-        PrintFile(outfile, Sprintf("%o|%o|%o|%o|%o|%o", q, d, #K, Index(G, K), SubgroupToString(G, K), &*L));
+        PrintFile(outfile, Sprintf("%o|%o|%o|%o|%o|%o", q, d, #K, Index(G, K), SubgroupToString(G, K), L));
     end for;
     PrintFile(timefile, Sprintf("%o %o", p, Cputime() - t0));
 end for;
