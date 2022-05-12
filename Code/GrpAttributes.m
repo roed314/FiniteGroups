@@ -54,9 +54,28 @@ intrinsic primary_abelian_invariants(G::LMFDBGrp) -> Any
 end intrinsic;
 
 intrinsic quasisimple(G::LMFDBGrp) -> BoolElt
-    {}
-    Q := G`MagmaGrp / Get(G, "MagmaCenter");
-    return (Get(G, "perfect") and IsSimple(Q));
+{}
+    Z := Get(G, "MagmaCenter");
+    n := Get(G, "order");
+    Qord := n div #Z;
+    if not (Get(G, "perfect") and IsSimpleOrder(Qord)) then
+        return false;
+    end if;
+    GG := G`MagmaGrp;
+    if Qord lt 1000000 then
+        return IsSimple(GG / Z);
+    else
+        // TODO: use stored normal subgroups if available
+        N := NormalSubgroups(GG : OrderMultipleOf:=#Z);
+        for rec in N do
+            if rec`order ne #Z and rec`order ne n then
+                if Z subset rec`subgroup then
+                    return false;
+                end if;
+            end if;
+        end for;
+        return true;
+    end if;
 end intrinsic;
 
 intrinsic supersolvable(G::LMFDBGrp) -> BoolElt
@@ -136,7 +155,7 @@ intrinsic EasyIsMetacyclic(G::LMFDBGrp) -> BoolElt
 end intrinsic;
 
 // for groups in Magma
-intrinsic EasyIsMetacyclicMagma(G::Grp) -> BoolElt
+intrinsic EasyIsMetacyclicMagma(G::Grp) -> Any
     {Easy checks for possibly being metacyclic}
     if IsSquarefree(Order(G)) or IsCyclic(G) then
         return true;

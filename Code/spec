@@ -19,6 +19,7 @@
   IO.m
   SmallGroups.m
   ProfileSmallGroups.m
+  BigGroups.m
   LC.m
   mb.m
   mb-gp-elts.m
