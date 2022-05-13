@@ -26,7 +26,7 @@ else
     G`MagmaGrp, phi := PCGroup(G`MagmaGrp);
 end if;
 t0 := Cputime();
-RePresent(G, reset_attrs:=false);
+RePresent(G: reset_attrs:=false);
 PrintFile(outfile, Sprint("%o|%o|%o", SamllGroupEncoding(G`MagmaGrp), Join([Sprint(c) : c in G`gens_used], ","), Join([Sprint(c) : c in CompactPresentation(G`MagmaGrp)], ",")));
 PrintFile(timefile, Sprint(Cputime() - t0));
 System("rm " * infile);
