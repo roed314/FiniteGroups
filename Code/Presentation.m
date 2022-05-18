@@ -64,15 +64,24 @@ intrinsic CyclicQuotients(Ambient::Grp, H::Grp) -> SeqEnum
 end intrinsic;
 
 RF := recformat<subgroup, order, length>;
-intrinsic all_minimal_chains(G::LMFDBGrp) -> SeqEnum
+intrinsic all_minimal_chains(G::LMFDBGrp : use_aut:=true) -> SeqEnum
 {Returns minimal length chains of subgroups so that each is normal in the previous with cyclic quotient}
     assert IsSolvable(G`MagmaGrp);
-    Ambient := Get(G, "Holomorph");
-    inj := Get(G, "HolInj");
-    GG := inj(G`MagmaGrp);
     L := New(SubgroupLat); // we build a new subgroup list in order to be able to take advantage of the identification features.
+    if use_aut then
+        Ambient := Get(G, "Holomorph");
+        inj := Get(G, "HolInj");
+        GG := inj(G`MagmaGrp);
+        L`outer_equivalence := true;
+    else
+        // Just using Ambient := G`MagmaGrp doesn't work, since GSet needs a permutation group
+        //
+        GG := G`MagmaGrp;
+        Ambient := GG;
+        inj := IdentityHomomorphism(GG);
+        L`outer_equivalence := false;
+    end if;
     L`Grp := G;
-    L`outer_equivalence := true;
     L`inclusions_known := false;
     n := #GG;
     KK := SubgroupLatElement(L, GG : i:=1);
@@ -197,7 +206,7 @@ The following groups took more than an hour to RePresent (timed out)
 256.44886
 256.52508
 */
-intrinsic RePresent(G::LMFDBGrp : reset_attrs:=true)
+intrinsic RePresent(G::LMFDBGrp : reset_attrs:=true, use_aut:=true)
 {Changes G`MagmaGrp and sets G`gens_used to give a more human readable presentation.
 If not solvable, just sets gens_used to [1..Ngens(G)].
 This function is only safe to call on a newly created group, since it changes MagmaGrp (and thus invalidates a lot of attributes)}
@@ -209,7 +218,7 @@ This function is only safe to call on a newly created group, since it changes Ma
     // * RHS of conjugacy relations are "deeper"
     GG := G`MagmaGrp;
     if #GG ne 1 and IsSolvable(GG) then
-        chains := all_minimal_chains(G);
+        chains := all_minimal_chains(G : use_aut:=use_aut);
         gens := [chain_to_gens(chain, G) : chain in chains];
         vprint User1: #gens, "generators (initial)";
         relcnt := AssociativeArray();
@@ -392,4 +401,32 @@ This function is only safe to call on a newly created group, since it changes Ma
     else
         G`gens_used := [i : i in [1..Ngens(G`MagmaGrp)]];
     end if;
+end intrinsic;
+
+
+intrinsic RePresentFast(G::LMFDBGrp) -> SeqEnum
+{Changes G`MagmaGrp and sets G`gens_used to give a more human readable presentation.
+Much faster than RePresent, but may not give as good a presentation.
+If not solvable, just sets gens_used to [1..Ngens(G)].
+This function is only safe to call on a newly created group, since it changes MagmaGrp (and thus invalidates a lot of attributes)}
+    // We greedily build from the top down.
+    // This version will only work with permutation groups, and will struggle with groups that are close to abelian
+    GG := G`MagmaGrp;
+    //Ambient := 
+    H := GG;
+    chain := [];
+    while #H gt 1 do
+        print #H;
+        C := CyclicQuotients(GG, H);
+        m := Max([Index(H, c) : c in C]);
+        poss := [c : c in C | Index(H, c) eq m];
+        if #poss gt 1 then
+            invs := [AbelianQuotientInvariants(PCGroup(c)) : c in poss];
+            m := Max([Max(inv) : inv in invs]);
+            poss := [poss[i] : i in [1..#poss] | Max(invs[i]) eq m];
+        end if;
+        H := Random(poss);
+        Append(~chain, H);
+    end while;
+    return chain;
 end intrinsic;

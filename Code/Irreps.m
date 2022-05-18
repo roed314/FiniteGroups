@@ -1,7 +1,5 @@
 // USAGE: ls DATA/irrep.todo | parallel -j100 --timeout 600 magma -b label:={1} Irreps.m
 
-// Only reports on FAITHFUL irreps that either have dimension at most 8 or are the smallest dimensional irrep for the group
-
 AttachSpec("spec");
 SetColumns(0);
 infile := "DATA/irrep.todo/" * label;

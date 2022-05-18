@@ -25,15 +25,7 @@ if Type(G0) eq GrpMat and Type(CoefficientRing(G0)) eq RngIntRes then
         if IsSolvable(G0) then
             G, psi := PCGroup(G0);
         else
-            V := RSpace(G0);
-            x := Random(V);
-            T := {x};
-            psi, G, K := OrbitAction(G0, T);
-            while #K ne 1 do
-                x := Random(V);
-                Include(~T, x);
-                psi, G, K := OrbitAction(G0, T);
-            end while;
+            G, psi := MatGroupToPermGroup(G0);
         end if;
     end if;
 else
