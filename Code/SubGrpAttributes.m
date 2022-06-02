@@ -129,7 +129,7 @@ intrinsic core_order(H::LMFDBSubGrp) -> RngIntElt
     return Order(H`core);
 end intrinsic;
 
-/*
+
 intrinsic Quotient(H::LMFDBSubGrp) -> LMFDBGrp
     {returns the quotient as an abstract group and sets QuotientMap}
     GG := Get(H, "MagmaAmbient");
@@ -137,8 +137,9 @@ intrinsic Quotient(H::LMFDBSubGrp) -> LMFDBGrp
     if not Get(H, "normal") then
         error "Subgroup is not normal";
     end if;
-    Q := quo< GG | HH >;
-*/
+    Q, H`QuotientMap := quo< GG | HH >;
+    return Q;
+end intrinsic;
 
 intrinsic quotient(H::LMFDBSubGrp) -> Any // Need to be together with all the labels
 {Determine label of the quotient group}
@@ -147,8 +148,7 @@ intrinsic quotient(H::LMFDBSubGrp) -> Any // Need to be together with all the la
   if not IsNormal(GG, HH) then
     return None();
   else
-    Q := quo< GG | HH >;
-    return label(Q);
+    return label(Get(H, "Quotient"));
   end if;
 end intrinsic;
 
@@ -389,11 +389,8 @@ end intrinsic;
 
 intrinsic quotient_tex(H::LMFDBSubGrp) -> Any
   {Returns Magma's name for the quotient.}
-  GG := Get(H, "MagmaAmbient");
-  HH := H`MagmaSubGrp;
-  if IsNormal(GG, HH) then
-    Q := quo< GG | HH >;
-    gn:= GroupName(Q: TeX:=true);
+  if Get(H, "normal") then
+    gn:= GroupName(Get(H, "Quotient"): TeX:=true);
     return ReplaceString(gn, "\\", "\\\\");
   else
     return None();
@@ -402,11 +399,8 @@ end intrinsic;
 
 intrinsic quotient_cyclic(H::LMFDBSubGrp) -> Any
   {Whether the quotient exists and is cyclic}
-  GG := Get(H, "MagmaAmbient");
-  HH := H`MagmaSubGrp;
-  if IsNormal(GG, HH) then
-    Q := quo< GG | HH >;
-    return IsCyclic(Q);
+  if Get(H, "normal") then
+    return IsCyclic(Get(H, "Quotient"));
   else
     return None();
   end if;
@@ -414,11 +408,8 @@ end intrinsic;
 
 intrinsic quotient_abelian(H::LMFDBSubGrp) -> Any
   {Whether the quotient exists and is abelian}
-  GG := Get(H, "MagmaAmbient");
-  HH := H`MagmaSubGrp;
-  if IsNormal(GG, HH) then
-    Q := quo< GG | HH >;
-    return IsAbelian(Q);
+  if Get(H, "normal") then
+    return IsAbelian(Get(H, "Quotient"));
   else
     return None();
   end if;
@@ -426,11 +417,8 @@ end intrinsic;
 
 intrinsic quotient_solvable(H::LMFDBSubGrp) -> Any
   {Whether the quotient exists and is solvable}
-  GG := Get(H, "MagmaAmbient");
-  HH := H`MagmaSubGrp;
-  if IsNormal(GG, HH) then
-    Q := quo< GG | HH >;
-    return IsSolvable(Q);
+  if Get(H, "normal") then
+    return IsSolvable(Get(H, "Quotient"));
   else
     return None();
   end if;
@@ -460,6 +448,7 @@ intrinsic aut_weyl_group(H::LMFDBSubGrp) -> Any
     HH := H`MagmaSubGrp;
     N := Normalizer(Ambient, inj(HH));
     Z := Centralizer(Ambient, inj(HH));
+    H`AutStab := N;
     H`aut_weyl_index := (#Ambient * #Z) div (#N * #GG);
     H`aut_centralizer_order := #(Z meet Stabilizer(Ambient, 1));
     if (#N div #Z) gt 2000 or (#N div #Z) in [512, 1024, 1152, 1536, 1920] then
@@ -479,10 +468,37 @@ intrinsic aut_centralizer_order(H::LMFDBSubGrp) -> Any
     return H`aut_centralizer_order;
 end intrinsic;
 
+intrinsic aut_stab_index(H::LMFDBSubGrp) -> Any
+{The index of Stab_A(H) in Aut(G); 1 for characteristic subgroups}
+    W := Get(H, "aut_weyl_group"); // sets AutStab
+    N := (H`AutStab meet Stabilizer(Ambient, 1));
+    Ambient := Get(G, "Holomorph");
+    return #Ambient div (#N * Get(H, "ambient_order"));
+end intrinsic;
+
 intrinsic aut_weyl_index(H::LMFDBSubGrp) -> Any
 {The index of the aut_weyl_group inside the automorphism group of H}
     W := Get(H, "aut_weyl_group"); // sets attr
     return H`aut_weyl_index;
+end intrinsic;
+
+intrinsic aut_quo_index(H::LMFDBSubGrp) -> Any
+{The index of the image of Stab_A(H) in Aut(G/H)}
+    if not Get(H, "normal") then
+        return None();
+    end if;
+    W := Get(H, "aut_weyl_group"); // sets AutStab
+    N := H`AutStab;
+    Ambient := Get(G, "Holomorph");
+    inj := Get(G, "HolInj");
+    Q := Get(H, "Quotient");
+    proj := Get(H, "QuotientMap");
+    gens := Generators(Q);
+    Ngens := Generators(N);
+    lifts := [x @@ proj : x in gens];
+    AQ := AutomorphismGroup(Q); // could be expensive, would be ideal to fetch this
+    AQimg := AutomorphismGroup(Q, gens, [[(inj(x)^n) @@ inj @ proj : x in lifts] : n in Ngens]);
+    return #AQ div #AQimg;
 end intrinsic;
 
 intrinsic proper(H::LMFDBSubGrp) -> Any

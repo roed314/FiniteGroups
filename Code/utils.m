@@ -434,7 +434,7 @@ intrinsic MatGroupToPermGroup(G0::GrpMat) -> GrpPerm, Map
     return G, psi;
 end intrinsic;
 
-intrinsic PCGroupToPermGroup(G::GrpPC : num_starts:=60, num_steps:=60) -> GrpPerm, Map
+intrinsic PCGroupToPermGroup(G::Grp : num_starts:=60, num_steps:=60) -> GrpPerm, Map
 {Randomly searchest for corefree subgroups to get a transitive permutation representation of G0.
  Increasing num_starts and num_steps will increase the runtime linearly and may give a lower degree representation.}
     best := sub<G|>;

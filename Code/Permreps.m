@@ -1,4 +1,4 @@
-// USAGE: ls DATA/permrep.todo | parallel -j100 --timeout 600 magma -b label:={1} PCreps.m
+// USAGE: ls DATA/permrep.todo | parallel -j100 --timeout 600 magma -b label:={1} Permreps.m
 
 AttachSpec("spec");
 SetColumns(0);
@@ -19,8 +19,12 @@ end if;
 t0 := Cputime();
 G := StringToPermGroup(desc);
 n := Degree(G);
-s := GroupToString(G);
-PrintFile(outfile, s);
-PrintFile(timefile, Sprint(Cputime() - t0));
-System("rm " * infile);
+if n lt 4000 then
+    s := GroupToString(G);
+    PrintFile(outfile, s);
+    PrintFile(timefile, Sprint(Cputime() - t0));
+    System("rm " * infile);
+else
+    print desc, "permutation rep of degree", n;
+end if;
 exit;

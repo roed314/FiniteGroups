@@ -589,13 +589,29 @@ intrinsic chevalley_letter(f::RngIntElt) -> MonStgElt
 end intrinsic;
 
 // https://magma.maths.usyd.edu.au/magma/handbook/text/743
-intrinsic composition_factor_decode(t::Tup) -> Grp
-  {Given a tuple <f,d,q>, in the format of the output of CompositionFactors, return the corresponding group.}
+intrinsic composition_factor_decode(t::Tup) -> RngIntElt, MonStgElt
+  {Given a tuple <f,d,q>, in the format of the output of CompositionFactors, return the corresponding size and label.}
   assert #t eq 3;
   if t[1] eq 19 then
-    return CyclicGroup(t[3]);
+      return t[3], Sprintf("%o.1", t[3]);
   else
-    return SimpleGroup(t);
+      N := SimpleGroupOrder(t);
+      if t[1] eq 3 and t[3] eq 3 and t[2] ge 3 then
+          // In this case (n=t[2]), Omega(2n+1, 3) is not isomorphic to PSp(2n, 3) but has the same order
+          ctr := "b";
+      elif t[1] eq 1 and t[2] eq 2 and t[3] eq 4 then
+          // In this case PSL(3,4) is not isomorphic to A8 = GL(4,2) but has the same order
+          ctr := "b";
+      elif t[1] eq 17 and t[2] eq 9 then
+          // In this case A9 is not isomorphic to GL(3,4) but has the same order
+          ctr := "b";
+      elif N lt 2000 then
+          ctr := IdentifyGroup(SimpleGroup(t))[2];
+      else
+          // I worry that there will be more exceptional cases in the future, but hard-coding 500+ cases is also unpleasant
+          ctr := "a";
+      end if;
+      return N, Sprintf("%o.%o", N, ctr);
   end if;
 end intrinsic;
 
@@ -604,8 +620,8 @@ intrinsic composition_factors(G::LMFDBGrp) -> Any
     // see https://magma.maths.usyd.edu.au/magma/handbook/text/625#6962
     data := [];
     for tup in CompositionFactors(G`MagmaGrp) do
-        H := composition_factor_decode(tup);
-        Append(~data, <#H, tup, label(H)>);
+        size, lab := composition_factor_decode(tup);
+        Append(~data, <size, tup, lab>);
     end for;
     Sort(~data);
     return [datum[3] : datum in data];
