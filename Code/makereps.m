@@ -110,6 +110,8 @@ intrinsic getirrreps(G::LMFDBGrp: Field:="C")->Any
         break;
       end if;
     end for;
+    //"Res[j]", res[j];
+    //"Characters", [Character(rep) : rep in im];
     assert Type(res[j]) ne RngIntElt;
   end for;
   return <z : z in res>;
