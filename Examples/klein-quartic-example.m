@@ -17,25 +17,3 @@ for rec in subgroups do
   Append(~curves, C_H);
   Append(~morphisms, mp_H);
 end for;
-
-/*
-  HH;
-  #HH;
-  subgroups[#subgroups-1];
-  $1`subgroup;
-  Gperm;
-  Hperm := $2;
-  H_perm;
-  Hperm;
-  HH_gens := [el @@ rho : el in Generators(Hperm)];
-  HH_gens;
-  HH := AutomorphismGroup(C_K, HH_gens);
-  CurveQuotient(HH);
-  Hperm := subgroups[3]`subgroup;
-  HH_gens := [el @@ rho : el in Generators(Hperm)];
-  HH := AutomorphismGroup(C_K, HH_gens);
-  CurveQuotient(HH);
-  C1, mp1 := $1;
-  C1;
-  Genus(C1);
-*/
