@@ -11,7 +11,7 @@ done, F := OpenTest(outfile, "r");
 if done then
     lines := Split(Read(outfile), "\n");
     stage := #lines;
-    if stage eq 2 then
+    if stage eq 3 then
         print "Already complete";
         exit;
     end if;
@@ -21,14 +21,25 @@ if not Get(G, "solvable") then
     System("rm " * infile);
     exit;
 end if;
-if Type(G) eq GrpPC then
-    phi := IdentityHomomorphism(G);
-else
-    G`MagmaGrp, phi := PCGroup(G`MagmaGrp);
-end if;
+G0 := G`MagmaGrp;
+
+procedure SavePCGrp(A, t, phi)
+    gens := PCGenerators(A`MagmaGrp);
+    PrintFile(outfile, Sprintf("%o|%o|%o|%o", SmallGroupEncoding(A`MagmaGrp), Join([Sprint(c) : c in A`gens_used], ","), Join([Sprint(c) : c in CompactPresentation(A`MagmaGrp)], ","), Join([SaveElt(phi(gens[i])) : i in A`gens_used], ",")));
+    PrintFile(timefile, Sprint(Cputime() - t));
+end procedure;
 t0 := Cputime();
-RePresent(G: reset_attrs:=false, use_aut:=false);
-PrintFile(outfile, Sprint("%o|%o|%o", SamllGroupEncoding(G`MagmaGrp), Join([Sprint(c) : c in G`gens_used], ","), Join([Sprint(c) : c in CompactPresentation(G`MagmaGrp)], ",")));
-PrintFile(timefile, Sprint(Cputime() - t0));
+RePresentFastest(G);
+SavePCGrp(G, t0, G`IsoToOldPresentation);
+G`MagmaGrp := G0;
+if Type(G0) eq GrpPerm then
+    t0 := Cputime();
+    RePresentFast(G);
+    SavePCGrp(G, t0, G`IsoToOldPresentation);
+    //G`MagmaGrp := G0;
+    //t0 := Cputime();
+    //RePresent(G: reset_attrs:=false, use_aut:=false);
+    //SavePCGrp(G, t0, G`IsoToOldPresentation);
+end if;
 System("rm " * infile);
 exit;

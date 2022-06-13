@@ -176,10 +176,10 @@ intrinsic LoadElt(inp::MonStgElt, G::LMFDBGrp) -> Any
         error "Other group types not yet supported";
     end if;
 end intrinsic;
-intrinsic SaveElt(out::Any, G::LMFDBGrp) -> MonStgElt
+intrinsic SaveElt(out::GrpElt) -> MonStgElt
     {}
-    GG := G`MagmaGrp;
-    if Type(GG) eq GrpPC then
+    GG := Parent(out);
+    if Type(out) eq GrpPCElt then
         n := 0;
         v := Reverse(ElementToSequence(out));
         Ps := Reverse(PCPrimes(GG));
@@ -188,7 +188,7 @@ intrinsic SaveElt(out::Any, G::LMFDBGrp) -> MonStgElt
             n +:= v[i];
         end for;
         return IntegerToString(n);
-    elif Type(GG) eq GrpPerm then
+    elif Type(out) eq GrpPermElt then
         return IntegerToString(EncodePerm(out));
     else
         error "Other group types not yet supported";
@@ -200,9 +200,9 @@ intrinsic LoadEltList(inp::MonStgElt, G::LMFDBGrp) -> SeqEnum
     assert inp[1] eq "{" and inp[#inp] eq "}";
     return [LoadElt(x, G) : x in Split(Substring(inp, 2, #inp-2), ",")];
 end intrinsic;
-intrinsic SaveEltList(out::SeqEnum, G::LMFDBGrp) -> MonStgElt
+intrinsic SaveEltList(out::SeqEnum) -> MonStgElt
     {}
-    return "{" * Join([SaveElt(x, G) : x in out], ",") * "}";
+    return "{" * Join([SaveElt(x) : x in out], ",") * "}";
 end intrinsic;
 
 intrinsic LoadSubgroupList(inp::MonStgElt, G::LMFDBGrp) -> SeqEnum
@@ -275,9 +275,9 @@ intrinsic SaveAttr(attr::MonStgElt, val::Any, obj::Any) -> MonStgElt
     elif attr in PermsCols then
         return SavePerms(val);
     elif attr in EltCols then
-        return SaveElt(val, GetGrp(obj));
+        return SaveElt(val);
     elif attr in EltListCols then
-        return SaveEltList(val, GetGrp(obj));
+        return SaveEltList(val);
     elif attr in SubgroupCols then
         if attr eq "sub1" then
             G := Get(obj, "G1");

@@ -34,6 +34,7 @@ declare attributes LMFDBGrp:
   CCReps,
   QQRepsAsCC,
   Characters,
+  IsoToOldPresentation, // set by the various RePresent intrinsics in Presentation.m
   AllCharactersKnown, // this should be renamed to a lower case variable once this computation run is done
   SubByGass, // used in MinReps.m
   label,

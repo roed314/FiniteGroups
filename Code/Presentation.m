@@ -166,7 +166,7 @@ intrinsic all_minimal_chains(G::LMFDBGrp : use_aut:=true) -> SeqEnum
     return fixed_chains;
 end intrinsic;
 
-chain_to_gens := function(chain, G)
+chain_to_gens := function(chain)
     ans := [];
     G := chain[#chain]`subgroup;
     A := chain[1]`subgroup;
@@ -182,6 +182,82 @@ chain_to_gens := function(chain, G)
         A := B;
     end for;
     return ans;
+end function;
+
+gens_to_pc := function(GG, best)
+    // This function takes a list ``best`` of tuples as output by chain_to_gens
+    // and produces a pc group together with a list of integers describing
+    // which generators are actually needed (others will be powers of these)
+    // We have to fill in powers of our chosen generators since magma wants prime relative orders
+    filled := [];
+    H := sub<GG|>;
+    gens_used := [];
+    used_tracker := -1;
+    for tup in best do
+        g := tup[1];
+        r := tup[2];
+        segment := [];
+        for pe in Factorization(r) do
+            p := pe[1]; e := pe[2];
+            for i in [1..e] do
+                Append(~segment, <g, p, sub<GG| H, g>>);
+                g := g^p;
+            end for;
+        end for;
+        used_tracker +:= #segment;
+        Append(~gens_used, used_tracker);
+        filled cat:= Reverse(segment);
+        H := tup[3];
+    end for;
+    // Magma has a descending filtration, so we switch to that here.
+    Reverse(~filled);
+    gens_used := [#filled - i : i in gens_used];
+    vprint User1: "filled", [<tup[1], tup[2], #tup[3]> : tup in filled];
+    F := FreeGroup(#filled);
+    rels := {};
+    one := Identity(F);
+    gens := [filled[i][1] : i in [1..#filled]];
+    function translate_to_F(x, depth)
+        fvec := one;
+        for k in [depth..#filled] do
+            //print "k", k;
+            // For the groups we're working with, the primes involved are small, so we just do a super-naive discrete log
+            if k eq #filled then
+                Filt := [Identity(GG)];
+            else
+                Filt := filled[k+1][3];
+            end if;
+            //print x, Filt;
+            while not x in Filt do
+                x := gens[k]^-1 * x;
+                fvec := fvec * F.k;
+            end while;
+        end for;
+        return fvec;
+    end function;
+
+    //print "Allrels";
+    //for i in [1..#filled] do
+    //    for j in [i+1..#filled] do
+    //        print "i,j,gj^gi", i, j, gens[j]^gens[i];
+    //    end for;
+    //end for;
+    for i in [1..#filled] do
+        //print "i", i;
+        p := filled[i][2];
+        Include(~rels, F.i^p = translate_to_F(gens[i]^p, i+1));
+        for j in [i+1..#filled] do
+            //print "j", j;
+            fvec := translate_to_F(gens[j]^gens[i], i+1);
+            if fvec ne F.j then
+                Include(~rels, F.j^F.i = fvec);
+            end if;
+        end for;
+    end for;
+    vprint User1: "rels", rels;
+    H := quo< GrpPC : F | rels >;
+    to_old := hom<H -> GG | [<PCGenerators(H)[i], gens[i]> : i in [1..#gens]]>;
+    return H, gens_used, to_old;
 end function;
 
 /*
@@ -219,7 +295,7 @@ This function is only safe to call on a newly created group, since it changes Ma
     GG := G`MagmaGrp;
     if #GG ne 1 and IsSolvable(GG) then
         chains := all_minimal_chains(G : use_aut:=use_aut);
-        gens := [chain_to_gens(chain, G) : chain in chains];
+        gens := [chain_to_gens(chain) : chain in chains];
         vprint User1: #gens, "generators (initial)";
         relcnt := AssociativeArray();
         for i in [1..#gens] do
@@ -307,81 +383,14 @@ This function is only safe to call on a newly created group, since it changes Ma
 
         best := gens[#gens];
         //print "best", [<tup[1], tup[2], #tup[3]> : tup in best];
+        H, gens_used, to_old := gens_to_pc(GG, best);
 
         // Now we build a new PC group with an isomorphism to our given one.
-        // We have to fill in powers of our chosen generators since magma wants prime relative orders
-        // We keep track of which generators are actually needed; other generators are powers of these
-        filled := [];
-        H := sub<GG|>;
-        gens_used := [];
-        used_tracker := -1;
-        for tup in best do
-            g := tup[1];
-            r := tup[2];
-            segment := [];
-            for pe in Factorization(r) do
-                p := pe[1]; e := pe[2];
-                for i in [1..e] do
-                    Append(~segment, <g, p, sub<GG| H, g>>);
-                    g := g^p;
-                end for;
-            end for;
-            used_tracker +:= #segment;
-            Append(~gens_used, used_tracker);
-            filled cat:= Reverse(segment);
-            H := tup[3];
-        end for;
-        // Magma has a descending filtration, so we switch to that here.
-        Reverse(~filled);
-        gens_used := [#filled - i : i in gens_used];
-        vprint User1: "filled", [<tup[1], tup[2], #tup[3]> : tup in filled];
-        F := FreeGroup(#filled);
-        rels := {};
-        one := Identity(F);
-        gens := [filled[i][1] : i in [1..#filled]];
-        function translate_to_F(x, depth)
-            fvec := one;
-            for k in [depth..#filled] do
-                //print "k", k;
-                // For the groups we're working with, the primes involved are small, so we just do a super-naive discrete log
-                if k eq #filled then
-                    Filt := [Identity(GG)];
-                else
-                    Filt := filled[k+1][3];
-                end if;
-                //print x, Filt;
-                while not x in Filt do
-                    x := gens[k]^-1 * x;
-                    fvec := fvec * F.k;
-                end while;
-            end for;
-            return fvec;
-        end function;
-
-        //print "Allrels";
-        //for i in [1..#filled] do
-        //    for j in [i+1..#filled] do
-        //        print "i,j,gj^gi", i, j, gens[j]^gens[i];
-        //    end for;
-        //end for;
-        for i in [1..#filled] do
-            //print "i", i;
-            p := filled[i][2];
-            Include(~rels, F.i^p = translate_to_F(gens[i]^p, i+1));
-            for j in [i+1..#filled] do
-                //print "j", j;
-                fvec := translate_to_F(gens[j]^gens[i], i+1);
-                if fvec ne F.j then
-                    Include(~rels, F.j^F.i = fvec);
-                end if;
-            end for;
-        end for;
-        vprint User1: "rels", rels;
-        H := quo< GrpPC : F | rels >;
         //print sprint([x : x in GetAttributes(LMFDBGrp) | assigned G``x]);
         //[CCAutCollapse,CCpermutation,CCpermutationInv]
         G`MagmaGrp := H;
         G`gens_used := Sort(gens_used);
+        G`IsoToOldPresentation := to_old;
         // We have to reset Holomorph, HolInj, ClassMap to use the new group
         // We could instead compose with the isomorphism between the new and old group, but that seems
         // prone to errors since it keeps the old group around
@@ -400,11 +409,34 @@ This function is only safe to call on a newly created group, since it changes Ma
         end if;
     else
         G`gens_used := [i : i in [1..Ngens(G`MagmaGrp)]];
+        G`IsoToOldPresentation := IdentityHomomorphism(G`MagmaGrp);
     end if;
 end intrinsic;
 
+intrinsic RePresentFastest(G::LMFDBGrp)
+{Very basic version that just depends on computing derived subgroups and smith decomposition}
+    GG := G`MagmaGrp;
+    H := GG;
+    chain := [rec<RF|subgroup:=H, order:=#H>];
+    oldord := #H;
+    while #H gt 1 do
+        D := DerivedSubgroup(H);
+        A, proj := quo<H | D>;
+        basis, invs := AbelianBasis(A);
+        H := sub<GG | D, sub<GG | [basis[j]@@proj : j in [1..#basis-1]]>>;
+        assert #H ne oldord;
+        Append(~chain, rec<RF|subgroup:=H, order:=#H>);
+    end while;
+    Reverse(~chain);
 
-intrinsic RePresentFast(G::LMFDBGrp) -> SeqEnum
+    gens := chain_to_gens(chain);
+    Gnew, gens_used, to_old := gens_to_pc(GG, gens);
+    G`MagmaGrp := Gnew;
+    G`gens_used := Sort(gens_used);
+    G`IsoToOldPresentation := to_old;
+end intrinsic;
+
+intrinsic RePresentFast(G::LMFDBGrp)
 {Changes G`MagmaGrp and sets G`gens_used to give a more human readable presentation.
 Much faster than RePresent, but may not give as good a presentation.
 If not solvable, just sets gens_used to [1..Ngens(G)].
@@ -412,11 +444,9 @@ This function is only safe to call on a newly created group, since it changes Ma
     // We greedily build from the top down.
     // This version will only work with permutation groups, and will struggle with groups that are close to abelian
     GG := G`MagmaGrp;
-    //Ambient := 
     H := GG;
-    chain := [];
+    chain := [rec<RF|subgroup:=H, order:=#H>];
     while #H gt 1 do
-        print #H;
         C := CyclicQuotients(GG, H);
         m := Max([Index(H, c) : c in C]);
         poss := [c : c in C | Index(H, c) eq m];
@@ -426,7 +456,12 @@ This function is only safe to call on a newly created group, since it changes Ma
             poss := [poss[i] : i in [1..#poss] | Max(invs[i]) eq m];
         end if;
         H := Random(poss);
-        Append(~chain, H);
+        Append(~chain, rec<RF|subgroup:=H, order:=#H>);
     end while;
-    return chain;
+    Reverse(~chain);
+    gens := chain_to_gens(chain);
+    H, gens_used, to_old := gens_to_pc(GG, gens);
+    G`MagmaGrp := H;
+    G`gens_used := Sort(gens_used);
+    G`IsoToOldPresentation := to_old;
 end intrinsic;
