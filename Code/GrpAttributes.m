@@ -800,7 +800,9 @@ intrinsic SemidirectFactorization(G::LMFDBGrp : direct := false) -> Any, Any, An
     return false, _, _;
   end if;
   Ns := Get(G, "NormalSubgroups");
-  if Type(Ns) eq NoneType then return None(); end if;
+  if Type(Ns) eq NoneType then
+    return None();
+  end if;
   Ns := Remove(Ns,#Ns); // remove full group;
   Remove(~Ns,1); // remove trivial group;
   if direct then
@@ -821,6 +823,46 @@ intrinsic SemidirectFactorization(G::LMFDBGrp : direct := false) -> Any, Any, An
   end for;
   return false, _, _;
 end intrinsic;
+
+// copied from /Applications/Magma/package/Group/GrpFin/groupname.m
+function IsADirectProductHeuristic(G: steps:=50)
+  vprint GroupName,2:"IsADirectProductHeuristic";
+  if IsAbelian(G) then
+    if #G eq 1 then return false,0,0; end if;
+    if IsPrimePower(#G) then
+      if IsCyclic(G)
+        then return false,0,0;
+        else A:=AbelianBasis(G);
+             return true, sub<G|A[1]>, sub<G|A[[2..#A]]>;
+      end if;
+    else
+      p:=PrimeDivisors(#G)[1];
+      S:=SylowSubgroup(G,p);
+      H:=GenHallSubgroupMinP(G,p);
+      return true,S,H;
+    end if;
+  end if;
+  vprint GroupName,2:"IsADirectProductHeuristic: Centre";
+  Z:=Centre(G);
+  vprint GroupName,2:"IsADirectProductHeuristic: Steps";
+  for i:=1 to steps do
+    repeat
+      for i:=1 to 5 do
+        r:=Random(G);
+        if IsSquarefree(Order(r)) then break; end if;
+      end for;
+      g:=r^Random(Divisors(Order(r)));
+    until not (g in Z);
+    N1:=NormalClosure(G,sub<G|g>);
+    N2:=Centralizer(G,N1);
+    if (#N1*#N2 eq #G) and (#(N1 meet N2) eq 1) and (#N2 ne 1) then
+      return true, N1, N2;    //! should be fixed in a new version of Magma
+      //return true,eval Sprint(N1,"Magma"),eval Sprint(N2,"Magma");
+    end if;
+  end for;
+  vprint GroupName,2:"IsADirectProductHeuristic: Done";
+  return false,0,0;
+end function;
 
 intrinsic DirectFactorization(G::LMFDBGrp) -> Any
   {Returns true if G is a nontrivial direct product, along with factors; otherwise returns false.}
