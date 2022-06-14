@@ -431,7 +431,13 @@ intrinsic MatGroupToPermGroup(G0::GrpMat) -> GrpPerm, Map
         Include(~T, x);
         psi, G, K := OrbitAction(G0, T);
     end while;
-    return G, psi;
+    // Another option: use MyQuotient
+    G2, psi2 := MyQuotient(G0, sub<G0|>);
+    if Degree(G2) lt Degree(G) then
+        return G2, psi2;
+    else
+        return G, psi;
+    end if;
 end intrinsic;
 
 intrinsic PCGroupToPermGroup(G::Grp : num_starts:=60, num_steps:=60) -> GrpPerm, Map
