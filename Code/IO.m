@@ -3,7 +3,7 @@ TextCols := ["abelian_quotient", "acted", "actor", "ambient", "aut_group", "brav
 IntegerCols := ["alias_spot", "arith_equiv", "aut_counter", "auts", "cdim", "commutator_count", "counter", "counter_by_index", "cyc_order_mat", "cyc_order_traces", "cyclotomic_n", "degree", "diagram_x", "diagram_aut_x", "dim", "elementary", "exponent", "extension_counter", "hyperelementary", "indicator", "multiplicity", "n", "number_characteristic_subgroups", "number_conjugacy_classes", "number_autjugacy_classes", "number_divisions", "number_normal_subgroups", "number_subgroup_classes", "number_subgroup_autclasses", "number_subgroups", "parity", "priority", "q", "qdim", "quotients_complenetess", "rep", "schur_index", "sibling_completeness", "size", "smallrep", "t", "transitive_degree", "hash"];
 SmallintCols := ["elt_rep_type", "composition_length", "derived_length", "ngens", "nilpotency_class", "pgroup", "sylow", "rank", "subgroup_index_bound", "solvability_type"];
 BigintCols := ["mobius_sub", "mobius_quo"];
-NumericCols := ["hall", "eulerian_function", "order", "aut_order", "outer_order", "ambient_order", "subgroup_order", "quotient_order", "quotient_action_kernel_order", "aut_centralizer_order", "aut_weyl_index", "count", "conjugacy_class_count", "pc_code", "core_order", "normalizer_index", "centralizer_order"];
+NumericCols := ["hall", "eulerian_function", "order", "aut_order", "outer_order", "ambient_order", "subgroup_order", "quotient_order", "quotient_action_kernel_order", "aut_centralizer_order", "aut_weyl_index", "aut_stab_index", "aut_quo_index", "count", "conjugacy_class_count", "pc_code", "core_order", "normalizer_index", "centralizer_order"];
 
 TextListCols := ["composition_factors", "special_labels", "wreath_data"];
 
@@ -176,10 +176,10 @@ intrinsic LoadElt(inp::MonStgElt, G::LMFDBGrp) -> Any
         error "Other group types not yet supported";
     end if;
 end intrinsic;
-intrinsic SaveElt(out::Any, G::LMFDBGrp) -> MonStgElt
+intrinsic SaveElt(out::GrpElt) -> MonStgElt
     {}
-    GG := G`MagmaGrp;
-    if Type(GG) eq GrpPC then
+    GG := Parent(out);
+    if Type(out) eq GrpPCElt then
         n := 0;
         v := Reverse(ElementToSequence(out));
         Ps := Reverse(PCPrimes(GG));
@@ -188,7 +188,7 @@ intrinsic SaveElt(out::Any, G::LMFDBGrp) -> MonStgElt
             n +:= v[i];
         end for;
         return IntegerToString(n);
-    elif Type(GG) eq GrpPerm then
+    elif Type(out) eq GrpPermElt then
         return IntegerToString(EncodePerm(out));
     else
         error "Other group types not yet supported";
@@ -200,9 +200,9 @@ intrinsic LoadEltList(inp::MonStgElt, G::LMFDBGrp) -> SeqEnum
     assert inp[1] eq "{" and inp[#inp] eq "}";
     return [LoadElt(x, G) : x in Split(Substring(inp, 2, #inp-2), ",")];
 end intrinsic;
-intrinsic SaveEltList(out::SeqEnum, G::LMFDBGrp) -> MonStgElt
+intrinsic SaveEltList(out::SeqEnum) -> MonStgElt
     {}
-    return "{" * Join([SaveElt(x, G) : x in out], ",") * "}";
+    return "{" * Join([SaveElt(x) : x in out], ",") * "}";
 end intrinsic;
 
 intrinsic LoadSubgroupList(inp::MonStgElt, G::LMFDBGrp) -> SeqEnum
@@ -275,9 +275,9 @@ intrinsic SaveAttr(attr::MonStgElt, val::Any, obj::Any) -> MonStgElt
     elif attr in PermsCols then
         return SavePerms(val);
     elif attr in EltCols then
-        return SaveElt(val, GetGrp(obj));
+        return SaveElt(val);
     elif attr in EltListCols then
-        return SaveEltList(val, GetGrp(obj));
+        return SaveEltList(val);
     elif attr in SubgroupCols then
         if attr eq "sub1" then
             G := Get(obj, "G1");

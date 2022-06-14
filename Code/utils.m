@@ -431,10 +431,16 @@ intrinsic MatGroupToPermGroup(G0::GrpMat) -> GrpPerm, Map
         Include(~T, x);
         psi, G, K := OrbitAction(G0, T);
     end while;
-    return G, psi;
+    // Another option: use MyQuotient
+    G2, psi2 := MyQuotient(G0, sub<G0|>);
+    if Degree(G2) lt Degree(G) then
+        return G2, psi2;
+    else
+        return G, psi;
+    end if;
 end intrinsic;
 
-intrinsic PCGroupToPermGroup(G::GrpPC : num_starts:=60, num_steps:=60) -> GrpPerm, Map
+intrinsic PCGroupToPermGroup(G::Grp : num_starts:=60, num_steps:=60) -> GrpPerm, Map
 {Randomly searchest for corefree subgroups to get a transitive permutation representation of G0.
  Increasing num_starts and num_steps will increase the runtime linearly and may give a lower degree representation.}
     best := sub<G|>;

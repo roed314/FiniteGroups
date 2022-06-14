@@ -34,6 +34,7 @@ declare attributes LMFDBGrp:
   CCReps,
   QQRepsAsCC,
   Characters,
+  IsoToOldPresentation, // set by the various RePresent intrinsics in Presentation.m
   AllCharactersKnown, // this should be renamed to a lower case variable once this computation run is done
   SubByGass, // used in MinReps.m
   label,
@@ -174,10 +175,10 @@ declare verbose LMFDBSubGrp, 1;
 declare type LMFDBSubGrp;
 declare attributes LMFDBSubGrp:
   Grp, // input
-  Quotient, // quotient as an ambient LMFDBGrp
+  Quotient, // quotient as a magma Grp
   MagmaAmbient, // derived from Grp
   MagmaSubGrp, // input
-  QuotientMap, // homomorphism from MagmaAmbient to Quotient`MagmaGrp
+  QuotientMap, // homomorphism from MagmaAmbient to Quotient
   label, // process
   short_label,
   aut_label,
@@ -243,8 +244,11 @@ declare attributes LMFDBSubGrp:
   ambient_tex,
   quotient_tex,
   weyl_group,
+  AutStab,
   aut_weyl_group,
   aut_weyl_index,
+  aut_stab_index,
+  aut_quo_index,
   aut_centralizer_order,
   proper;
 
