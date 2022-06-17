@@ -50,7 +50,7 @@ intrinsic RandomCoredSubgroups(G::Grp, N::Grp, cnt::RngIntElt : max_tries:=20) -
     tries := 1;
     while tries le max_tries do
         // One failure mode is that we just leave one of the Cs equal to N, so we prioritize inceasing the smallest H
-        print tries, [Index(G, H) : H in Hs];
+        //print tries, [Index(G, H) : H in Hs];
         if cnt eq 1 then
             i := 1;
         elif Random([true, false]) then
@@ -84,13 +84,13 @@ intrinsic RandomCoredSubgroups(G::Grp, N::Grp, cnt::RngIntElt : max_tries:=20) -
             // try to take powers of g, since otherwise it's hard to get lower order elements
             D := Divisors(Order(g));
             for m in D[2..#D-1] do
-                print "div", m;
+                //print "div", m;
                 h := g^m;
                 if h in H then continue; end if;
                 K := sub<G|H,h>;
                 tt0 := Cputime();
                 Cnew := Core(G, K);
-                print "time", Cputime() - tt0;
+                //print "time", Cputime() - tt0;
                 if #K ne #G and #Cnew eq #C then
                     Hs[i] := K;
                     tries := 0;
@@ -182,7 +182,7 @@ intrinsic GoodCoredSubgroups(G::Grp, N::Grp, max_orbits::RngIntElt : num_checks:
         cur_check +:= 1;
         Hs := RandomCoredSubgroups(G, N, max_orbits : max_tries:=max_tries);
         d := &+[Index(G, H) : H in Hs];
-        printf "Degree %o=%o (prior best %o)\n", d, Join(Sort([Sprint(Index(G, H)) : H in Hs]), "+"), best_degree;
+        //printf "Degree %o=%o (prior best %o)\n", d, Join(Sort([Sprint(Index(G, H)) : H in Hs]), "+"), best_degree;
         if d lt best_degree then
             cur_check := 0;
             best_degree := d;
