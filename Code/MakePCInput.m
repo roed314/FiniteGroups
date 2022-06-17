@@ -1,10 +1,10 @@
-// parallel -j128 --timeout 300 -a DATA/to_add.txt magma -b data:="{1}" MakePCInput.m
+// parallel -j128 -a DATA/to_add.txt magma -b data:="{1}" MakePCInput.m
 
 AttachSpec("spec");
 SetColumns(0);
 pieces := Split(data, " ");
 if #pieces eq 1 then
-    N, i := Split(pieces[1], ".");
+    N, i := Explode(Split(pieces[1], "."));
     N := StringToInteger(N);
     if N le 2000 and (N le 500 or Valuation(N, 2) le 6) then
         // we already have an optimized pc representation available
