@@ -94,6 +94,7 @@ intrinsic RandomCoredSubgroups(G::Grp, N::Grp, cnt::RngIntElt : max_tries:=20) -
                 if #K ne #G and #Cnew eq #C then
                     Hs[i] := K;
                     tries := 0;
+                    break;
                 elif #K ne #G and cnt gt 1 and #(Cnew meet Ccomp) eq Nord then
                     // No change in intersection of cores, so adding this element is okay
                     Hs[i] := K;
@@ -104,6 +105,7 @@ intrinsic RandomCoredSubgroups(G::Grp, N::Grp, cnt::RngIntElt : max_tries:=20) -
                             Ccomps[j] := &meet[Cs[k] : k in I | k ne j];
                         end if;
                     end for;
+                    break;
                 end if;
             end for;
         end if;
@@ -124,7 +126,7 @@ intrinsic RandomCoredSubgroups(G::Grp, N::Grp, cnt::RngIntElt : max_tries:=20) -
             bestXcomp := { i : i in I};
             best := &+[Index(G, Hs[i]) : i in I];
             for X in Subsets(extras) do
-                Xcomp := {i : i in I | not i in X};
+                Xcomp := {i : i in I | not (i in X)};
                 if #Xcomp gt 0 and #&meet[Cs[i] : i in Xcomp] eq Nord then
                     cur := &+[Index(G, Hs[i]) : i in Xcomp];
                     if cur lt best then
@@ -147,7 +149,7 @@ intrinsic RandomCoredSubgroups(G::Grp, N::Grp, cnt::RngIntElt : max_tries:=20) -
             Hs := [Hs[j] : j in J];
         end if;
     elif cnt gt 1 and #extras eq 1 then
-        Hs := [Hs[i] : i in I | not i in extras];
+        Hs := [Hs[i] : i in I | not (i in extras)];
     end if;
     return Hs;
 end intrinsic;
@@ -201,6 +203,8 @@ num_checks is the number of times RandomCoredSubgroups is called to check if a s
 Note that this can be used as a less optimal but sometimes faster version of MinimalDegreePermutationRepresentation by taking N=sub<G|>
 }
     best_Hs := GoodCoredSubgroups(G, N, max_orbits : num_checks:=num_checks, max_tries:=max_tries);
-    rho, Q := CosetAction(G, best_Hs);
+    rho, Q, K := CosetAction(G, best_Hs);
+    // I'm not sure where this bug came from, but I saw cases with incorrect cores so we double check.
+    assert #K eq #N and #Q eq (#G div #N);
     return Q, rho;
 end intrinsic;
