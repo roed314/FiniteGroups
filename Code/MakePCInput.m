@@ -1,7 +1,9 @@
-// parallel -j128 -a DATA/to_add.txt magma -b data:="{1}" MakePCInput.m
+// parallel -j128 -a DATA/to_add.txt magma -b i:="{1}" MakePCInput.m ::: {1..544802}
 
 AttachSpec("spec");
 SetColumns(0);
+i := StringToInteger(i);
+data := Split(Read("DATA/to_add.txt"), "\n")[i];
 pieces := Split(data, " ");
 if #pieces eq 1 then
     N, i := Explode(Split(pieces[1], "."));
@@ -22,7 +24,7 @@ end if;
 // See if we have a minimal permutation representation available
 done, F := OpenTest("DATA/minreps/" * label, "r");
 if done then
-    mrep := Read(F);
+    mrep := Read("DATA/minreps/" * label);
     pieces := Split(mrep, "|");
     if "T" in pieces[1] and Split(pieces[1], "T")[1] eq pieces[2] then
         // transitive rep was smallest degree possible
