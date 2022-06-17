@@ -7,15 +7,20 @@ infile := "DATA/pcrep.todo/" * label;
 outfile := "DATA/pcreps/" * label;
 timefile := "DATA/pcrep.timings/" * label;
 N := StringToInteger(Split(label, ".")[1]);
+
 done, F := OpenTest(outfile, "r");
 if done then
+    exit;
+    /*
     lines := Split(Read(outfile), "\n");
     stage := #lines;
     if stage eq 3 then
         print "Already complete";
         exit;
     end if;
+    */
 end if;
+
 G := MakeBigGroup(Read(infile), label);
 if not Get(G, "solvable") then
     System("rm " * infile);
