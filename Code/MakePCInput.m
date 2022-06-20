@@ -1,4 +1,4 @@
-// parallel -j128 -a DATA/to_add.txt magma -b i:="{1}" MakePCInput.m ::: {1..544802}
+// seq 544802 | parallel -j128 magma -b i:="{1}" MakePCInput.m
 
 AttachSpec("spec");
 SetColumns(0);
