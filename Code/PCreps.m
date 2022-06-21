@@ -33,18 +33,18 @@ procedure SavePCGrp(A, t, phi)
     PrintFile(outfile, Sprintf("%o|%o|%o|%o", SmallGroupEncoding(A`MagmaGrp), Join([Sprint(c) : c in A`gens_used], ","), Join([Sprint(c) : c in CompactPresentation(A`MagmaGrp)], ","), Join([SaveElt(phi(gens[i])) : i in A`gens_used], ",")));
     PrintFile(timefile, Sprint(Cputime() - t));
 end procedure;
-t0 := Cputime();
-RePresentFastest(G);
-SavePCGrp(G, t0, G`IsoToOldPresentation);
+//t0 := Cputime();
+//RePresentFastest(G);
+//SavePCGrp(G, t0, G`IsoToOldPresentation);
 //G`MagmaGrp := G0;
-//if Type(G0) eq GrpPerm then
-//    t0 := Cputime();
-//    RePresentFast(G);
-//    SavePCGrp(G, t0, G`IsoToOldPresentation);
+if Type(G0) eq GrpPerm then
+    t0 := Cputime();
+    RePresentFast(G);
+    SavePCGrp(G, t0, G`IsoToOldPresentation);
     //G`MagmaGrp := G0;
     //t0 := Cputime();
     //RePresent(G: reset_attrs:=false, use_aut:=false);
     //SavePCGrp(G, t0, G`IsoToOldPresentation);
-//end if;
-System("rm " * infile);
+    System("rm " * infile);
+end if;
 exit;
