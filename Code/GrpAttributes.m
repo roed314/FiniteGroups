@@ -791,6 +791,7 @@ intrinsic order_stats(G::LMFDBGrp) -> Any
     return [[k, v] : k -> v in A];
 end intrinsic;
 
+/*
 //intrinsic SemidirectFactorizationMagma(G::LMFDBGrp : direct := false) -> Any
 intrinsic SemidirectFactorizationMagma(GG::Grp : direct := false, Ns := []) -> Any
   {}
@@ -880,7 +881,7 @@ intrinsic CollectDirectFactorsMagma(facts::SeqEnum) -> SeqEnum
   Sort(~pairs);
   return pairs;
 end intrinsic;
-
+*/
 
 intrinsic SemidirectFactorization(G::LMFDBGrp : direct := false) -> Any, Any, Any
   {Returns true if G is a nontrivial semidirect product, along with factors; otherwise returns false.}
@@ -974,6 +975,7 @@ intrinsic direct_product(G::LMFDBGrp) -> Any
   return fact_bool;
 end intrinsic;
 
+/*
 intrinsic direct_factorization_recursive(G::LMFDBGrp) -> SeqEnum
 {}
   fact_bool, Nsub, Ksub := DirectFactorization(G);
@@ -986,6 +988,7 @@ intrinsic direct_factorization_recursive(G::LMFDBGrp) -> SeqEnum
     return $$(N) cat $$(K);
   end if;
 end intrinsic;
+*/
 
 intrinsic direct_factorization(G::LMFDBGrp) -> SeqEnum
   {}
