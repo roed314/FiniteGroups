@@ -916,6 +916,7 @@ intrinsic SemidirectFactorization(G::LMFDBGrp : direct := false) -> Any, Any, An
 end intrinsic;
 
 // copied from /Applications/Magma/package/Group/GrpFin/groupname.m
+/*
 function IsADirectProductHeuristic(G: steps:=50)
   vprint GroupName,2:"IsADirectProductHeuristic";
   if IsAbelian(G) then
@@ -954,6 +955,7 @@ function IsADirectProductHeuristic(G: steps:=50)
   vprint GroupName,2:"IsADirectProductHeuristic: Done";
   return false,0,0;
 end function;
+*/
 
 intrinsic DirectFactorization(G::LMFDBGrp) -> Any
   {Returns true if G is a nontrivial direct product, along with factors; otherwise returns false.}

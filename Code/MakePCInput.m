@@ -26,12 +26,16 @@ done, F := OpenTest("DATA/minreps/" * label, "r");
 if done then
     mrep := Read("DATA/minreps/" * label);
     pieces := Split(mrep, "|");
+    G := StringToGroup(pieces[1]);
+    if not IsSolvable(G) then
+        exit;
+    end if;
     if "T" in pieces[1] and Split(pieces[1], "T")[1] eq pieces[2] then
         // transitive rep was smallest degree possible
         desc := pieces[1];
     else
         // Use the smaller degree permutation rep
-        desc := Sprintf("%oPerm%o", pieces[2], pieces[3][2..#pieces[3]-1]);
+        desc := Sprintf("%oPerm%o", pieces[2], ReplaceString(pieces[3], ["{", "}", "\n"], ["", "", ""]));
     end if;
 elif not ("T" in desc or "Perm" in desc) then
     G := StringToGroup(desc);
