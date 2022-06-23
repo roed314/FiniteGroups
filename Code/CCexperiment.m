@@ -1,5 +1,5 @@
 // The goal is to find examples where ConjugacyClasses, or CyclicSubgroups is slow
-// seq 2000 | parallel -j20 magma -b CCexperiment.m
+// seq 2000 | parallel -j20 --timeout 120 magma -b CCexperiment.m
 
 AttachSpec("spec");
 SetColumns(0);
