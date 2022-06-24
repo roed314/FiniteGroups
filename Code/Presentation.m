@@ -260,6 +260,96 @@ gens_to_pc := function(GG, best)
     return H, gens_used, to_old;
 end function;
 
+function pick_best_gens(gens)
+    vprint User1: #gens, "generators (initial)";
+    relcnt := AssociativeArray();
+    for i in [1..#gens] do
+        c := 0;
+        for tup in gens[i] do
+            if IsIdentity(tup[1]^tup[2]) then
+                c +:= 1;
+            end if;
+        end for;
+        if not IsDefined(relcnt, c) then relcnt[c] := []; end if;
+        Append(~relcnt[c], i);
+    end for;
+    // Only keep chains with the maximum number of identity relative powers
+    gens := [gens[i] : i in relcnt[Max(Keys(relcnt))]];
+    vprint User1: #gens, "generators (most identity relative powers)";
+
+    commut := AssociativeArray();
+    for i in [1..#gens] do
+        c := 0;
+        for a in [1..#gens[i]] do
+            for b in [a+1..#gens[i]] do
+                g := gens[i][a][1];
+                h := gens[i][b][1];
+                if IsIdentity(g*h*g^-1*h^-1) then
+                    c +:= 1;
+                end if;
+            end for;
+        end for;
+        if not IsDefined(commut, c) then commut[c] := []; end if;
+        Append(~commut[c], i);
+    end for;
+    // Only keep chains that have the most commuting pairs of generators
+    gens := [gens[i] : i in commut[Max(Keys(commut))]];
+    vprint User1: #gens, "generators (most commuting pairs)";
+
+    ooo := AssociativeArray();
+    for i in [1..#gens] do
+        c := 0;
+        for a in [1..#gens[i]] do
+            for b in [a+1..#gens[i]] do
+                r := gens[i][a][2];
+                s := gens[i][b][2];
+                if r lt s then
+                    c +:= 1;
+                end if;
+            end for;
+        end for;
+        if not IsDefined(ooo, c) then ooo[c] := []; end if;
+        Append(~ooo[c], i);
+    end for;
+    // Only keep chains that have the minimal number of out-of-order relative orders
+    gens := [gens[i] : i in ooo[Min(Keys(ooo))]];
+    vprint User1: #gens, "generators (fewest out-of-order relative orders)";
+
+    total_depth := AssociativeArray();
+    for i in [1..#gens] do
+        c := 0;
+        for a in [1..#gens[i]] do
+            for b in [a+1..#gens[i]] do
+                g := gens[i][a][1];
+                h := gens[i][b][1];
+                com := g*h*g^-1*h^-1;
+                if not IsIdentity(com) then
+                    for j in [b-2..1 by -1] do
+                        if not com in gens[i][j][3] then
+                            c +:= j;
+                        end if;
+                    end for;
+                end if;
+            end for;
+        end for;
+        if not IsDefined(total_depth, c) then total_depth[c] := []; end if;
+        Append(~total_depth[c], i);
+    end for;
+    // Only keep chains that have the minimal total depth
+    gens := [gens[i] : i in total_depth[Min(Keys(total_depth))]];
+    vprint User1: #gens, "generators (require minimal total depth)";
+
+    orders := [[tup[2] : tup in chain] : chain in gens];
+    ParallelSort(~orders, ~gens);
+
+    // We can't feasibly make this deterministic, and we don't have any more ideas for
+    // picking a "better" presentation, so we now just take the last one,
+    // which has the largest relative order for the first generator (and so on)
+
+    return gens[#gens];
+    //print "best", [<tup[1], tup[2], #tup[3]> : tup in best];
+end function;
+
 /*
 The following groups took more than an hour to RePresent (timed out)
 256.31887
@@ -296,93 +386,7 @@ This function is only safe to call on a newly created group, since it changes Ma
     if #GG ne 1 and IsSolvable(GG) then
         chains := all_minimal_chains(G : use_aut:=use_aut);
         gens := [chain_to_gens(chain) : chain in chains];
-        vprint User1: #gens, "generators (initial)";
-        relcnt := AssociativeArray();
-        for i in [1..#gens] do
-            c := 0;
-            for tup in gens[i] do
-                if IsIdentity(tup[1]^tup[2]) then
-                    c +:= 1;
-                end if;
-            end for;
-            if not IsDefined(relcnt, c) then relcnt[c] := []; end if;
-            Append(~relcnt[c], i);
-        end for;
-        // Only keep chains with the maximum number of identity relative powers
-        gens := [gens[i] : i in relcnt[Max(Keys(relcnt))]];
-        vprint User1: #gens, "generators (most identity relative powers)";
-
-        commut := AssociativeArray();
-        for i in [1..#gens] do
-            c := 0;
-            for a in [1..#gens[i]] do
-                for b in [a+1..#gens[i]] do
-                    g := gens[i][a][1];
-                    h := gens[i][b][1];
-                    if IsIdentity(g*h*g^-1*h^-1) then
-                        c +:= 1;
-                    end if;
-                end for;
-            end for;
-            if not IsDefined(commut, c) then commut[c] := []; end if;
-            Append(~commut[c], i);
-        end for;
-        // Only keep chains that have the most commuting pairs of generators
-        gens := [gens[i] : i in commut[Max(Keys(commut))]];
-        vprint User1: #gens, "generators (most commuting pairs)";
-
-        ooo := AssociativeArray();
-        for i in [1..#gens] do
-            c := 0;
-            for a in [1..#gens[i]] do
-                for b in [a+1..#gens[i]] do
-                    r := gens[i][a][2];
-                    s := gens[i][b][2];
-                    if r lt s then
-                        c +:= 1;
-                    end if;
-                end for;
-            end for;
-            if not IsDefined(ooo, c) then ooo[c] := []; end if;
-            Append(~ooo[c], i);
-        end for;
-        // Only keep chains that have the minimal number of out-of-order relative orders
-        gens := [gens[i] : i in ooo[Min(Keys(ooo))]];
-        vprint User1: #gens, "generators (fewest out-of-order relative orders)";
-
-        total_depth := AssociativeArray();
-        for i in [1..#gens] do
-            c := 0;
-            for a in [1..#gens[i]] do
-                for b in [a+1..#gens[i]] do
-                    g := gens[i][a][1];
-                    h := gens[i][b][1];
-                    com := g*h*g^-1*h^-1;
-                    if not IsIdentity(com) then
-                        for j in [b-2..1 by -1] do
-                            if not com in gens[i][j][3] then
-                                c +:= j;
-                            end if;
-                        end for;
-                    end if;
-                end for;
-            end for;
-            if not IsDefined(total_depth, c) then total_depth[c] := []; end if;
-            Append(~total_depth[c], i);
-        end for;
-        // Only keep chains that have the minimal total depth
-        gens := [gens[i] : i in total_depth[Min(Keys(total_depth))]];
-        vprint User1: #gens, "generators (require minimal total depth)";
-
-        orders := [[tup[2] : tup in chain] : chain in gens];
-        ParallelSort(~orders, ~gens);
-
-        // We can't feasibly make this deterministic, and we don't have any more ideas for
-        // picking a "better" presentation, so we now just take the last one,
-        // which has the largest relative order for the first generator (and so on)
-
-        best := gens[#gens];
-        //print "best", [<tup[1], tup[2], #tup[3]> : tup in best];
+        best := pick_best_gens(gens);
         H, gens_used, to_old := gens_to_pc(GG, best);
 
         // Now we build a new PC group with an isomorphism to our given one.
@@ -418,19 +422,42 @@ intrinsic RePresentFastest(G::LMFDBGrp)
     GG := G`MagmaGrp;
     H := GG;
     chain := [rec<RF|subgroup:=H, order:=#H>];
-    oldord := #H;
     while #H gt 1 do
         D := DerivedSubgroup(H);
         A, proj := quo<H | D>;
-        basis, invs := AbelianBasis(A);
+        basis := AbelianBasis(A);
         H := sub<GG | D, sub<GG | [basis[j]@@proj : j in [1..#basis-1]]>>;
-        assert #H ne oldord;
         Append(~chain, rec<RF|subgroup:=H, order:=#H>);
     end while;
     Reverse(~chain);
 
     gens := chain_to_gens(chain);
     Gnew, gens_used, to_old := gens_to_pc(GG, gens);
+    G`MagmaGrp := Gnew;
+    G`gens_used := Sort(gens_used);
+    G`IsoToOldPresentation := to_old;
+end intrinsic;
+
+function random_chain(GG)
+    H := GG;
+    chain := [rec<RF|subgroup:=H, order:=#H>];
+    while #H gt 1 do
+        D := DerivedSubgroup(H);
+        A, proj := quo<H | D>;
+        basis, invs := AbelianBasis(A);
+        i := Random([1..#invs]);
+        H := sub<GG | D, sub<GG | [basis[j]@@proj : j in [1..#invs] | j ne i]>>;
+        Append(~chain, rec<RF|subgroup:=H, order:=#H>);
+    end while;
+    Reverse(~chain);
+    return chain;
+end function;
+
+intrinsic RePresentRand(G::LMFDBGrp : reps:=60)
+{Randomly construct chains and pick the best}
+    gens := [chain_to_gens(random_chain(G`MagmaGrp)) : _ in [1..reps]];
+    best := pick_best_gens(gens);
+    Gnew, gens_used, to_old := gens_to_pc(G`MagmaGrp, best);
     G`MagmaGrp := Gnew;
     G`gens_used := Sort(gens_used);
     G`IsoToOldPresentation := to_old;

@@ -515,7 +515,7 @@ intrinsic MatricesToHexlist(L::SeqEnum, R::Rng) -> SeqEnum, MonStgElt
     return L, R;
 end intrinsic;
 
-intrinsic GroupToString(G::Grp) -> MonStgElt
+intrinsic GroupToString(G::Grp : use_id:=true) -> MonStgElt
 {}
     // This produces a string from which the group can be reconstructed, up to isomorphism
     // Note that it does not guarantee the same presentation or choice of generators
@@ -548,7 +548,7 @@ intrinsic GroupToString(G::Grp) -> MonStgElt
             error "Unsupported group type", Type(G);
         end if;
         return Sprintf("%o-A%o;%o", Gdesc, Join([Sprint(g) : g in gens], ","), Join([Sprint(a) : a in auts], ","));
-    elif CanIdentifyGroup(N) then
+    elif use_id and CanIdentifyGroup(N) then
         return Sprintf("%o.%o", N, IdentifyGroup(G)[2]);
     elif Type(G) eq GrpPerm then
         if IsTransitive(G) and Degree(G) lt 48 then
