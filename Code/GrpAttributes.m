@@ -809,13 +809,13 @@ intrinsic IsADirectProductHeuristic(G::Grp : steps:=50) -> Any
       if IsCyclic(G)
         then return false,0,0;
         else A:=AbelianBasis(G);
-             return true, sub<G|A[1]>, sub<G|A[[2..#A]]>;
+             return true, sub<G|A[1]>, sub<G|A[[2..#A]]>, [];
       end if;
     else
       p:=PrimeDivisors(#G)[1];
       S:=SylowSubgroup(G,p);
       H:=GenHallSubgroupMinP(G,p);
-      return true,S,H;
+      return true,S,H,[];
     end if;
   end if;
   vprint GroupName,2:"IsADirectProductHeuristic: Centre";
@@ -832,7 +832,7 @@ intrinsic IsADirectProductHeuristic(G::Grp : steps:=50) -> Any
     N1:=NormalClosure(G,sub<G|g>);
     N2:=Centralizer(G,N1);
     if (#N1*#N2 eq #G) and (#(N1 meet N2) eq 1) and (#N2 ne 1) then
-      return true, N1, N2;    //! should be fixed in a new version of Magma
+      return true, N1, N2, [];    //! should be fixed in a new version of Magma
       //return true,eval Sprint(N1,"Magma"),eval Sprint(N2,"Magma");
     end if;
   end for;
