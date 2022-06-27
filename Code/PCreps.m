@@ -39,13 +39,13 @@ end procedure;
 //System("rm " * infile);
 //G`MagmaGrp := G0;
 if Type(G0) eq GrpPerm then
-    t0 := Cputime();
-    RePresentFast(G);
-    SavePCGrp(G, t0, G`IsoToOldPresentation);
-    //G`MagmaGrp := G0;
     //t0 := Cputime();
-    //RePresent(G: reset_attrs:=false, use_aut:=false);
+    //RePresentFast(G);
     //SavePCGrp(G, t0, G`IsoToOldPresentation);
+    //G`MagmaGrp := G0;
+    t0 := Cputime();
+    RePresent(G: reset_attrs:=false, use_aut:=false);
+    SavePCGrp(G, t0, G`IsoToOldPresentation);
     System("rm " * infile);
 end if;
 exit;
