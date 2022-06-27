@@ -883,9 +883,9 @@ intrinsic DirectFactorizationMagma(GG::Grp : try_heuristic := true, Ns := []) ->
   return SemidirectFactorizationMagma(GG : direct := true, Ns := Ns);
 end intrinsic;
 
-intrinsic direct_factorizationMagma(GG::Grp) -> Any
+intrinsic direct_factorizationMagma(GG::Grp : try_heuristic := true) -> Any
   {}
-  fact_bool, Nrec, Krec, Ns := DirectFactorizationMagma(GG);
+  fact_bool, Nrec, Krec, Ns := DirectFactorizationMagma(GG : try_heuristic := try_heuristic);
   if not fact_bool then
     return [];
   end if;
@@ -896,7 +896,7 @@ intrinsic direct_factorizationMagma(GG::Grp) -> Any
     new_facts :=[];
     for fact in facts do
       Ns_fact := [el : el in Ns | el`subgroup subset fact`subgroup];
-      split_bool, Nirec, Kirec := DirectFactorizationMagma(fact`subgroup : Ns := Ns_fact);
+      split_bool, Nirec, Kirec := DirectFactorizationMagma(fact`subgroup : Ns := Ns_fact, try_heuristic := try_heuristic);
       if not split_bool then
         Append(~irred_facts, fact);
       else
