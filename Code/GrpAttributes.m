@@ -840,7 +840,7 @@ intrinsic IsADirectProductHeuristic(G::Grp : steps:=50) -> Any
   return false,0,0,[];
 end intrinsic;
 
-intrinsic SemidirectFactorizationMagma(GG::Grp : direct := false, Ns := []) -> Any
+intrinsic SemidirectFactorization(GG::Grp : direct := false, Ns := []) -> Any
   {}
   ordG := #GG;
   // deal with trivial group
@@ -870,7 +870,7 @@ intrinsic SemidirectFactorizationMagma(GG::Grp : direct := false, Ns := []) -> A
   return false, _, _, _;
 end intrinsic;
 
-intrinsic DirectFactorizationMagma(GG::Grp : try_heuristic := true, Ns := []) -> Any
+intrinsic DirectFactorization(GG::Grp : try_heuristic := true, Ns := []) -> Any
   {Returns true if G is a nontrivial direct product, along with factors; otherwise returns false.}
   if try_heuristic then
     heur_bool, N, K, Ns := IsADirectProductHeuristic(GG);
@@ -878,12 +878,12 @@ intrinsic DirectFactorizationMagma(GG::Grp : try_heuristic := true, Ns := []) ->
       return heur_bool, N, K, Ns;
     end if;
   end if;
-  return SemidirectFactorizationMagma(GG : direct := true, Ns := Ns);
+  return SemidirectFactorization(GG : direct := true, Ns := Ns);
 end intrinsic;
 
-intrinsic direct_factorizationMagma(GG::Grp : try_heuristic := true) -> Any
+intrinsic direct_factorization(GG::Grp : try_heuristic := true) -> Any
   {}
-  fact_bool, N, K, Ns := DirectFactorizationMagma(GG : try_heuristic := try_heuristic);
+  fact_bool, N, K, Ns := DirectFactorization(GG : try_heuristic := try_heuristic);
   if not fact_bool then
     return [];
   end if;
@@ -894,7 +894,7 @@ intrinsic direct_factorizationMagma(GG::Grp : try_heuristic := true) -> Any
     new_facts := [];
     for fact in facts do
       Ns_fact := [el : el in Ns | el subset fact];
-      split_bool, Ni, Ki := DirectFactorizationMagma(fact: Ns := Ns_fact, try_heuristic := try_heuristic);
+      split_bool, Ni, Ki := DirectFactorization(fact: Ns := Ns_fact, try_heuristic := try_heuristic);
       if not split_bool then
         Append(~irred_facts, fact);
       else
@@ -906,10 +906,10 @@ intrinsic direct_factorizationMagma(GG::Grp : try_heuristic := true) -> Any
     end if;
     facts := new_facts;
   end while;
-  return CollectDirectFactorsMagma(irred_facts);
+  return CollectDirectFactors(irred_facts);
 end intrinsic;
 
-intrinsic CollectDirectFactorsMagma(facts::SeqEnum) -> SeqEnum
+intrinsic CollectDirectFactors(facts::SeqEnum) -> SeqEnum
   {Group together factors in direct product, returning a sequence of pairs <label, exponent>}
   //facts := [el`subgroup : el in facts];
   pairs := [];
@@ -933,54 +933,15 @@ intrinsic CollectDirectFactorsMagma(facts::SeqEnum) -> SeqEnum
   return pairs;
 end intrinsic;
 
-intrinsic SemidirectFactorization(G::LMFDBGrp : direct := false) -> Any, Any, Any
-  {Returns true if G is a nontrivial semidirect product, along with factors; otherwise returns false.}
-  GG := Get(G, "MagmaGrp");
-  ordG := Get(G, "order");
-  // deal with trivial group
-  if ordG eq 1 then
-    return false, _, _;
-  end if;
-  Ns := Get(G, "NormalSubgroups");
-  if Type(Ns) eq NoneType then
-    return None();
-  end if;
-  Ns := Remove(Ns,#Ns); // remove full group;
-  Remove(~Ns,1); // remove trivial group;
-  if direct then
-    Ks := Ns;
-  else // semidirect
-    Ks := Get(G, "Subgroups");
-  end if;
-  for N in Ns do
-    NN := Get(N, "MagmaSubGrp");
-    comps := [el : el in Ks | Get(el, "subgroup_order") eq (ordG div Get(N, "subgroup_order"))];
-    for K in comps do
-      KK := Get(K, "MagmaSubGrp");
-      if #(NN meet KK) eq 1 then
-        return true, N, K;
-        //print N, K;
-      end if;
-    end for;
-  end for;
-  return false, _, _;
-end intrinsic;
-
-
-intrinsic DirectFactorization(G::LMFDBGrp) -> Any
-  {Returns true if G is a nontrivial direct product, along with factors; otherwise returns false.}
-  return SemidirectFactorization(G : direct := true);
-end intrinsic;
-
 intrinsic semidirect_product(G::LMFDBGrp) -> Any
   {Returns true if G is a nontrivial semidirect product; otherwise returns false.}
-  fact_bool, _, _ := SemidirectFactorization(G);
+  fact_bool, _, _ := SemidirectFactorization(G`MagmaGrp);
   return fact_bool;
 end intrinsic;
 
 intrinsic direct_product(G::LMFDBGrp) -> Any
   {Returns true if G is a nontrivial direct product; otherwise returns false.}
-  fact_bool, _, _ := DirectFactorization(G);
+  fact_bool, _, _ := DirectFactorization(G`MagmaGrp);
   return fact_bool;
 end intrinsic;
 
@@ -1036,29 +997,6 @@ intrinsic direct_factorization(G::LMFDBGrp) -> SeqEnum
   //assert IsIsomorphic(GG, DirectProduct(irred_facts_mag));
 
   return CollectDirectFactors(irred_facts);
-end intrinsic;
-
-intrinsic CollectDirectFactors(facts::SeqEnum) -> SeqEnum
-  {Group together factors in direct product, returning a sequence of pairs <label, exponent>}
-  pairs := [];
-  for fact in facts do
-    label := Get(fact, "label");
-    old_bool := false;
-    for i := 1 to #pairs do
-      if label eq pairs[i][1] then
-        fact_ind := i;
-        old_bool := true;
-      end if;
-    end for;
-    if old_bool then
-      pairs[fact_ind][2] +:= 1;
-    else
-      // tuples are sortable while sequences [* *] are not
-      Append(~pairs, <Get(fact, "label"), 1>);
-    end if;
-  end for;
-  Sort(~pairs);
-  return pairs;
 end intrinsic;
 
 intrinsic CCpermutation(G::LMFDBGrp) -> SeqEnum
