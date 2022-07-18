@@ -961,8 +961,10 @@ end intrinsic;
 */
 
 intrinsic direct_factorization(G::LMFDBGrp) -> SeqEnum
-  {}
-  fact_bool, Nsub, Ksub := DirectFactorization(G);
+{}
+    return direct_factorization(G`MagmaGrp);
+/*
+  fact_bool, Nsub, Ksub := DirectFactorization(G`MagmaGrp);
   if not fact_bool then
     return [];
   end if;
@@ -996,7 +998,7 @@ intrinsic direct_factorization(G::LMFDBGrp) -> SeqEnum
   //irred_facts_mag := [ Get(el, "MagmaGrp") : el in irred_facts ];
   //assert IsIsomorphic(GG, DirectProduct(irred_facts_mag));
 
-  return CollectDirectFactors(irred_facts);
+  return CollectDirectFactors(irred_facts);*/
 end intrinsic;
 
 intrinsic CCpermutation(G::LMFDBGrp) -> SeqEnum
