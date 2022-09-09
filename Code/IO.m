@@ -526,3 +526,26 @@ intrinsic PrintGLnData(G::LMFDBGrp: sep:="|") -> Tup
             [SaveLMFDBObject(cr: sep:=sep) : cr in creps]>;
 end intrinsic;
 
+intrinsic WriteByTmpHeader(G::LMFDBGrp, filename::MonStgElt, header::MonStgElt: sep:="|")
+{}
+    code, attrs := Explode(Split(Read(header * ".tmpheader"), "\n"));
+    attrs := Split(attrs, sep);
+    s := code * SaveLMFDBObject(G: attrs:=attrs, sep:=sep);
+    PrintFile(filename, s);
+end intrinsic;
+
+intrinsic Preload(G::LMFDBGrp : sep:="|")
+{Load attributes from DATA/preload/label}
+    data := "";
+    havedata, F := OpenTest("DATA/preload/" * G`label, "r");
+    if havedata then
+        header, data := Explode(Split(Read(F), "\n"));
+        header := Split(header, sep);
+        data := Split(data, sep: IncludeEmpty := true);
+        assert #header eq #data;
+        for i in [1..#data] do
+            attr := header[i];
+            G``attr := LoadAttr(attr, data[i], G);
+        end for;
+    end if;
+end intrinsic;
