@@ -4,6 +4,7 @@
 # For the most part, it just adds a selected set of files to a tarball,
 # but it also records the number of groups in each todo folder.
 
+import os
 import argparse
 import subprocess
 
