@@ -2,7 +2,7 @@
 
 AttachSpec("spec");
 SetColumns(0);
-infile := "DATA/minrep.todo/" * label;
+infile := "DATA/descriptions/" * label;
 outfile := "DATA/minreps/" * label;
 timefile := "DATA/minrep.timings/" * label;
 done, F := OpenTest(outfile, "r");
@@ -42,7 +42,7 @@ elif Type(G0) eq GrpPC then
 else
     gens := Generators(G0);
 end if;
-PrintFile(outfile, Sprintf("%o|%o|%o", desc, Degree(P), SavePerms([phi(psi(g)) : g in gens])));
+PrintFile(outfile, Sprintf("%o|%o|%o|%o", label, desc, Degree(P), SavePerms([phi(psi(g)) : g in gens])));
 PrintFile(timefile, Cputime() - t0);
-System("rm " * infile);
+//System("rm " * infile);
 exit;

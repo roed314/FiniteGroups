@@ -15,9 +15,9 @@ args = parser.parse_args()
 
 if args.phase == 1:
     todos = [
-        ("MinReps4", "minrep", 2, 3600),
-        ("PCreps_fast", "pcrep_fast", 2, 3600),
-        ("PCreps", "pcrep", 2, 3600),
+        ("MinReps4", "minrep", 1, 6*3600),
+        #("PCreps_fast", "pcrep_fast", 1, 3600),
+        ("PCreps", "pcrep", 1, 3*3600),
     ]
 elif args.phase == 2:
     todos = [

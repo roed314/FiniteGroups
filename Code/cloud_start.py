@@ -29,8 +29,10 @@ with open("DATA/manifest") as F:
             os.makedirs(timings, exist_ok=True)
             subprocess.run("parallel --timeout %s magma -b label:={1} %s ::: %s" % (timeout, script, " ".join(L)), shell=True)
             # Move the results to the standard output location
-            os.rename(out, os.path.expanduser("~/output"))
-            os.rename(timings, os.path.expanduser("~/timings"))
+            with open(os.path.expanduser("output"), "a") as Fout:
+                for label in os.listdir(out):
+                    with open(os.path.join(out, label)) as F:
+                        _ = Fout.write(F.read())
             break
         else:
             job -= cnt
