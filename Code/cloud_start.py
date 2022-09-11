@@ -27,7 +27,7 @@ with open("DATA/manifest") as F:
             L = L[per_job * job: per_job * (job + 1)]
             os.makedirs(out, exist_ok=True)
             os.makedirs(timings, exist_ok=True)
-            subprocess.run("parallel --timeout %s magma -b label:={1} %s ::: %s" % (timeout, script, " ".join(L)), shell=True)
+            subprocess.run('parallel --timeout %s "magma -b label:={1} %s >> errors 2>&1" ::: %s' % (timeout, script, " ".join(L)), shell=True)
             # Move the results to the standard output location
             with open(os.path.expanduser("output"), "a") as Fout:
                 for label in os.listdir(out):
