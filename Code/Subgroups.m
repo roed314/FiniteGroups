@@ -1825,7 +1825,7 @@ intrinsic NormalSubgroups(X::LMFDBGrp) -> Any
     res`Grp := X;
     res`outer_equivalence := false;
     res`inclusions_known := true;
-    res`index_bound := (ordbd eq 1) select 0 else #G div ordbd;
+    res`index_bound := 0; //(ordbd eq 1) select 0 else #G div ordbd;
     res`subs := [SubgroupLatElement(res, subs[i]`subgroup : i:=i) : i in [1..#subs]];
     res`by_index := ByIndex(res`subs, #G);
     AddSpecialSubgroups(res);
