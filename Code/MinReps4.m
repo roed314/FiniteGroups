@@ -2,7 +2,7 @@
 
 AttachSpec("spec");
 SetColumns(0);
-infile := "DATA/descriptions/" * label;
+infile := "DATA/minrep.todo/" * label;
 outfile := "DATA/minreps/" * label;
 timefile := "DATA/minrep.timings/" * label;
 done, F := OpenTest(outfile, "r");
