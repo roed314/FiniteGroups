@@ -1814,11 +1814,21 @@ intrinsic Subgroups(G::LMFDBGrp) -> SeqEnum
     return S;
 end intrinsic;
 
-intrinsic NormalSubgroups(G::LMFDBGrp) -> Any
-    {List of normal LMFDBSubGrps, or None if not computed}
-    if not G`normal_subgroups_known then
+intrinsic NormalSubgroups(X::LMFDBGrp) -> Any
+{lattice of normal subgroups, or None if not computed}
+    if not X`normal_subgroups_known then
         return None();
     end if;
+    G := X`Grp;
+    subs := NormalSubgroups(G);
+    res := New(SubgroupLat);
+    res`Grp := X;
+    res`outer_equivalence := false;
+    res`inclusions_known := true;
+    res`index_bound := (ordbd eq 1) select 0 else #G div ordbd;
+    res`subs := [SubgroupLatElement(res, subs[i]`subgroup : i:=i) : i in [1..#subs]];
+    res`by_index := ByIndex(res`subs, #G);
+    AddSpecialSubgroups(res);
     return [H : H in Get(G, "Subgroups") | H`normal];
 end intrinsic;
 

@@ -11,7 +11,7 @@ if done then
     exit;
 end if;
 desc := Read(infile);
-print desc;
+//print desc;
 G0 := StringToGroup(desc);
 G := G0;
 t0 := Cputime();

@@ -385,6 +385,10 @@ intrinsic StringToGroup(s::MonStgElt) -> Grp
     elif "PC" in s then
         N, code := Explode([StringToInteger(c) : c in Split(s, "PC")]);
         return SmallGroupDecoding(code, N);
+    elif "pc" in s then
+        N, compact := Explode(Split(s, "pc"));
+        compact := [StringToInteger(c) : c in Split(compact, ",")];
+        return PCGroup(compact);
     elif s[#s] eq ")" and #Split(s, "(") eq 2 then
         // We just use the Magma command to store classical matrix groups, since we can then recover
         // the homomorphism in the projective case

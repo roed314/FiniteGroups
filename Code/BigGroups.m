@@ -34,6 +34,48 @@ Find all subgroups (and resulting quantities, like semidirect products, rank, eu
 Generate a list of subs/quos for hashing and identification (don't add them, but it would be good to know if they're already there)
 Other stuff (schur_multiplier, wreath_data)
 
+BASIC
+label|Agroup|Zgroup|elt_rep_type|abelian|center_label|composition_factors|composition_length|counter|cyclic|derived_length|elementary|exponent|exponents_of_order|factors_of_order|gens_used|hash|hyperelementary|metabelian|metacyclic|ngens|nilpotency_class|nilpotent|old_label|order|pc_code|perfect|perm_gens|pgroup|primary_abelian_invariants|quasisimple|simple|smith_abelian_invariants|solvable|supersolvable|sylow_subgroups_known|finite_matrix_group
+LABELING
+label|abelian_quotient|central_quotient|commutator_label|frattini_label|frattini_quotient
+AUT STUFF
+label|aut_group|aut_order|complete|factors_of_aut_order|number_autjugacy_classes|outer_equivalence|outer_group|outer_order
+SCHUR
+label|schur_multiplier
+WREATH
+label|wreath_data|wreath_product
+
+NAME
+label|name|tex_name
+
+CONJUGACY CLASSES (and write groups_cc)
+label|number_conjugacy_classes|number_divisions|order_stats
+
+NORMAL SUBGROUPS (only run when SUBGROUPS times out, write appropriate subgroups)
+label|almost_simple|central_product|direct_factorization|direct_product|number_characteristic_subgroups|normal_subgroups_known|number_normal_subgroups
+
+
+SUBGROUPS (and write subgroups)
+label|transitive_degree|all_subgroups_known|eulerian_function|maximal_subgroups_known|number_subgroup_autclasses|number_subgroup_classes|number_subgroups|rank|semidirect_product|subgroup_inclusions_known|subgroup_index_bound
+
+CHARACTERS (and write characters_cc)
+label|commutator_count|faithful_reps|monomial|smallrep|solvability_type
+RATIONAL CHARACTERS (and write characters_qq)
+label|rational
+
+finite_matrix_group shouldn't be a column probably
+easy cases for rank should be possible without subgroup lattice
+new stuff....
+check status on number_divisions
+make sure ngens, gens_used, pc_code, perm_gens ok in basic
+use already-computed hash values (slow for S47 for example)
+metacyclic might be slow for basic
+deciding on outer_equivalence
+store permutation generators in a separate table?
+Fix quasisimple for when quotient is large (use MyQuotient?)
+Can use Complements to do find semidirect decompositions from NormalSubgroups
+Use semidirect products to select a better name
+
 ***********/
 
 intrinsic GetNormalData(G::LMFDBGrp) -> Any
