@@ -51,8 +51,7 @@ if args.phase > 1:
     include.extend([
         "DATA/preload", # saved attributes from previous runs
         "DATA/descriptions",
-        "DATA/fromhash",
-        "DATA/tohash",
+        #"DATA/fromhash",
     ])
 for mag, todo, per_job, timeout in todos:
     D = f"DATA/{todo}.todo"

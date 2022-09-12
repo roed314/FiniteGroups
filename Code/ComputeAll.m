@@ -4,6 +4,7 @@ SetColumns(0);
 infile := "DATA/descriptions/" * label;
 outfile := "DATA/computes/" * label;
 desc := Read(infile);
+SetVerbose("User1", 1); // for testing
 G := MakeBigGroup(desc, label);
 headers := [* "basic", "labeling", "aut", "conj", <"J", "ConjugacyClasses", "GrpConjCls">, "schur", "wreath", "charc", <"C", "CCCharacters", "GrpChtrCC">, "charq", <"Q", "QQCharacters", "GrpChtrQQ">, "subgroups", <"S", "Subgroups", "SubGrp">, "name" *];
 t0 := Cputime();
