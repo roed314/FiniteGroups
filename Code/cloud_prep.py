@@ -17,7 +17,7 @@ if args.phase == 1:
     todos = [
         ("MinReps4", "minrep", 1, 9*3600),
         #("PCreps_fast", "pcrep_fast", 1, 3600),
-        ("PCreps", "pcrep", 1, 4*3600
+        ("PCreps", "pcrep", 1, 4*3600),
     ]
 elif args.phase == 2:
     todos = [
