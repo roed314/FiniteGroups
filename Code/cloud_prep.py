@@ -59,7 +59,13 @@ for mag, todo, per_job, timeout in todos:
     Dout = f"DATA/{todo}s"
     Dtiming = f"DATA/{todo}.timings"
     include.append(D)
-    n = (len(os.listdir(D)) - 1) // per_job + 1
+    if os.path.isdir(D):
+        n = (len(os.listdir(D)) - 1) // per_job + 1
+    else:
+        n = 0
+        with open(D) as FD:
+            for jb in FD:
+                n += 1
     total += n
     manifest.append(f"{D} {Dout} {Dtiming} {mag}.m {n} {per_job} {timeout}")
 with open("DATA/manifest", "w") as F:
