@@ -1,7 +1,8 @@
 #!/usr/bin/env python3
 
 # This script is used to control the computation of group data so that we can still get some results even when certain computations time out.
-# It takes as input an integer and selects the appropriate magma script to execute under parallel
+# It takes as input an integer between 1 and the number of jobs, selects the appropriate magma script to execute under parallel, then transfers the output to a top-level "output" file.
+# Errors and standard out are redirected to an "errors" file.
 
 import os
 import argparse
@@ -12,7 +13,7 @@ parser.add_argument("job", type=int, help="job number")
 
 args = parser.parse_args()
 
-job = args.job
+job = args.job - 1 # shift from 1-based to 0-based indexing
 with open("DATA/manifest") as F:
     for line in F:
         todo, out, timings, script, cnt, per_job, timeout = line.strip().split()

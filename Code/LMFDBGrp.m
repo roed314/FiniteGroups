@@ -65,6 +65,7 @@ declare attributes LMFDBGrp:
   pgroup,
   elementary,
   hyperelementary,
+  easy_rank,
   rank,
   eulerian_function,
   MagmaCenter,

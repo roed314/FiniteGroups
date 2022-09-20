@@ -223,6 +223,9 @@ end intrinsic;
 // Moved from IO.m so that it could be used while just attaching hashspec
 
 function is_iterative_description(desc)
+    if "--" in desc then // using A--homdesc-->B format
+        return false;
+    end if;
     for i in [1..#desc - 1] do
         if desc[i] eq "-" and not desc[i+1] in "123456789" then
             return true;
@@ -273,6 +276,40 @@ function IntegerToHex(n, b)
     s := s[3..#s]; // strip leading 0x
     return "0"^(b-#s) * s;
 end function;
+
+intrinsic SplitMatrixCodes(L::MonStgElt, d::RngIntElt, Rcode::MonStgElt) -> SeqEnum, Rng
+{Given a string L representing a list of matrices via MatricesToHexList, returns a list of lists of integers giving the corresponding matrices together with the base ring}
+    b := 1;
+    if Rcode eq "0" then
+        R := Integers();
+        b := #L div d^2;
+    elif Rcode[1] eq "q" then
+        q := StringToInteger(Rcode[2..#Rcode]);
+        _, p := IsPrimePower(q);
+        b := 1 + Ilog(16, p-1);
+        R := GF(q);
+    else
+        N := StringToInteger(Rcode);
+        b := 1 + Ilog(16, N-1);
+        R := Integers(N);
+    end if;
+    if "," in L then
+        L := [StringToInteger(c) : c in Split(L, ",")];
+    else
+        assert IsDivisibleBy(#L, d^2);
+        if Rcode eq "0" then
+            L := [HexToSignedInteger(L[i..i+b-1]) : i in [1..#L by b]];
+        else
+            L := [HexToInteger(L[i..i+b-1]) : i in [1..#L by b]];
+        end if;
+    end if;
+    assert IsDivisibleBy(#L, d^2);
+    if Rcode[1] eq "q" then
+        k := Degree(R);
+        L := [R!L[i..i+k-1] : i in [1..#L by k]];
+    end if;
+    return [L[i..i+d^2-1] : i in [1..#L by d^2]], R;
+end intrinsic;
 
 intrinsic StringToGroup(s::MonStgElt) -> Grp
 {}
@@ -346,36 +383,7 @@ intrinsic StringToGroup(s::MonStgElt) -> Grp
         dR, L := Explode(Split(s, "Mat"));
         d, Rcode := Explode(Split(dR, ","));
         d := StringToInteger(d);
-        b := 1;
-        if Rcode eq "0" then
-            R := Integers();
-            b := #L div d^2;
-        elif Rcode[1] eq "q" then
-            q := StringToInteger(Rcode[2..#Rcode]);
-            _, p := IsPrimePower(q);
-            b := 1 + Ilog(16, p-1);
-            R := GF(q);
-        else
-            N := StringToInteger(Rcode);
-            b := 1 + Ilog(16, N-1);
-            R := Integers(N);
-        end if;
-        if "," in L then
-            L := [StringToInteger(c) : c in Split(L, ",")];
-        else
-            assert IsDivisibleBy(#L, d^2);
-            if Rcode eq "0" then
-                L := [HexToSignedInteger(L[i..i+b-1]) : i in [1..#L by b]];
-            else
-                L := [HexToInteger(L[i..i+b-1]) : i in [1..#L by b]];
-            end if;
-        end if;
-        assert IsDivisibleBy(#L, d^2);
-        if Rcode[1] eq "q" then
-            k := Degree(R);
-            L := [R!L[i..i+k-1] : i in [1..#L by k]];
-        end if;
-        L := [L[i..i+d^2-1] : i in [1..#L by d^2]];
+        L, R := SplitMatrixCodes(L, d, Rcode);
         return MatrixGroup<d, R| L >;
     elif "Perm" in s then
         n, L := Explode(Split(s, "Perm"));
@@ -489,34 +497,42 @@ intrinsic StringToPermGroup(s::MonStgElt) -> GrpPerm
     end if;
 end intrinsic;
 
+intrinsic CoefficientRingCode(R::Rng) -> MonStgElt
+{}
+    if Type(R) eq RngInt then
+        return "0";
+    elif Type(R) eq RngIntRes then
+        return Sprint(Modulus(R));
+    elif Type(R) eq FldFin then
+        p := Characteristic(R);
+        k := Degree(R);
+        if k eq 1 then
+            return Sprint(#R);
+        elif DefiningPolynomial(R) ne ConwayPolynomial(p, k) then
+            error "Matrix rings over finite fields not defined by a Conway polynomial are unsupported";
+        else
+            return Sprintf("q%o", #R);
+        end if;
+    else
+        error "Unsupported coefficient ring", R;
+    end if;
+end intrinsic;
+
 intrinsic MatricesToHexlist(L::SeqEnum, R::Rng) -> SeqEnum, MonStgElt
 {}
     L := &cat[Eltseq(g) : g in L];
     if Type(R) eq RngInt then
-        R := "0";
         b := Max([1 + Ilog(16, Integers()!(2*Abs(c+1/2))) : c in L]); // only need 1 digit for -8, but 2 for 8; deals with c=0 correctly
-        L := [IntegerToHex(c, b) : c in L];
     elif Type(R) eq RngIntRes then
         b := 1 + Ilog(16, Modulus(R) - 1);
-        L := [IntegerToHex(c, b) : c in L];
-        R := Sprint(Modulus(R));
     elif Type(R) eq FldFin then
         p := Characteristic(R);
         b := 1 + Ilog(16, p-1);
-        k := Degree(R);
-        if k eq 1 then
-            R := Sprint(p);
-        elif DefiningPolynomial(R) ne ConwayPolynomial(p, k) then
-            error "Matrix rings over finite fields not defined by a Conway polynomial are unsupported";
-        else
+        if Degree(R) gt 1 then
             L := &cat[Eltseq(a) : a in L];
-            R := Sprintf("q%o", #R);
         end if;
-        L := [IntegerToHex(c, b) : c in L];
-    else
-        error "Unsupported coefficient ring", R;
     end if;
-    return L, R;
+    return [IntegerToHex(c, b) : c in L], CoefficientRingCode(R);
 end intrinsic;
 
 intrinsic GroupToString(G::Grp : use_id:=true) -> MonStgElt
@@ -599,6 +615,57 @@ intrinsic SubgroupToString(G::Grp, H::Grp) -> MonStgElt
     else
         error Sprintf("Unsupported subgroup type %o of order %o", Type(H), #H);
     end if;
+end intrinsic;
+
+intrinsic StringToGroupHom(s::MonStgElt) -> Map, BoolElt
+{Returns the map described, together with a boolean describing whether elements should be lifted from the codomain to the domain (indicated by a >> arrowhead) or mapped from the domain to the codomain (true in first case, false in second)}
+    if "--" in s then
+        // Describe the homomorphism explicitly
+        pieces := Split(s, "--");
+        if #pieces ne 3 then
+            error "Invalid hom string with", #pieces-1, "-- segments";
+        end if;
+        G, f, H := Explode(pieces);
+        assert #H gt 1 and H[1] eq ">";
+        if H[2] eq ">" then
+            cover := true;
+            H := H[3..#H];
+        else
+            cover := false;
+            H := H[2..#H];
+        end if;
+        G := StringToGroup(G);
+        H := StringToGroup(H);
+        if Type(H) eq GrpMat then
+            Rcode := CoefficientRingCode(CoefficientRing(H));
+            f := SplitMatrixCodes(f, Rcode);
+        else
+            f := Split(f, ",");
+            f := [LoadElt(m, H) : m in f];
+        end if;
+        return hom<G -> H | f>, cover;
+    else
+        // The identity homomorphism on a single group
+        G := StringToGroup(s);
+        return IdentityHomomorphism(G), false;
+    end if;
+end intrinsic;
+
+intrinsic GroupHomToString(f::Map : cover:=false) -> MonStgElt
+{}
+    if IsIdentity(f) then
+        return GroupToString(Domain(f) : use_id:=false);
+    end if;
+    G := GroupToString(Domain(f) : use_id:=false);
+    H := GroupToString(Codomain(f) : use_id:=false);
+    arrowhead := cover select ">>" else ">";
+    if Type(H) eq GrpMat then
+        L, R := MatricesToHexlist([f(g) : g in Generators(G)], CoefficientRing(H));
+        fdef := &*[Sprint(c) : c in L];
+    else
+        fdef := Join([SaveElt(f(x)) : x in Generators(G)], ",");
+    end if;
+    return G * "--" * fdef * "--" * arrowhead * H;
 end intrinsic;
 
 /*

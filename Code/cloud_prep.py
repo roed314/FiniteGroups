@@ -9,7 +9,7 @@ import argparse
 import subprocess
 
 parser = argparse.ArgumentParser("Create tarball for cloud computation")
-parser.add_argument("phase", type=int, help="phase of computation (1 or 2)")
+parser.add_argument("phase", type=int, help="phase of computation (1 to 3)")
 
 args = parser.parse_args()
 

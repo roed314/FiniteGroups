@@ -61,20 +61,11 @@ intrinsic quasisimple(G::LMFDBGrp) -> BoolElt
     if not (Get(G, "perfect") and IsSimpleOrder(Qord)) then
         return false;
     end if;
-    GG := G`MagmaGrp;
     if Qord lt 1000000 then
-        return IsSimple(GG / Z);
+        return IsSimple(G`MagmaGrp / Z);
     else
-        // TODO: use stored normal subgroups if available
-        N := NormalSubgroups(GG : OrderMultipleOf:=#Z);
-        for rec in N do
-            if rec`order ne #Z and rec`order ne n then
-                if Z subset rec`subgroup then
-                    return false;
-                end if;
-            end if;
-        end for;
-        return true;
+        Zcomp := CompositionFactors(Z);
+        return Get(G, "composition_length") eq #Zcomp + 1;
     end if;
 end intrinsic;
 
@@ -1558,8 +1549,8 @@ intrinsic pc_code(G::LMFDBGrp) -> RngInt
     return SmallGroupEncoding(G`MagmaGrp);
 end intrinsic;
 
-intrinsic rank(G::LMFDBGrp) -> Any
-{Calculates the rank of the group G: the minimal number of generators}
+intrinsic easy_rank(G::LMFDBGrp) -> Any
+{Computes the rank in cases where doing so does not require the full subgroup lattice; -1 if too hard}
     if Get(G, "order") eq 1 then return 0; end if;
     if Get(G, "cyclic") then return 1; end if;
     if Get(G, "pgroup") ne 0 then
@@ -1571,6 +1562,15 @@ intrinsic rank(G::LMFDBGrp) -> Any
             _, _, k := IsPrimePower(F);
         end if;
         return m - k;
+    end if;
+    return -1;
+end intrinsic;
+
+intrinsic rank(G::LMFDBGrp) -> Any
+{Calculates the rank of the group G: the minimal number of generators}
+    r := Get(G, "easy_rank");
+    if r ne -1 then
+        return r;
     end if;
     if not G`subgroup_inclusions_known then return None(); end if;
     subs := Get(G, "Subgroups");

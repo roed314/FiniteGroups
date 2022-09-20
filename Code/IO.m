@@ -1,7 +1,7 @@
 TextCols := ["abelian_quotient", "acted", "actor", "ambient", "aut_group", "bravais_class", "c_class", "center_label", "central_quotient", "commutator_label", "coset_action_label", "crystal_symbol", "factor1", "factor2", "family", "frattini_label", "frattini_quotient", "group", "image", "knowl", "label", "short_label", "aut_label", "magma_cmd", "name", "old_label", "outer_group", "product", "proj_label", "projective_image", "q_class", "quotient", "quotient_action_image", "subgroup", "tex_name", "q_character", "carat_label", "subgroup_tex", "ambient_tex", "quotient_tex", "weyl_group", "aut_weyl_group", "quotient_action_kernel"];
 
 IntegerCols := ["alias_spot", "arith_equiv", "aut_counter", "auts", "cdim", "commutator_count", "counter", "counter_by_index", "cyc_order_mat", "cyc_order_traces", "cyclotomic_n", "degree", "diagram_x", "diagram_aut_x", "dim", "elementary", "exponent", "extension_counter", "hyperelementary", "indicator", "multiplicity", "n", "number_characteristic_subgroups", "number_conjugacy_classes", "number_autjugacy_classes", "number_divisions", "number_normal_subgroups", "number_subgroup_classes", "number_subgroup_autclasses", "number_subgroups", "parity", "priority", "q", "qdim", "quotients_complenetess", "rep", "schur_index", "sibling_completeness", "size", "smallrep", "t", "transitive_degree", "hash"];
-SmallintCols := ["elt_rep_type", "composition_length", "derived_length", "ngens", "nilpotency_class", "pgroup", "sylow", "rank", "subgroup_index_bound", "solvability_type"];
+SmallintCols := ["elt_rep_type", "composition_length", "derived_length", "ngens", "nilpotency_class", "pgroup", "sylow", "easy_rank", "rank", "subgroup_index_bound", "solvability_type"];
 BigintCols := ["mobius_sub", "mobius_quo"];
 NumericCols := ["hall", "eulerian_function", "order", "aut_order", "outer_order", "ambient_order", "subgroup_order", "quotient_order", "quotient_action_kernel_order", "aut_centralizer_order", "aut_weyl_index", "aut_stab_index", "aut_quo_index", "count", "conjugacy_class_count", "pc_code", "core_order", "normalizer_index", "centralizer_order"];
 
@@ -156,10 +156,8 @@ intrinsic SavePerms(out::SeqEnum) -> MonStgElt
     return SaveIntegerList([EncodePerm(o) : o in out]);
 end intrinsic;
 
-intrinsic LoadElt(inp::MonStgElt, G::LMFDBGrp) -> Any
-    {}
-    // For PCGroups, we have loaded the group from its pc_code since we're using a different presentation
-    GG := G`MagmaGrp;
+intrinsic LoadElt(inp::MonStgElt, GG::Grp) -> Any
+{}
     if Type(GG) eq GrpPC then
         n := StringToInteger(inp);
         v := [];
@@ -175,6 +173,11 @@ intrinsic LoadElt(inp::MonStgElt, G::LMFDBGrp) -> Any
     else
         error "Other group types not yet supported";
     end if;
+end intrinsic;
+intrinsic LoadElt(inp::MonStgElt, G::LMFDBGrp) -> Any
+    {}
+    // For PCGroups, we have loaded the group from its pc_code since we're using a different presentation
+    return LoadElt(inp, G`MagmaGrp);
 end intrinsic;
 intrinsic SaveElt(out::GrpElt) -> MonStgElt
     {}
@@ -526,7 +529,7 @@ intrinsic PrintGLnData(G::LMFDBGrp: sep:="|") -> Tup
             [SaveLMFDBObject(cr: sep:=sep) : cr in creps]>;
 end intrinsic;
 
-intrinsic WriteByTmpHeader(G::LMFDBGrp, filename::MonStgElt, header::MonStgElt: sep:="|")
+intrinsic WriteByTmpHeader(G::Any, filename::MonStgElt, header::MonStgElt: sep:="|")
 {}
     code, attrs := Explode(Split(Read(header * ".tmpheader"), "\n"));
     attrs := Split(attrs, sep);
