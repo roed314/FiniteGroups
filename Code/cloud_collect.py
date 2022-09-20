@@ -33,12 +33,12 @@ with open(datafile) as F:
             if line.count("|") == 3:
                 # minrep data
                 os.unlink(opj("DATA", "minrep.todo", label))
-                with open(opj("DATA", "minreps", label)) as Fout:
+                with open(opj("DATA", "minreps", label), "w") as Fout:
                     _ = Fout.write(outdata + "\n")
             elif line.count("|") == 4:
                 # pcrep data
                 os.unlink(opj("DATA", "pcrep.todo", label))
-                with open(opj("DATA", "pcreps", label)) as Fout:
+                with open(opj("DATA", "pcreps", label), "w") as Fout:
                     _ = Fout.write(outdata + "\n")
         else:
             # one-letter code for which output line is appended to the beginning
