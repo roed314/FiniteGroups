@@ -4,6 +4,7 @@
 import os
 import sys
 opj = os.path.join
+ope = os.path.exists
 
 sys.path.append(os.path.expanduser(opj("~", "lmfdb")))
 
