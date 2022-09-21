@@ -58,6 +58,23 @@ for label in os.listdir(opj("DATA", "pcreps_fastest")):
 # pcreps_small?
 print("PC reps loaded")
 
+# There is a magma bug that prevents loading of pccodes in some cases.
+# We retrieve the CompactPresentation output in some cases from the RePresentations folder
+for label in os.listdir(opj("DATA", "RePresentations")):
+    with open(opj("DATA", "RePresentations", label)) as F:
+        N = label.split(".")[0]
+        data = F.read().split("[")[1].split("]")[0].strip().replace(" ", "")
+        desc = f"{N}pc{data}\n"
+        if label in slookup:
+            pccode, compact, gens_used = slookup[label]
+            if compact is None:
+                slookup[label] = (pccode, data, gens_used)
+        if ope(opj("DATA", "pcbug.todo", label)):
+            # Magma had a bug in the loading the pccode here; we record that we have the compact presentation
+            with open(opj("DATA", "pcbugs", label), "w") as Fout:
+                _ = Fout.write(desc)
+            os.unlink(opj("DATA", "pcbug.todo", label))
+
 # Get minimal permutation presentations from the minreps folder
 minrep = {}
 for label in os.listdir(opj("DATA", "minreps")):
