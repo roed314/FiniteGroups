@@ -10,5 +10,5 @@ if IsSolvable(G) then
     compact := Sprintf("%opc%o", #G, Join([Sprint(c) : c in CompactPresentation(G)], ","));
     PrintFile(outfile, compact);
 end if;
-//System("rm " * infile);
+System("rm " * infile);
 exit;
