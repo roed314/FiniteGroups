@@ -16,6 +16,8 @@ print("LMFDB data loaded")
 
 os.makedirs(opj("DATA", "descriptions"), exist_ok=True)
 os.makedirs(opj("DATA", "preload"), exist_ok=True)
+os.makedirs(opj("DATA", "pcbug.todo"), exist_ok=True)
+os.makedirs(opj("DATA", "pcbugs"), exist_ok=True)
 
 aliases = defaultdict(list)
 aut = {}
@@ -53,6 +55,7 @@ for label in os.listdir(opj("DATA", "pcreps_fastest")):
     if label in slookup: continue
     with open(opj("DATA", "pcreps_fastest", label)) as F:
         slookup[label] = getpc(F)
+# pcreps_small?
 print("PC reps loaded")
 
 # Get minimal permutation presentations from the minreps folder
@@ -65,7 +68,7 @@ for label in os.listdir(opj("DATA", "minreps")):
         minrep[label] = (d, desc, gens)
 print("Minreps loaded")
 
-unknown_pcrep = []
+#unknown_pcrep = []
 to_add = {}
 with open(opj("DATA", "to_add.txt")) as F:
     for line in F:
@@ -73,9 +76,13 @@ with open(opj("DATA", "to_add.txt")) as F:
             label, hsh, disp, comp = line.strip().split()
         else:
             label = line.strip()
-            hsh = label.split(".")[1]
-            if label not in slookup and label not in nlookup:
-                unknown_pcrep.append(label)
+            N, hsh = label.split(".")
+            #if label not in slookup and label not in nlookup:
+            #    unknown_pcrep.append(label)
             disp = comp = label
+            pccode, compact, gens_used = slookup.get(label, (1,1,1))
+            if compact is None:
+                with open(opj("DATA", "pcbug.todo", label), "w") as Fout:
+                    _ = Fout.write(f"{N}PC{pccode}\n")
         to_add[label] = (hsh, disp, comp)
 print("Finished")
