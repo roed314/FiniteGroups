@@ -62,6 +62,7 @@ print("PC reps loaded")
 # There is a magma bug that prevents loading of pccodes in some cases.
 # We retrieve the CompactPresentation output in some cases from the RePresentations folder
 for label in os.listdir(opj("DATA", "RePresentations")):
+    if label == "log": continue
     with open(opj("DATA", "RePresentations", label)) as F:
         N = label.split(".")[0]
         data = F.read().split("[")[1].split("]")[0].strip().replace(" ", "")
