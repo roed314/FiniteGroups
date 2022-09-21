@@ -1,4 +1,4 @@
-#!/usr/bin/env sage -python
+#!/usr/bin/env -S sage -python
 # Create the descriptions folder
 
 import os
