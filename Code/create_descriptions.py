@@ -12,6 +12,7 @@ from collections import defaultdict
 
 slookup = {rec["label"]: (rec["pc_code"], None, rec["gens_used"]) for rec in db.gps_groups.search({"solvable":True}, ["label", "pc_code", "gens_used"])}
 nlookup = {rec["label"]: rec["perm_gens"] for rec in db.gps_groups.search({"solvable":False}, ["label", "perm_gens"])}
+print("LMFDB data loaded")
 
 os.makedirs(opj("DATA", "descriptions"), exist_ok=True)
 os.makedirs(opj("DATA", "preload"), exist_ok=True)
@@ -27,6 +28,7 @@ with open(opj("DATA", "aliases.txt")) as F:
             aut[G0] = label
         else:
             aliases[label].append(desc)
+print("Aliases loaded")
 
 # Get polycyclic presentations from the pcreps folders
 def getpc(F):
@@ -51,6 +53,7 @@ for label in os.listdir(opj("DATA", "pcreps_fastest")):
     if label in slookup: continue
     with open(opj("DATA", "pcreps_fastest", label)) as F:
         slookup[label] = getpc(F)
+print("PC reps loaded")
 
 # Get minimal permutation presentations from the minreps folder
 minrep = {}
@@ -60,6 +63,7 @@ for label in os.listdir(opj("DATA", "minreps")):
         d = int(d)
         gens = gens.replace("{", "").replace("}", "").split(",")
         minrep[label] = (d, desc, gens)
+print("Minreps loaded")
 
 unknown_pcrep = []
 to_add = {}
@@ -72,4 +76,6 @@ with open(opj("DATA", "to_add.txt")) as F:
             hsh = label.split(".")[1]
             if label not in slookup and label not in nlookup:
                 unknown_pcrep.append(label)
+            disp = comp = label
         to_add[label] = (hsh, disp, comp)
+print("Finished")
