@@ -114,7 +114,8 @@ for label in os.listdir(opj("DATA", "pcreps")):
     with open(opj("DATA", "pcreps", label)) as F:
         data = getpc(F)
         if label in slookup:
-            assert all(data[i] == slookup[label][i] for i in [0,2])
+            assert slookup[label][0] == int(data[0])
+            assert slookup[label][2] == data[2]
         slookup[label] = data
 for label in os.listdir(opj("DATA", "pcreps_fast")):
     if label in slookup: continue
