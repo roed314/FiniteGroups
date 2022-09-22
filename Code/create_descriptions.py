@@ -111,12 +111,9 @@ def getpc(F):
     return pccode, compact, gens_used
 
 for label in os.listdir(opj("DATA", "pcreps")):
+    # We may be overwriting pccodes from the existing database, but that's okay: we recomputed the presentation and now have the compact form
     with open(opj("DATA", "pcreps", label)) as F:
-        data = getpc(F)
-        if label in slookup:
-            assert slookup[label][0] == int(data[0])
-            assert slookup[label][2] == data[2]
-        slookup[label] = data
+        slookup[label] = getpc(F)
 for label in os.listdir(opj("DATA", "pcreps_fast")):
     if label in slookup: continue
     with open(opj("DATA", "pcreps_fast", label)) as F:
