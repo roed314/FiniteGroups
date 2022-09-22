@@ -103,6 +103,9 @@ print("Aliases loaded")
 # Get polycyclic presentations from the pcreps folders
 def getpc(F):
     s = F.read()
+    if s.count("|") == 4:
+        # strip off label
+        s = s.split("|", 1)[1]
     pccode, gens_used, compact, backiso = s.strip().split("|")
     gens_used = [int(c) for c in gens_used.split(",")]
     return pccode, compact, gens_used
