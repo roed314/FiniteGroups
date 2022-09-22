@@ -107,9 +107,11 @@ def getpc(F):
     return pccode, compact, gens_used
 
 for label in os.listdir(opj("DATA", "pcreps")):
-    assert label not in slookup
     with open(opj("DATA", "pcreps", label)) as F:
-        slookup[label] = getpc(F)
+        data = getpc(F)
+        if label in slookup:
+            assert all(data[i] == slookup[label][i] for i in [0,2])
+        slookup[label] = data
 for label in os.listdir(opj("DATA", "pcreps_fast")):
     if label in slookup: continue
     with open(opj("DATA", "pcreps_fast", label)) as F:
