@@ -61,7 +61,7 @@ def update_options(D, desc):
             q = int(q[1:]) + 1000000
         else:
             q = int(q)
-        D["M"].append((d, n, desc))
+        D["M"].append((d, q, desc))
     elif "T" in desc:
         n, i = [int(c) for c in desc.split("T")]
         D["T"].append((n, i, desc))
