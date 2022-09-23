@@ -178,7 +178,11 @@ best = {}
 for label, D in aliases.items():
     best[label] = {typ: min(opts) for typ, opts in D.items()}
 
-spectrum = sorted((D.get("P",[0])[0], D.get("T",[0])[0], D.get("M",[0])[0], D.get("L",[0])[0]) for D in best.values())
+spectrum = sorted(set((D.get("P",[0])[0], D.get("T",[0])[0], D.get("M",[0])[0], D.get("L",[0])[0]) for D in best.values()))
+
+# RULES
+# Abelian always PC
+# 2-generator PC uses PC
 
 to_add = {}
 with open(opj("DATA", "to_add.txt")) as F:
