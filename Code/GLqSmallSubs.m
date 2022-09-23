@@ -5,7 +5,7 @@ AttachSpec("spec");
 
 G := GL(2, StringToInteger(q));
 for H in Subgroups(G) do
-    if H`order le 2000 and (H`order le 500 or Valuation(H`order, 2) le 6) then
+    if H`order gt 1 and H`order le 2000 and (H`order le 500 or Valuation(H`order, 2) le 6) then
         printf "%o %o\n", GroupToString(H`subgroup), GroupToString(H`subgroup : use_id:=false);
     end if;
 end for;
