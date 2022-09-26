@@ -282,7 +282,8 @@ intrinsic SplitMatrixCodes(L::MonStgElt, d::RngIntElt, Rcode::MonStgElt) -> SeqE
     b := 1;
     if Rcode eq "0" then
         R := Integers();
-        b := #L div d^2;
+        // b := #L div d^2; // This doesn't work, since we can't distinguish between 2 generators with b=1 and 1 generator with b=2.
+        b := 1; // This won't always hold, but all matrix groups added so far have entries in -1,0,1.
     elif Rcode[1] eq "q" then
         q := StringToInteger(Rcode[2..#Rcode]);
         _, p := IsPrimePower(q);

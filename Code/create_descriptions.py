@@ -180,9 +180,15 @@ for label, D in aliases.items():
 
 spectrum = sorted(set((D.get("P",[0])[0], D.get("T",[0])[0], D.get("M",[0])[0], D.get("L",[0])[0]) for D in best.values()))
 
+# NEED
+# Double check output of Minrep using intransitive and transitive groups
+# Redo GL(n,Z) and small matrix representations for orders already in the LMFDB
+
 # RULES
 # Abelian always PC
-# 2-generator PC uses PC
+# Use permutations for Sn and An
+# Use group of Lie type
+# compare (#gen for pc) to (deg of permrep)^3/5 to (deg of matrix group), choosing smallest, favoring PC to Perm to Mat in case of tie
 
 to_add = {}
 with open(opj("DATA", "to_add.txt")) as F:
