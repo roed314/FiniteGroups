@@ -6,7 +6,7 @@ AttachSpec("spec");
 N := StringToInteger(N);
 R := Integers(N);
 Ambient := GL(2, R);
-outfile := Sprintf("GL2Z%o.txt", N);
+outfile := Sprintf("DATA/GLZN/GL2Z%o.txt", N);
 if IsPrime(N) then
     infile := "/scratch/gl2/gl2p_1000.txt";
     start := Sprintf("%o:", N);
@@ -26,7 +26,7 @@ else
     for H in data do
         n := StringToInteger(H[2]);
         if n gt 1 and n le 2000 and (n le 500 or Valuation(n, 2) le 6) then
-            G := sub<Ambient|eval H[4]>;
+            G := sub<Ambient|eval H[9]>;
             PrintFile(outfile, Sprintf("%o %o", GroupToString(G), GroupToString(G : use_id:=false)));
         end if;
     end for;
