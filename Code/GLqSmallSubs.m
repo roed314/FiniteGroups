@@ -1,4 +1,4 @@
-// Usage parallel -j 14 "magma -b dq:={1} GLqSmallSubs.m > DATA/GLq/GLq{1}.txt" ::: 4 8 9 16 25 27 32 49 64 81 121 125 128 169 243 256 289 343 361 3,2 3,3 3,4 3,5 3,7 3,8 3,9 3,11 3,13 4,2 4,3 4,4 4,5 5,2
+// Usage parallel -j 14 "magma -b dq:={1} GLqSmallSubs.m" ::: 4 8 9 16 25 27 32 49 64 81 121 125 128 169 243 256 289 343 361 529 625 729 841 961 3,2 3,3 3,4 3,5 3,7 3,8 3,9 3,11 3,13 4,2 4,3 4,4 4,5 5,2
 
 SetColumns(0);
 AttachSpec("spec");
@@ -10,10 +10,17 @@ else
     q := StringToInteger(dq);
 end if;
 
+function savable(n)
+    return n gt 1 and CanIdentifyGroup(n) and not (n le 2000 and (n le 500 or Valuation(n, 2) le 6));
+end function;
+
+outfile := Sprintf("DATA/GLq/GL2Z%o.txt", N);
 G := GL(d, q);
-for H in Subgroups(G) do
-    if H`order gt 1 and H`order le 2000 and (H`order le 500 or Valuation(H`order, 2) le 6) then
-        printf "%o %o\n", GroupToString(H`subgroup), GroupToString(H`subgroup : use_id:=false);
-    end if;
-end for;
+if &or[savable(d) : d in Divisors(#G)] then
+    for H in Subgroups(G) do
+        if savable(H`order) then
+            PrintFile(outfile, "%o %o", GroupToString(H`subgroup), GroupToString(H`subgroup : use_id:=false));
+        end if;
+    end for;
+end if;
 exit;
