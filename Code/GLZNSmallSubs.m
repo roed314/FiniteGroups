@@ -14,7 +14,7 @@ if IsPrime(N) then
     data := [Split(x, ":") : x in Split(Read(infile), "\n") | x[1..slen] eq start];
     for H in data do
         n, i := Explode([StringToInteger(c) : c in Split(H[3][2..#H[3]-1], ",")]);
-        if i ne 0 and n gt 1 and n le 2000 and (n le 500 or Valuation(n, 2) le 6) then
+        if CanIdentifyGroup(n) and n gt 1 and not (n le 2000 and (n le 500 or Valuation(n, 2) le 6)) then
             G := sub<Ambient|eval H[4]>;
             PrintFile(outfile, Sprintf("%o.%o %o", n, i, GroupToString(G : use_id:=false)));
         end if;
@@ -25,7 +25,7 @@ else
     data := data[2..#data]; // strip header
     for H in data do
         n := StringToInteger(H[2]);
-        if n gt 1 and n le 2000 and (n le 500 or Valuation(n, 2) le 6) then
+        if CanIdentifyGroup(n) and n gt 1 and not (n le 2000 and (n le 500 or Valuation(n, 2) le 6)) then
             G := sub<Ambient|eval H[9]>;
             PrintFile(outfile, Sprintf("%o %o", GroupToString(G), GroupToString(G : use_id:=false)));
         end if;
