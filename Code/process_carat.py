@@ -37,7 +37,7 @@ def load_file(filename, bigfile=None, mediumfile=None, smallfile=None, tinyfile=
                     b = 2 * abs(m) + 1
                 shift = (b - 1) // 2
                 entries = [entries[i*dim**2:(i+1)*dim**2] for i in range(ngens)]
-                codes = [sum(b**i * (mat[i] + shift) for i in range(dim**2)) for mat in entries]
+                codes = [str(sum(b**i * (mat[i] + shift) for i in range(dim**2))) for mat in entries]
                 s = f"{dim},0,{b}MAT{','.join(codes)}"
                 if big and bigfile is not None or medium and mediumfile is not None or small and smallfile is not None or tiny and tinyfile is not None:
                     entries = [[mat[i*dim:(i+1)*dim] for i in range(dim)] for mat in entries]
