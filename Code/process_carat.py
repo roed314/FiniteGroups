@@ -57,7 +57,7 @@ def load_file(filename, bigfile=None, mediumfile=None, smallfile=None, tinyfile=
                         with open(bigfile, "a") as Fout:
                             _ = Fout.write(s + "\n")
                     if tiny and tinyfile is not None:
-                        with open(mediumfile, "a") as Fout:
+                        with open(tinyfile, "a") as Fout:
                             _ = Fout.write(f"{label} {s}\n")
                 groups[order].append(s)
                 reported = True
