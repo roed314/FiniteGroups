@@ -62,6 +62,25 @@ label|commutator_count|faithful_reps|monomial|smallrep|solvability_type
 RATIONAL CHARACTERS (and write characters_qq)
 label|rational
 
+Path to finishing computations:
+1. Finish creating the to_add file that will be fed into google cloud.
+ a. List of groups is finalized
+ b. PCreps are done enough: optimized reps for 257,936+51,565 groups, fast reps for 203,654 groups; 31,647 nonsolvable
+ c. Minreps are done enough: minimal degree permutation rep for 532,960 groups; 11,842 missing (of which 11,444 have a smallish permutation representation)
+ d. Matreps are in progress: nxn matrix groups over Fq found for n=2 and q<1000, n=3 and q<15, n=4 and q < 6, n=5 and q=2, 2x2 matrix groups over Z/N from Drew are identified except for Z/72, have code for optimizing generators.
+ e. Have been using StringToGroup and GroupToString; recently created StringToGroupHom and GroupHomToString for GL(n,q) -> PGL(n,q), Sp -> PSp, SL -> PSL, SO -> PSO, etc and matrix groups over Z/N
+ f. Need to pick heuristics for which representation to choose in displaying elements.  Plan: use pc for abelian and 2-generator, then compare (pc ngens) ~ (perm deg)^(3/5) ~ (mat deg).  Note that this heuristic doesn't include matrix base ring (add one?)
+2. Modify code to run in cloud
+ a. Have created cloud_prep.py, which makes a tarball with everything needed for a run
+ b. Then cloud_start.py just takes an integer and uses a manifest file to translate that to a particular magma script.  We've already used this to compute some minreps and pcreps.  For main computation, have split up the tasks into parts which can be run independently (first we'll do a run with a shortish timeout that goes through these tasks sequentially, then another where they're split up, then a final one falling back to normal subgroups if all subgroups was infeasible)
+ c. Need to use Complements to find semidirect decompositions from NormalSubgroups
+ d. Use 
+
+Point Jen to places in the code doing PC reps
+cc stats stored in group
+Send a message about todo items on Large Groups list
+Think about whether there are more sections that need to be added.
+
 new stuff (permutation degree, linear degree, etc)....
 check status on number_divisions
 make sure ngens, gens_used, pc_code, perm_gens ok in basic
@@ -73,12 +92,14 @@ Use semidirect products to select a better name
 Write StringToGroupHom and GroupHomToString in order to deal with things like PGL
 Write cloud_collect.py to collect results
 Write another job that modifies a full record along a group hom by mapping/lifting all elements
+Encode matrix elements as integers (for compatibility with perm and pc elements)
 
 finite_matrix_group shouldn't be a column probably
 metacyclic might be slow for basic
 
 
 ***********/
+
 
 intrinsic GetNormalData(G::LMFDBGrp) -> Any
 {}

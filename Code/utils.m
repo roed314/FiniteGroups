@@ -312,6 +312,39 @@ intrinsic SplitMatrixCodes(L::MonStgElt, d::RngIntElt, Rcode::MonStgElt) -> SeqE
     return [L[i..i+d^2-1] : i in [1..#L by d^2]], R;
 end intrinsic;
 
+intrinsic SplitMATRIXCodes(L::MonStgElt, d::RngIntElt, Rcode::MonStgElt, b::MonStgElt) -> SeqEnum, Rng
+{}
+    if Rcode eq "0" then
+        R := Integers();
+        b := StringToInteger(b);
+        shift := (b - 1) div 2;
+    elif Rcode[1] eq "q" then
+        q := StringToInteger(Rcode[2..#Rcode]);
+        _, p := IsPrimePower(q);
+        b := p;
+        R := GF(q);
+    else
+        N := StringToInteger(Rcode);
+        b := N;
+        R := Integers(N);
+    end if;
+    L := [StringToInteger(c) : c in Split(L, ",")];
+    L := [IntegerToSequence(mat, b) : mat in L];
+    function Pad(X, m)
+        return #X ge m select X else X cat [0 : i in [1..m-#X]];
+    end function;
+    if Rcode[1] eq "q" then
+        k := Degree(R);
+        L := [Pad(mat, k*d^2) : mat in L];
+        L := [[R!mat[i..i+k-1] : i in [1..#mat by k]] : mat in L];
+    elif Rcode eq "0" then
+        L := [[c - shift : c in Pad(mat, d^2)] : mat in L];
+    else
+        L := [Pad(mat, d^2) : mat in L];
+    end if;
+    return L, R;
+end intrinsic;
+
 intrinsic StringToGroup(s::MonStgElt) -> Grp
 {}
     // We want to support iterated constructions separated by hyphens, but also need to handle negative signs
@@ -385,6 +418,18 @@ intrinsic StringToGroup(s::MonStgElt) -> Grp
         d, Rcode := Explode(Split(dR, ","));
         d := StringToInteger(d);
         L, R := SplitMatrixCodes(L, d, Rcode);
+        return MatrixGroup<d, R| L >;
+    elif "MAT" in s then // encode matrices as integers rather than hex strings
+        dR, L := Explode(Split(s, "MAT"));
+        dR := Split(dR, ",");
+        if dR[2] eq "0" then
+            d, Rcode, b := Explode(dR);
+        else
+            d, Rcode := Explode(dR);
+            b := "";
+        end if;
+        d := StringToInteger(d);
+        L, R := SplitMATRIXCodes(L, d, Rcode, b);
         return MatrixGroup<d, R| L >;
     elif "Perm" in s then
         n, L := Explode(Split(s, "Perm"));
@@ -536,6 +581,33 @@ intrinsic MatricesToHexlist(L::SeqEnum, R::Rng) -> SeqEnum, MonStgElt
     return [IntegerToHex(c, b) : c in L], CoefficientRingCode(R);
 end intrinsic;
 
+intrinsic MatricesToIntegers(L::SeqEnum, R::Rng) -> SeqEnum, MonStgElt
+{}
+    L := [Eltseq(g) : g in L];
+    Rcode := CoefficientRingCode(R);
+    if Type(R) eq RngInt then
+        Lcat := &cat(L);
+        m := Min(Lcat);
+        M := Max(Lcat);
+        if Abs(M) gt Abs(m) then
+            b := 2*Abs(M);
+        else
+            b := 2*Abs(m) + 1;
+        end if;
+        // b = 2 supports 0,1; b=3 supports -1,0,1; b=4 supports -1,0,1,2
+        shift := (b - 1) div 2;
+        L := [[c + shift : c in mat] : mat in L];
+        Rcode *:= Sprintf(",%o", b);
+    else
+        b := Characteristic(R);
+        if Type(R) eq FldFin and Degree(R) gt 1 then
+            L := [&cat[Eltseq(a) : a in mat] : mat in L];
+        end if;
+        L := [[Integers()!a : a in mat] : mat in L];
+    end if;
+    return [SequenceToInteger(mat, b) : mat in L], Rcode;
+end intrinsic;
+
 intrinsic GroupToString(G::Grp : use_id:=true) -> MonStgElt
 {}
     // This produces a string from which the group can be reconstructed, up to isomorphism
@@ -579,8 +651,10 @@ intrinsic GroupToString(G::Grp : use_id:=true) -> MonStgElt
             return Sprintf("%oPerm%o", Degree(G), Join([Sprint(EncodePerm(g)) : g in Generators(G)], ","));
         end if;
     elif Type(G) eq GrpMat then
-        L, R := MatricesToHexlist([g : g in Generators(G)], CoefficientRing(G));
-        return Sprintf("%o,%oMat%o", Dimension(G), R, &*[Sprint(c) : c in L]);
+        // L, R := MatricesToHexlist([g : g in Generators(G)], CoefficientRing(G));
+        // return Sprintf("%o,%oMat%o", Dimension(G), R, &*[Sprint(c) : c in L]);
+        L, R := MatricesToIntegers([g : g in Generators(G)], CoefficientRing(G));
+        return Sprintf("%o,%oMAT%o", Dimension(G), R, Join([Sprint(c) : c in L], ","));
     else
         if Type(G) eq GrpAb then
             G := PCGroup(G);
@@ -639,12 +713,34 @@ intrinsic StringToGroupHom(s::MonStgElt) -> Map, BoolElt
         H := StringToGroup(H);
         if Type(H) eq GrpMat then
             Rcode := CoefficientRingCode(CoefficientRing(H));
-            f := SplitMatrixCodes(f, Rcode);
+            f := SplitMATRIXCodes(f, Rcode);
         else
             f := Split(f, ",");
             f := [LoadElt(m, H) : m in f];
         end if;
         return hom<G -> H | f>, cover;
+    elif s[#s] eq ")" and #Split(s, "(") eq 2 and Split(s, "(")[1] in ["PGL", "PSL", "PSp", "PSO", "PSOPlus", "PSOMinus", "PSU", "PGO", "PGOPlus", "PGOMinus", "PGU", "POmega", "POmegaPlus", "POmegaMinus", "PGammaL", "PSigmaL", "PSigmaSp", "PGammaU"] then
+        cmd, data := Explode(Split(s[1..#s-1], "("));
+        n, q := Explode([StringToInteger(c) : c in Split(data, ",")]);
+        if "amma" in cmd or "igma" in cmd then
+            up := cmd[2] * cmd[#cmd]; // GL, SL, Sp or GU
+        else
+            up := cmd[2..#cmd];
+        end if;
+        up := eval up;
+        cmd := eval cmd;
+        G := up(n, q);
+        P, S := cmd(n, q);
+        nonzero := [Min([i : i in [1..Degree(v)] | v[i] ne 0]) : v in S];
+        function Slook(v)
+            for i in [1..#S] do
+                if v eq S[i] * v[nonzero[i]] / S[i][nonzero[i]] then
+                    return i;
+                end if;
+            end for;
+        end function;
+        f := hom<G -> P | [g -> P![Slook(v * g) : v in S] : g in Generators(G)]>;
+        return f, true;
     else
         // The identity homomorphism on a single group
         G := StringToGroup(s);
@@ -654,11 +750,13 @@ end intrinsic;
 
 intrinsic GroupHomToString(f::Map : cover:=false) -> MonStgElt
 {}
-    if IsIdentity(f) then
-        return GroupToString(Domain(f) : use_id:=false);
+    G := Domain(f);
+    H := Codomain(f);
+    if G cmpeq H and &and[f(g) eq g : g in Generators(G)] then
+        return GroupToString(G : use_id:=false);
     end if;
-    G := GroupToString(Domain(f) : use_id:=false);
-    H := GroupToString(Codomain(f) : use_id:=false);
+    GG := GroupToString(G : use_id:=false);
+    HH := GroupToString(H : use_id:=false);
     arrowhead := cover select ">>" else ">";
     if Type(H) eq GrpMat then
         L, R := MatricesToHexlist([f(g) : g in Generators(G)], CoefficientRing(H));
@@ -666,7 +764,22 @@ intrinsic GroupHomToString(f::Map : cover:=false) -> MonStgElt
     else
         fdef := Join([SaveElt(f(x)) : x in Generators(G)], ",");
     end if;
-    return G * "--" * fdef * "--" * arrowhead * H;
+    return GG * "--" * fdef * "--" * arrowhead * HH;
+end intrinsic;
+
+// Computing the hom for projective groups like PGL can get slow, so we save them
+intrinsic PStringToHomString(s::MonStgElt) -> MonStgElt
+{}
+    f := StringToGroupHom(s);
+    desc := Split(GroupHomToString(f), "--")[2];
+    cmd, data := Explode(Split(s[1..#s-1], "("));
+    n, q := Explode([StringToInteger(c) : c in Split(data, ",")]);
+    if "amma" in cmd or "igma" in cmd then
+        up := cmd[2] * cmd[#cmd]; // GL, SL, Sp or GU
+    else
+        up := cmd[2..#cmd];
+    end if;
+    return Sprintf("%o(%o,%o)--%o-->>%o", up, n, q, desc, s);
 end intrinsic;
 
 /*

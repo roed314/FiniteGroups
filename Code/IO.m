@@ -169,7 +169,7 @@ intrinsic LoadElt(inp::MonStgElt, GG::Grp) -> Any
         return GG!v;
     elif Type(GG) eq GrpPerm then
         n := Degree(GG);
-        return GG!DecodePerm(inp, n);
+        return GG!DecodePerm(StringToInteger(inp), n);
     else
         error "Other group types not yet supported";
     end if;
