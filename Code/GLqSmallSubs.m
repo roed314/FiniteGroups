@@ -23,7 +23,7 @@ G := GL(d, q);
 if &or[savable(d) : d in Divisors(#G)] then
     for H in Subgroups(G) do
         if savable(H`order) then
-            PrintFile(outfile, "%o %o", GroupToString(H`subgroup), GroupToString(H`subgroup : use_id:=false));
+            PrintFile(outfile, Sprintf("%o %o", GroupToString(H`subgroup), GroupToString(H`subgroup : use_id:=false)));
         end if;
     end for;
 end if;
