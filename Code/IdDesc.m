@@ -2,8 +2,8 @@
 
 SetColumns(0);
 AttachSpec("spec");
-infile := Sprintf("to%o.id", n);
-outfile := Sprintf("done%o.id", n);
+infile := Sprintf("DATA/to%o.id", n);
+outfile := Sprintf("DATA/done%o.id", n);
 descs := Split(Read(infile), "\n");
 
 for desc in descs do
