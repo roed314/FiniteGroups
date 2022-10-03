@@ -56,8 +56,11 @@ def update_options(D, desc):
         n = int(desc.split("Perm")[0])
         # favor transitive groups of the same degree
         D["T"].append((n, 10000000, desc))
-    elif "Mat" in desc:
-        d, q = desc.split("Mat")[0].split(",")[:2]
+    elif "Mat" in desc or "MAT" in desc:
+        if "Mat" in desc:
+            d, q = desc.split("Mat")[0].split(",")[:2]
+        else:
+            d, q = desc.split("MAT")[0].split(",")[:2]
         d = int(d)
         if q.startswith("q"):
             # prefer Z/N to finite fields (easier to display)
