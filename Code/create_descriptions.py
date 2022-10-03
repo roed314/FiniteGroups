@@ -5,6 +5,7 @@ import os
 import sys
 opj = os.path.join
 ope = os.path.exists
+from sage.all import ZZ
 
 sys.path.append(os.path.expanduser(opj("~", "lmfdb")))
 
@@ -36,16 +37,16 @@ Chev_lookup = { # (dimension, exponent to raise q in order to get actual coeffic
     "E,7": (56, 1),
 }
 Spor_lookup = {
-    "J1": [("M", 7, 11), ("T", 266, 0)],
-    "J2": [("M", 6, 1000004), ("T", 100, 0)],
+    "J1": [("FpM", 7, 11), ("T", 266, 0)],
+    "J2": [("FqM", 6, 2, 2), ("T", 100, 0)],
     "HS": [("T", 100, 0)],
-    "J3": [("M", 18, 1000009)],
+    "J3": [("FqM", 18, 2, 3)],
     "McL": [("T", 275, 0)],
-    "He": [("M", 51, 2)],
-    "Ru": [("M", 28, 2)],
-    "Co3": [("M", 22, 2), ("T", 276, 0)],
-    "Co2": [("M", 22, 2), ("T", 2300, 0)],
-    "Co1": [("M", 24, 2)],
+    "He": [("FpM", 51, 2)],
+    "Ru": [("FpM", 28, 2)],
+    "Co3": [("FpM", 22, 2), ("T", 276, 0)],
+    "Co2": [("FpM", 22, 2), ("T", 2300, 0)],
+    "Co1": [("FpM", 24, 2)],
 }
 
 def update_options(D, desc):
@@ -54,14 +55,25 @@ def update_options(D, desc):
         # favor transitive groups of the same degree
         D["T"].append((n, 10000000, desc))
     elif "Mat" in desc:
-        d, q = desc.split("Mat")[0].split(",")
+        d, q = desc.split("Mat")[0].split(",")[:2]
         d = int(d)
         if q.startswith("q"):
             # prefer Z/N to finite fields (easier to display)
-            q = int(q[1:]) + 1000000
+            p, k = ZZ(q[1:]).is_prime_power(get_data=True)
+            if k > 1:
+                D["FqM"].append((d, k, p, desc))
+            else:
+                D["FpM"].append((d, p, desc))
+        elif q == "0":
+            D["ZM"].append((d, desc))
         else:
-            q = int(q)
-        D["M"].append((d, q, desc))
+            p, k = ZZ(q).is_prime_power(get_data=True)
+            if k == 0: # not a prime power
+                D["ZNM"].append((d, p, desc))
+            elif k == 1: # prime
+                D["FpM"].append((d, p, desc))
+            else:
+                D["ZqM"].append((d, k, p, desc))
     elif "T" in desc:
         n, i = [int(c) for c in desc.split("T")]
         D["T"].append((n, i, desc))
@@ -74,10 +86,12 @@ def update_options(D, desc):
     elif "Chev" in desc:
         typ, q = desc[4:].rsplit(",", 1)
         d, k = Chev_lookup[typ]
-        q = int(q.replace("-D", ""))**k # remove derived subgroup code for 2F(4,2)-D
-        if q not in [2, 3, 5, 7]:
-            q += 1000000
-        D["M"].append((d, q, desc))
+        q = ZZ(q.replace("-D", ""))**k # remove derived subgroup code for 2F(4,2)-D
+        p, k = q.is_prime_power(get_data=True)
+        if k > 1:
+            D["FqM"].append((d, k, p, desc))
+        else:
+            D["FpM"].append((d, p, desc))
     elif desc in Spor_lookup:
         for rec in Spor_lookup[desc]:
             D[rec[0]].append(rec[1:] + (desc,))
@@ -86,12 +100,9 @@ def update_options(D, desc):
 
 aliases = defaultdict(lambda: defaultdict(list))
 aut = {}
-lies = set()
 with open(opj("DATA", "aliases.txt")) as F:
     for line in F:
         label, desc = line.strip().split()
-        if "(" in desc:
-            lies.add(desc.split("(")[0])
         if desc.endswith("-A"):
             G0 = desc[:-2]
             assert G0 not in aut
@@ -99,6 +110,12 @@ with open(opj("DATA", "aliases.txt")) as F:
         else:
             update_options(aliases[label], desc)
 print("Aliases loaded")
+
+with open(opj("DATA", "mat_aliases.txt")) as F:
+    for line in F:
+        label, desc = line.strip().split()
+        update_options(aliases[label], desc)
+print("Matrix aliases loaded")
 
 # Get polycyclic presentations from the pcreps folders
 def getpc(F):
@@ -165,13 +182,17 @@ for label in os.listdir(opj("DATA", "minreps")):
             desc = orig
             i = int(orig.split("T")[1])
         else:
-            # Might actually be transitive...
+            # Might actually be transitive, but it should show up as a T-label if d<48 and d!=32
             desc = f"{d}Perm{gens}"
             i = 1000000
         d = int(d)
         minrep[label] = (d, desc, gens)
         aliases[label]["T"].append((d, i, desc))
 print("Minreps loaded")
+
+# Get set of abelian labels
+with open(opj("DATA", "abelian.txt")) as F:
+    ab = set(F.read().strip().split("\n"))
 
 # Pick best representative in each category
 best = {}
@@ -193,20 +214,12 @@ spectrum = sorted(set((D.get("P",[0])[0], D.get("T",[0])[0], D.get("M",[0])[0], 
 to_add = {}
 with open(opj("DATA", "to_add.txt")) as F:
     for line in F:
-        N, hsh = label.split(".")
+        line = line.strip()
         if " " in line:
             label, hsh, disp, comp = line.strip().split()
         else:
-            label = line.strip()
-            disp = comp = label
-        pccode, compact, gens_used = slookup.get(label, (None, None, None))
-        if pccode is None:
-            # not solvable
-            pc = None
-        elif compact is None:
-            pc = f"{N}PC{pccode}"
-        else:
-            pc = f"{N}pc{compact}"
+            disp = comp = label = line
+            N, hsh = label.split(".")
         if label in minrep:
             mrep = minrep[label]
         to_add[label] = (hsh, disp, comp)

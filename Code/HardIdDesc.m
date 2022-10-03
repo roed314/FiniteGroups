@@ -1,4 +1,4 @@
-// Usage parallel -j 5 magma -b n:={1} IdDesc.m ::: {1..21}
+// Usage parallel -j 5 magma -b n:={1} HardIdDesc.m ::: {1..21}
 // Inputs should be in DATA/hardN.id, outputs written to DATA/hardoneN.id
 
 // There are some groups where Magma's IdentifyGroup fails with "coset table too large"
