@@ -1,6 +1,8 @@
 #!/usr/bin/env -S sage -python
 # Create the descriptions folder
 
+from sage.misc.misc import walltime
+t0 = walltime()
 import os
 import sys
 opj = os.path.join
@@ -223,4 +225,4 @@ with open(opj("DATA", "to_add.txt")) as F:
         if label in minrep:
             mrep = minrep[label]
         to_add[label] = (hsh, disp, comp)
-print("Finished")
+print("Finished in ", walltime() - t0)
