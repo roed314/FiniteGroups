@@ -251,7 +251,7 @@ for label, D in aliases.items():
         opts = sorted(B.items(), key=sort_key)
         best = opts[0]
         desc = best[1][-1]
-        if best[0] in ["ZN", "Zq"]:
+        if best[0] in ["ZNM", "ZqM"]:
             # Want a better type to compute with; it would be nice to know if P or T was the better choice
             if "P" in B:
                 comp = B["P"][-1]
