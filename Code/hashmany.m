@@ -6,7 +6,7 @@ AttachSpec("hashspec");
 N := StringToInteger(N);
 span := StringToInteger(span);
 outfile := Sprintf("DATA/hash%o/%o", N, i0);
-i0 := span * (StringToInteger(i0) - 1);
+i0 := span * (StringToInteger(i0) - 1) + 1;
 i1 := Min(i0 + span - 1, NumberOfSmallGroups(N));
 for i in [i0..i1] do
     G := SmallGroup(N, i);
