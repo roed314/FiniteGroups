@@ -244,21 +244,22 @@ def sort_key(item):
 for label, D in aliases.items():
     B = best_of_breed[label] = {typ: min(opts) for typ, opts in D.items()}
     if label in ab:
-        best_of_show[label] = B["P"]
+        best_of_show[label] = B["P"][-1]
     elif label in AnSn:
-        best_of_show[label] = B["T"]
+        best_of_show[label] = B["T"][-1]
     else:
         opts = sorted(B.items(), key=sort_key)
-        best = opts[0][1]
+        best = opts[0]
+        desc = best[1][-1]
         if best[0] in ["ZN", "Zq"]:
             # Want a better type to compute with; it would be nice to know if P or T was the better choice
             if "P" in B:
                 comp = B["P"][-1]
             else:
                 comp = B["T"][-1]
-            best_of_show[label] = f"{comp}---->{best[-1]}"
+            best_of_show[label] = f"{comp}---->{desc}"
         else:
-            best_of_show[label] = opts[0][-1]
+            best_of_show[label] = desc
 
 # Find smallest degree transitive permutation representations
 smalltrans = {}
