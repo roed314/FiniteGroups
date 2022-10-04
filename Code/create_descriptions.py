@@ -21,7 +21,7 @@ tbound = defaultdict(lambda: 48) # 48 is larger than any transitive degree in an
 for rec in db.gps_transitive.search({"gapid":{"$ne":0}}, ["order", "gapid", "n"]):
     label = f"{rec['order']}.{rec['gapid']}"
     tbound[label] = min(tbound[label], rec["n"])
-print("LMFDB data loaded")
+print("LMFDB data loaded in", walltime() - t0)
 
 os.makedirs(opj("DATA", "descriptions"), exist_ok=True)
 os.makedirs(opj("DATA", "preload"), exist_ok=True)
@@ -127,13 +127,13 @@ with open(opj("DATA", "aliases.txt")) as F:
             aut[G0] = label
         else:
             update_options(label, desc)
-print("Aliases loaded")
+print("Aliases loaded in", walltime() - t0)
 
 with open(opj("DATA", "mat_aliases.txt")) as F:
     for line in F:
         label, desc = line.strip().split()
         update_options(label, desc)
-print("Matrix aliases loaded")
+print("Matrix aliases loaded in", walltime() - t0)
 
 # Get polycyclic presentations from the pcreps folders
 def getpc(F):
@@ -188,7 +188,7 @@ for label, (pccode, compact, gens_used) in slookup.items():
     else:
         desc = f"{N}pc{compact}"
     aliases[label]["P"].append((len(gens_used), desc))
-print("PC reps loaded")
+print("PC reps loaded in", walltime() - t0)
 
 # Get minimal permutation presentations from the minreps folder
 minrep = {}
@@ -206,7 +206,7 @@ for label in os.listdir(opj("DATA", "minreps")):
         d = int(d)
         minrep[label] = (d, desc, gens)
         aliases[label]["T"].append((d, i, desc))
-print("Minreps loaded")
+print("Minreps loaded in", walltime() - t0)
 
 # Get set of abelian labels
 with open(opj("DATA", "abelian.txt")) as F:
@@ -234,7 +234,7 @@ def sort_key(item):
         return (n,) + (3,) + vec[1:]
     elif typ == "ZqM":
         return (n+1,) + (4,) + vec[1:]
-    elif typ == "ZN":
+    elif typ == "ZNM":
         return (n+2,) + (5,) + vec[1:]
     elif typ == "FqM":
         return (n+2,) + (6,) + vec[1:]
@@ -291,4 +291,4 @@ with open(opj("DATA", "to_add.txt")) as F:
         to_add[label] = (best_of_show[label], hsh, permdeg, pccode, tpermdeg) # also various reps: perm_gens, mat_gens, etc
         #with open(opj("DATA", "descriptions", label), "w") as F:
         #    _ = F.write(best_of_show[label])
-print("Finished in ", walltime() - t0)
+print("Finished in", walltime() - t0)
