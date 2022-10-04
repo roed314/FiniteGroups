@@ -267,8 +267,6 @@ for label, tbnd in tbound.items():
     if tbnd <= sibling_bound.get(label, 0) or N.valuation(2) < 5: # 32 is the only degree where our list is not complete
         smalltrans[label] = tbnd
 
-spectrum = sorted(set((D.get("P",[0])[0], D.get("T",[0])[0], D.get("M",[0])[0], D.get("L",[0])[0]) for D in best.values()))
-
 # NEED
 # Double check output of Minrep using intransitive and transitive groups
 # Redo GL(n,Z) and small matrix representations for orders already in the LMFDB
