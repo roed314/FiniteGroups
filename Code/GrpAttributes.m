@@ -1370,7 +1370,7 @@ intrinsic Socle(G::LMFDBGrp) -> Any
     if fail then spot +:= 1; else break; end if;
   end while;
   assert spot le #nl;
-  return nl! spot;
+  return Group(nl!spot);
 end intrinsic;
 
 intrinsic coset_action_label(H::LMFDBSubGrp) -> Any
@@ -1516,7 +1516,7 @@ intrinsic elt_rep_type(G:LMFDBGrp) -> Any
     elif Type(G`MagmaGrp) eq GrpPerm then
       return -Degree(G`MagmaGrp);
     elif Type(G`MagmaGrp) eq GrpMat then
-        R := CoefficientRing(G);
+        R := CoefficientRing(G`MagmaGrp);
         if R eq Integers() then
             return 1;
         elif Type(R) eq FldFin then

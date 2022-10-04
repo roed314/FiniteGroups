@@ -16,6 +16,11 @@ from collections import defaultdict
 
 slookup = {rec["label"]: (rec["pc_code"], None, rec["gens_used"]) for rec in db.gps_groups.search({"solvable":True}, ["label", "pc_code", "gens_used"])}
 nlookup = {rec["label"]: rec["perm_gens"] for rec in db.gps_groups.search({"solvable":False}, ["label", "perm_gens"])}
+sibling_bound = {rec["label"]: rec["bound_siblings"] for rec in db.gps_transitive.search({}, ["label", "bound_siblings"])}
+tbound = defaultdict(lambda: 48) # 48 is larger than any transitive degree in an nTt label
+for rec in db.gps_transitive.search({"gapid":{"$ne":0}}, ["order", "gapid", "n"]):
+    label = f"{rec['order']}.{rec['gapid']}"
+    tbound[label] = min(tbound[label], rec["n"])
 print("LMFDB data loaded")
 
 os.makedirs(opj("DATA", "descriptions"), exist_ok=True)
@@ -50,8 +55,12 @@ Spor_lookup = {
     "Co2": [("FpM", 22, 2), ("T", 2300, 0)],
     "Co1": [("FpM", 24, 2)],
 }
+SnT = dict(zip(range(2, 48), [1, 2, 5, 5, 16, 7, 50, 34, 45, 8, 301, 9, 63, 104, 1954, 10, 983, 8, 1117, 164, 59, 7, 25000, 211, 96, 2392, 1854, 8, 5712, 12, 2801324, 162, 115, 407, 121279, 11, 76, 306, 315842, 10, 9491, 10, 2113, 10923, 56, 6])) # The T-number for Sn in each degree; An is one less
 
-def update_options(D, desc):
+aliases = defaultdict(lambda: defaultdict(list))
+AnSn = set()
+def update_options(label, desc):
+    D = aliases[label]
     if "Perm" in desc:
         n = int(desc.split("Perm")[0])
         # favor transitive groups of the same degree
@@ -81,10 +90,15 @@ def update_options(D, desc):
                 D["ZqM"].append((d, k, p, desc))
     elif "T" in desc:
         n, i = [int(c) for c in desc.split("T")]
+        tbound[label] = min(tbound[label], n)
+        if n in SnT and i in [SnT[n], SnT[n] - 1]:
+            AnSn.add(label)
         D["T"].append((n, i, desc))
     elif "(" in desc:
+        cmd = desc.split("(")[0]
+        lie_codes = ["GL", "SL", "Sp", "SO", "SOPlus", "SOMinus", "SU", "GO", "GOPlus", "GOMinus", "GU", "CSp", "CSO", "CSOPlus", "CSOMinus", "CSU", "CO", "COPlus", "COMinus", "CU", "Omega", "OmegaPlus", "OmegaMinus", "Spin", "SpinPlus", "SpinMinus", "PGL", "PSL", "PSp", "PSO", "PSOPlus", "PSOMinus", "PSU", "PGO", "PGOPlus", "PGOMinus", "PGU", "POmega", "POmegaPlus", "POmegaMinus", "PGammaL", "PSigmaL", "PSigmaSp", "PGammaU", "AGL", "ASL", "ASp", "AGammaL", "ASigmaL", "ASigmaSp"]
         d, q = [int(c) for c in desc.split("(")[1].split(")")[0].split(",")]
-        D["L"].append((d, q, desc))
+        D["L"].append((d, lie_codes.index(cmd), q, desc))
     elif "Perf" in desc:
         i = int(desc[4:])
         D["T"].append((Perf_lookup[i], 5000000, desc))
@@ -103,7 +117,6 @@ def update_options(D, desc):
     else:
         raise ValueError("Unexpected description", desc)
 
-aliases = defaultdict(lambda: defaultdict(list))
 aut = {}
 with open(opj("DATA", "aliases.txt")) as F:
     for line in F:
@@ -113,13 +126,13 @@ with open(opj("DATA", "aliases.txt")) as F:
             assert G0 not in aut
             aut[G0] = label
         else:
-            update_options(aliases[label], desc)
+            update_options(label, desc)
 print("Aliases loaded")
 
 with open(opj("DATA", "mat_aliases.txt")) as F:
     for line in F:
         label, desc = line.strip().split()
-        update_options(aliases[label], desc)
+        update_options(label, desc)
 print("Matrix aliases loaded")
 
 # Get polycyclic presentations from the pcreps folders
@@ -200,9 +213,59 @@ with open(opj("DATA", "abelian.txt")) as F:
     ab = set(F.read().strip().split("\n"))
 
 # Pick best representative in each category
-best = {}
+# Abelian always PC
+# Use permutations for Sn and An
+# Use group of Lie type
+# Then compare (#gen for pc) to (deg of permrep)^3/5 to (deg of matrix group), choosing smallest, with a penalty for more complicated coefficient rings, favoring PC to Perm to Mat in case of tie
+best_of_breed = {}
+best_of_show = {}
+def sort_key(item):
+    typ, vec = item
+    n = vec[0]
+    if typ == "L":
+        return (-1,) + vec
+    elif typ == "P":
+        return (n,) + (0,) + vec[1:]
+    elif typ == "T":
+        return (n**0.6,) + (1,) + vec[1:]
+    elif typ == "ZM":
+        return (n,) + (2,) + vec[1:]
+    elif typ == "FpM":
+        return (n,) + (3,) + vec[1:]
+    elif typ == "ZqM":
+        return (n+1,) + (4,) + vec[1:]
+    elif typ == "ZN":
+        return (n+2,) + (5,) + vec[1:]
+    elif typ == "FqM":
+        return (n+2,) + (6,) + vec[1:]
+    else:
+        raise NotImplementedError
+
 for label, D in aliases.items():
-    best[label] = {typ: min(opts) for typ, opts in D.items()}
+    B = best_of_breed[label] = {typ: min(opts) for typ, opts in D.items()}
+    if label in ab:
+        best_of_show[label] = B["P"]
+    elif label in AnSn:
+        best_of_show[label] = B["T"]
+    else:
+        opts = sorted(B.items(), key=sort_key)
+        best = opts[0]
+        if best[0] in ["ZN", "Zq"]:
+            # Want a better type to compute with; it would be nice to know if P or T was the better choice
+            if "P" in B:
+                comp = B["P"][-1]
+            else:
+                comp = B["T"][-1]
+            best_of_show[label] = f"{comp}---->{best[-1]}"
+        else:
+            best_of_show[label] = opts[0][-1]
+
+# Find smallest degree transitive permutation representations
+smalltrans = {}
+for label, tbnd in tbound.items():
+    N = ZZ(label.split(".")[0])
+    if tbnd <= sibling_bound.get(label, 0) or N.valuation(2) < 5: # 32 is the only degree where our list is not complete
+        smalltrans[label] = tbnd
 
 spectrum = sorted(set((D.get("P",[0])[0], D.get("T",[0])[0], D.get("M",[0])[0], D.get("L",[0])[0]) for D in best.values()))
 
@@ -211,10 +274,7 @@ spectrum = sorted(set((D.get("P",[0])[0], D.get("T",[0])[0], D.get("M",[0])[0], 
 # Redo GL(n,Z) and small matrix representations for orders already in the LMFDB
 
 # RULES
-# Abelian always PC
-# Use permutations for Sn and An
-# Use group of Lie type
-# compare (#gen for pc) to (deg of permrep)^3/5 to (deg of matrix group), choosing smallest, favoring PC to Perm to Mat in case of tie
+# compare 
 
 to_add = {}
 with open(opj("DATA", "to_add.txt")) as F:
@@ -225,7 +285,10 @@ with open(opj("DATA", "to_add.txt")) as F:
         else:
             disp = comp = label = line
             N, hsh = label.split(".")
-        if label in minrep:
-            mrep = minrep[label]
-        to_add[label] = (hsh, disp, comp)
+        permdeg = minrep.get(label, (None,))[0]
+        pccode = slookup.get(label, (None,))[0]
+        tpermdeg = smalltrans.get(label, None)
+        to_add[label] = (best_of_show[label], hsh, permdeg, pccode, tpermdeg) # also various reps: perm_gens, mat_gens, etc
+        #with open(opj("DATA", "descriptions", label), "w") as F:
+        #    _ = F.write(best_of_show[label])
 print("Finished in ", walltime() - t0)

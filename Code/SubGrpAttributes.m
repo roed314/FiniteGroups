@@ -471,9 +471,9 @@ end intrinsic;
 intrinsic aut_stab_index(H::LMFDBSubGrp) -> Any
 {The index of Stab_A(H) in Aut(G); 1 for characteristic subgroups}
     W := Get(H, "aut_weyl_group"); // sets AutStab
-    N := (H`AutStab meet Stabilizer(Ambient, 1));
     G := H`Grp;
     Ambient := Get(G, "Holomorph");
+    N := (H`AutStab meet Stabilizer(Ambient, 1));
     return #Ambient div (#N * Get(H, "ambient_order"));
 end intrinsic;
 
@@ -494,8 +494,11 @@ intrinsic aut_quo_index(H::LMFDBSubGrp) -> Any
     Ambient := Get(G, "Holomorph");
     inj := Get(G, "HolInj");
     Q := Get(H, "Quotient");
+    if #Q eq 1 then
+        return 1;
+    end if;
     proj := Get(H, "QuotientMap");
-    gens := Generators(Q);
+    gens := [g : g in Generators(Q)];
     Ngens := Generators(N);
     lifts := [x @@ proj : x in gens];
     AQ := AutomorphismGroup(Q); // could be expensive, would be ideal to fetch this
