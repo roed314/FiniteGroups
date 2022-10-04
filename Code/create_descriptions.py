@@ -249,7 +249,7 @@ for label, D in aliases.items():
         best_of_show[label] = B["T"]
     else:
         opts = sorted(B.items(), key=sort_key)
-        best = opts[0]
+        best = opts[0][1]
         if best[0] in ["ZN", "Zq"]:
             # Want a better type to compute with; it would be nice to know if P or T was the better choice
             if "P" in B:
