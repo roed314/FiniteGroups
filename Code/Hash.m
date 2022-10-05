@@ -434,7 +434,7 @@ intrinsic IdentifyGroups(Glist::SeqEnum : hashes:=0) -> SeqEnum
         G := Glist[i];
         if CanIdentifyGroup(#G) then
             ans[i] := IdentifyGroup(G);
-        elif #G in [512, 1152, 1536, 1920] then
+        elif #G in [512, 1152, 1536, 1920, 2187, 6561, 15625, 16807, 78125, 161051] then
             ordhsh := Sprintf("%o.%o", #G, hashes[i]);
             j := Index(toid, ordhsh);
             if j eq 0 then
