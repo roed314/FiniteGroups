@@ -241,6 +241,7 @@ def sort_key(item):
     else:
         raise NotImplementedError
 
+problems = []
 for label, D in aliases.items():
     B = best_of_breed[label] = {typ: min(opts) for typ, opts in D.items()}
     if label in ab:
@@ -255,8 +256,11 @@ for label, D in aliases.items():
             # Want a better type to compute with; it would be nice to know if P or T was the better choice
             if "P" in B:
                 comp = B["P"][-1]
-            else:
+            elif "T" in B:
                 comp = B["T"][-1]
+            else:
+                problems.append(label)
+                comp = desc
             best_of_show[label] = f"{comp}---->{desc}"
         else:
             best_of_show[label] = desc
