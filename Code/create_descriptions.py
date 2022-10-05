@@ -275,6 +275,7 @@ for label, tbnd in tbound.items():
 # RULES
 # compare 
 
+special_names = []
 to_add = {}
 with open(opj("DATA", "to_add.txt")) as F:
     for line in F:
@@ -287,7 +288,16 @@ with open(opj("DATA", "to_add.txt")) as F:
         permdeg = minrep.get(label, (None,))[0]
         pccode = slookup.get(label, (None,))[0]
         tpermdeg = smalltrans.get(label, None)
-        to_add[label] = (best_of_show[label], hsh, permdeg, pccode, tpermdeg) # also various reps: perm_gens, mat_gens, etc
+        ZMgens = best_of_breed[label].get("ZM", (None,))[-1]
+        FpMgens = best_of_breed[label].get("FpM", (None,))[-1]
+        if FpMgens is None:
+            ZNMgens = best_of_breed[label].get("ZqM", best_of_breed[label].get("ZNM", (None,)))[-1]
+            FqMgens = best_of_breed[label].get("FqM", (None,))[-1]
+        else:
+            ZNMgens = FqMgens = None
+        permgens = best_of_breed[label].get("T", (None,))[-1]
+        special_names.extend([{"family": desc.split("(")[0], {"n": n, "q": q}, "label": label} for (n, code, q, desc) in aliases[label].get("L", [])])
+        to_add[label] = (best_of_show[label], hsh, permdeg, tpermdeg, pccode, permgens, ZMgens, FpMgens, ZNMgens, FqMgens, ZNMgens) # also various reps: perm_gens, mat_gens, etc
         #with open(opj("DATA", "descriptions", label), "w") as F:
         #    _ = F.write(best_of_show[label])
 print("Finished in", walltime() - t0)
