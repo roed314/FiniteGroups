@@ -457,6 +457,7 @@ intrinsic IdentifyGroups(Glist::SeqEnum : hashes:=0) -> SeqEnum
         System(Sprintf("rm %o %o.out", fname, fname));
         assert #possibilities eq #toid;
         // This will need to be updated when we add support for large orders
+        StanPres := AssociativeArray();
         for i in [1..#Glist] do
             G := Glist[i];
             if #G in SMALLHASH_ORDERS then
@@ -486,7 +487,10 @@ intrinsic IdentifyGroups(Glist::SeqEnum : hashes:=0) -> SeqEnum
                         end if;
                     end if;
                     for pair in poss do
-                        H := SmallGroup(pair[1], pair[2]);
+                        if not IsDefined(StanPres, pair) then
+                            StanPres[pair] := StandardPresentation(SmallGroup(pair[1], pair[2]));
+                        end if;
+                        H := StanPres[pair];
                         if IsPrimePower(#G) and IsIdenticalPresentation(G, H) or not IsPrimePower(#G) and (solv and IsIsomorphicSolubleGroup(G, H) or not solv and IsIsomorphic(G, H)) then
                             ans[i] := pair;
                             break;
