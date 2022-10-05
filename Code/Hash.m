@@ -419,6 +419,7 @@ intrinsic ReduceByOrbits(G::GrpPerm) -> GrpPerm
     return H;
 end intrinsic;
 
+SMALLHASH_ORDERS := [512, 1152, 1536, 1920, 2187, 6561, 15625, 16807, 78125, 161051];
 intrinsic IdentifyGroups(Glist::SeqEnum : hashes:=0) -> SeqEnum
 {Identify groups if small it will use IdentifyGroup; if medium lookup in gps_smallhash; if large currently raise an error (eventually will use hashes stored in gps_groups)}
     if hashes cmpeq 0 then
@@ -434,7 +435,7 @@ intrinsic IdentifyGroups(Glist::SeqEnum : hashes:=0) -> SeqEnum
         G := Glist[i];
         if CanIdentifyGroup(#G) then
             ans[i] := IdentifyGroup(G);
-        elif #G in [512, 1152, 1536, 1920, 2187, 6561, 15625, 16807, 78125, 161051] then
+        elif #G in SMALLHASH_ORDERS then
             ordhsh := Sprintf("%o.%o", #G, hashes[i]);
             j := Index(toid, ordhsh);
             if j eq 0 then
@@ -458,7 +459,7 @@ intrinsic IdentifyGroups(Glist::SeqEnum : hashes:=0) -> SeqEnum
         // This will need to be updated when we add support for large orders
         for i in [1..#Glist] do
             G := Glist[i];
-            if #G in [512, 1152, 1536, 1920] then
+            if #G in SMALLHASH_ORDERS then
                 poss := possibilities[translate[i]];
                 if #poss eq 1 then
                     if poss[1][2] eq 0 then
@@ -468,7 +469,7 @@ intrinsic IdentifyGroups(Glist::SeqEnum : hashes:=0) -> SeqEnum
                     ans[i] := poss[1];
                 else
                     vprint User1: Sprintf("%o/%o: Iterating through %o possible groups", i, #Glist, #poss);
-                    if #G eq 512 then
+                    if IsPrimePower(#G) then
                         solv := true;
                         if Category(G) ne GrpPC then
                             G := PCGroup(G);
@@ -486,7 +487,7 @@ intrinsic IdentifyGroups(Glist::SeqEnum : hashes:=0) -> SeqEnum
                     end if;
                     for pair in poss do
                         H := SmallGroup(pair[1], pair[2]);
-                        if #G eq 512 and IsIdenticalPresentation(G, H) or #G ne 512 and (solv and IsIsomorphicSolubleGroup(G, H) or not solv and IsIsomorphic(G, H)) then
+                        if IsPrimePower(#G) and IsIdenticalPresentation(G, H) or not IsPrimePower(#G) and (solv and IsIsomorphicSolubleGroup(G, H) or not solv and IsIsomorphic(G, H)) then
                             ans[i] := pair;
                             break;
                         end if;
