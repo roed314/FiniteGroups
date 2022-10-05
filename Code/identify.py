@@ -19,7 +19,7 @@ with open(os.devnull, 'w') as F:
         sys.stdout = savedstdout
         sys.stderr = savedstderr
 
-SMALLHASHED = [512, 1152, 1536, 1920]
+SMALLHASHED = [512, 1152, 1536, 1920, 2187, 6561, 15625, 16807, 78125, 161051]
 
 parser = argparse.ArgumentParser()
 parser.add_argument("-i", "--input", help="file containing the hashes to identify, one per line, each of the form N.hsh")
