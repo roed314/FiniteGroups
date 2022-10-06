@@ -16,8 +16,36 @@ elif "---->" in desc then
     GG, HH := Explode(PySplit(desc, "---->"));
     G := StringToGroup(GG);
     H := StringToGroup(HH);
-    ok, f := IsIsomorphic(G, H);
+    assert #G eq #H;
+    //ok, f := IsIsomorphic(G, H); // this was failing
+    SG := Subgroups(G);
+    SH := Subgroups(H);
+    assert #SG eq #SH;
+    CG := [X`subgroup : X in SG | #Core(G, X`subgroup) eq 1];
+    CH := [X`subgroup : X in SH | #Core(H, X`subgroup) eq 1];
+    assert #CG eq #CH;
+    mG := Max([#X : X in CG]); // May be better to choose another order rather than the maximum, if there are fewer conjugacy classes of subgroups of that order.  Extreme case would be regular representation.
+    m := Max([#X : X in CH]);
+    assert m eq mG;
+    CG := [X : X in CG | #X eq mG];
+    CH := [X : X in CH | #X eq m];
+    assert #CG eq #CH;
+    Sn := Sym(#G div m);
+    A := CG[1];
+    rhoA := CosetAction(G, A);
+    PA := Image(rhoA);
+    ok := false;
+    for i in [1..#CH] do
+        B := CH[i];
+        rhoB := CosetAction(H, B);
+        PB := Image(rhoB);
+        ok, c := IsConjugate(Sn, PA, PB);
+        if ok then
+            break;
+        end if;
+    end for;
     assert ok;
+    f := hom<G -> H | [g -> ((g @ rhoA)^c) @@ rhoB : g in Generators(G)]>;
     fdesc := GroupHomToString(f : GG:=GG, HH:=HH);
 else
     error "Unrecognized homomorphism specification";
