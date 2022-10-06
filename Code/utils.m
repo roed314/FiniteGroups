@@ -345,6 +345,18 @@ intrinsic SplitMATRIXCodes(L::MonStgElt, d::RngIntElt, Rcode::MonStgElt, b::MonS
     return L, R;
 end intrinsic;
 
+function dbFromdR(dR)
+    dR := Split(dR, ",");
+    if dR[2] eq "0" then
+        d, Rcode, b := Explode(dR);
+    else
+        d, Rcode := Explode(dR);
+        b := "";
+    end if;
+    d := StringToInteger(d);
+    return d, b;
+end function;
+
 intrinsic StringToGroup(s::MonStgElt) -> Grp
 {}
     // We want to support iterated constructions separated by hyphens, but also need to handle negative signs
@@ -421,14 +433,7 @@ intrinsic StringToGroup(s::MonStgElt) -> Grp
         return MatrixGroup<d, R| L >;
     elif "MAT" in s then // encode matrices as integers rather than hex strings
         dR, L := Explode(Split(s, "MAT"));
-        dR := Split(dR, ",");
-        if dR[2] eq "0" then
-            d, Rcode, b := Explode(dR);
-        else
-            d, Rcode := Explode(dR);
-            b := "";
-        end if;
-        d := StringToInteger(d);
+        d, b := dbFromdR(dR);
         L, R := SplitMATRIXCodes(L, d, Rcode, b);
         return MatrixGroup<d, R| L >;
     elif "Perm" in s then
@@ -450,8 +455,12 @@ intrinsic StringToGroup(s::MonStgElt) -> Grp
         cmd, data := Explode(Split(s[1..#s-1], "("));
         n, q := Explode([StringToInteger(c) : c in Split(data, ",")]);
         assert cmd in ["GL", "SL", "Sp", "SO", "SOPlus", "SOMinus", "SU", "GO", "GOPlus", "GOMinus", "GU", "CSp", "CSO", "CSOPlus", "CSOMinus", "CSU", "CO", "COPlus", "COMinus", "CU", "Omega", "OmegaPlus", "OmegaMinus", "Spin", "SpinPlus", "SpinMinus", "PGL", "PSL", "PSp", "PSO", "PSOPlus", "PSOMinus", "PSU", "PGO", "PGOPlus", "PGOMinus", "PGU", "POmega", "POmegaPlus", "POmegaMinus", "PGammaL", "PSigmaL", "PSigmaSp", "PGammaU", "AGL", "ASL", "ASp", "AGammaL", "ASigmaL", "ASigmaSp"];
-        cmd := eval cmd;
-        return cmd(n, q);
+        CMD := eval cmd;
+        if cmd in ["AGL", "ASL", "ASp", "AGammaL", "ASigmaL", "ASigmaSp"] then
+            return CMD(GrpMat, n, q);
+        else
+            return CMD(n, q);
+        end if;
     elif s in ["J1", "J2", "HS", "J3", "McL", "He", "Ru", "Co3", "Co2", "Co1"] then
         return StringToGroup(sporadic_codes[s]);
     elif "." in s then
@@ -700,25 +709,38 @@ intrinsic StringToGroupHom(s::MonStgElt) -> Map, BoolElt
         if #pieces ne 3 then
             error "Invalid hom string with", #pieces-1, "-- segments";
         end if;
-        G, f, H := Explode(pieces);
-        assert #H gt 1 and H[1] eq ">";
-        if H[2] eq ">" then
+        G, f, HH := Explode(pieces);
+        assert #HH gt 1 and HH[1] eq ">";
+        if HH[2] eq ">" then
             cover := true;
-            H := H[3..#H];
+            HH := HH[3..#HH];
         else
             cover := false;
-            H := H[2..#H];
+            HH := HH[2..#HH];
         end if;
         G := StringToGroup(G);
-        H := StringToGroup(H);
+        H := StringToGroup(HH);
         if Type(H) eq GrpMat then
             Rcode := CoefficientRingCode(CoefficientRing(H));
-            f := SplitMATRIXCodes(f, Rcode);
+            if "MAT" in HH then
+                dR, L := Explode(Split(HH, "MAT"));
+                d, b := dbFromdR(dR);
+            elif "Mat" in HH then
+                dR, L := Explode(Split(HH, "Mat"));
+                d, b := dbFromdR(dR);
+            else
+                assert IsFinite(CoefficientRing(H));
+                d := Degree(H);
+                b := "";
+            end if;
+            f := SplitMATRIXCodes(f, d, Rcode, b);
         else
             f := Split(f, ",");
             f := [LoadElt(m, H) : m in f];
         end if;
-        return hom<G -> H | f>, cover;
+        Ggens := [g : g in Generators(G)];
+        assert #Ggens eq #f;
+        return hom<G -> H | [Ggens[i] -> f[i] : i in [1..#Ggens]]>, cover;
     elif s[#s] eq ")" and #Split(s, "(") eq 2 and Split(s, "(")[1] in ["PGL", "PSL", "PSp", "PSO", "PSOPlus", "PSOMinus", "PSU", "PGO", "PGOPlus", "PGOMinus", "PGU", "POmega", "POmegaPlus", "POmegaMinus", "PGammaL", "PSigmaL", "PSigmaSp", "PGammaU"] then
         cmd, data := Explode(Split(s[1..#s-1], "("));
         n, q := Explode([StringToInteger(c) : c in Split(data, ",")]);
@@ -748,19 +770,23 @@ intrinsic StringToGroupHom(s::MonStgElt) -> Map, BoolElt
     end if;
 end intrinsic;
 
-intrinsic GroupHomToString(f::Map : cover:=false) -> MonStgElt
+intrinsic GroupHomToString(f::Map : cover:=false, GG:="", HH:="") -> MonStgElt
 {}
     G := Domain(f);
     H := Codomain(f);
     if G cmpeq H and &and[f(g) eq g : g in Generators(G)] then
         return GroupToString(G : use_id:=false);
     end if;
-    GG := GroupToString(G : use_id:=false);
-    HH := GroupToString(H : use_id:=false);
+    if #GG eq 0 then
+        GG := GroupToString(G : use_id:=false);
+    end if;
+    if #HH eq 0 then
+        HH := GroupToString(H : use_id:=false);
+    end if;
     arrowhead := cover select ">>" else ">";
     if Type(H) eq GrpMat then
-        L, R := MatricesToHexlist([f(g) : g in Generators(G)], CoefficientRing(H));
-        fdef := &*[Sprint(c) : c in L];
+        L, R := MatricesToIntegers([f(g) : g in Generators(G)], CoefficientRing(H));
+        fdef := Join([Sprint(c) : c in L], ",");
     else
         fdef := Join([SaveElt(f(x)) : x in Generators(G)], ",");
     end if;
