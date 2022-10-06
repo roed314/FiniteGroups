@@ -28,12 +28,32 @@ intrinsic ReplaceString(s::MonStgElt, fs::MonStgElt, ts::MonStgElt) -> MonStgElt
 end intrinsic;
 
 intrinsic ReplaceString(s::MonStgElt, fs::[MonStgElt], ts::[MonStgElt]) -> MonStgElt
-  {Return a string obtained from the string s by replacing all occurences of strings in fs with strings in ts.}
-  // assert not (true in [ts[i] in s : i in [1..#ts]]);
-  for i:=1 to #fs do
-    s:=ReplaceString(s,fs[i],ts[i]);
-  end for;
-  return s;
+{Return a string obtained from the string s by replacing all occurences of strings in fs with strings in ts.}
+    // assert not (true in [ts[i] in s : i in [1..#ts]]);
+    for i:=1 to #fs do
+        s:=ReplaceString(s,fs[i],ts[i]);
+    end for;
+    return s;
+end intrinsic;
+
+intrinsic PySplit(s::MonStgElt, sep::MonStgElt : limit:=-1) -> SeqEnum[MonStgElt]
+{Splits using Python semantics (different when #sep > 1, and different when sep at beginning or end)}
+    if #sep eq 0 then
+        error "Empty separator";
+    end if;
+    i := 1;
+    j := 0;
+    ans := [];
+    while limit gt 0 or limit eq -1 do
+        if limit ne -1 then limit -:= 1; end if;
+        pos := Index(s, sep, i);
+        if pos eq 0 then break; end if;
+        j := pos - 1;
+        Append(~ans, s[i..j]);
+        i := j + #sep + 1;
+    end while;
+    Append(~ans, s[i..#s]);
+    return ans;
 end intrinsic;
 
 // procedure versions
@@ -426,26 +446,26 @@ intrinsic StringToGroup(s::MonStgElt) -> Grp
         q := StringToInteger(q);
         return ChevalleyGroup(series, n, q);
     elif "Mat" in s then
-        dR, L := Explode(Split(s, "Mat"));
+        dR, L := Explode(PySplit(s, "Mat"));
         d, Rcode := Explode(Split(dR, ","));
         d := StringToInteger(d);
         L, R := SplitMatrixCodes(L, d, Rcode);
         return MatrixGroup<d, R| L >;
     elif "MAT" in s then // encode matrices as integers rather than hex strings
-        dR, L := Explode(Split(s, "MAT"));
+        dR, L := Explode(PySplit(s, "MAT"));
         d, b := dbFromdR(dR);
         L, R := SplitMATRIXCodes(L, d, Rcode, b);
         return MatrixGroup<d, R| L >;
     elif "Perm" in s then
-        n, L := Explode(Split(s, "Perm"));
+        n, L := Explode(PySplit(s, "Perm"));
         n := StringToInteger(n);
         L := [DecodePerm(StringToInteger(c), n) : c in Split(L, ",")];
         return PermutationGroup<n | L>;
     elif "PC" in s then
-        N, code := Explode([StringToInteger(c) : c in Split(s, "PC")]);
+        N, code := Explode([StringToInteger(c) : c in PySplit(s, "PC")]);
         return SmallGroupDecoding(code, N);
     elif "pc" in s then
-        N, compact := Explode(Split(s, "pc"));
+        N, compact := Explode(PySplit(s, "pc"));
         compact := [StringToInteger(c) : c in Split(compact, ",")];
         return PCGroup(compact);
     elif s[#s] eq ")" and #Split(s, "(") eq 2 then
@@ -705,7 +725,7 @@ intrinsic StringToGroupHom(s::MonStgElt) -> Map, BoolElt
 {Returns the map described, together with a boolean describing whether elements should be lifted from the codomain to the domain (indicated by a >> arrowhead) or mapped from the domain to the codomain (true in first case, false in second)}
     if "--" in s then
         // Describe the homomorphism explicitly
-        pieces := Split(s, "--");
+        pieces := PySplit(s, "--");
         if #pieces ne 3 then
             error "Invalid hom string with", #pieces-1, "-- segments";
         end if;
@@ -723,10 +743,10 @@ intrinsic StringToGroupHom(s::MonStgElt) -> Map, BoolElt
         if Type(H) eq GrpMat then
             Rcode := CoefficientRingCode(CoefficientRing(H));
             if "MAT" in HH then
-                dR, L := Explode(Split(HH, "MAT"));
+                dR, L := Explode(PySplit(HH, "MAT"));
                 d, b := dbFromdR(dR);
             elif "Mat" in HH then
-                dR, L := Explode(Split(HH, "Mat"));
+                dR, L := Explode(PySplit(HH, "Mat"));
                 d, b := dbFromdR(dR);
             else
                 assert IsFinite(CoefficientRing(H));
@@ -797,7 +817,7 @@ end intrinsic;
 intrinsic PStringToHomString(s::MonStgElt) -> MonStgElt
 {}
     f := StringToGroupHom(s);
-    desc := Split(GroupHomToString(f), "--")[2];
+    desc := PySplit(GroupHomToString(f), "--")[2];
     cmd, data := Explode(Split(s[1..#s-1], "("));
     n, q := Explode([StringToInteger(c) : c in Split(data, ",")]);
     if "amma" in cmd or "igma" in cmd then

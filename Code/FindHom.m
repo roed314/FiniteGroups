@@ -1,4 +1,4 @@
-// USAGE: ls DATA/hom.todo | paralel -j80 --timeout 600 magma -b label:={1} FindHom.m
+// USAGE: ls DATA/hom.todo | parallel -j80 --timeout 600 magma -b label:={1} FindHom.m
 // Finds a homomorphism to fill out a GroupHom description
 
 AttachSpec("spec");
@@ -13,7 +13,7 @@ fdesc := "";
 if "(" in desc and desc[1] eq "P" then
     fdesc := PStringToHomString(desc);
 elif "---->" in desc then
-    GG, HH := Explode(Split(desc, "---->"));
+    GG, HH := Explode(PySplit(desc, "---->"));
     G := StringToGroup(GG);
     H := StringToGroup(HH);
     ok, f := IsIsomorphic(G, H);
