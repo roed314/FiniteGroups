@@ -365,7 +365,7 @@ intrinsic SplitMATRIXCodes(L::MonStgElt, d::RngIntElt, Rcode::MonStgElt, b::MonS
     return L, R;
 end intrinsic;
 
-function dbFromdR(dR)
+function dbcFromdR(dR)
     dR := Split(dR, ",");
     if dR[2] eq "0" then
         d, Rcode, b := Explode(dR);
@@ -374,7 +374,7 @@ function dbFromdR(dR)
         b := "";
     end if;
     d := StringToInteger(d);
-    return d, b;
+    return d, b, Rcode;
 end function;
 
 intrinsic StringToGroup(s::MonStgElt) -> Grp
@@ -453,7 +453,7 @@ intrinsic StringToGroup(s::MonStgElt) -> Grp
         return MatrixGroup<d, R| L >;
     elif "MAT" in s then // encode matrices as integers rather than hex strings
         dR, L := Explode(PySplit(s, "MAT"));
-        d, b := dbFromdR(dR);
+        d, b, Rcode := dbcFromdR(dR);
         L, R := SplitMATRIXCodes(L, d, Rcode, b);
         return MatrixGroup<d, R| L >;
     elif "Perm" in s then
@@ -741,13 +741,12 @@ intrinsic StringToGroupHom(s::MonStgElt) -> Map, BoolElt
         G := StringToGroup(G);
         H := StringToGroup(HH);
         if Type(H) eq GrpMat then
-            Rcode := CoefficientRingCode(CoefficientRing(H));
             if "MAT" in HH then
                 dR, L := Explode(PySplit(HH, "MAT"));
-                d, b := dbFromdR(dR);
+                d, b, Rcode := dbcFromdR(dR);
             elif "Mat" in HH then
                 dR, L := Explode(PySplit(HH, "Mat"));
-                d, b := dbFromdR(dR);
+                d, b, Rcode := dbcFromdR(dR);
             else
                 assert IsFinite(CoefficientRing(H));
                 d := Degree(H);
