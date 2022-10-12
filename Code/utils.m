@@ -201,6 +201,16 @@ intrinsic IndexFibers(S::SeqEnum, f::UserProgram) -> Assoc
     return A;
 end intrinsic;
 
+intrinsic CountFibers(S::SeqEnum, f::UserProgram : sort:=true) -> SeqEnum
+{Given a list of objects S and a function f on S creates an list of pairs <y, m> where m is the number of s in S with f(s) = y.}
+    A := IndexFibers(S, f);
+    C := [<y, #vals> : y -> vals in A];
+    if sort then
+        Sort(~C);
+    end if;
+    return C;
+end intrinsic;
+
 intrinsic AssociativeArrayToMap(xs :: Assoc, codomain) -> Map
   {The map from Keys(xs) to codomain implied by xs.}
   return map<Keys(xs) -> codomain | k :-> xs[k]>;

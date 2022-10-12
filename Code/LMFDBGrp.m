@@ -3,6 +3,8 @@ declare verbose LMFDBGrp, 1;
 declare type LMFDBGrp;
 declare attributes LMFDBGrp:
   MagmaGrp,
+  ElementReprHom,
+  ElementReprCovers,
   Subgroups,
   NormalSubgroups,
   SubGrpLst,
@@ -108,7 +110,11 @@ declare attributes LMFDBGrp:
   smith_abelian_invariants,
   schur_multiplier,
   order_stats,
-  //irrep_stats,
+  cc_stats,
+  div_stats,
+  aut_stats,
+  irrep_stats,
+  ratrep_stats,
   elt_rep_type,
   perm_gens,
   hash,

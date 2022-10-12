@@ -7,7 +7,7 @@ desc := Read(infile);
 SetVerbose("User1", 1); // for testing
 G := MakeBigGroup(desc, label);
 Preload(G);
-headers := [* "basic", "labeling", "aut", "conj", <"ConjugacyClasses", "conjagg">, "schur", "wreath", "charc", <"CCCharacters", "charcagg">, "charq", <"QQCharacters", "charqagg">, "sub", <"Subgroups", "subagg">, "name" *];
+headers := [* "basic", "labeling", "conj", "aut", <"ConjugacyClasses", "conjagg">, "schur", "wreath", "charc", <"CCCharacters", "charcagg">, "charq", <"QQCharacters", "charqagg">, "sub", <"Subgroups", "subagg">, "name" *];
 t0 := Cputime();
 // Iteratively try to save different attributes, so that timeouts are handled gracefully
 for X in headers do

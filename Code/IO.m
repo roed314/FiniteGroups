@@ -9,7 +9,7 @@ TextListCols := ["composition_factors", "special_labels", "wreath_data"];
 
 IntegerListCols := ["cycle_type", "denominators", "factors_of_aut_order", "faithful_reps", "powers", "primary_abelian_invariants", "schur_multiplier", "smith_abelian_invariants", "subgroup_fusion", "nt","qvalues","trace_field"];
 SmallintListCols := ["factors_of_order", "gens_used", "exponents_of_order"];
-NumericListCols := ["order_stats","field"];
+NumericListCols := ["order_stats","cc_stats","div_stats","aut_stats","irrep_stats","ratrep_stats","field"];
 
 BoolCols := ["Agroup", "Zgroup", "abelian", "all_subgroups_known", "almost_simple", "central", "central_product", "characteristic", "cyclic", "direct", "direct_product", "faithful", "finite_matrix_group", "indecomposible", "irreducible", "maximal", "maximal_normal", "maximal_subgroups_known", "metabelian", "metacyclic", "minimal", "minimal_normal", "monomial", "nilpotent", "normal", "normal_subgroups_known", "outer_equivalence", "perfect", "prime", "primitive", "quasisimple", "rational", "semidirect_product", "simple", "solvable", "split", "stem", "subgroup_inclusions_known", "supersolvable", "sylow_subgroups_known", "wreath_product", "standard_generators", "quotient_cyclic", "quotient_abelian", "quotient_solvable", "proper", "complete"];
 
@@ -174,13 +174,35 @@ intrinsic LoadElt(inp::MonStgElt, GG::Grp) -> Any
         error "Other group types not yet supported";
     end if;
 end intrinsic;
+
 intrinsic LoadElt(inp::MonStgElt, G::LMFDBGrp) -> Any
-    {}
+{}
+    if assigned G`ElementReprCovers then
+        assert assigned G`ElementReprHom;
+        cover := G`ElementReprCovers;
+        f := G`ElementReprHom;
+        if cover then
+            GG := Domain(f);
+        else
+            GG := Codomain(f);
+        end if;
+    else
+        GG := G`MagmaGrp;
+    end if;
     // For PCGroups, we have loaded the group from its pc_code since we're using a different presentation
-    return LoadElt(inp, G`MagmaGrp);
+    inp := LoadElt(inp, GG);
+    if assigned G`ElementReprCovers then
+        if cover then
+            inp := inp @ f;
+        else
+            inp := inp @@ f;
+        end if;
+    end if;
+    return inp;
 end intrinsic;
+
 intrinsic SaveElt(out::GrpElt) -> MonStgElt
-    {}
+{}
     GG := Parent(out);
     if Type(out) eq GrpPCElt then
         n := 0;
@@ -198,14 +220,28 @@ intrinsic SaveElt(out::GrpElt) -> MonStgElt
     end if;
 end intrinsic;
 
+intrinsic SaveElt(out::GrpElt, G::LMFDBGrp) -> MonStgElt
+{}
+    if assigned G`ElementReprCovers then
+        assert assigned G`ElementReprHom;
+        f := G`ElementReprHom;
+        if G`ElementReprCovers then
+            out := out @@ f;
+        else
+            out := out @ f;
+        end if;
+    end if;
+    return SaveElt(out);
+end intrinsic;
+
 intrinsic LoadEltList(inp::MonStgElt, G::LMFDBGrp) -> SeqEnum
     {}
     assert inp[1] eq "{" and inp[#inp] eq "}";
     return [LoadElt(x, G) : x in Split(Substring(inp, 2, #inp-2), ",")];
 end intrinsic;
-intrinsic SaveEltList(out::SeqEnum) -> MonStgElt
+intrinsic SaveEltList(out::SeqEnum, G::LMFDBGrp) -> MonStgElt
     {}
-    return "{" * Join([SaveElt(x) : x in out], ",") * "}";
+    return "{" * Join([SaveElt(x, G) : x in out], ",") * "}";
 end intrinsic;
 
 intrinsic LoadSubgroupList(inp::MonStgElt, G::LMFDBGrp) -> SeqEnum
@@ -278,9 +314,9 @@ intrinsic SaveAttr(attr::MonStgElt, val::Any, obj::Any) -> MonStgElt
     elif attr in PermsCols then
         return SavePerms(val);
     elif attr in EltCols then
-        return SaveElt(val);
+        return SaveElt(val, GetGrp(obj));
     elif attr in EltListCols then
-        return SaveEltList(val);
+        return SaveEltList(val, GetGrp(obj));
     elif attr in SubgroupCols then
         if attr eq "sub1" then
             G := Get(obj, "G1");

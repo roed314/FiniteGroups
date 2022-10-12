@@ -50,64 +50,87 @@ intrinsic nonrandomG(~state::Any, gen_seq::SeqEnum, ord_seq::SeqEnum, ~result::A
   end for;
 end intrinsic;
 
-// Pass in the group data
-intrinsic ordercc(g::Any,cc::Any,cm::Any,pm::Any,gens::Any: dorandom:=true) -> Any
-  {Take a Magma group, the conjugacy class, class map, power map, and
-   generators, and return ordered classes and labels.}
-  ncc:=#cc;
-  gens:=[z : z in gens];
-  if gens eq [] then
-    gens := [Id(g)];
-  end if;
-  // Step 1 partitions the classes based on the order of a generator
-  // and the size of the class
-  step1:=AssociativeArray();
-  for j:=1 to ncc do
-    c:=cc[j];
-    if IsDefined(step1, [c[1],c[2]]) then
-        Include(~step1[[c[1],c[2]]], j);
-    else
-      step1[[c[1],c[2]]] := {j};
-    end if;
-  end for;
-  // List indicating which classes are maximal w.r.t. powering
-  ismax:=[true : z in cc];
-  for j:=1 to ncc do
-    dlist := Divisors(cc[j][1]);
-    for k:=2 to #dlist-1 do
-      ismax[pm(j, dlist[k])] := false;
+function makedivs(v, C, pm)
+    // v is a set of integers, indexing into C
+    // C = ConjugacyClasses(G)
+    // pm = PowerMap(G)
+    if #v eq 1 then return [v]; end if;
+    divs := [];
+    while #li gt 0 do
+        r := Rep(v);
+        newdiv := {r};
+        Exclude(~v, r);
+        for j:=1 to C[r][1]-1 do
+            if GCD(j, C[r][1]) eq 1 then
+                c := pm(r, j);
+                Include(~newdiv, c);
+                Exclude(~v, c);
+            end if;
+            if #v eq 0 then break; end if;
+        end for;
+        Append(~divs, newdiv);
+    end while;
+    return divs;
+end function;
+
+intrinsic MagmaDivisions(G::LMFDBGrp) -> SeqEnum
+{A list of triples [o, s, D], where o is the order of elements in the division, s is the size of a CONJUGACY CLASS in the division, and D is a set of indexes into the list of conjugacy classes}
+    C := Get(G, "MagmaConjugacyClasses");
+    pm := Get(G, "MagmaPowerMap");
+    // Step 1 partitions the classes based on the order of a generator
+    // and the size of the class
+    by_ordsize := AssociativeArray();
+    for j:= 1 to #C do
+        c := C[j];
+        os := [c[1], c[2]];
+        if IsDefined(by_ordsize, os) then
+            Include(~by_ordsize[os], j);
+        else
+            by_ordsize[os] := {j};
+        end if;
     end for;
-    // Just in case the identity is not first
-    if j eq 1 then ismax[pm(1, cc[1][1])] := false; end if;
-  end for;
   // Separate a set of classes into divisions
   // The order of a rep is cc[r][1].  This could be more efficient
   // if we used generators for (Z/nZ)^* where n=cc[r][1]
-  makedivs := function(li)
-    if #li eq 1 then return [li]; end if;
-    divs:=[];
-    while #li gt 0 do
-      r:=Rep(li);
-      newdiv:={r};
-      Exclude(~li, r);
-      for j:=1 to cc[r][1]-1 do
-        if GCD(j, cc[r][1]) eq 1 then
-          c:=pm(r, j);
-          Include(~newdiv, c);
-          Exclude(~li, c);
+    divisions := [];
+    for os in Sort(Keys(by_ordsize)) do
+        for division in makedivs(by_ordsize[os], C, pm) do
+            Append(~divisions, <os[1], os[2], division>);
+        end for;
+    end for;
+    return divisions;
+end intrinsic;
+
+// Pass in the group data
+intrinsic ordercc(G::LMFDBGrp, gens::SeqEnum: dorandom:=true) -> Any
+{Take an LMFDB group, and a sequence of generators and return ordered classes and labels.}
+    g := G`MagmaGrp;
+    cc := Get(G, "MagmaConjugacyClasses");
+    cm := Get(G, "MagmaClassMap");
+    pm := Get(G, "MagmaPowerMap");
+    ncc:=#cc;
+    if gens eq [] then
+        gens := [Id(g)];
+    end if;
+    // List indicating which classes are maximal w.r.t. powering
+    ismax:=[true : z in cc];
+    for j:=1 to ncc do
+        dlist := Divisors(cc[j][1]);
+        for k:=2 to #dlist-1 do
+            ismax[pm(j, dlist[k])] := false;
+        end for;
+        // Just in case the identity is not first
+        if j eq 1 then ismax[pm(1, cc[1][1])] := false; end if;
+    end for;
+    step1 := AssociativeArray();
+    for division in Get(G, "MagmaDivisions") do
+        os := [division[1], division[2]];
+        if IsDefined(step1, os) then
+            Append(~step1[os], division[3]);
+        else
+            step1[os] := [division[3]];
         end if;
-        if #li eq 0 then break; end if;
-      end for;
-      Append(~divs, newdiv);
-    end while;
-    return divs;
-  end function;
-  // Now partition into divisions
-  number_divisions := 0;
-  for k->v in step1 do
-    step1[k] := makedivs(step1[k]);
-    number_divisions +:= #step1[k];
-  end for;
+    end for;
 
   // Step2 partitions based on [order of rep, size of class, size of divisions]
   step2:=AssociativeArray();
@@ -247,48 +270,46 @@ intrinsic ordercc(g::Any,cc::Any,cm::Any,pm::Any,gens::Any: dorandom:=true) -> A
     end if;
   end for;
   cc:=[c[3] : c in cc];
-  return cc, finalkeys, labels, number_divisions;
+  return cc, finalkeys, labels;
 end intrinsic;
 
-intrinsic testCCs(g::Any:dorandom:=true)->Any
-  {}
-  cc:=ConjugacyClasses(g);
-  cm:=ClassMap(g);
-  pm:=PowerMap(g);
-  ngens:=NumberOfGenerators(g);
-  gens:=[g . j : j in [1..ngens]];
+intrinsic testCCs(G::LMFDBGrp: dorandom:=true)->Any
+{}
+    g := G`MagmaGrp;
+    ngens:=NumberOfGenerators(g);
+    gens:=[g . j : j in [1..ngens]];
 
-  if not dorandom and #g gt 100 then
-  /* Add extra generator whose shortest representation as a word in the existing generators is at least length_bound if such a word exists.
-     length_bound is set to some value that seems reasonable (currently a fixed constant). Something adaptive like Floor(Log(#g)/Log(#gens)) might be better, but this was slightly slower during limited testing..
-  */
-    length_bound := 7;
-    gen_ords := [Order(x) : x in gens];
+    if not dorandom and #g gt 100 then
+        /* Add extra generator whose shortest representation as a word in the existing generators is at least length_bound if such a word exists.
+           length_bound is set to some value that seems reasonable (currently a fixed constant). Something adaptive like Floor(Log(#g)/Log(#gens)) might be better, but this was slightly slower during limited testing..
+        */
+        length_bound := 7;
+        gen_ords := [Order(x) : x in gens];
 
-    /*  element_set is constructed so it contains all group elements represented by words of length less than length_bound. */
-    element_set := {Id(g)};
-    w := [];
-    while (#element_set lt #g) and (#w lt length_bound) do
-      w := NextWord(w,gens,gen_ords);
-      Include(~element_set,&*w);
-    end while;
+        /*  element_set is constructed so it contains all group elements represented by words of length less than length_bound. */
+        element_set := {Id(g)};
+        w := [];
+        while (#element_set lt #g) and (#w lt length_bound) do
+            w := NextWord(w,gens,gen_ords);
+            Include(~element_set,&*w);
+        end while;
 
-    /* Find next valid word w not in element_set. */
-    if (#element_set lt #g) then
-      found := false;
-      while not found do
-        if not (&*w in element_set) then
-          found := true;
-        else
-          w := NextWord(w,gens,gen_ords);
+        /* Find next valid word w not in element_set. */
+        if (#element_set lt #g) then
+            found := false;
+            while not found do
+                if not (&*w in element_set) then
+                    found := true;
+                else
+                    w := NextWord(w,gens,gen_ords);
+                end if;
+            end while;
+
+            /* Add the group element represented by w as an extra generator to the list gens. */
+            Append(~gens,&*w);
         end if;
-      end while;
-
-      /* Add the group element represented by w as an extra generator to the list gens. */
-      Append(~gens,&*w);
     end if;
-  end if;
-  return ordercc(g,cc,cm,pm,gens: dorandom:=dorandom);
+    return ordercc(G, gens: dorandom:=dorandom);
 end intrinsic;
 
 

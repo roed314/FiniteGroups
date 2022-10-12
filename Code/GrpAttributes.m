@@ -39,8 +39,25 @@ end intrinsic;
 
 intrinsic number_divisions(G::LMFDBGrp) -> Any
 {Number of divisions: equivalence classes of elements up to conjugacy and exponentiation by integers prime to the order}
-    C := Get(G, "ConjugacyClasses"); // computes the number
-    return G`number_divisions;
+    return #Get(G, "MagmaDivisions");
+end intrinsic;
+
+intrinsic aut_stats(G::LMFDBGrp) -> Any
+{returns the list of triples [o, s, k, m] where m is the number of autjugacy classes of order o containing k conjugacy classes of size s}
+    Hol := Get(G, "Holomorph");
+    inj := Get(G, "HolInj");
+    CC := Get(G, "MagmaConjugacyClasses");
+    D := Classify([1..#CC], func<i, j | IsConjugate(Hol, inj(CC[i][3]), inj(CC[j][3]))>);
+    A := AssociativeArray();
+    for d in D do
+        c := CC[d[1]];
+        os := [c[1], c[2], #d];
+        if not IsDefined(A, os) then
+            A[os] := 0;
+        end if;
+        A[os] +:= 1;
+    end for;
+    return Sort([[os[1], os[2], os[3], m] : os -> m in A]);
 end intrinsic;
 
 intrinsic primary_abelian_invariants(G::LMFDBGrp) -> Any
@@ -770,16 +787,42 @@ end intrinsic;
 
 intrinsic order_stats(G::LMFDBGrp) -> Any
     {returns the list of pairs [o, m] where m is the number of elements of order o}
-    GG := G`MagmaGrp;
     A := AssociativeArray();
-    C := Classes(GG);
+    C := Get(G, "MagmaConjugacyClasses");
     for c in C do
         if not IsDefined(A, c[1]) then
             A[c[1]] := 0;
         end if;
         A[c[1]] +:= c[2];
     end for;
-    return [[k, v] : k -> v in A];
+    return Sort([[k, v] : k -> v in A]);
+end intrinsic;
+
+intrinsic cc_stats(G::LMFDBGrp) -> Any
+{returns the list of triples [o, s, m] where m is the number of conjugacy classes of order o and size s}
+    C := Get(G, "MagmaConjugacyClasses");
+    A := AssociativeArray();
+    for c in C do
+        os := [c[1], c[2]];
+        if not IsDefined(A, os) then
+            A[os] := 0;
+        end if;
+        A[os] +:= 1;
+    end for;
+    return Sort([[k[1], k[2], v] : k -> v in A]);
+end intrinsic;
+
+intrinsic div_stats(G::LMFDBGrp) -> Any
+{returns the list of triples [o, s, k, m] where m is the number of divisions of order o containing k conjugacy classes of size s}
+    divs := AssociativeArray();
+    for d in Get(G, "MagmaDivisions") do
+        os := [d[1], d[2], #d[3]];
+        if not IsDefined(divs[os]) then
+            divs[os] := 0;
+        end if;
+        divs[os] +:= 1;
+    end for;
+    return Sort([[os[1], os[2], os[3], m] : os -> m in divs]);
 end intrinsic;
 
 // copied from /Applications/Magma/package/Group/GrpFin/groupname.m
@@ -1042,12 +1085,11 @@ end intrinsic;
 
 intrinsic ConjugacyClasses(G::LMFDBGrp) ->  SeqEnum
 {The list of conjugacy classes for this group}
-    g:=G`MagmaGrp;
-    cc:=Get(G, "MagmaConjugacyClasses");
-    cm:=Get(G, "MagmaClassMap");
-    pm:=Get(G, "MagmaPowerMap");
-    gens:=Get(G, "MagmaGenerators");
-    ordercc, _, labels, G`number_divisions := ordercc(g,cc,cm,pm,gens);
+    cc := Get(G, "MagmaConjugacyClasses");
+    cm := Get(G, "MagmaClassMap");
+    pm := Get(G, "MagmaPowerMap");
+    gens := Get(G, "MagmaGenerators");
+    ordercc, _, labels := ordercc(G, gens);
     // We determine the number of rational characters
 
     // perm will convert given index to the one out of ordercc
@@ -1058,17 +1100,17 @@ intrinsic ConjugacyClasses(G::LMFDBGrp) ->  SeqEnum
         perm[cm(ordercc[j])] := j;
         perminv[j] := cm(ordercc[j]);
     end for;
-    G`CCpermutation:=perm;
-    G`CCpermutationInv:=perminv;
+    G`CCpermutation := perm;
+    G`CCpermutationInv := perminv;
     sset := {1..#cc};
     permmap := map<sset->sset | [j -> perminv[j] : j in sset]>;
     G`ClassMap := cm*permmap; // Magma does composition backwards!
-    magccs:=[ New(LMFDBGrpConjCls) : j in cc];
-    gord:=Order(g);
-    plist:=[z[1] : z in Factorization(gord) * Factorization(EulerPhi(Get(G, "exponent")))];
+    magccs := [ New(LMFDBGrpConjCls) : j in cc];
+    gord := Get(G, "order");
+    plist := [z[1] : z in Factorization(gord) * Factorization(EulerPhi(Get(G, "exponent")))];
     //gord:=Get(G, 'Order');
     for j:=1 to #cc do
-        ix:=perm[j];
+        ix := perm[j];
         magccs[j]`Grp := G;
         magccs[j]`MagmaConjCls := cc[ix];
         magccs[j]`label := labels[j];
@@ -1086,6 +1128,11 @@ intrinsic MagmaCharacterTable(G::LMFDBGrp) -> Any
   return CharacterTable(G`MagmaGrp);
 end intrinsic;
 
+intrinsic irrep_stats(G::LMFDBGrp) -> Any
+{Return the sequence of pairs <d, m>, where m is the number of complex irreducible representations of G of dimension d}
+    return CountFibers(Get(G, "MagmaCharacterTable"), func<chi|Degree(chi)>);
+end intrinsic;
+
 intrinsic MagmaCharacterMatching(G::LMFDBGrp) -> Any
   {Return the list of list showing which complex characters go with each rational character.}
   u:=Get(G,"MagmaRationalCharacterTable");
@@ -1098,6 +1145,11 @@ intrinsic MagmaRationalCharacterTable(G::LMFDBGrp) -> Any
   u,v:= RationalCharacterTable(G`MagmaGrp);
   G`MagmaCharacterMatching:=v;
   return u;
+end intrinsic;
+
+intrinsic ratrep_stats(G::LMFDBGrp) -> Any
+{Return the sequence of pairs <d, m>, where m is the number of rational representations of G of dimension d that are irreducible over Q}
+    return CountFibers(Get(G, "MagmaRationalCharacterTable"), func<chi|Degree(chi)>);
 end intrinsic;
 
 intrinsic complexconjindex(ct::Any, gorb::Any, achar::Any) -> Any

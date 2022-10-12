@@ -1,8 +1,16 @@
 
 intrinsic MakeBigGroup(desc::MonStgElt, label::MonStgElt) -> LMFDBGrp
     {Create an LMFDBGrp object for StringToGroup(desc)}
-    G := NewLMFDBGrp(StringToGroup(desc), label);
+    f, cover := StringToGroupHom(desc);
+    if cover then
+        G := Codomain(f);
+    else
+        G := Domain(f);
+    end if;
+    G := NewLMFDBGrp(G, label);
     AssignBasicAttributes(G);
+    G`ElementReprHom := f;
+    G`ElementReprCovers := cover;
     return G;
 end intrinsic;
 
@@ -82,17 +90,18 @@ Send a message about todo items on Large Groups list
 Think about whether there are more sections that need to be added.
 
 new stuff (permutation degree, linear degree, etc)....
-check status on number_divisions
+hashes for subgroups and quotients (things that might not have labels)
 make sure ngens, gens_used, pc_code, perm_gens ok in basic
 organize which columns are preloaded (hash, gens_used, pc_code...)
 deciding on outer_equivalence
 store permutation generators in a separate table?
 Can use Complements to do find semidirect decompositions from NormalSubgroups
-Use semidirect products to select a better name
-Write StringToGroupHom and GroupHomToString in order to deal with things like PGL
+Make SaveElt work for matrix groups (save as integers and deal with figuring out what b is)
+
+Use semidirect products to select a better name (postprocess step so that we can work up from the bottom); make sure to modify other places names show up (subgroups table)
 Write cloud_collect.py to collect results
 Write another job that modifies a full record along a group hom by mapping/lifting all elements
-Encode matrix elements as integers (for compatibility with perm and pc elements)
+Write scripts for adding more groups later
 
 finite_matrix_group shouldn't be a column probably
 metacyclic might be slow for basic
