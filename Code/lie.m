@@ -120,7 +120,8 @@ for idat in classical cat classical_perm do
             if IsPrimePower(q) then
                 fullname := Sprintf("%o(%o,%o)", name, d, q);
                 print "Const", fullname;
-                if name[1] eq "A" and d gt 1 then
+                // Ugh, Magma doesn't support GrpMat for ASp, AGL(1,q)
+                if name[1] eq "A" and not (name eq "AGL" and d eq 1 or name eq "ASp") then
                     G := func(GrpMat, d, q);
                 else
                     G := func(d, q);
