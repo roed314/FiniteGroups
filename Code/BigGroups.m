@@ -99,6 +99,7 @@ store permutation generators in a separate table? No, but need to add various ma
 Can use Complements to do find semidirect decompositions from NormalSubgroups
 Make SaveElt work for matrix groups (save as integers and deal with figuring out what b is)
 Check permutation_degree (certainly shouldn't be larger than transitive degree)
+Make sure that the version of Magma installed in the cloud has the appropriate libraries installed (Atlas, Trans32Id for example)
 
 Use semidirect products to select a better name (postprocess step so that we can work up from the bottom); make sure to modify other places names show up (subgroups table)
 Write cloud_collect.py to collect results
