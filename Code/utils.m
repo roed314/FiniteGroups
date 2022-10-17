@@ -651,7 +651,7 @@ intrinsic GroupToString(G::Grp : use_id:=true) -> MonStgElt
 {}
     // This produces a string from which the group can be reconstructed, up to isomorphism
     // Note that it does not guarantee the same presentation or choice of generators
-    N := #G;
+    N := use_id select #G else 0;
     if Type(G) eq GrpAuto then
         A := G;
         G := Group(G);
