@@ -120,7 +120,7 @@ for idat in classical cat classical_perm do
             if IsPrimePower(q) then
                 fullname := Sprintf("%o(%o,%o)", name, d, q);
                 print "Const", fullname;
-                if name[1] eq "A" then
+                if name[1] eq "A" and d gt 1 then
                     G := func(GrpMat, d, q);
                 else
                     G := func(d, q);
