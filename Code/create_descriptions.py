@@ -44,27 +44,28 @@ Chev_lookup = { # (dimension, exponent to raise q in order to get actual coeffic
     "E,7": (56, 1),
 }
 Spor_lookup = {
-    "J1": [("FpM", 7, 11), ("T", 266, 0)],
-    "J2": [("FqM", 6, 2, 2), ("T", 100, 0)],
-    "HS": [("T", 100, 0)],
-    "J3": [("FqM", 18, 2, 3)],
-    "McL": [("T", 275, 0)],
-    "He": [("FpM", 51, 2)],
-    "Ru": [("FpM", 28, 2)],
-    "Co3": [("FpM", 22, 2), ("T", 276, 0)],
-    "Co2": [("FpM", 22, 2), ("T", 2300, 0)],
-    "Co1": [("FpM", 24, 2)],
+    "J1": [("GLFp", 7, 11), ("Perm", 266, 0)],
+    "J2": [("GLFq", 6, 2, 2), ("Perm", 100, 0)],
+    "HS": [("Perm", 100, 0)],
+    "J3": [("GLFq", 18, 2, 3)],
+    "McL": [("Perm", 275, 0)],
+    "He": [("GLFp", 51, 2)],
+    "Ru": [("GLFp", 28, 2)],
+    "Co3": [("GLFp", 22, 2), ("Perm", 276, 0)],
+    "Co2": [("GLFp", 22, 2), ("Perm", 2300, 0)],
+    "Co1": [("GLFp", 24, 2)],
 }
 SnT = dict(zip(range(2, 48), [1, 2, 5, 5, 16, 7, 50, 34, 45, 8, 301, 9, 63, 104, 1954, 10, 983, 8, 1117, 164, 59, 7, 25000, 211, 96, 2392, 1854, 8, 5712, 12, 2801324, 162, 115, 407, 121279, 11, 76, 306, 315842, 10, 9491, 10, 2113, 10923, 56, 6])) # The T-number for Sn in each degree; An is one less
 
 aliases = defaultdict(lambda: defaultdict(list))
-AnSn = set()
+An = {}
+Sn = {}
 def update_options(label, desc):
     D = aliases[label]
     if "Perm" in desc:
         n = int(desc.split("Perm")[0])
         # favor transitive groups of the same degree
-        D["T"].append((n, 10000000, desc))
+        D["Perm"].append((n, 10000000, desc))
     elif "Mat" in desc or "MAT" in desc:
         if "Mat" in desc:
             d, q = desc.split("Mat")[0].split(",")[:2]
@@ -75,25 +76,27 @@ def update_options(label, desc):
             # prefer Z/N to finite fields (easier to display)
             p, k = ZZ(q[1:]).is_prime_power(get_data=True)
             if k > 1:
-                D["FqM"].append((d, k, p, desc))
+                D["GLFq"].append((d, k, p, desc))
             else:
-                D["FpM"].append((d, p, desc))
+                D["GLFp"].append((d, p, desc))
         elif q == "0":
-            D["ZM"].append((d, desc))
+            D["GLZ"].append((d, desc))
         else:
             p, k = ZZ(q).is_prime_power(get_data=True)
             if k == 0: # not a prime power
-                D["ZNM"].append((d, p, desc))
+                D["GLZN"].append((d, p, desc))
             elif k == 1: # prime
-                D["FpM"].append((d, p, desc))
+                D["GLFp"].append((d, p, desc))
             else:
-                D["ZqM"].append((d, k, p, desc))
+                D["GLZq"].append((d, k, p, desc))
     elif "T" in desc:
         n, i = [int(c) for c in desc.split("T")]
         tbound[label] = min(tbound[label], n)
-        if n in SnT and i in [SnT[n], SnT[n] - 1]:
-            AnSn.add(label)
-        D["T"].append((n, i, desc))
+        if n in SnT and i == SnT[n]:
+            Sn[label] = n
+        elif n in SnT and i == SnT[n] - 1:
+            An[label] = n
+        D["Perm"].append((n, i, desc))
     elif "(" in desc:
         cmd = desc.split("(")[0]
         lie_codes = ["GL", "SL", "Sp", "SO", "SOPlus", "SOMinus", "SU", "GO", "GOPlus", "GOMinus", "GU", "CSp", "CSO", "CSOPlus", "CSOMinus", "CSU", "CO", "COPlus", "COMinus", "CU", "Omega", "OmegaPlus", "OmegaMinus", "Spin", "SpinPlus", "SpinMinus", "PGL", "PSL", "PSp", "PSO", "PSOPlus", "PSOMinus", "PSU", "PGO", "PGOPlus", "PGOMinus", "PGU", "POmega", "POmegaPlus", "POmegaMinus", "PGammaL", "PSigmaL", "PSigmaSp", "PGammaU", "AGL", "ASL", "ASp", "AGammaL", "ASigmaL", "ASigmaSp"]
@@ -101,16 +104,16 @@ def update_options(label, desc):
         D["L"].append((d, lie_codes.index(cmd), q, desc))
     elif "Perf" in desc:
         i = int(desc[4:])
-        D["T"].append((Perf_lookup[i], 5000000, desc))
+        D["Perm"].append((Perf_lookup[i], 5000000, desc))
     elif "Chev" in desc:
         typ, q = desc[4:].rsplit(",", 1)
         d, k = Chev_lookup[typ]
         q = ZZ(q.replace("-D", ""))**k # remove derived subgroup code for 2F(4,2)-D
         p, k = q.is_prime_power(get_data=True)
         if k > 1:
-            D["FqM"].append((d, k, p, desc))
+            D["GLFq"].append((d, k, p, desc))
         else:
-            D["FpM"].append((d, p, desc))
+            D["GLFp"].append((d, p, desc))
     elif desc in Spor_lookup:
         for rec in Spor_lookup[desc]:
             D[rec[0]].append(rec[1:] + (desc,))
@@ -187,7 +190,7 @@ for label, (pccode, compact, gens_used) in slookup.items():
         desc = f"{N}PC{pccode}"
     else:
         desc = f"{N}pc{compact}"
-    aliases[label]["P"].append((len(gens_used), desc))
+    aliases[label]["PC"].append((len(gens_used), desc))
 print("PC reps loaded in", walltime() - t0)
 
 # Get minimal permutation presentations from the minreps folder
@@ -205,7 +208,7 @@ for label in os.listdir(opj("DATA", "minreps")):
             i = 1000000
         d = int(d)
         minrep[label] = (d, desc, gens)
-        aliases[label]["T"].append((d, i, desc))
+        aliases[label]["Perm"].append((d, i, desc))
 print("Minreps loaded in", walltime() - t0)
 
 # Get set of abelian labels
@@ -219,24 +222,25 @@ with open(opj("DATA", "abelian.txt")) as F:
 # Then compare (#gen for pc) to (deg of permrep)^3/5 to (deg of matrix group), choosing smallest, with a penalty for more complicated coefficient rings, favoring PC to Perm to Mat in case of tie
 best_of_breed = {}
 best_of_show = {}
+elt_repr_type = {}
 def sort_key(item):
     typ, vec = item
     n = vec[0]
     if typ == "L":
         return (-1,) + vec
-    elif typ == "P":
+    elif typ == "PC":
         return (n,) + (0,) + vec[1:]
-    elif typ == "T":
+    elif typ == "Perm":
         return (n**0.6,) + (1,) + vec[1:]
-    elif typ == "ZM":
+    elif typ == "GLZ":
         return (n,) + (2,) + vec[1:]
-    elif typ == "FpM":
+    elif typ == "GLFp":
         return (n,) + (3,) + vec[1:]
-    elif typ == "ZqM":
+    elif typ == "GLZq":
         return (n+1,) + (4,) + vec[1:]
-    elif typ == "ZNM":
+    elif typ == "GLZN":
         return (n+2,) + (5,) + vec[1:]
-    elif typ == "FqM":
+    elif typ == "GLFq":
         return (n+2,) + (6,) + vec[1:]
     else:
         raise NotImplementedError
@@ -245,19 +249,24 @@ problems = []
 for label, D in aliases.items():
     B = best_of_breed[label] = {typ: min(opts) for typ, opts in D.items()}
     if label in ab:
-        best_of_show[label] = B["P"][-1]
-    elif label in AnSn:
-        best_of_show[label] = B["T"][-1]
+        best_of_show[label] = B["PC"][-1]
+    elif label in An or label in Sn:
+        best_of_show[label] = B["Perm"][-1]
+        if label in An:
+            family, n = "A", An[label]
+        else:
+            family, n = "S", Sn[label]
+        special_names.append({"family": family, "parameters": {"n": n}, "label": label})
     else:
         opts = sorted(B.items(), key=sort_key)
         best = opts[0]
         desc = best[1][-1]
-        if best[0] in ["ZNM", "ZqM"]:
+        if best[0] in ["GLZN", "GLZq"]:
             # Want a better type to compute with; it would be nice to know if P or T was the better choice
-            if "P" in B:
-                comp = B["P"][-1]
-            elif "T" in B:
-                comp = B["T"][-1]
+            if "PC" in B:
+                comp = B["PC"][-1]
+            elif "Perm" in B:
+                comp = B["Perm"][-1]
             else:
                 problems.append(label)
                 comp = desc
@@ -292,16 +301,18 @@ with open(opj("DATA", "to_add.txt")) as F:
         permdeg = minrep.get(label, (None,))[0]
         pccode = slookup.get(label, (None,))[0]
         tpermdeg = smalltrans.get(label, None)
-        ZMgens = best_of_breed[label].get("ZM", (None,))[-1]
-        FpMgens = best_of_breed[label].get("FpM", (None,))[-1]
-        if FpMgens is None:
-            ZNMgens = best_of_breed[label].get("ZqM", best_of_breed[label].get("ZNM", (None,)))[-1]
-            FqMgens = best_of_breed[label].get("FqM", (None,))[-1]
+        representations = make_representations_dict(best_of_breed[label])
+        GLZgens = best_of_breed[label].get("GLZ", (None,))[-1]
+        GLFpgens = best_of_breed[label].get("GLFp", (None,))[-1]
+        if GLFpgens is None:
+            GLZNgens = best_of_breed[label].get("GLZq", best_of_breed[label].get("GLZN", (None,)))[-1]
+            GLFqgens = best_of_breed[label].get("GLFq", (None,))[-1]
         else:
-            ZNMgens = FqMgens = None
-        permgens = best_of_breed[label].get("T", (None,))[-1]
+            GLZNgens = GLFqgens = None
+        permgens = best_of_breed[label].get("Perm", (None,))[-1]
         special_names.extend([{"family": desc.split("(")[0], "parameters": {"n": n, "q": q}, "label": label} for (n, code, q, desc) in aliases[label].get("L", [])])
-        to_add[label] = (best_of_show[label], hsh, permdeg, tpermdeg, pccode, permgens, ZMgens, FpMgens, ZNMgens, FqMgens, ZNMgens) # also various reps: perm_gens, mat_gens, etc
+        # Also permutation_degree, irrC_degree, irrQ_degree, linC_degree, linFp_degree, linFq_degree, linQ_degree, pc_rank, element_repr_type, representations
+        to_add[label] = (best_of_show[label], hsh, permdeg, tpermdeg, pccode, permgens, GLZgens, GLFpgens, GLZNgens, GLFqgens, GLZNgens) # also various reps: perm_gens, mat_gens, etc
         #with open(opj("DATA", "descriptions", label), "w") as F:
         #    _ = F.write(best_of_show[label])
 print("Finished in", walltime() - t0)

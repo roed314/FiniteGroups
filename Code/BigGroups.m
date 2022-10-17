@@ -91,12 +91,14 @@ Think about whether there are more sections that need to be added.
 
 new stuff (permutation degree, linear degree, etc)....
 hashes for subgroups and quotients (things that might not have labels)
+Make labeling work using hashes
 make sure ngens, gens_used, pc_code, perm_gens ok in basic
 organize which columns are preloaded (hash, gens_used, pc_code...)
 deciding on outer_equivalence
-store permutation generators in a separate table?
+store permutation generators in a separate table? No, but need to add various mat_gens
 Can use Complements to do find semidirect decompositions from NormalSubgroups
 Make SaveElt work for matrix groups (save as integers and deal with figuring out what b is)
+Check permutation_degree (certainly shouldn't be larger than transitive degree)
 
 Use semidirect products to select a better name (postprocess step so that we can work up from the bottom); make sure to modify other places names show up (subgroups table)
 Write cloud_collect.py to collect results

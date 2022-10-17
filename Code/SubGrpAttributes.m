@@ -107,9 +107,13 @@ intrinsic subgroup(H::LMFDBSubGrp) -> MonStgElt // Need to be together with all 
 end intrinsic;
 
 intrinsic subgroup_order(H::LMFDBSubGrp) -> RngIntElt // Need to be subgroup attribute file
-  {returns order of the subgroup}
-  HH := H`MagmaSubGrp;
-  return Order(HH);
+{the order of the subgroup}
+    return Order(H`MagmaSubGrp);
+end intrinsic;
+
+intrinsic subgroup_hash(H::LMFDBSubGrp) -> Any
+{the hash of the subgroup}
+    return hash(H`MagmaSubGrp);
 end intrinsic;
 
 intrinsic ambient(H::LMFDBSubGrp) -> MonStgElt // Need to be together with all the labels
@@ -129,23 +133,30 @@ intrinsic core_order(H::LMFDBSubGrp) -> RngIntElt
     return Order(H`core);
 end intrinsic;
 
-
-intrinsic Quotient(H::LMFDBSubGrp) -> LMFDBGrp
+intrinsic Quotient(H::LMFDBSubGrp) -> Grp
     {returns the quotient as an abstract group and sets QuotientMap}
     GG := Get(H, "MagmaAmbient");
     HH := Get(H, "MagmaSubGrp");
     if not Get(H, "normal") then
         error "Subgroup is not normal";
     end if;
-    Q, H`QuotientMap := quo< GG | HH >;
+    if Type(GG) eq GrpPC or Index(GG, HH) lt 100000 then
+        Q, H`QuotientMap := quo<GG|HH>;
+    else
+        Q, H`QuotientMap := MyQuotient(GG, HH : max_orbits:=4, num_checks := 3);
+    end if;
     return Q;
+end intrinsic;
+
+intrinsic QuotientMap(H::LMFDBSubGrp) -> Map
+{}
+    Q := Get(H, "Quotient"); // sets map
+    return H`QuotientMap;
 end intrinsic;
 
 intrinsic quotient(H::LMFDBSubGrp) -> Any // Need to be together with all the labels
 {Determine label of the quotient group}
-  GG := Get(H, "MagmaAmbient");
-  HH := H`MagmaSubGrp;
-  if not IsNormal(GG, HH) then
+  if not Get(H, "normal") then
     return None();
   else
     return label(Get(H, "Quotient"));
@@ -157,6 +168,15 @@ intrinsic quotient_order(H::LMFDBSubGrp) -> Any // Need to be subgroup attribute
   GG := Get(H, "MagmaAmbient");
   HH := H`MagmaSubGrp;
   return Index(GG, HH);
+end intrinsic;
+
+intrinsic quotient_hash(H::LMFDBSubGrp) -> Any
+{the hash of the quotient; None if not normal}
+    if Get(H, "normal") then
+        return hash(Get(H, "Quotient"));
+    else
+        return None();
+    end if;
 end intrinsic;
 
 intrinsic GetGrp(H::LMFDBSubGrp) -> LMFDBGrp
@@ -179,16 +199,50 @@ intrinsic minimal_normal(H::LMFDBSubGrp) -> BoolElt // Need to be subgroup attri
   if not IsNormal(GG, HH) or Order(HH) eq 1 then
     return false;
   else
-    for r in Get(G, "NormalSubgroups") do
-      N := r`MagmaSubGrp;
-      if (N subset HH) and (N ne HH) and (Order(N) ne 1) then
-         return false;
-      end if;
-    end for;
-    return true;
+    if IsSimple(HH) then return true; end if;
+    // Any minimal normal subgroup is the direct product of isomorphic simple groups
+    if IsSolvable(HH) then
+      if not IsAbelian(HH) then return false; end if;
+      if not IsPrime(Exponent(HH)) then return false; end if;
+      return IsIrreducible(Gmodule(GG, HH));
+    else
+      if #{F : F in CompositionFactors(HH)} ne 1 then return false; end if;
+    end if;
+    // We fall back on iterating over the minimal normal subgroups of G.  This should occur rarely.
+    if G`outer_equivalence then
+        Ambient := Get(G, "Holomorph");
+        inj := Get(G, "HolInj");
+        for N in Get(G, "MagmaMinimalNormalSubgroups") do
+            if IsConjugateSubgroup(Ambient, inj(N), inj(HH)) then
+                return true;
+            end if;
+        end for;
+    else
+        for N in Get(G, "MagmaMinimalNormalSubgroups") do
+            if HH eq N then
+                return true;
+            end if;
+        end  for;
+    end if;
+    return false;
   end if;
 end intrinsic;
 
+intrinsic central_factor(H::LMFDBSubGrp) -> BoolElt
+{H is a central factor of G if it is nontrivial, noncentral, normal and generates G together with its centralizer.
+ In such a case, G will be a nontrivial central product of H with its centralizer.
+ Moreover, any nonabelian group that has some nontrivial central product decomposition will have one of this form}
+    if Get(H, "normal") and Get(H, "subgroup_order") ne 1 and Get(H, "quotient_order") ne 1 then
+        HH := H`MagmaSubGrp;
+        GG := Get(H, "MagmaAmbient");
+        C := Centralizer(GG, HH);
+        // |CH| = |C||H|/|C meet H|. We check if |CH| = |G| and return true if so.
+        if #C lt #GG and #C * #HH eq #(C meet HH) * #GG then
+            return true;
+        end if;
+    end if;
+    return false;
+end intrinsic;
 
 intrinsic split(H::LMFDBSubGrp) -> Any
   {Returns whether this sequence with H splits or not, null when non-normal}

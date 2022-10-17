@@ -1,22 +1,21 @@
-TextCols := ["abelian_quotient", "acted", "actor", "ambient", "aut_group", "bravais_class", "c_class", "center_label", "central_quotient", "commutator_label", "coset_action_label", "crystal_symbol", "factor1", "factor2", "family", "frattini_label", "frattini_quotient", "group", "image", "knowl", "label", "short_label", "aut_label", "magma_cmd", "name", "old_label", "outer_group", "product", "proj_label", "projective_image", "q_class", "quotient", "quotient_action_image", "subgroup", "tex_name", "q_character", "carat_label", "subgroup_tex", "ambient_tex", "quotient_tex", "weyl_group", "aut_weyl_group", "quotient_action_kernel"];
+TextCols := ["abelian_quotient", "acted", "actor", "ambient", "aut_group", "bravais_class", "c_class", "center_label", "central_quotient", "commutator_label", "coset_action_label", "crystal_symbol", "factor1", "factor2", "family", "frattini_label", "frattini_quotient", "group", "image", "knowl", "label", "short_label", "aut_label", "magma_cmd", "name", "old_label", "outer_group", "product", "proj_label", "projective_image", "q_class", "quotient", "quotient_action_image", "subgroup", "tex_name", "q_character", "carat_label", "subgroup_tex", "ambient_tex", "quotient_tex", "weyl_group", "aut_weyl_group", "quotient_action_kernel", "element_repr_type"];
 
 IntegerCols := ["alias_spot", "arith_equiv", "aut_counter", "auts", "cdim", "commutator_count", "counter", "counter_by_index", "cyc_order_mat", "cyc_order_traces", "cyclotomic_n", "degree", "diagram_x", "diagram_aut_x", "dim", "elementary", "exponent", "extension_counter", "hyperelementary", "indicator", "multiplicity", "n", "number_characteristic_subgroups", "number_conjugacy_classes", "number_autjugacy_classes", "number_divisions", "number_normal_subgroups", "number_subgroup_classes", "number_subgroup_autclasses", "number_subgroups", "parity", "priority", "q", "qdim", "quotients_complenetess", "rep", "schur_index", "sibling_completeness", "size", "smallrep", "t", "transitive_degree", "hash"];
 SmallintCols := ["elt_rep_type", "composition_length", "derived_length", "ngens", "nilpotency_class", "pgroup", "sylow", "easy_rank", "rank", "subgroup_index_bound", "solvability_type"];
-BigintCols := ["mobius_sub", "mobius_quo"];
+BigintCols := ["mobius_sub", "mobius_quo", "hash", "subgroup_hash", "quotient_hash"];
 NumericCols := ["hall", "eulerian_function", "order", "aut_order", "outer_order", "ambient_order", "subgroup_order", "quotient_order", "quotient_action_kernel_order", "aut_centralizer_order", "aut_weyl_index", "aut_stab_index", "aut_quo_index", "count", "conjugacy_class_count", "pc_code", "core_order", "normalizer_index", "centralizer_order"];
 
 TextListCols := ["composition_factors", "special_labels", "wreath_data"];
 
-IntegerListCols := ["cycle_type", "denominators", "factors_of_aut_order", "faithful_reps", "powers", "primary_abelian_invariants", "schur_multiplier", "smith_abelian_invariants", "subgroup_fusion", "nt","qvalues","trace_field"];
+IntegerListCols := ["cycle_type", "denominators", "factors_of_aut_order", "faithful_reps", "powers", "primary_abelian_invariants", "schur_multiplier", "smith_abelian_invariants", "subgroup_fusion", "nt","qvalues", "trace_field"];
 SmallintListCols := ["factors_of_order", "gens_used", "exponents_of_order"];
-NumericListCols := ["order_stats","cc_stats","div_stats","aut_stats","irrep_stats","ratrep_stats","field"];
+NumericListCols := ["order_stats","cc_stats","div_stats","aut_stats","irrep_stats","ratrep_stats","field","perm_gens", "matZ_gens", "matFp_gens", "matZq_gens", "matZN_gens", "matFq_gens", "pmatFp_gens", "pmatFq_gens"];
 
 BoolCols := ["Agroup", "Zgroup", "abelian", "all_subgroups_known", "almost_simple", "central", "central_product", "characteristic", "cyclic", "direct", "direct_product", "faithful", "finite_matrix_group", "indecomposible", "irreducible", "maximal", "maximal_normal", "maximal_subgroups_known", "metabelian", "metacyclic", "minimal", "minimal_normal", "monomial", "nilpotent", "normal", "normal_subgroups_known", "outer_equivalence", "perfect", "prime", "primitive", "quasisimple", "rational", "semidirect_product", "simple", "solvable", "split", "stem", "subgroup_inclusions_known", "supersolvable", "sylow_subgroups_known", "wreath_product", "standard_generators", "quotient_cyclic", "quotient_abelian", "quotient_solvable", "proper", "complete"];
 
 // creps has a gens which is not integer[]
-JsonbCols := ["quotient_fusion","decomposition","traces", "gens","values","direct_factorization"];
+JsonbCols := ["quotient_fusion", "decomposition", "traces", "gens", "values", "direct_factorization", "element_repr_data"];
 
-PermsCols := ["perm_gens"];
 SubgroupCols := ["centralizer", "kernel", "core", "center", "normal_closure", "normalizer", "sub1", "sub2"];
 SubgroupListCols := ["complements", "contains", "contained_in"];
 
@@ -84,66 +83,79 @@ intrinsic SaveTextList(out::SeqEnum) ->  MonStgElt
 end intrinsic;
 
 
-strgsave:=function(strg);
-   if Type(strg) eq MonStgElt then
-      return "\"" cat strg cat "\"";
-   else
-      return strg;
-   end if;
-end function;
-
-listprocess:=function(L);
-   newout:="[ ";
-   for i in [1..#L] do
-      subL:=L[i];
-      if Type(subL) eq SeqEnum or Type(subL) eq List or Type(subL) eq Tup then
-         out_piece:=$$(subL);   
-      else 
-         out_piece:=Sprint(strgsave(subL));  
-      end if;
-      if i ne #L then
-         out_piece:=out_piece cat ", ";
-      end if;
-      newout:=newout cat out_piece;
-   end for;
-   newout  := newout cat " ]";
-   return newout;
-end function;
-
-
-removestars:=function(L);
-   for i in [1..#L] do
-      if Type(L[i]) eq List then
-          L[i]:=$$(L[i]);
-      end if;
-   end for;
-   typeL:={Type(L[i]) : i in [1..#L]};
-   if #typeL eq 1 then
-      newL:=[L[i] : i in [1..#L]];
-   else 
-      newL:=L;
-   end if;
-   return newL;
-end function;
-
-intrinsic LoadJsonb(inp::MonStgElt) -> List
-    {assuming lists of strings or integers only}
-    assert inp[1] eq "[" and inp[#inp] eq "]";
-    ReplaceString(~inp,["[","]"],["[*","*]"]);
-    magma_inp:=eval inp;
-    return removestars(magma_inp);
+intrinsic SaveJsonb(inp::MonStgElt) -> MonStgElt
+{Save a string by wrapping with quotes}
+    return "\"" * inp * "\"";
 end intrinsic;
-intrinsic SaveJsonb(out::List) ->  MonStgElt
-{assuming list of strings or integers (or embedded lists of these) only}
-    return listprocess(out);
+intrinsic SaveJsonb(inp::RngIntElt) -> MonStgElt
+{Save an integer}
+    return Sprint(inp);
 end intrinsic;
-intrinsic SaveJsonb(out::SeqEnum[List]) ->  MonStgElt
+intrinsic SaveJsonb(inp::List) ->  MonStgElt
 {assuming list of strings or integers (or embedded lists of these) only}
-    return listprocess(out);
+    return "[" * Join([SaveJsonb(x) : x in inp], ",") * "]";
 end intrinsic;
-intrinsic SaveJsonb(out::SeqEnum) ->  MonStgElt
+intrinsic SaveJsonb(inp::SeqEnum) ->  MonStgElt
 {assuming list of strings or integers (or embedded lists of these) only}
-    return listprocess(out);
+    return "[" * Join([SaveJsonb(x) : x in inp], ",") * "]";
+end intrinsic;
+intrinsic SaveJsonb(inp::Assoc) -> MonStgElt
+{saving a dictionary}
+    return "{" * Join([Sprintf("%o:%o", SaveJsonb(k), SaveJsonb(v)) : k -> v in inp], ",") * "}";
+end intrinsic;
+
+function splitagg(inp, spliton)
+    level := 0;
+    strlevel := Integers(2)!0; // strings don't nest: they're just on or off
+    out := [];
+    i := 1;
+    for j in [1..#inp] do
+        if inp[j] in ["[", "{"] then
+            level +:= 1;
+        elif inp[j] in ["]", "}"] then
+            level -:= 1;
+        elif inp[j] eq "\"" then
+            strlevel +:= 1;
+        elif level eq 0 and strlevel eq 0 and inp[j] eq spliton then
+            Append(~out, inp[i..j-1]);
+            i := j+1;
+        end if;
+    end for;
+    if i le #inp then
+        Append(~out, inp[i..#inp]);
+    end if;
+    return out;
+end function;
+intrinsic LoadJsonb(inp::MonStgElt) -> Any
+{Supports lists and dictionaries (iteratively), with strings and integers as leaves}
+    i := 1; k := #inp;
+    while inp[i] eq " " do i +:= 1; end while;
+    while inp[k] eq " " do k -:= 1; end while;
+    if inp[i] eq "[" and inp[k] eq "]" then
+        // Need to strip interior whitespace to handle empty list [  ] appropriately
+        while inp[i+1] eq " " do i +:= 1; end while;
+        while inp[k-1] eq " " do k -:= 1; end while;
+        out := [* LoadJsonb(x) : x in splitagg(inp[i+1..k-1], ",") *];
+        try
+            return [x : x in out];
+        catch e;
+            return out;
+        end try;
+    elif inp[i] eq "{" and inp[k] eq "}" then
+        // Need to strip interior whitespace to handle empty dict { } appropriately
+        while inp[i+1] eq " " do i +:= 1; end while;
+        while inp[k-1] eq " " do k -:= 1; end while;
+        out := AssociativeArray();
+        for x in splitagg(inp[i+1..k-1], ",") do
+            yz := splitagg(x, ":"); assert #yz eq 2;
+            out[LoadJsonb(yz[1])] := LoadJsonb(yz[2]);
+        end for;
+        return out;
+    elif inp[i] eq "\"" and inp[k] eq "\"" and &and[inp[j] ne "\"" : j in [i+1..k-1]] then
+        return inp[i+1..k-1];
+    else
+        return StringToInteger(inp);
+    end if;
 end intrinsic;
 
 
@@ -271,8 +283,6 @@ intrinsic LoadAttr(attr::MonStgElt, inp::MonStgElt, obj::Any) -> Any
         return LoadIntegerList(inp);
     elif attr in TextListCols then
         return LoadTextList(inp);
-    elif attr in PermsCols then
-        return LoadPerms(inp, Get(obj, "transitive_degree"));
     elif attr in EltCols then
         return LoadElt(inp, GetGrp(obj));
     elif attr in EltListCols then
@@ -311,8 +321,6 @@ intrinsic SaveAttr(attr::MonStgElt, val::Any, obj::Any) -> MonStgElt
         return SaveIntegerList(val);
     elif attr in TextListCols then
         return SaveTextList(val);
-    elif attr in PermsCols then
-        return SavePerms(val);
     elif attr in EltCols then
         return SaveElt(val, GetGrp(obj));
     elif attr in EltListCols then
@@ -392,7 +400,7 @@ intrinsic DefaultAttributes(c::Cat) -> SeqEnum
                       // Subgroup attributes
                       "alias_spot",
                       "aut_counter",
-		      "extension_counter",
+		      "extension_counter"
 		      //  "diagram_x", returns 0 now
 		      //"generators",
 		      //"standard_generators"
@@ -403,7 +411,7 @@ intrinsic DefaultAttributes(c::Cat) -> SeqEnum
 
                       // This attributes are TEMPORARILY blacklisted while we try to figure out
                       // which are difficult for large groups
-                      "transitive_degree", // should be set in advance for the actual transitive groups
+/*                      "transitive_degree", // should be set in advance for the actual transitive groups
                       "almost_simple", // NormalSubgroups -> Subgroups
                       "aut_group", // Sometimes MagmaAutGroup is slow
                       "aut_order", // Sometimes MagmaAutGroup is slow
@@ -443,7 +451,7 @@ intrinsic DefaultAttributes(c::Cat) -> SeqEnum
                       "smallrep", // faithful_reps None
                       "tex_name", // GroupName can be very slow
                       "wreath_data", // IsWreathProduct is slow
-                      "wreath_product" // IsWreathProduct is slow
+                      "wreath_product" // IsWreathProduct is slow*/
                       ];
 
         greylist := [
@@ -516,8 +524,6 @@ intrinsic AttrType(attr::MonStgElt) -> MonStgElt
         return "numeric[]";
     elif attr in TextListCols then
         return "text[]";
-    elif attr in PermsCols then
-        return "numeric[]";
     elif attr in EltCols then
         return "numeric";
     elif attr in EltListCols then

@@ -7,12 +7,9 @@ intrinsic almost_simple(G::LMFDBGrp) -> Any
         return false;
     end if;
 
-    if not G`normal_subgroups_known then
-        return None();
-    end if;
     GG := G`MagmaGrp;
-    for N in Get(G, "NormalSubgroups") do
-        if IsSimple(N`MagmaSubGrp) and not IsAbelian(N`MagmaSubGrp) and (Order(Centralizer(GG, N`MagmaSubGrp)) eq 1) then
+    for N in Get(G, "MagmaMinimalNormalSubgroups") do
+        if not IsAbelian(N) and IsSimple(N) and #Centralizer(GG, N) eq 1 then
             return true;
         end if;
     end for;
@@ -233,8 +230,7 @@ end intrinsic;
 
 intrinsic factors_of_order(G::LMFDBGrp) -> Any
     {Prime factors of the order of the group}
-    gord:=Get(G,"order");
-    return [z[1] : z in Factorization(gord)];
+    return [z[1] : z in Factorization(G`order)];
 end intrinsic;
 
 intrinsic exponents_of_order(G::LMFDBGrp) -> Any
@@ -323,8 +319,8 @@ intrinsic elementary(G::LMFDBGrp) -> Any
     g:=G`MagmaGrp;
     g:=PCGroup(g);
     sylowsys:= SylowBasis(g);
-    comp:=ComplementBasis(g);
-    facts:= factors_of_order(G);
+    comp := ComplementBasis(g);
+    facts := Get(G, "factors_of_order");
     for j:=1 to #sylowsys do
       if IsNormal(g, sylowsys[j]) and IsNormal(g,comp[j]) and IsCyclic(comp[j]) then
         ans := ans*facts[j];
@@ -338,12 +334,12 @@ intrinsic hyperelementary(G::LMFDBGrp) -> Any
   {Product of all primes p such that G is an extension of a p-group by a cyclic group of order prime to p}
   ans := 1;
   if Get(G,"solvable") and Get(G,"order") gt 1 then
-    g:=G`MagmaGrp;
-    g:=PCGroup(g);
-    comp:=ComplementBasis(g);
-    facts:= factors_of_order(G);
+    g := G`MagmaGrp;
+    g := PCGroup(g);
+    comp := ComplementBasis(g);
+    facts := Get(G, "factors_of_order");
     for j:=1 to #comp do
-      if IsNormal(g,comp[j]) and IsCyclic(comp[j]) then
+      if IsNormal(g, comp[j]) and IsCyclic(comp[j]) then
         ans := ans*facts[j];
       end if;
     end for;
@@ -373,16 +369,59 @@ end intrinsic;
 
 intrinsic transitive_degree(G::LMFDBGrp) -> Any
     {Smallest transitive degree for a faithful permutation representation}
-    ts:=Get(G, "MagmaTransitiveSubgroup");
+    ts := Get(G, "MagmaTransitiveSubgroup");
     if Type(ts) eq NoneType then return None(); end if;
     return Get(G, "order") div Order(ts);
 end intrinsic;
 
-//intrinsic permutation_degree(G::LMFDBGrp) -> Any
-//{Smallest degree for a faithful permutation representation}
+intrinsic permutation_degree(G::LMFDBGrp) -> Any
+{Smallest degree for a faithful permutation representation}
+    return Degree(Image(MinimalDegreePermutationRepresentation(G`MagmaGrp)));
+end intrinsic;
+
+intrinsic irrC_degree(G::LMFDBGrp) -> Any
+{}
+    if G`AllCharactersKnown then
+        return Min([Get(chi, "dim") : chi in Get(G, "CCCharacters") | Get(chi, "faithful")]);
+    end if;
+    return None();
+end intrinsic;
+
+intrinsic irrQ_degree(G::LMFDBGrp) -> Any
+{}
+    if G`AllCharactersKnown then
+        return Min([Get(chi, "dim") : chi in Get(G, "QQCharacters") | Get(chi, "faithful")]);
+    end if;
+    return None();
+end intrinsic;
+
+// The following attributes are set externally for now (using Preload)
+intrinsic linC_degree(G::LMFDBGrp) -> Any
+{}
+    if G`abelian then
+        return #Get(G, "smith_abelian_invariants");
+    end if;
+    return None();
+end intrinsic;
+intrinsic linQ_degree(G::LMFDBGrp) -> Any
+{}
+    return None();
+end intrinsic;
+intrinsic linFp_degree(G::LMFDBGrp) -> Any
+{}
+    return None();
+end intrinsic;
+intrinsic linFq_degree(G::LMFDBGrp) -> Any
+{}
+    return None();
+end intrinsic;
+intrinsic pc_rank(G::LMFDBGrp) -> Any
+{}
+    return None();
+end intrinsic;
 
 intrinsic perm_gens(G::LMFDBGrp) -> Any
-{Generators of a minimal degree transitive faithful permutation representation}
+{Generators of a minimal degree faithful permutation representation}
     ert := Get(G, "elt_rep_type");
     if ert eq 0 then
         return None();
@@ -510,7 +549,7 @@ intrinsic commutator_count(G::LMFDBGrp) -> Any
 end intrinsic;
 
 // Check redundancy of Sylow call
-intrinsic MagmaSylowSubgroups(G::LMFDBGrp) -> Any
+intrinsic MagmaSylowSubgroups(G::LMFDBGrp) -> Assoc
   {Compute SylowSubgroups of the group G}
   GG := G`MagmaGrp;
   SS := AssociativeArray();
@@ -520,6 +559,11 @@ intrinsic MagmaSylowSubgroups(G::LMFDBGrp) -> Any
     SS[p] := SylowSubgroup(GG, p);
   end for;
   return SS;
+end intrinsic;
+
+intrinsic MagmaMinimalNormalSubgroups(G::LMFDBGrp) -> SeqEnum
+{The minimal normal subgroups of G}
+    return MinimalNormalSubgroups(G`MagmaGrp);
 end intrinsic;
 
 intrinsic Zgroup(G::LMFDBGrp) -> Any
@@ -874,8 +918,14 @@ intrinsic IsADirectProductHeuristic(G::Grp : steps:=50) -> Any
   return false,0,0,[];
 end intrinsic;
 
-intrinsic SemidirectFactorization(GG::Grp : direct := false, Ns := []) -> Any
-  {}
+intrinsic DirectFactorization(GG::Grp : try_heuristic:=true, Ns:=[]) -> Any
+{Returns true if G is a nontrivial direct product, along with factors; otherwise returns false.}
+  if try_heuristic then
+    heur_bool, N, K, Ns := IsADirectProductHeuristic(GG);
+    if heur_bool then
+      return heur_bool, N, K, Ns;
+    end if;
+  end if;
   ordG := #GG;
   // deal with trivial group
   if ordG eq 1 then
@@ -883,17 +933,10 @@ intrinsic SemidirectFactorization(GG::Grp : direct := false, Ns := []) -> Any
   end if;
   if #Ns eq 0 then
     //Ns := NormalSubgroups(GG);
-    Ns := [el`subgroup : el in NormalSubgroups(GG)];
-    Remove(~Ns,#Ns); // remove full group;
-    Remove(~Ns,1); // remove trivial group;
-  end if;
-  if direct then
-    Ks := Ns;
-  else // semidirect
-    Ks := [el`subgroup : el in Subgroups(GG)];
+    Ns := [el`subgroup : el in NormalSubgroups(GG) | el`order gt 1 and el`order lt ordG];
   end if;
   for N in Ns do
-    comps := [el : el in Ks | #el eq (ordG div #N)];
+    comps := [el : el in Ns | #el eq (ordG div #N)];
     for K in comps do
       if #(N meet K) eq 1 then
         //print N, K;
@@ -902,17 +945,6 @@ intrinsic SemidirectFactorization(GG::Grp : direct := false, Ns := []) -> Any
     end for;
   end for;
   return false, _, _, _;
-end intrinsic;
-
-intrinsic DirectFactorization(GG::Grp : try_heuristic := true, Ns := []) -> Any
-  {Returns true if G is a nontrivial direct product, along with factors; otherwise returns false.}
-  if try_heuristic then
-    heur_bool, N, K, Ns := IsADirectProductHeuristic(GG);
-    if heur_bool then
-      return heur_bool, N, K, Ns;
-    end if;
-  end if;
-  return SemidirectFactorization(GG : direct := true, Ns := Ns);
 end intrinsic;
 
 intrinsic direct_factorization(GG::Grp : try_heuristic := true) -> Any
@@ -968,9 +1000,8 @@ intrinsic CollectDirectFactors(facts::SeqEnum) -> SeqEnum
 end intrinsic;
 
 intrinsic semidirect_product(G::LMFDBGrp) -> Any
-  {Returns true if G is a nontrivial semidirect product; otherwise returns false.}
-  fact_bool, _, _ := SemidirectFactorization(G`MagmaGrp);
-  return fact_bool;
+{Returns true if G is a nontrivial semidirect product; otherwise returns false.}
+    return &or[#Get(H, "complements") gt 0 : H in Get(G, "NormalSubgroups") | Get(H, "subgroup_order") ne 1 and Get(H, "quotient_order") ne 1];
 end intrinsic;
 
 intrinsic direct_product(G::LMFDBGrp) -> Any
@@ -1429,12 +1460,9 @@ intrinsic coset_action_label(H::LMFDBSubGrp) -> Any
   {Determine the transitive classification for G/H}
   GG := Get(H, "MagmaAmbient");
   HH := H`MagmaSubGrp;
-  if Order(Core(GG,HH)) eq 1 then
-    if Index(GG,HH) gt 47 then
-      return None();
-    end if;
-    ca:=CosetImage(GG,HH);
-    t,n:=TransitiveGroupIdentification(ca);
+  if Order(Core(GG,HH)) eq 1 and Index(GG, HH) lt 48 then
+    ca := CosetImage(GG,HH);
+    t,n := TransitiveGroupIdentification(ca);
     return Sprintf("%oT%o", n, t);
   else
     return None();
@@ -1446,40 +1474,23 @@ end intrinsic;
 intrinsic central_product(G::LMFDBGrp) -> BoolElt
     {Checks if the group G is a central product.}
     GG := G`MagmaGrp;
-    if Get(G, "abelian") then
+    if G`abelian then
         /* G abelian will not be a central product <=> it is cyclic of prime power order (including trivial group).*/
-        if not (Get(G, "cyclic") and #factors_of_order(G) in {0,1}) then /* changed FactoredOrder(GG) by factors_of_order(G).*/
-            return true;
-        end if;
+        return not (G`cyclic and #Get(G, "factors_of_order") in {0,1});
     else
-        /* G is not abelian. We run through the proper nontrivial normal subgroups N and consider whethe$
-the centralizer C = C_G(N) together with N form a central product decomposition for G. We skip over N wh$
-central (C = G) since if a complement C' properly contained in C = G exists, then it cannot also be cent$
-is not abelian. Since C' must itself be normal (NC' = G), we will encounter C' (with centralizer smaller$
+        /* G is not abelian. We run through the proper nontrivial normal subgroups N and consider whether
+the centralizer C = C_G(N) together with N form a central product decomposition for G. We skip over N that are
+central (C = G) since if a complement C' properly contained in C = G exists, then it cannot also be central since G
+is not abelian. Since C' must itself be normal (NC' = G), we will encounter C' (with centralizer smaller than G)
 somewhere else in the loop. */
-
-        normal_list := Get(G, "NormalSubgroups");
-        for ent in normal_list do
-            N := ent`MagmaSubGrp;
-            if (#N gt 1) and (#N lt #GG) then
-                C := Centralizer(GG,N);
-                if (#C lt #GG) then  /* C is a proper subgroup of G. */
-                    C_meet_N := C meet N;
-                    // |CN| = |C||N|/|C_meet_N|. We check if |CN| = |G| and return true if so.
-                    if #C*#N eq #C_meet_N*#GG then
-                        return true;
-                    end if;
-                end if;
-            end if;
-        end for;
+        return &or[Get(H, "central_factor") : H in Get(G, "NormalSubgroups")];
     end if;
-    return false;
 end intrinsic;
 
 intrinsic schur_multiplier(G::LMFDBGrp) -> Any
   {Returns abelian invariants for Schur multiplier by computing prime compoments and then merging them.}
   invs := [];
-  ps := factors_of_order(G);
+  ps := Get(G, "factors_of_order");
   GG := Get(G, "MagmaGrp");
   // Need GrpPerm for pMultiplicator function calls below. Check and convert if not GrpPerm.
   if Type(GG) ne GrpPerm then
@@ -1604,7 +1615,7 @@ end intrinsic;
 intrinsic easy_rank(G::LMFDBGrp) -> Any
 {Computes the rank in cases where doing so does not require the full subgroup lattice; -1 if too hard}
     if Get(G, "order") eq 1 then return 0; end if;
-    if Get(G, "cyclic") then return 1; end if;
+    if Get(G, "abelian") then return #Get(G, "smith_abelian_invariants"); end if;
     if Get(G, "pgroup") ne 0 then
         _, p, m := IsPrimePower(Get(G, "order"));
         F := #Get(G, "MagmaFrattini");
