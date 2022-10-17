@@ -152,8 +152,10 @@ for trip in groups do
     G := trip[2];
     LG := trip[3];
     print fullname;
-    sizes[fullname] := #G;
     PrintFile(gensfile, Sprintf("%o %o", fullname, GroupToString(LG : use_id:=false)));
+    // Computing size of these can be slow
+    if fullname in sporadic then continue; end if;
+    sizes[fullname] := #G;
     if CanIdentifyGroup(#G) then
         gid := IdentifyGroup(G);
         gid := Sprintf("%o.%o", gid[1], gid[2]);
