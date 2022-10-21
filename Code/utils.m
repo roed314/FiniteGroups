@@ -232,7 +232,7 @@ intrinsic CremonaCode(num::RngIntElt) -> MonStgElt
     return Reverse(strg);
 end intrinsic;
 
-intrinsic strip(X::MonStgElt) -> MonStgElt
+intrinsic remove_whitespace(X::MonStgElt) -> MonStgElt
 { Strips spaces and carraige returns from string; much faster than StripWhiteSpace. }
     return Join(Split(Join(Split(X," "),""),"\n"),"");
 end intrinsic;
@@ -240,7 +240,16 @@ end intrinsic;
 intrinsic sprint(X::.) -> MonStgElt
 { Sprints object X with spaces and carraige returns stripped. }
     if Type(X) eq Assoc then return Join(Sort([ $$(k) cat "=" cat $$(X[k]) : k in Keys(X)]),":"); end if;
-    return strip(Sprintf("%o",X));
+    return remove_whitespace(Sprintf("%o",X));
+end intrinsic;
+
+intrinsic strip(X::MonStgElt) -> MonStgElt
+{ Removes whitespace from beginning and end of a string}
+    i := 1;
+    while X[i] in [" ", "\n", "\t"] do i +:= 1; end while;
+    j := #X;
+    while X[j] in [" ", "\n", "\t"] do j -:= 1; end while;
+    return X[i..j];
 end intrinsic;
 
 intrinsic find_process_id(N::RngIntElt, i::RngIntElt : Nlower:=1) -> RngIntElt
@@ -390,6 +399,7 @@ end function;
 intrinsic StringToGroup(s::MonStgElt) -> Grp
 {}
     // We want to support iterated constructions separated by hyphens, but also need to handle negative signs
+    s := strip(s);
     if is_iterative_description(s) then
         path := Split(s, "-");
         G := StringToGroup(path[1]);
@@ -486,7 +496,7 @@ intrinsic StringToGroup(s::MonStgElt) -> Grp
         n, q := Explode([StringToInteger(c) : c in Split(data, ",")]);
         assert cmd in ["GL", "SL", "Sp", "SO", "SOPlus", "SOMinus", "SU", "GO", "GOPlus", "GOMinus", "GU", "CSp", "CSO", "CSOPlus", "CSOMinus", "CSU", "CO", "COPlus", "COMinus", "CU", "Omega", "OmegaPlus", "OmegaMinus", "Spin", "SpinPlus", "SpinMinus", "PGL", "PSL", "PSp", "PSO", "PSOPlus", "PSOMinus", "PSU", "PGO", "PGOPlus", "PGOMinus", "PGU", "POmega", "POmegaPlus", "POmegaMinus", "PGammaL", "PSigmaL", "PSigmaSp", "PGammaU", "AGL", "ASL", "ASp", "AGammaL", "ASigmaL", "ASigmaSp"];
         CMD := eval cmd;
-        if cmd in ["AGL", "ASL", "ASp", "AGammaL", "ASigmaL", "ASigmaSp"] then
+        if cmd in ["AGL", "ASL"] then // wish we could do "ASp", "AGammaL", "ASigmaL", "ASigmaSp"
             return CMD(GrpMat, n, q);
         else
             return CMD(n, q);
