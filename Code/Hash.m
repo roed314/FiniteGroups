@@ -10,8 +10,6 @@ declare attributes LMFDBHashData:
     hash,
     label,
     description, // string to reconstruct the group
-    gens_used, // a list of integers: which generators are displayed to the user (others obtained by exponentiation)
-    gens_fixed, // whether the list of generators has been fixed in the database
     hard_hash; // a list of integers designed to break up hash collisions; possibly tailored to groups in this hash cluster, only computed when needed (initially set to [])
 
 declare type LMFDBHashCluster;
@@ -321,13 +319,6 @@ intrinsic HashData(G::LMFDBGrp) -> LMFDBHashData
 {}
     HD := New(LMFDBHashData);
     HD`MagmaGrp := G`MagmaGrp;
-    if assigned G`gens_used then
-        HD`gens_used := G`gens_used;
-        HD`gens_fixed := true;
-    else
-        HD`gens_used := [];
-        HD`gens_fixed := not Get(G, "solvable");
-    end if;
     HD`label := G`label;
     HD`hash := Get(G, "hash");
     HD`hard_hash := [];
@@ -337,8 +328,6 @@ intrinsic HashData(n::RngIntElt, i::RngIntElt) -> LMFDBGrp
     {Make HashData from the small group database}
     G := New(LMFDBHashData);
     G`MagmaGrp := SmallGroup(n, i);
-    G`gens_used := [];
-    G`gens_fixed := false;
     G`label := Sprint(n) cat "." cat Sprint(i);
     G`hard_hash := [];
     return G;
@@ -420,6 +409,11 @@ intrinsic ReduceByOrbits(G::GrpPerm) -> GrpPerm
 end intrinsic;
 
 SMALLHASH_ORDERS := [512, 1152, 1536, 1920, 2187, 6561, 15625, 16807, 78125, 161051];
+intrinsic SmallhashOrders() -> SeqEnum
+{The orders where all hashes are known}
+    return SMALLHASH_ORDERS;
+end intrinsic;
+
 intrinsic IdentifyGroups(Glist::SeqEnum : hashes:=0) -> SeqEnum
 {Identify groups if small it will use IdentifyGroup; if medium lookup in gps_smallhash; if large currently raise an error (eventually will use hashes stored in gps_groups)}
     if hashes cmpeq 0 then

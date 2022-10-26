@@ -84,31 +84,45 @@ Path to finishing computations:
  c. Need to use Complements to find semidirect decompositions from NormalSubgroups
  d. Use 
 
-Point Jen to places in the code doing PC reps
-cc stats stored in group
-Send a message about todo items on Large Groups list
-Think about whether there are more sections that need to be added.
+Holomorph plan: 
 
-new stuff (permutation degree, linear degree, etc)....
-hashes for subgroups and quotients (things that might not have labels)
-Make labeling work using hashes
-make sure ngens, gens_used, pc_code, perm_gens ok in basic
-organize which columns are preloaded (hash, gens_used, pc_code...)
-deciding on outer_equivalence
-store permutation generators in a separate table? No, but need to add various mat_gens
-Can use Complements to do find semidirect decompositions from NormalSubgroups
-Make SaveElt work for matrix groups (save as integers and deal with figuring out what b is)
-Check permutation_degree (certainly shouldn't be larger than transitive degree)
-Make sure that the version of Magma installed in the cloud has the appropriate libraries installed (Atlas, Trans32Id for example)
+Harmonize the various place column names show up (IO.m, .tmpheader, .header, LMFDBGrp.m, postgres table...)
+Refine labeling: it may be too slow
+organize which columns are preloaded (hash, data from gps_transitive...)
+deciding on outer_equivalence, other decision variables
+Can use Complements to do semidirect decompositions from NormalSubgroups
+Don't priorize weird Lie groups
+If no holomorph:
+ * can't label subgroups (current label scheme requires grouping by automorphism class)
+ * to compute autjugacy classes need to take generators for OuterFPGroup (probably enough to just take last several generators of AutomorphismGroup) and find connected components.  Can probably do the same for subgroups....
+ * 
+Compute and save automorphism group beforehand; deal with the fact that we sometimes can't compute Holomorph (can compute OuterFPGroup and then connected component
+Print timing output to be combined by cloud_start.py
+To compute aut lattice with edges in non-holomorph case, just collapse the conj lattice with edges (need to compute those subgroups anyway)
 
-Use semidirect products to select a better name (postprocess step so that we can work up from the bottom); make sure to modify other places names show up (subgroups table)
+Use semidirect products to select a better name (postprocess step so that we can work up from the bottom and include Lie group names if not stupid); make sure to modify other places names show up (subgroups table); make sure status variables like complex_characters_known are accurate (might have tried and failed)
 Write cloud_collect.py to collect results
 Write another job that modifies a full record along a group hom by mapping/lifting all elements
 Write scripts for adding more groups later
 
-finite_matrix_group shouldn't be a column probably
-metacyclic might be slow for basic
+Talk to Drew: Make sure that the version of Magma installed in the cloud has the appropriate libraries installed (Atlas, Trans32Id for example), and that LMFDB access is okay
+Columns to remove: finite_matrix_group, elt_rep_type, perm_gens, pc_code, gens_used, smallrep (replaced by irrC_degree)
+For discussion:
+ * ngens (not very mathematically meaningful)
+ * MinimalDegreePermutationRepresentation (could be wrong); improved by modifying magma to fix bug
+ * Some affine groups displayed as permutation groups
 
+Send a message about todo items on Large Groups list
+Think about whether there are more sections that need to be added to paper
+
+Done:
+finish representations jsonb column
+Make SaveElt work for matrix groups
+hashes for subgroups and quotients (things that might not have labels)
+new stuff (permutation degree, linear degree, etc)....
+Check permutation_degree (rerun in progress)
+Check status of LoadSubgroupCache (used in SubgroupLattice)
+Separate computation of complex and rational character tables? (linked by labeling characters, so can't)
 
 ***********/
 

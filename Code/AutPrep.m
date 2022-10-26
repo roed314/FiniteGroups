@@ -20,7 +20,7 @@ procedure PrepSmallGroup(N, i)
             RePresent(G : reset_attrs:=false);
             t := Cputime() - t0;
             F := Open(filename, "w");
-            Write(F, Sprintf("<PCGroup(%o), %o, %o>", CompactPresentation(G`MagmaGrp), G`gens_used, t));
+            Write(F, Sprintf("<PCGroup(%o), %o, %o>", CompactPresentation(G`MagmaGrp), Get(G, "gens_used"), t));
             Flush(F);
         end if;
     end if;

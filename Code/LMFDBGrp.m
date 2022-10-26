@@ -14,11 +14,15 @@ declare attributes LMFDBGrp:
   SubGrpAutOrbits,
   Holomorph,
   HolInj,
+  HaveHolomorph,
+  HaveAutomorphisms,
+  SavedAutomorphismGroup,
   ConjugacyClasses,
   CCAutCollapse,
   GeneratorsSequence,
   MagmaGenerators,
   MagmaConjugacyClasses,
+  MagmaDivisions,
   ClassMap,
   MagmaClassMap,
   MagmaPowerMap,
@@ -37,7 +41,6 @@ declare attributes LMFDBGrp:
   QQRepsAsCC,
   Characters,
   IsoToOldPresentation, // set by the various RePresent intrinsics in Presentation.m
-  AllCharactersKnown, // this should be renamed to a lower case variable once this computation run is done
   SubByGass, // used in MinReps.m
   label,
   old_label,
@@ -105,8 +108,8 @@ declare attributes LMFDBGrp:
   complete,
   nilpotency_class,
   ngens,
-  pc_code,
-  gens_used,
+  pc_code, // old style; to be removed
+  gens_used, // old style; to be removed
   number_conjugacy_classes,
   number_autjugacy_classes,
   number_divisions,
@@ -126,13 +129,14 @@ declare attributes LMFDBGrp:
   irrep_stats,
   ratrep_stats,
   elt_rep_type, // old style; to be removed
-  pc_compact_presentation, // list of integers, the output of CompactPresentation
-  representations, // A dictionary with keys in "Perm", "GLZ", "GLFp", "GLZq", "GLZN", "PGLFp", "PGLFq", and values a dictionary {"gens": [list of integers], "dR": [list of integers]}
+  representations, // A dictionary with keys in "Perm", "PC", "GLZ", "GLFp", "GLZq", "GLZN", "PGLFp", "PGLFq", and values a dictionary giving the defining parameters
   element_repr_type, // string, explains which repr type ("PC", "Perm", "GLZ", "GLFp", "GLZq", "GLZN", "GLFq", "PGLFp", "PGLFq") to be used in representing elements
   perm_gens, // old style; to be removed
   hash,
   HashData,
   all_subgroups_known,
+  complex_characters_known,
+  rational_characters_known,
   normal_subgroups_known,
   maximal_subgroups_known,
   sylow_subgroups_known,

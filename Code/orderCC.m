@@ -56,7 +56,7 @@ function makedivs(v, C, pm)
     // pm = PowerMap(G)
     if #v eq 1 then return [v]; end if;
     divs := [];
-    while #li gt 0 do
+    while #divs gt 0 do
         r := Rep(v);
         newdiv := {r};
         Exclude(~v, r);
@@ -93,7 +93,7 @@ intrinsic MagmaDivisions(G::LMFDBGrp) -> SeqEnum
   // The order of a rep is cc[r][1].  This could be more efficient
   // if we used generators for (Z/nZ)^* where n=cc[r][1]
     divisions := [];
-    for os in Sort(Keys(by_ordsize)) do
+    for os in Sort([k : k in Keys(by_ordsize)]) do
         for division in makedivs(by_ordsize[os], C, pm) do
             Append(~divisions, <os[1], os[2], division>);
         end for;

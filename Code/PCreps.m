@@ -29,7 +29,7 @@ G0 := G`MagmaGrp;
 
 procedure SavePCGrp(A, t, phi)
     gens := PCGenerators(A`MagmaGrp);
-    PrintFile(outfile, Sprintf("%o|%o|%o|%o|%o", label, SmallGroupEncoding(A`MagmaGrp), Join([Sprint(c) : c in A`gens_used], ","), Join([Sprint(c) : c in CompactPresentation(A`MagmaGrp)], ","), Join([SaveElt(phi(gens[i])) : i in A`gens_used], ",")));
+    PrintFile(outfile, Sprintf("%o|%o|%o|%o|%o", label, SmallGroupEncoding(A`MagmaGrp), Join([Sprint(c) : c in Get(A, "gens_used")], ","), Join([Sprint(c) : c in CompactPresentation(A`MagmaGrp)], ","), Join([SaveElt(phi(gens[i])) : i in Get(A, "gens_used")], ",")));
     PrintFile(timefile, Sprint(Cputime() - t));
 end procedure;
 //t0 := Cputime();

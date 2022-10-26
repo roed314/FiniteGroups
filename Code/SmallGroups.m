@@ -10,7 +10,6 @@ intrinsic MakeSmallGroup(N::RngIntElt, i::RngIntElt : represent:=true, set_param
             vprint User1: "Looking up stored presentation";
             data := eval Read(F);
             G`MagmaGrp := data[1];
-            G`gens_used := data[2];
         else
             RePresent(G);
             vprint User1: "New presentation found";
@@ -39,7 +38,7 @@ intrinsic MakeSmallGroupData(N::RngIntElt, i::RngIntElt) -> Tup, SeqEnum
     SetSubgroupParameters(G);
     vprint User1: "Subgroup parameters set";
     Append(~ts, Cputime() - t0);
-    tasks := G`AllCharactersKnown select ["Subgroups", "Characters", "faithful_reps"] else ["Subgroups"];
+    tasks := ["Subgroups", "Characters", "faithful_reps"];
     for task in tasks do
         vprint User1: "Starting", task;
         t0 := Cputime();

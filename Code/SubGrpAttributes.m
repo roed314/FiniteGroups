@@ -98,12 +98,7 @@ end intrinsic;
 
 intrinsic subgroup(H::LMFDBSubGrp) -> MonStgElt // Need to be together with all the labels
 {Determine label of subgroup}
-    HH := H`MagmaSubGrp;
-    // Work around a magma bug in IdentifyGroup
-    if Get(H, "quotient_order") eq 1 then
-        return label(H`Grp`MagmaGrp);
-    end if;
-    return label(HH);
+    return label_subgroup(H`Grp, H`MagmaSubGrp : hsh:=Get(H, "subgroup_hash"));
 end intrinsic;
 
 intrinsic subgroup_order(H::LMFDBSubGrp) -> RngIntElt // Need to be subgroup attribute file
@@ -117,15 +112,13 @@ intrinsic subgroup_hash(H::LMFDBSubGrp) -> Any
 end intrinsic;
 
 intrinsic ambient(H::LMFDBSubGrp) -> MonStgElt // Need to be together with all the labels
-  {Determine label of the ambient group}
-  GG := Get(H, "MagmaAmbient");
-  return label(GG);
+{Determine label of the ambient group}
+    return Get(H`Grp, "label");
 end intrinsic;
 
 intrinsic ambient_order(H::LMFDBSubGrp) -> RngIntElt // Need to be subgroup attribute file
-  {returns order of the ambient group}
-  GG := Get(H, "MagmaAmbient");
-  return Order(GG);
+{returns order of the ambient group}
+    return Get(H`Grp, "order");
 end intrinsic;
 
 intrinsic core_order(H::LMFDBSubGrp) -> RngIntElt
@@ -140,11 +133,7 @@ intrinsic Quotient(H::LMFDBSubGrp) -> Grp
     if not Get(H, "normal") then
         error "Subgroup is not normal";
     end if;
-    if Type(GG) eq GrpPC or Index(GG, HH) lt 100000 then
-        Q, H`QuotientMap := quo<GG|HH>;
-    else
-        Q, H`QuotientMap := MyQuotient(GG, HH : max_orbits:=4, num_checks := 3);
-    end if;
+    Q, H`QuotientMap := BestQuotient(GG, HH);
     return Q;
 end intrinsic;
 
@@ -156,11 +145,11 @@ end intrinsic;
 
 intrinsic quotient(H::LMFDBSubGrp) -> Any // Need to be together with all the labels
 {Determine label of the quotient group}
-  if not Get(H, "normal") then
-    return None();
-  else
-    return label(Get(H, "Quotient"));
-  end if;
+    if not Get(H, "normal") then
+        return None();
+    else
+        return label_quotient(H`Grp, H`MagmaSubGrp : GN:=Get(H, "Quotient"), hsh:=Get(H, "quotient_hash"));
+    end if;
 end intrinsic;
 
 intrinsic quotient_order(H::LMFDBSubGrp) -> Any // Need to be subgroup attribute file
@@ -266,9 +255,7 @@ end intrinsic;
 
 intrinsic projective_image(H::LMFDBSubGrp) -> Any // Need to be subgroup attribute file
   {returns label of the quotient by the center of the ambient group}
-  GG := H`MagmaAmbient;
-  HH := H`MagmaSubGrp; 
-  return label(quo<GG|HH meet Center(GG)>);
+  return label_quotient(H`Grp, H`MagmaSubGrp meet Center(H`MagmaAmbient));
 end intrinsic;
 
 intrinsic complements(H::LMFDBSubGrp) -> Any
@@ -479,18 +466,18 @@ intrinsic quotient_solvable(H::LMFDBSubGrp) -> Any
 end intrinsic;
 
 intrinsic weyl_group(H::LMFDBSubGrp) -> Any
-  {The quotient of the normalizer by the centralizer}
-  GG := Get(H, "MagmaAmbient");
-  HH := H`MagmaSubGrp;
-  N := Normalizer(GG, HH);
-  Z := Centralizer(GG, HH);
-  W := quo< N | Z >;
-  try
-    return label(W);
-  catch e;
-    print "weyl_group", e;
-    return None();
-  end try;
+{The quotient of the normalizer by the centralizer}
+    GG := Get(H, "MagmaAmbient");
+    HH := H`MagmaSubGrp;
+    N := Normalizer(GG, HH);
+    Z := Centralizer(GG, HH);
+    W := BestQuotient(N, Z);
+    try
+        return label(W);
+    catch e;
+        print "weyl_group", e;
+        return None();
+    end try;
 end intrinsic;
 
 intrinsic aut_weyl_group(H::LMFDBSubGrp) -> Any
@@ -509,7 +496,7 @@ intrinsic aut_weyl_group(H::LMFDBSubGrp) -> Any
         return None();
     end if;
     try
-        W := quo< N | Z >;
+        Q := BestQuotient(N, Z);
         return label(W);
     catch e;
         return None();

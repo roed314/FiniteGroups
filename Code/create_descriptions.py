@@ -27,6 +27,7 @@ os.makedirs(opj("DATA", "descriptions"), exist_ok=True)
 os.makedirs(opj("DATA", "preload"), exist_ok=True)
 os.makedirs(opj("DATA", "pcbug.todo"), exist_ok=True)
 os.makedirs(opj("DATA", "pcbugs"), exist_ok=True)
+os.makedirs(opj("DATA", "hash_lookup"), exist_ok=True)
 
 # Permutation degrees of perfect groups from the perfect group database
 Perf_lookup = dict(zip(
@@ -137,6 +138,17 @@ with open(opj("DATA", "mat_aliases.txt")) as F:
         label, desc = line.strip().split()
         update_options(label, desc)
 print("Matrix aliases loaded in", walltime() - t0)
+
+with open(opj("DATA", "TinyLie.txt")) as F:
+    for line in F:
+        label, desc = line.strip().split()
+        update_options(label, desc)
+liegens = {}
+with open(opj("DATA", "LieGens.txt")) as F:
+    for line in F:
+        desc, explicit_desc = line.strip().split()
+        liegens[desc] = explicit_desc
+print("Lie aliases loaded in", walltime() - t0)
 
 # Get polycyclic presentations from the pcreps folders
 def getpc(F):
@@ -295,9 +307,15 @@ with open(opj("DATA", "to_add.txt")) as F:
         line = line.strip()
         if " " in line:
             label, hsh, disp, comp = line.strip().split()
+            small = label.split(".")[1].isdigit()
         else:
+            small = True
             disp = comp = label = line
             N, hsh = label.split(".")
+        if not small and hsh != r"\N":
+            os.makedirs(opj("DATA", "hash_lookup", str(N)), exist_ok=True)
+            with open(opj("DATA", "hash_lookup", str(N), str(hsh)), "a") as F:
+                _ = F.write(label + "\n")
         permdeg = minrep.get(label, (None,))[0]
         pccode = slookup.get(label, (None,))[0]
         tpermdeg = smalltrans.get(label, None)
@@ -312,6 +330,10 @@ with open(opj("DATA", "to_add.txt")) as F:
         permgens = best_of_breed[label].get("Perm", (None,))[-1]
         special_names.extend([{"family": desc.split("(")[0], "parameters": {"n": n, "q": q}, "label": label} for (n, code, q, desc) in aliases[label].get("L", [])])
         # Also permutation_degree, irrC_degree, irrQ_degree, linC_degree, linFp_degree, linFq_degree, linQ_degree, pc_rank, element_repr_type, representations
+        # Save group_name for groups of Lie type
+        # Remove "PC" and use liegens to pop "L" from best_of_breed
+        # set aut_group, aut_order, etc when known
+        # Save gens_used in representations, save hash
         to_add[label] = (best_of_show[label], hsh, permdeg, tpermdeg, pccode, permgens, GLZgens, GLFpgens, GLZNgens, GLFqgens, GLZNgens) # also various reps: perm_gens, mat_gens, etc
         #with open(opj("DATA", "descriptions", label), "w") as F:
         #    _ = F.write(best_of_show[label])

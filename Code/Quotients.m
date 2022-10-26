@@ -208,3 +208,13 @@ Note that this can be used as a less optimal but sometimes faster version of Min
     assert #K eq #N and #Q eq (#G div #N);
     return Q, rho;
 end intrinsic;
+
+intrinsic BestQuotient(G::Grp, N::Grp) -> Grp, Map
+{Choose either quo<G|N> or MyQuotient(G, N) depending on index and type}
+    if Type(G) eq GrpPC or Index(G, N) lt 1000000 then
+        Q, proj := quo<G | N>;
+    else
+        Q, proj :=  MyQuotient(G, N : max_orbits:=4, num_checks:=3);
+    end if;
+    return Q, proj;
+end intrinsic;

@@ -396,13 +396,18 @@ function dbcFromdR(dR)
     return d, b, Rcode;
 end function;
 
-intrinsic StringToGroup(s::MonStgElt) -> Grp
+intrinsic StringToGroup(s::MonStgElt : baseG:=0) -> Grp
 {}
     // We want to support iterated constructions separated by hyphens, but also need to handle negative signs
     s := strip(s);
     if is_iterative_description(s) then
         path := Split(s, "-");
-        G := StringToGroup(path[1]);
+        if baseG cmpeq 0 then
+            G := StringToGroup(path[1]);
+        else
+            // We need to be able to specify an existing group for PC groups rather than creating a new one.
+            G := baseG;
+        end if;
         for zig in path[2..#path] do
             if zig[1] eq "A" then
                 // Since computing the automorphism group can be expensive, we allow storage of the actual automorphisms
@@ -410,30 +415,10 @@ intrinsic StringToGroup(s::MonStgElt) -> Grp
                     G := AutomorphismGroup(G);
                 else
                     gens, auts := Explode(Split(zig[2..#zig], ";"));
-                    gens := [StringToInteger(c) : c in Split(gens, ",")];
-                    auts := [StringToInteger(c) : c in Split(auts, ",")];
+                    gens := [LoadElt(c, G) : c in Split(gens, ",")];
+                    auts := Split(auts, ",");
                     auts := [auts[i..i+#gens-1] : i in [1..#auts by #gens]];
-                    if Type(G) eq GrpPerm then
-                        n := Degree(G);
-                        gens := [DecodePerm(gen, n) : gen in gens];
-                        auts := [[DecodePerm(x, n) : x in imgs] : imgs in auts];
-                    elif Type(G) eq GrpMat then
-                        d := Dimension(G);
-                        R := CoefficientRing(G);
-                        if Type(R) eq FldFin and Degree(R) gt 1 then
-                            k := Degree(R);
-                            gens := [R!gens[i..i+k-1] : i in [1..#gens by k]];
-                            auts := [[R!imgs[i..i+k-1] : i in [1..#imgs by k]] : imgs in auts];
-                        end if;
-                        gens := [G!gens[i..i+d^2-1] : i in [1..#gens by d^2]];
-                        auts := [[G!imgs[i..i+d^2-1] : i in [1..#imgs by d^2]] : imgs in auts];
-                    elif Type(G) eq GrpPC then
-                        n := NumberOfPCGenerators(G);
-                        gens := [G!gens[i..i+n-1] : i in [1..#gens by n]];
-                        auts := [[G!imgs[i..i+n-1] : i in [1..#imgs by n]] : imgs in auts];
-                    else
-                        error "Unsupported group type", Type(G);
-                    end if;
+                    auts := [[LoadElt(c, G) : c in phi] : phi in auts];
                     G := AutomorphismGroup(G, gens, auts);
                 end if;
             elif zig eq "Z" then
@@ -672,23 +657,8 @@ intrinsic GroupToString(G::Grp : use_id:=true) -> MonStgElt
             gens := Generators(G);
         end if;
         auts := &cat[[phi(g) : g in gens] : phi in Generators(A)];
-        if Type(G) eq GrpPC then
-            gens := &cat[ElementToSequence(g) : g in gens];
-            auts := &cat[ElementToSequence(im) : im in auts];
-        elif Type(G) eq GrpPerm then
-            gens := [EncodePerm(g) : g in gens];
-            auts := [EncodePerm(im) : im in auts];
-        elif Type(G) eq GrpMat then
-            gens := &cat[Eltseq(g) : g in gens];
-            auts := &cat[Eltseq(im) : im in auts];
-            R := CoefficientRing(G);
-            if Type(R) eq FldFin and Degree(R) gt 1 then
-                gens := &cat[Eltseq(a) : a in gens];
-                auts := &cat[Eltseq(a) : a in auts];
-            end if;
-        else
-            error "Unsupported group type", Type(G);
-        end if;
+        gens := [SaveElt(g) : g in gens];
+        auts := [SaveElt(gimg) : gimg in auts];
         return Sprintf("%o-A%o;%o", Gdesc, Join([Sprint(g) : g in gens], ","), Join([Sprint(a) : a in auts], ","));
     elif use_id and CanIdentifyGroup(N) then
         return Sprintf("%o.%o", N, IdentifyGroup(G)[2]);

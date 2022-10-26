@@ -15,7 +15,7 @@ end intrinsic;
 
 intrinsic group(C::LMFDBGrpConjCls) -> MonStgElt
     {return label of ambient group of C}
-    return label(C`Grp);
+    return (C`Grp)`label;
 end intrinsic;
 
 intrinsic size(C::LMFDBGrpConjCls) -> Any

@@ -11,7 +11,7 @@ end intrinsic;
 
 intrinsic group(Chi::LMFDBGrpChtrCC) -> Any
     {}
-    return label(Get(Chi, "Grp"));
+    return (Chi`Grp)`label;
 end intrinsic;
 
 intrinsic dim(Chi::LMFDBGrpChtrCC) -> Any
