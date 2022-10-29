@@ -74,7 +74,7 @@ intrinsic label_quotient(G::LMFDBGrp, N::Grp : GN:=0, hsh:=0) -> Any
 {Given a group G and a normal subgroup N, returns the label of G/N as an abstract group}
     if #N eq 1 then
         return Get(G, "label");
-    elif #N eq #G then
+    elif #N eq G`order then
         return "1.1";
     end if;
     GG := G`MagmaGrp;

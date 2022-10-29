@@ -57,6 +57,7 @@ end intrinsic;
 
 intrinsic characteristic(H::LMFDBSubGrp) -> BoolElt
 {Returns true if H is a characteristic subgroup of G}
+    // This will usually not get called since it's set by the LMFDBSubgroup(SubgroupLatElt) constructor
     if not Get(H, "normal") then return false; end if;
     G := H`Grp;
     HH := H`MagmaSubGrp;
@@ -193,26 +194,16 @@ intrinsic minimal_normal(H::LMFDBSubGrp) -> BoolElt // Need to be subgroup attri
     if IsSolvable(HH) then
       if not IsAbelian(HH) then return false; end if;
       if not IsPrime(Exponent(HH)) then return false; end if;
-      return IsIrreducible(Gmodule(GG, HH));
+      return IsIrreducible(GModule(GG, HH));
     else
       if #{F : F in CompositionFactors(HH)} ne 1 then return false; end if;
     end if;
     // We fall back on iterating over the minimal normal subgroups of G.  This should occur rarely.
-    if G`outer_equivalence then
-        Ambient := Get(G, "Holomorph");
-        inj := Get(G, "HolInj");
-        for N in Get(G, "MagmaMinimalNormalSubgroups") do
-            if IsConjugateSubgroup(Ambient, inj(N), inj(HH)) then
-                return true;
-            end if;
-        end for;
-    else
-        for N in Get(G, "MagmaMinimalNormalSubgroups") do
-            if HH eq N then
-                return true;
-            end if;
-        end  for;
-    end if;
+    for N in Get(G, "MagmaMinimalNormalSubgroups") do
+      if HH eq N then
+        return true;
+      end if;
+    end  for;
     return false;
   end if;
 end intrinsic;
@@ -260,23 +251,12 @@ end intrinsic;
 
 intrinsic complements(H::LMFDBSubGrp) -> Any
   {Returns the subgroups K of G such that H ∩ K = e and G=HK in a list}
+  if not Get(H, "normal") then
+      return [];
+  end if;
   GG := Get(H, "MagmaAmbient");
   HH := H`MagmaSubGrp;
-  G := Get(H, "Grp");
-  S:= Get(G, "Subgroups");
-  if not Get(H, "normal") then
-    return [];
-  else
-    comps := [el : el in S | Order(el`MagmaSubGrp) eq (Order(GG) div Order(HH))];
-    M := [];
-    for s in comps do
-      K := s`MagmaSubGrp;
-      if #(K meet HH) eq 1 then
-        Append(~M, K);
-      end if;
-    end for;
-    return M;
-  end if;
+  return Complements(GG, HH);
 end intrinsic;
 
 
@@ -318,7 +298,7 @@ intrinsic QuotientActionMap(H::LMFDBSubGrp : use_solv:=true) -> Any
         N := H`MagmaSubGrp;
         vprint User1: "Starting QuotientActionMap with", use_solv, Get(H, "split");
         t := Cputime();
-        if use_solv then
+        if use_solv and Type(GG) eq GrpPC then
             A := AutomorphismGroupSolubleGroup(N);
         else
             A := AutomorphismGroup(N);
@@ -483,6 +463,9 @@ end intrinsic;
 intrinsic aut_weyl_group(H::LMFDBSubGrp) -> Any
 {The quotient of the normalizer by the centralizer, inside the holomorph}
     G := H`Grp;
+    if not Get(G, "HaveHolomorph") then
+        return None();
+    end if;
     GG := G`MagmaGrp;
     Ambient := Get(G, "Holomorph");
     inj := Get(G, "HolInj");
@@ -496,7 +479,7 @@ intrinsic aut_weyl_group(H::LMFDBSubGrp) -> Any
         return None();
     end if;
     try
-        Q := BestQuotient(N, Z);
+        W := BestQuotient(N, Z);
         return label(W);
     catch e;
         return None();
@@ -506,12 +489,13 @@ end intrinsic;
 intrinsic aut_centralizer_order(H::LMFDBSubGrp) -> Any
 {The number of automorphisms of the ambient group that act trivially on this subgroup}
     W := Get(H, "aut_weyl_group"); // sets attr
-    return H`aut_centralizer_order;
+    return (assigned H`aut_centralizer_order) select H`aut_centralizer_order else None();
 end intrinsic;
 
 intrinsic aut_stab_index(H::LMFDBSubGrp) -> Any
 {The index of Stab_A(H) in Aut(G); 1 for characteristic subgroups}
     W := Get(H, "aut_weyl_group"); // sets AutStab
+    if not assigned H`AutStab then return None(); end if;
     G := H`Grp;
     Ambient := Get(G, "Holomorph");
     N := (H`AutStab meet Stabilizer(Ambient, 1));
@@ -521,15 +505,15 @@ end intrinsic;
 intrinsic aut_weyl_index(H::LMFDBSubGrp) -> Any
 {The index of the aut_weyl_group inside the automorphism group of H}
     W := Get(H, "aut_weyl_group"); // sets attr
+    if not assigned H`aut_weyl_index then return None(); end if;
     return H`aut_weyl_index;
 end intrinsic;
 
 intrinsic aut_quo_index(H::LMFDBSubGrp) -> Any
 {The index of the image of Stab_A(H) in Aut(G/H)}
-    if not Get(H, "normal") then
-        return None();
-    end if;
+    if not Get(H, "normal") then return None(); end if;
     W := Get(H, "aut_weyl_group"); // sets AutStab
+    if not assigned H`AutStab then return None(); end if;
     N := H`AutStab;
     G := H`Grp;
     Ambient := Get(G, "Holomorph");

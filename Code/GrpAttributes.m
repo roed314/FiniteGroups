@@ -41,10 +41,30 @@ end intrinsic;
 
 intrinsic aut_stats(G::LMFDBGrp) -> Any
 {returns the list of triples [o, s, k, m] where m is the number of autjugacy classes of order o containing k conjugacy classes of size s}
-    Hol := Get(G, "Holomorph");
-    inj := Get(G, "HolInj");
+    // Don't want to use CCAutCollapse since that triggers computation of the rational character table
     CC := Get(G, "MagmaConjugacyClasses");
-    D := Classify([1..#CC], func<i, j | IsConjugate(Hol, inj(CC[i][3]), inj(CC[j][3]))>);
+    if Get(G, "HaveHolomorph") then
+        Hol := Get(G, "Holomorph");
+        inj := Get(G, "HolInj");
+        D := Classify([1..#CC], func<i, j | IsConjugate(Hol, inj(CC[i][3]), inj(CC[j][3]))>);
+    elif Get(G, "HaveAutomorphisms") then
+        Aut := Get(G, "MagmaAutGroup");
+        cm := Get(G, "MagmaClassMap");
+        outs := [f : f in Generators(Aut) | not IsInner(f)];
+        edges := [{Integers()|} : _ in [1..#CC]];
+        for f in outs do
+            for i in [1..#CC] do
+                j := cm(f(CC[i][3]));
+                if i ne j then
+                    Include(~(edges[i]), j);
+                end if;
+            end for;
+        end for;
+        V := Graph<#CC| edges : SparseRep := true>;
+        D := [Sort([Index(v) : v in comp]) : comp in Components(V)];
+    else
+        error "Must have either holomorph or automorphisms";
+    end if;
     A := AssociativeArray();
     for d in D do
         c := CC[d[1]];
@@ -275,7 +295,7 @@ end intrinsic;
 
 function IsCpxCq(n)
     // Whether a non-abelian group of order n is necessarily of the form C_p \rtimes C_q with p = 1 (mod q)
-    F := Factorization();
+    F := Factorization(n);
     return #F eq 2 and F[1][2] eq 1 and F[2][2] eq 1;
 end function;
 
@@ -379,7 +399,7 @@ intrinsic irrQ_degree(G::LMFDBGrp) -> Any
         return p - 1;
     end if;
     rct := Get(G, "MagmaRationalCharacterTable");
-    faithful := [Degree(chi) : chi in rct | IsFaithful(chi)];
+    faithful := [Integers()!Degree(chi) : chi in rct | IsFaithful(chi)];
     if #faithful gt 0 then
         return Min(faithful);
     else
@@ -891,7 +911,7 @@ intrinsic div_stats(G::LMFDBGrp) -> Any
     divs := AssociativeArray();
     for d in Get(G, "MagmaDivisions") do
         os := [d[1], d[2], #d[3]];
-        if not IsDefined(divs[os]) then
+        if not IsDefined(divs, os) then
             divs[os] := 0;
         end if;
         divs[os] +:= 1;
@@ -1539,7 +1559,7 @@ end intrinsic;
 
 
 intrinsic central_product(G::LMFDBGrp) -> BoolElt
-    {Checks if the group G is a central product.}
+{Checks if the group G is a central product.}
     GG := G`MagmaGrp;
     if G`abelian then
         /* G abelian will not be a central product <=> it is cyclic of prime power order (including trivial group).*/
@@ -1672,11 +1692,12 @@ intrinsic old_label(G:LMFDBGrp)-> Any
 end intrinsic;
 
 intrinsic pc_code(G::LMFDBGrp) -> RngInt
-{}
+{This should be set externally for solvable groups that are not represented as a polycyclic group}
+    GG := G`MagmaGrp;
     if not Get(G, "solvable") then
         return 0;
     end if;
-    return SmallGroupEncoding(G`MagmaGrp);
+    return SmallGroupEncoding(GG);
 end intrinsic;
 
 intrinsic gens_used(G::GrpPC) -> SeqEnum
@@ -1822,6 +1843,7 @@ end intrinsic;
 intrinsic eulerian_function(G::LMFDBGrp) -> Any
 {Calculates the Eulerian function of G for n = rank(G)}
     if Get(G, "order") eq 1 then return 1; end if;
+    if not G`subgroup_inclusions_known then return None(); end if;
     r := Get(G,"rank");
     tot := &+[Get(s, "subgroup_order")^r * s`mobius_sub * s`count : s in Get(G, "Subgroups")];
     aut := Get(G, "aut_order");

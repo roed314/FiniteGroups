@@ -26,7 +26,7 @@ end function;
 
 intrinsic outer_equivalence(G::LMFDBGrp) -> Any
 {Whether subgroups are computed up to automorphism (vs only up to conjugacy)}
-    if Get(G, "HaveHolomorph") then
+    if not Get(G, "HaveHolomorph") then
         return false;
     end if;
     byA := Get(G, "SubGrpLstAut");
@@ -121,6 +121,8 @@ declare attributes SubgroupLatElt:
         easy_hash, // for identification
         normalizer,
         centralizer,
+        normal,
+        characteristic,
         normal_closure,
         characteristic_closure;
 
@@ -136,6 +138,7 @@ declare attributes SubgroupLat:
         aut_class,
         aut_orbit,
         from_conj,
+        aut_component_data,
         index_bound;
 
 declare type SubgroupLatInterval;
@@ -330,7 +333,7 @@ function SplitByAuts(L, G : use_order:=true, use_hash:=true, use_gassman:=false,
                     end for;
                 end for;
                 V := Graph<#chunk| edges : SparseRep := true>;
-                newL cat:= [[chunk[i] : i in Sort([j : j in comp])] : comp in Components(V)];
+                newL cat:= [[chunk[i] : i in Sort([Index(j) : j in comp])] : comp in Components(V)];
             else
                 new_chunk := [];
                 for s in chunk do
@@ -441,6 +444,7 @@ end intrinsic;
 
 intrinsic Holomorph(X::LMFDBGrp) -> Grp
 {}
+    error "Starting holomorph";
     G := X`MagmaGrp;
     A := Get(X, "MagmaAutGroup");
     H, inj := Holomorph(G, A);
@@ -452,6 +456,84 @@ intrinsic HolInj(X::LMFDBGrp) -> HomGrp
 {}
     _ := Holomorph(X); // computes the injection
     return X`HolInj;
+end intrinsic;
+
+intrinsic aut_component_data(L::SubgroupLat) -> Tuple
+{Returns lookup, retract; where lookup[i] is the index i0 of the chosen subgroup in the same component as subs[i], and retract[i] is an automorphism mapping subs[i] to subs[i0]}
+    subs := Get(L, "by_index_aut");
+    subs := &cat[subs[n] : n in Sort([k : k in Keys(subs)])];
+    lookup := AssociativeArray();
+    retract := AssociativeArray();
+    G := L`Grp;
+    GG := G`MagmaGrp;
+    Aut := Get(G, "MagmaAutGroup");
+    outs := [f : f in Generators(Aut) | not IsInner(f)];
+    t0 := Cputime();
+    for i in [1..#subs] do
+        print i, #subs, Cputime() - t0;
+        comp := subs[i];
+        for H in comp do
+            lookup[H`i] := i;
+        end for;
+        retract[comp[1]`i] := Identity(Aut);
+        seen := {1};
+        layer := {1};
+        while #seen lt #comp do
+            new_layer := {};
+            for j in layer do
+                H := comp[j]`subgroup;
+                for f in outs do
+                    K := f(H);
+                    for k in [2..#comp] do
+                        if not (k in seen) then
+                            conj, c := IsConjugate(GG, K, comp[k]`subgroup);
+                            if conj then
+                                fc := Aut!hom<GG -> GG | [g -> g^c : g in Generators(GG)]>;
+                                Include(~seen, k);
+                                Include(~new_layer, k);
+                                retract[comp[k]`i] := fc^-1 * f^-1 * retract[comp[j]`i];
+                            end if;
+                        end if;
+                    end for;
+                end for;
+            end for;
+            assert #new_layer gt 0;
+            layer := new_layer;
+        end while;
+    end for;
+    return <lookup, retract>;
+end intrinsic;
+
+// As an alternative to the Holomorph, we can form a graph on the set of conjugacy classes (of elements or of subgroups) with edges given by the generators of the automorphism group, and then use connected components and geodesics
+//
+intrinsic IsAutjugateSubgroup(L::SubgroupLat, H1::Grp, H2::Grp) -> BoolElt, GrpElt
+{Whether H1 and H2 are related by an automorphism, and an automorphism with f(H1) = H2 if they are}
+    G := L`Grp;
+    GG := G`MagmaGrp;
+    A := Get(G, "MagmaAutGroup");
+    if assigned L`from_conj then
+        conjL, lookup := Explode(L`from_conj);
+        b, c := IsAutjugateSubgroup(conjL, H1, H2);
+        return b, c;
+    elif L`outer_equivalence then
+        Ambient := Get(G, "Holomorph");
+        inj := Get(G, "HolInj");
+        b, c := IsConjugateSubgroup(Ambient, inj(H1), inj(H2));
+        if b then
+            f := hom<GG -> GG | [g -> ((g @ inj)^c) @@ inj : g in Generators(GG)]>;
+            return true, A!f;
+        else
+            return false, _;
+        end if;
+    end if;
+    b1, i1, c1 := SubgroupIdentify(L, H1 : get_conjugator:=true); assert b1;
+    b2, i2, c2 := SubgroupIdentify(L, H2 : get_conjugator:=true); assert b2;
+    lookup, retract := Explode(Get(L, "aut_component_data"));
+    i0 := lookup[i1]; i0x := lookup[i2];
+    if i0 ne i0x then return false, _; end if;
+    f1 := A!hom<GG -> GG | [g -> g^(c1^-1) : g in Generators(GG)]>;
+    f2 := A!hom<GG -> GG | [g -> g^c2 : g in Generators(GG)]>;
+    return true, f1 * retract[i1] * retract[i2]^-1 * f2;
 end intrinsic;
 
 intrinsic CCAutCollapse(X::LMFDBGrp) -> Map
@@ -475,7 +557,7 @@ intrinsic CCAutCollapse(X::LMFDBGrp) -> Map
             end for;
         end for;
         V := Graph<#CC| edges : SparseRep := true>;
-        D := [Sort([v : v in comp]) : comp in Components(V)];
+        D := [Sort([Index(v) : v in comp]) : comp in Components(V)];
     else
         error "Must have either holomorph or automorphisms";
     end if;
@@ -557,9 +639,8 @@ intrinsic SubGrpLstAut(X::LMFDBGrp) -> SubgroupLat
     else
         if AllSubgroupsOk(G) then
             // In this case, we compute all subgroups and then group them by autjugacy
-            subs := Get(X, "SubGrpLst");
-            subs := SplitByAuts([subs`subs], X);
-            X`SubGrpAutOrbits := subs;
+            subs := Get(Get(X, "SubGrpLst"), "by_index_aut");
+            subs := &cat[subs[n] : n in Sort([k : k in Keys(subs)])];
         else
             trim := false;
             // There may be too many subgroups, so we work by index
@@ -697,7 +778,7 @@ intrinsic AddSpecialSubgroups(L::SubgroupLat)
     end for;
 end intrinsic;
 
-intrinsic SubgroupLatElement(L::SubgroupLat, H::Grp : i:=false, normalizer:=false, centralizer:=false, normal_closure:=false, gens:=false, subgroup_count:=false, standard:=false, recurse:=0) -> SubgroupLatElt
+intrinsic SubgroupLatElement(L::SubgroupLat, H::Grp : i:=false, normalizer:=false, centralizer:=false, normal:=0, normal_closure:=false, gens:=false, subgroup_count:=false, standard:=false, recurse:=0) -> SubgroupLatElt
 {}
     x := New(SubgroupLatElt);
     x`Lat := L;
@@ -715,6 +796,7 @@ intrinsic SubgroupLatElement(L::SubgroupLat, H::Grp : i:=false, normalizer:=fals
     if Type(normal_closure) ne BoolElt then x`normal_closure := normal_closure; end if;
     if Type(gens) ne BoolElt then x`gens := gens; end if;
     if Type(subgroup_count) ne BoolElt then x`subgroup_count := subgroup_count; end if;
+    if Type(normal) ne RngIntElt then x`normal := normal; end if;
     if Type(recurse) ne RngIntElt then x`recurse := recurse; end if;
     return x;
 end intrinsic;
@@ -907,7 +989,11 @@ intrinsic Print(Lat::SubgroupLat)
     for d in Sort([k : k in Keys(by_index)]) do
         m := n div d;
         for H in by_index[d] do
-            Append(~lines, Sprintf("[%o]  Order %o  Length %o  Maximal Subgroups: %o", H`i, m, H`subgroup_count, Join([Sprint(u) : u in Sort([j : j in Keys(H`unders)])], " ")));
+            if Lat`inclusions_known then
+                Append(~lines, Sprintf("[%o]  Order %o  Length %o  Maximal Subgroups: %o", H`i, m, H`subgroup_count, Join([Sprint(u) : u in Sort([j : j in Keys(H`unders)])], " ")));
+            else
+                Append(~lines, Sprintf("[%o]  Order %o  Length %o", H`i, m, H`subgroup_count));
+            end if;
         end for;
     end for;
     printf Join(lines, "\n");
@@ -1288,21 +1374,9 @@ function SubgroupLattice(GG, aut)
 end function;
 */
 
-function SubgroupLattice_edges(G, aut)
-    // This version of SubgroupLattice constructs the subgroups first then adds edges
-    GG := G`MagmaGrp;
-    vprint User1: "Starting to list subgroups with aut =", aut;
-    if aut then
-        L := Get(G, "SubGrpLstAut");
-        Ambient := Get(G, "Holomorph");
-        inj := Get(G, "HolInj");
-    else
-        L := Get(G, "SubGrpLst");
-        Ambient := GG;
-        inj := IdentityHomomorphism(GG);
-    end if;
+procedure ComputeLatticeEdges(~L, Ambient, inj : normal_lattice:=false)
     one := Identity(Ambient);
-    n := #GG;
+    n := L`Grp`order;
     C := AssociativeArray();
     overs := [{Integers()|} : i in [1..#L]];
     unders := [{Integers()|} : i in [1..#L]];
@@ -1325,13 +1399,17 @@ function SubgroupLattice_edges(G, aut)
     procedure add_edge(~CC, ~kb, ~ka, ~new_edges, bottom, mid, top)
         if not IsDefined(CC, [bottom, top]) then
             //print "Adding", bottom, mid, top;
-            if CC[[bottom, mid]] eq one and CC[[mid, top]] eq one then
-                CC[[bottom, top]] := one;
-            elif L`subs[bottom]`subgroup subset L`subs[top]`subgroup then
-                // We want use use one whenever possible
-                CC[[bottom, top]] := one;
+            if normal_lattice then
+                CC[[bottom, top]] := true;
             else
-                CC[[bottom, top]] := CC[[bottom, mid]] * CC[[mid, top]];
+                if CC[[bottom, mid]] eq one and CC[[mid, top]] eq one then
+                    CC[[bottom, top]] := one;
+                elif L`subs[bottom]`subgroup subset L`subs[top]`subgroup then
+                    // We want use use one whenever possible
+                    CC[[bottom, top]] := one;
+                else
+                    CC[[bottom, top]] := CC[[bottom, mid]] * CC[[mid, top]];
+                end if;
             end if;
             Include(~kb[top], bottom);
             Include(~ka[bottom], top);
@@ -1370,7 +1448,12 @@ function SubgroupLattice_edges(G, aut)
                             if IsDefined(C, [sub`i, super`i]) then continue; end if;
                             supervec := Get(super, "gassman_vec");
                             if gvec_le(subvec, supervec) then
-                                conj, elt := IsConjugateSubgroup(Ambient, inj(super`subgroup), inj(sub`subgroup));
+                                if normal_lattice then
+                                    // Normal subgroup inclusion is determined by gassman_vec comparison
+                                    conj := true; elt := true;
+                                else
+                                    conj, elt := IsConjugateSubgroup(Ambient, inj(super`subgroup), inj(sub`subgroup));
+                                end if;
                                 if conj then
                                     C[[sub`i, super`i]] := elt;
                                     Include(~known_below[super`i], sub`i);
@@ -1405,33 +1488,86 @@ function SubgroupLattice_edges(G, aut)
             L`subs[i]`unders[j] := true;
         end for;
     end for;
+end procedure;
+
+intrinsic normal(H::SubgroupLatElt) -> BoolElt
+{Whether this subgroup is normal}
+    return Get(H, "cc_count") eq Get(H, "subgroup_count");
+end intrinsic;
+
+intrinsic characteristic(H::SubgroupLatElt) -> BoolElt
+{Whether this subgroup is stabilized by all automorphisms}
+    L := H`Lat;
+    return Get(H, "subgroup_count") eq 1 and (L`outer_equivalence or #Get(L, "aut_orbit")[H`i] eq 1);
+end intrinsic;
+
+procedure SetClosures(~L)
     // Set normal and characteristic closures
     L`subs[1]`normal_closure := 1;
     L`subs[1]`characteristic_closure := 1;
-    function is_characteristic(M)
-        return Get(M, "subgroup_count") eq 1 and (L`outer_equivalence or #Get(L, "aut_orbit")[M`i] eq 1);
-    end function;
     for j in [2..#L] do
         HH := L`subs[j];
         for attr in ["normal_closure", "characteristic_closure"] do
+            if assigned HH``attr then continue; end if;
             current_layer := {HH};
+            to_assign := {HH};
             while not HasAttribute(HH, attr) do
                 next_layer := {};
                 for cur in current_layer do
-                    if (attr eq "normal_closure" and Get(cur, "cc_count") eq Get(cur, "subgroup_count") // normal
-                        or attr eq "characteristic_closure" and is_characteristic(cur)) then // characteristic
-                        HH``attr := cur`i;
+                    if (attr eq "normal_closure" and Get(cur, "normal")
+                        or attr eq "characteristic_closure" and Get(cur, "characteristic")) then
+                        // The following doesn't work because Magma is stupid
+                        /*for H in to_assign do
+                            H``attr := cur`i;
+                        end for;*/
+                        to_assign := [H : H in to_assign];
+                        for k in [1..#to_assign] do
+                            to_assign[k]``attr := cur`i;
+                        end for;
                         break;
                     end if;
-                    for next in Keys(cur`overs) do
+                    for next in Keys(Get(cur, "overs")) do
                         Include(~next_layer, L`subs[next]);
                     end for;
                 end for;
+                to_assign join:= current_layer;
                 current_layer := next_layer;
             end while;
         end for;
     end for;
+end procedure;
 
+/*AttachSpec("spec");
+SetVerbose("User1", 1);
+G := MakeBigGroup("40T6148", "10240.gz");
+G`all_subgroups_known := true;
+G`subgroup_index_bound := 0;
+G`maximal_subgroups_known := true;
+G`subgroup_inclusions_known := true;
+G`normal_subgroups_known := true;
+G`sylow_subgroups_known := true;
+X := PrintData(G);
+
+Fix number_characteristic_subgroups, number_normal_subgroups, number_subgroup_autclasses, number_subgroup_classes, number_subgroups (currently set in SubGrpLstAut, but this was only called when determining blah values)
+Set pc_code, permutation_degree, representations externally
+*/
+function SubgroupLattice_edges(G, aut)
+    // This version of SubgroupLattice constructs the subgroups first then adds edges
+    GG := G`MagmaGrp;
+    vprint User1: "Starting to list subgroups with aut =", aut;
+    if aut then
+        L := Get(G, "SubGrpLstAut");
+        Ambient := Get(G, "Holomorph");
+        inj := Get(G, "HolInj");
+    else
+        L := Get(G, "SubGrpLst");
+        Ambient := GG;
+        inj := IdentityHomomorphism(GG);
+    end if;
+    ComputeLatticeEdges(~L, Ambient, inj);
+    vprint User1: "Setting normal and characteristic closures";
+    SetClosures(~L);
+    vprint User1: "Setting mobius_sub";
     // Set the mobius functions
     L`subs[1]`mobius_sub := 1; //μ_G(G) = 1
     noi := AssociativeArray();
@@ -1451,6 +1587,7 @@ function SubgroupLattice_edges(G, aut)
         end for;
         //print "mobius_sub", x`mobius_sub;
     end for;
+    vprint User1: "Setting mobius_quo";
     if L`index_bound eq 0 then
         L`subs[#L]`mobius_quo := 1;
         for i in [#L-1..1 by -1] do
@@ -1481,7 +1618,7 @@ intrinsic SubGrpLst(G::LMFDBGrp) -> SubgroupLat
     res`outer_equivalence := false;
     res`inclusions_known := false;
     res`subs := [SubgroupLatElement(res, subs[i]`subgroup : i:=i, subgroup_count:=subs[i]`length) : i in [1..#subs]];
-    AddSpecialSubgroups(res); // just adds the labels since the subgroups already present
+    //AddSpecialSubgroups(res); // just adds the labels since the subgroups already present
     res`index_bound := 0;
     return res;
 end intrinsic;
@@ -1529,13 +1666,8 @@ intrinsic CollapseLatticeByAutGrp(L::SubgroupLat) -> SubgroupLat
     res`index_bound := L`index_bound;
     subs := Get(L, "by_index_aut");
     subs := &cat[subs[n] : n in Sort([k : k in Keys(subs)])];
+    lookup, retract := Explode(Get(L, "aut_component_data"));
     // Have to make new SubgroupLatElements, since we're changing the lattice and modifying overs and unders
-    lookup := AssociativeArray();
-    for i in [1..#subs] do
-        for H in subs[i] do
-            lookup[H`i] := i;
-        end for;
-    end for;
     res`subs := [CollapseLatElement(res, subs[i], i, lookup) : i in [1..#subs]];
     res`from_conj := <L, lookup>;
     return res;
@@ -1563,15 +1695,10 @@ intrinsic unders(x::SubgroupLatElt) -> Assoc
     GG := Lat`Grp;
     G := GG`MagmaGrp;
     H := x`subgroup;
-    if Lat`outer_equivalence then
-        Ambient := Get(GG, "Holomorph");
-        inj := Get(GG, "HolInj");
-    else
-        Ambient := G;
-        inj := IdentityHomomorphism(G);
-    end if;
+    aut := Lat`outer_equivalence and Get(GG, "HaveHolomorph");
+    // It's alright to have duplication below, so we set aut to false since otherwise maximal_subgroup_classes would compute the Holomorph
     ans := AssociativeArray();
-    for M in maximal_subgroup_classes(GG, H, Lat`outer_equivalence : collapse:=false) do
+    for M in maximal_subgroup_classes(GG, H, aut : collapse:=false) do
         // We don't record the weights since that's not needed for this application.  We still use an associative array so that the data type of overs and unders doesn't change.
         i := SubgroupIdentify(Lat, M`subgroup);
         ans[i] := true;
@@ -1590,15 +1717,17 @@ intrinsic overs(x::SubgroupLatElt) -> Assoc
     xvec := Get(x, "gassman_vec");
     by_index := Get(Lat, "by_index");
     for p in PrimeDivisors(n div m) do
-        for h in by_index[n div (m*p)] do
-            hvec := Get(h, "gassman_vec");
-            if gvec_le(xvec, hvec) then
-                unders := Get(h, "unders");
-                if IsDefined(unders, x`i) then
-                    ans[h`i] := true;
+        if IsDefined(by_index, n div (m*p)) then
+            for h in by_index[n div (m*p)] do
+                hvec := Get(h, "gassman_vec");
+                if gvec_le(xvec, hvec) then
+                    unders := Get(h, "unders");
+                    if IsDefined(unders, x`i) then
+                        ans[h`i] := true;
+                    end if;
                 end if;
-            end if;
-        end for;
+            end for;
+        end if;
     end for;
     return ans;
 end intrinsic;
@@ -1621,7 +1750,11 @@ end intrinsic;
 intrinsic subgroup_count(x::SubgroupLatElt) -> RngIntElt
 {}
     Lat := x`Lat;
-    if Lat`outer_equivalence then
+    if assigned Lat`from_conj then
+        conjL, lookup := Explode(Lat`from_conj);
+        orbit := [i : i -> j in lookup | j eq lookup[x`i]];
+        return &+[Get(conjL`subs[i], "subgroup_count") : i in orbit];
+    elif Lat`outer_equivalence then
         Ambient := Get(Lat`Grp, "Holomorph");
         inj := Get(Lat`Grp, "HolInj");
     else
@@ -1782,10 +1915,15 @@ end intrinsic;
 
 intrinsic aut_sort_pick(H::SubgroupLatElt) -> Grp
 {A canonical autjugate of H.  Also sets H`aut_sort_conj, which conjugates H`subgroup to H`sort_pick.  Note that H`aut_sort_conj will be in the Holomorph}
-    G := H`Lat`Grp;
+    L := H`Lat;
+    G := L`Grp;
     GG := G`MagmaGrp;
     if H`characteristic_closure eq H`i then
-        H`aut_sort_conj := Identity(Get(G, "Holomorph"));
+        if Get(G, "HaveHolomorph") then
+            H`aut_sort_conj := Identity(Get(G, "Holomorph"));
+        else
+            H`aut_sort_conj := Identity(Get(G, "MagmaAutGroup"));
+        end if;
         return H`subgroup;
     end if;
     gens := Get(H, "aut_sort_gens"); // sets aut_sort_conj
@@ -1807,10 +1945,16 @@ end function;
 function comp_sort_gens(H, aut)
     L := H`Lat;
     G0 := L`Grp;
+    use_hol := Get(G0, "HaveHolomorph");
     // among overs, we first prioritize the path to the normal closure (since getting there stops the recursion), then we prioritize small index (inside the over, so maximal index of the over inside the ambient), then break ties by full_label
     if aut then
-        Ambient := Get(G0, "Holomorph");
-        inj := Get(G0, "HolInj");
+        if use_hol then
+            Ambient := Get(G0, "Holomorph");
+            inj := Get(G0, "HolInj");
+        else
+            Ambient := G0`MagmaGrp;
+            inj := IdentityHomomorphism(Ambient);
+        end if;
         cm := AutClassMap(G0);
         N := L`subs[Get(H, "characteristic_closure")];
         if N`i eq H`i then error "H must not be characteristic"; end if;
@@ -1823,11 +1967,22 @@ function comp_sort_gens(H, aut)
         Gi := poss[k][1];
         G := L`subs[Gi];
         GG := inj(Get(G, "aut_sort_pick"));
+        HH := inj(L`subs[Hi]`subgroup);
         c := L`conjugator[[Hi, Gi]];
-        if not L`outer_equivalence then
-            c := inj(c);
+        if c cmpne true then // this would indicate that we're in the lattice of normal subgroups and thus don't need to conjugate
+            if not L`outer_equivalence then
+                c := inj(c);
+            end if;
+            HH := HH^c;
         end if;
-        HH := inj(L`subs[Hi]`subgroup)^(c * Get(G, "aut_sort_conj"));
+        if use_hol then
+            // we stored an element of the holomorph to conjugate by
+            HH := HH^Get(G, "aut_sort_conj");
+        else
+            // we stored an automorphism
+            f := Get(G, "aut_sort_conj");
+            HH := f(HH);
+        end if;
     else
         Ambient := G0`MagmaGrp;
         inj := IdentityHomomorphism(Ambient);
@@ -1881,7 +2036,11 @@ function comp_sort_gens(H, aut)
             break;
         end for;
     end while;
-    b, conj := IsConjugate(Ambient, inj(H`subgroup), K); assert b;
+    if aut and not use_hol then
+        b, conj := IsAutjugateSubgroup(L, H`subgroup, K); assert b;
+    else
+        b, conj := IsConjugate(Ambient, inj(H`subgroup), K); assert b;
+    end if;
     if aut then
         H`aut_sort_conj := conj;
     else
@@ -1919,7 +2078,7 @@ function CreateLabel(Glabel, Hlabel)
     end if;
 end function;
 
-intrinsic LMFDBSubgroup(H::SubgroupLatElt) -> LMFDBSubGrp
+intrinsic LMFDBSubgroup(H::SubgroupLatElt : normal_lattice:=false) -> LMFDBSubGrp
 {}
     Lat := H`Lat;
     G := Lat`Grp;
@@ -1930,33 +2089,34 @@ intrinsic LMFDBSubgroup(H::SubgroupLatElt) -> LMFDBSubGrp
     res`standard_generators := H`standard_generators;
     res`label := G`label * "." * H`label;
     res`short_label := H`label;
-    res`aut_label := Sprintf("%o.%o%o", H`aut_label[1], CremonaCode(H`aut_label[2]), H`aut_label[3]);
+    if assigned H`aut_label then
+        res`aut_label := Sprintf("%o.%o%o", H`aut_label[1], CremonaCode(H`aut_label[2]), H`aut_label[3]);
+    end if;
     res`special_labels := H`special_labels;
     res`count := Get(H, "subgroup_count");
     res`conjugacy_class_count := Get(H, "cc_count");
+    res`characteristic := Get(H, "characteristic");
     if Lat`inclusions_known then
         res`contains := [Lat`subs[k]`label : k in Keys(H`unders)]; // Sort
         res`contained_in := [Lat`subs[k]`label : k in Keys(H`overs)]; // Sort
-        res`mobius_sub := H`mobius_sub;
-        if Lat`index_bound eq 0 then
-            res`mobius_quo := H`mobius_quo;
-        else
-            // We could compute mobius_quo in this case as well, when we're storing all normal subgroups
-            res`mobius_quo := None();
-        end if;
+        res`mobius_sub := (assigned H`mobius_sub) select H`mobius_sub else None();
+        res`mobius_quo := (assigned H`mobius_quo) select H`mobius_quo else None();
+    // port mobius_quo from normal subgroups
     else
         res`contains := None();
         res`contained_in := None();
         res`mobius_sub := None();
         res`mobius_quo := None();
     end if;
-    N := Get(H, "normalizer");
-    res`normalizer := Lat`subs[N]`label;
-    res`normalizer_index := Get(G, "order") div Lat`subs[N]`order;
-    res`normal_closure := Lat`subs[Get(H, "normal_closure")]`label;
-    C := Get(H, "centralizer");
-    res`centralizer := (Type(C) eq NoneType) select None() else Lat`subs[C]`label;
-    res`centralizer_order := (Type(C) eq NoneType) select None() else Lat`subs[C]`order;
+    if not normal_lattice then
+        N := Get(H, "normalizer");
+        res`normalizer := Lat`subs[N]`label;
+        res`normalizer_index := Get(G, "order") div Lat`subs[N]`order;
+        res`normal_closure := Lat`subs[Get(H, "normal_closure")]`label;
+        C := Get(H, "centralizer");
+        res`centralizer := (Type(C) eq NoneType) select None() else Lat`subs[C]`label;
+        res`centralizer_order := (Type(C) eq NoneType) select None() else Lat`subs[C]`order;
+    end if;
     AssignBasicAttributes(res);
     return res;
 end intrinsic;
@@ -1980,32 +2140,82 @@ end intrinsic;
 
 intrinsic Subgroups(G::LMFDBGrp) -> SeqEnum
     {The list of LMFDBSubGrps computed for this group}
-    t0 := Cputime();
-    S := [];
-    GG := G`MagmaGrp;
     L := BestSubgroupLat(G);
+    vprint User1: "Labeling subgroups";
     LabelSubgroups(L);
-    S := [LMFDBSubgroup(H) : H in L`subs];
+    vprint User1: "Subgroups labelled";
+    return [LMFDBSubgroup(H) : H in L`subs];
     /*if G`all_subgroups_known and not G`outer_equivalence then // Remove G`outer_equivalence once Magma bugs around automorphisms are fixed or worked around
         SaveSubgroupCache(G, S);
     end if;*/
-    return S;
+end intrinsic;
+
+procedure SetMobiusQuo(~L, aut)
+    L`subs[#L]`mobius_quo := 1;
+    for i in [#L-1..1 by -1] do
+        x := L`subs[i];
+        x`mobius_quo := 0;
+        for j in half_interval(x, "unders", {}) do
+            y := L`subs[j];
+            if x`i ne y`i then
+                // both are normal, so there is only 1 inclusion unless working up to automorphism
+                n := aut select NumberOfInclusions(y, x) else 1;
+                x`mobius_quo -:= n * y`mobius_quo;
+            end if;
+        end for;
+    end for;
+end procedure;
+
+intrinsic NormSubGrpLat(G::LMFDBGrp) -> SubgroupLat
+{Lattice of normal subgroups}
+    L := New(SubgroupLat);
+    L`Grp := G;
+    GG := G`MagmaGrp;
+    L`outer_equivalence := false;
+    L`inclusions_known := true;
+    L`index_bound := 0;
+    subs := Reverse(NormalSubgroups(GG));
+    L`subs := [SubgroupLatElement(L, subs[i]`subgroup : i:=i, normal:=true) : i in [1..#subs]];
+    ComputeLatticeEdges(~L, GG, IdentityHomomorphism(GG) : normal_lattice:=true);
+    SetClosures(~L);
+    SetMobiusQuo(~L, false);
+    return L;
+end intrinsic;
+
+// Need to set label, aut_label
+intrinsic NormSubGrpLatAut(G::LMFDBGrp) -> SubgroupLat
+{Lattice of normal subgroups up to automorphism}
+    if Get(G, "solvable") and Get(G, "HaveHolomorph") then
+        L := New(SubgroupLat);
+        L`Grp := G;
+        L`outer_equivalence := true;
+        L`inclusions_known := true;
+        L`index_bound := 0;
+        subs := SolvAutSubs(G : normal:=true);
+        L`subs := [SubgroupLatElement(L, subs[i]`subgroup : i:=i, normal:=true) : i in [1..#subs]];
+        ComputeLatticeEdges(~L, Get(G, "Holomorph"), Get(G, "HolInj"));
+        SetClosures(~L);
+        SetMobiusQuo(~L, true);
+        return L;
+    else
+        // This assumes more attributes are set than NormSubGrpLat currently does
+        return CollapseLatticeByAutGrp(Get(G, "NormSubGrpLat"));
+    end if;
 end intrinsic;
 
 intrinsic NormalSubgroups(G::LMFDBGrp) -> Any
 {lattice of normal subgroups, or None if not computed}
-    if not G`normal_subgroups_known then
-        return None();
+    // semidirect_product: need to find complements for each (currently implemented as a LMFDBSubGrp)
+    // central_product: need to get central_factor
+    // direct product should probably depend on this
+    // should ideally get recycled when filling in normal subgroups (especially since complements are saved)
+    if Get(G, "outer_equivalence") then
+        L := Get(G, "NormSubGrpLatAut");
+    else
+        L := Get(G, "NormSubGrpLat");
     end if;
-    subs := NormalSubgroups(G);
-    res := New(SubgroupLat);
-    res`Grp := G;
-    res`outer_equivalence := false;
-    res`inclusions_known := true;
-    res`index_bound := 0; //(ordbd eq 1) select 0 else #G div ordbd;
-    res`subs := [SubgroupLatElement(res, subs[i]`subgroup : i:=i) : i in [1..#subs]];
-    AddSpecialSubgroups(res);
-    return [H : H in Get(G, "Subgroups") | H`normal];
+    LabelNormalSubgroups(L); // TODO
+    return [LMFDBSubgroup(H : normal_lattice:=true) : H in L`subs];
 end intrinsic;
 
 intrinsic LowIndexSubgroups(G::LMFDBGrp, d::RngIntElt) -> SeqEnum
@@ -2040,7 +2250,7 @@ intrinsic LookupSubgroupLabel(G::LMFDBGrp, HH::Any) -> Any
     else
         L := BestSubgroupLat(G);
         try
-            x := SubgroupIdentify(L, HH);
+            x := L`subs[SubgroupIdentify(L, HH)];
         catch e
             return "\\N";
         end try;
