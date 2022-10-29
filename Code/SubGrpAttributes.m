@@ -5,7 +5,7 @@ see https://github.com/roed314/FiniteGroups/blob/master/ProposedSchema.md for de
 */
 intrinsic outer_equivalence(H::LMFDBSubGrp) -> BoolElt
     {}
-    return H`Grp`outer_equivalence;
+    return Get(H`Grp, "outer_equivalence");
 end intrinsic;
 
 

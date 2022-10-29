@@ -3,8 +3,8 @@ These have been moved to Subgroups.m and GrpAttributes.m
 
 intrinsic mobius_sub(G::LMFDBGrp) -> Any
 {Calculates the images of the subgroup-Mobius function on subgroups of G}
-    if G`all_subgroups_known and G`subgroup_inclusions_known then
-        L := G`outer_equivalence select Get(G, "SubGrpLatAut") else Get(G, "SubGrpLat");
+    if Get(G, "all_subgroups_known") and Get(G, "subgroup_inclusions_known") then
+        L := Get(G, "outer_equivalence") select Get(G, "SubGrpLatAut") else Get(G, "SubGrpLat");
         MobiusImages:=[[#L,1]]; //μ_G(G) = 1
 
         for i in [1..#L-1] do

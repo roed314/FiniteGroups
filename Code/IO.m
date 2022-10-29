@@ -392,7 +392,6 @@ intrinsic TransitiveLMFDBGrp(n::RngIntElt, t::RngIntElt) -> LMFDBGrp
 {}
     G := NewLMFDBGrp(TransitiveGroup(n, t), "TEST.1");
     AssignBasicAttributes(G);
-    SetBigSubgroupParameters(G);
     return G;
 end intrinsic;
 

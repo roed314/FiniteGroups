@@ -1,8 +1,5 @@
 /**********************************************************
 This file supports computation of subgroups of abstract groups.
-
-Which subgroups we compute and store is determined by the function
-SetSubgroupParameters
 **********************************************************/
 
 VS_QUOTIENT_CUTOFF := 5; // if G has a subquotient vector space of dimension larger than this, we always compute up to automorphism;
@@ -26,14 +23,13 @@ end function;
 
 intrinsic outer_equivalence(G::LMFDBGrp) -> Any
 {Whether subgroups are computed up to automorphism (vs only up to conjugacy)}
-    if not Get(G, "HaveHolomorph") then
-        return false;
-    end if;
-    byA := Get(G, "SubGrpLstAut");
-    if #byA ge NUM_SUBS_CUTOFF_CONJ or byA`index_bound ne 0 or not AllSubgroupsOk(G`MagmaGrp) then
-        // too many subgroups up to automorphism, so we don't need to compute the list up to conjugacy
-        //printf "%o subgroups up to automorphism (min order %o, ok %o), so not computing up to conjugacy\n", #byA, byA[1]`order, AllSubgroupsOk(GG);
-        return true;
+    if Get(G, "HaveHolomorph") then
+        byA := Get(G, "SubGrpLstAut");
+        if #byA ge NUM_SUBS_CUTOFF_CONJ or byA`index_bound ne 0 or not AllSubgroupsOk(G`MagmaGrp) then
+            // too many subgroups up to automorphism, so we don't need to compute the list up to conjugacy
+            //printf "%o subgroups up to automorphism (min order %o, ok %o), so not computing up to conjugacy\n", #byA, byA[1]`order, AllSubgroupsOk(GG);
+            return true;
+        end if;
     end if;
     byC := Get(G, "SubGrpLst");
     //print #byA, "subgroups up to automorphism,", #byC, "subgroups up to conjugacy";
@@ -42,50 +38,33 @@ end intrinsic;
 
 intrinsic subgroup_index_bound(G::LMFDBGrp) -> RngIntElt
 {}
-    byA := Get(G, "SubGrpLstAut");
-    if Get(G, "outer_equivalence") and byA`index_bound ne 0 then
-        return byA`index_bound;
-    end if;
-    return 0;
+    return BestSubgroupLat(G)`index_bound;
 end intrinsic;
 
-intrinsic SetBigSubgroupParameters(G::LMFDBGrp)
-{Set the parameters assuming that everything is hard (for example if G is very large)}
-    G`outer_equivalence := false; // automorphism group is hard
-    G`subgroup_index_bound := 3; // Maybe we can get a few
-    G`all_subgroups_known := false; // trillions of subgroups
-    G`normal_subgroups_known := true; // let us hope!
-    G`maximal_subgroups_known := true; // let us hope!
-    G`sylow_subgroups_known := true; // this is actually doable even for large groups
-    G`subgroup_inclusions_known := false; // there are no inclusions if we're only going up to index 3
+intrinsic all_subgroups_known(G::LMFDBGrp) -> BoolElt
+{}
+    return Get(G, "subgroup_index_bound") eq 0;
 end intrinsic;
 
-intrinsic SetSubgroupParameters(G::LMFDBGrp)
-    {Set the parameters for which subgroups to compute (and do some initial computations)}
-    GG := G`MagmaGrp;
-    byA := Get(G, "SubGrpLstAut");
-    if #byA ge NUM_SUBS_CUTOFF_CONJ or byA`index_bound ne 0 or not AllSubgroupsOk(GG) then
-        // too many subgroups up to automorphism, so we don't need to compute the list up to conjugacy
-        //printf "%o subgroups up to automorphism (min order %o, ok %o), so not computing up to conjugacy\n", #byA, byA[1]`order, AllSubgroupsOk(GG);
-        G`outer_equivalence := true;
-    else
-        byC := Get(G, "SubGrpLst");
-        //print #byA, "subgroups up to automorphism,", #byC, "subgroups up to conjugacy";
-        G`outer_equivalence := (#byC ge NUM_SUBS_RATCHECK and #byC ge NUM_SUBS_RATIO * #byA);
-    end if;
-    if G`outer_equivalence and byA`index_bound ne 0 then
-        G`subgroup_index_bound := byA`index_bound;
-        G`all_subgroups_known := false;
-    else
-        G`subgroup_index_bound := 0;
-        G`all_subgroups_known := true;
-    end if;
-    G`normal_subgroups_known := true;
-    G`maximal_subgroups_known := true;
-    G`sylow_subgroups_known := true;
-    G`subgroup_inclusions_known := (#byA lt LAT_CUTOFF and byA`index_bound eq 0);
-    // Now determine whether we compute characters
-    F := Factorization(Get(G, "order"));
+intrinsic maximal_subgroups_known(G::LMFDBGrp) -> BoolElt
+{Can be set externally to prevent computation of maximal subgroups beyond index bound}
+    return true;
+end intrinsic;
+
+intrinsic normal_subgroups_known(G::LMFDBGrp) -> BoolElt
+{Can be set externally to prevent computation of normal subgroups beyond index bound}
+    return true;
+end intrinsic;
+
+intrinsic sylow_subgroups_known(G::LMFDBGrp) -> BoolElt
+{Can be set externally to prevent computation of Sylow subgroups beyond index bound}
+    return true;
+end intrinsic;
+
+intrinsic subgroup_inclusions_known(G::LMFDBGrp) -> BoolElt
+{Can be set externally to prevent computation of subgroup inclusions (note that this will screw up labeling)}
+    // (#byA lt LAT_CUTOFF and byA`index_bound eq 0);
+    return true;
 end intrinsic;
 
 RF := recformat<subgroup, order, length>;
@@ -211,7 +190,7 @@ intrinsic SaveSubgroupCache(G::LMFDBGrp, subs::SeqEnum : sep:=":")
     folder := GetLMFDBRootFolder();
     if #folder ne 0 then
         C := New(LMFDBSubgroupCache);
-        C`outer_equivalence := G`outer_equivalence;
+        C`outer_equivalence := Get(G, "outer_equivalence");
         C`description := description(G);
         C`labels := [H`label : H in subs];
         C`gens := [H`generators : H in subs];
@@ -669,7 +648,7 @@ intrinsic SubGrpLstAut(X::LMFDBGrp) -> SubgroupLat
                 X`number_subgroup_classes := None();
                 X`number_subgroup_autclasses := None();
                 X`number_subgroups := None();
-                if X`sylow_subgroups_known then
+                if Get(X, "sylow_subgroups_known") then
                     for pe in Factorization(N) do
                         p := pe[1];
                         q := p^pe[2];
@@ -678,7 +657,7 @@ intrinsic SubGrpLstAut(X::LMFDBGrp) -> SubgroupLat
                         end if;
                     end for;
                 end if;
-                if X`normal_subgroups_known then
+                if Get(X, "normal_subgroups_known") then
                     Norms := NormalSubgroups(G);
                     X`number_normal_subgroups := #Norms;
                     if Get(X, "HaveHolomorph") or Get(X, "HaveAutomorphisms") then
@@ -686,13 +665,13 @@ intrinsic SubGrpLstAut(X::LMFDBGrp) -> SubgroupLat
                     else
                         X`number_characteristic_subgroups := None();
                     end if;
-                    subs cat:= [[H] : H in Norms | H`order lt ordbd and not (X`sylow_subgroups_known and is_sylow_order(X, H`order))];
+                    subs cat:= [[H] : H in Norms | H`order lt ordbd and not (Get(X, "sylow_subgroups_known") and is_sylow_order(X, H`order))];
                 else
                     X`number_normal_subgroups := None();
                     X`number_characteristic_subgroups := None();
                 end if;
-                if X`maximal_subgroups_known then
-                    subs cat:= [[H] : H in MaximalSubgroups(G) | H`order lt ordbd and not (X`sylow_subgroups_known and is_sylow_order(X, H`order) or X`normal_subgroups_known and IsNormal(G, H))];
+                if Get(X, "maximal_subgroups_known") then
+                    subs cat:= [[H] : H in MaximalSubgroups(G) | H`order lt ordbd and not (Get(X, "sylow_subgroups_known") and is_sylow_order(X, H`order) or Get(X, "normal_subgroups_known") and IsNormal(G, H))];
                 end if;
             end if;
         end if;
@@ -715,15 +694,15 @@ intrinsic SubGrpLstAut(X::LMFDBGrp) -> SubgroupLat
         end while;
         ordbd := subs[cut]`order;
         // We trim subgroups beyond the bound, keeping Sylow, normal and maximal ones
-        if X`normal_subgroups_known then
+        if Get(X, "normal_subgroups_known") then
             keep := {@ @};
         else
             keep := {@ i : i in [cut+1..#subs] | IsNormal(G, subs[i]`subgroup) @};
         end if;
-        if X`sylow_subgroups_known then
+        if Get(X, "sylow_subgroups_known") then
             keep join:= {@ i : i in [cut+1..#subs] | is_sylow_order(X, subs[i]`order) @};
         end if;
-        if X`maximal_subgroups_known then
+        if Get(X, "maximal_subgroups_known") then
             keep join:= {@ i : i in [cut+1..#subs] | IsMaximal(G, subs[i]`subgroup) @};
         end if;
         subs := subs[1..cut] cat [subs[i] : i in Sort(keep)];
@@ -1187,7 +1166,6 @@ function SubgroupLattice(GG, aut)
     Lat`outer_equivalence := aut;
     Lat`inclusions_known := true;
     Lat`index_bound := 0;
-    // May want to double check that GG`subgroup_inclusions_known=true and/or GG`subgroup_index_bound=0
     G := GG`MagmaGrp;
     solv := Get(GG, "solvable");
     if solv then
@@ -1540,12 +1518,6 @@ end procedure;
 /*AttachSpec("spec");
 SetVerbose("User1", 1);
 G := MakeBigGroup("40T6148", "10240.gz");
-G`all_subgroups_known := true;
-G`subgroup_index_bound := 0;
-G`maximal_subgroups_known := true;
-G`subgroup_inclusions_known := true;
-G`normal_subgroups_known := true;
-G`sylow_subgroups_known := true;
 X := PrintData(G);
 
 Fix number_characteristic_subgroups, number_normal_subgroups, number_subgroup_autclasses, number_subgroup_classes, number_subgroups (currently set in SubGrpLstAut, but this was only called when determining blah values)
@@ -1784,7 +1756,7 @@ intrinsic AddConjugators(L::SubgroupLat)
     n := #GG;
     by_index := Get(L, "by_index");
     D := Sort([k : k in Keys(by_index) | k gt 1]);
-    if G`outer_equivalence then
+    if Get(G, "outer_equivalence") then
         Ambient := Get(G, "Holomorph");
         inj := Get(G, "HolInj");
     else
@@ -1813,9 +1785,7 @@ end intrinsic;
 
 intrinsic ConjugatorTiming(N, i : aut:=true)
 {}
-    G := MakeSmallGroup(N, i : represent:=false, set_params:=false);
-    G`outer_equivalence := aut;
-    G`all_subgroups_known := true;
+    G := MakeSmallGroup(N, i : represent:=false);
     G`subgroup_index_bound := 0;
     t0 := Cputime();
     if aut then
@@ -1832,9 +1802,7 @@ intrinsic ConjugatorTiming(N, i : aut:=true)
     t0 := Cputime();
     AddConjugators(L);
     print "Conjugators complete", Cputime() - t0;
-    G := MakeSmallGroup(N, i : represent:=false, set_params:=false);
-    G`outer_equivalence := aut;
-    G`all_subgroups_known := true;
+    G := MakeSmallGroup(N, i : represent:=false);
     G`subgroup_index_bound := 0;
     t0 := Cputime();
     if aut then
@@ -1847,7 +1815,7 @@ end intrinsic;
 
 intrinsic test_overs_unders(N, i : aut:=true) -> LMFDBGrp
 {}
-    G := MakeSmallGroup(N, i : represent:=false, set_params:=false);
+    G := MakeSmallGroup(N, i : represent:=false);
     if aut then
         L1 := SubGrpLatAut(G);
     else
@@ -2123,14 +2091,14 @@ end intrinsic;
 
 intrinsic BestSubgroupLat(G::LMFDBGrp) -> SubgroupLat
 {}
-    if G`outer_equivalence then
-        if G`subgroup_inclusions_known then
+    if Get(G, "outer_equivalence") then
+        if Get(G, "subgroup_inclusions_known") then
             return Get(G, "SubGrpLatAut");
         else
             return Get(G, "SubGrpLstAut");
         end if;
     else
-        if G`subgroup_inclusions_known then
+        if Get(G, "subgroup_inclusions_known") then
             return Get(G, "SubGrpLat");
         else
             return Get(G, "SubGrpLst");
@@ -2145,7 +2113,7 @@ intrinsic Subgroups(G::LMFDBGrp) -> SeqEnum
     LabelSubgroups(L);
     vprint User1: "Subgroups labelled";
     return [LMFDBSubgroup(H) : H in L`subs];
-    /*if G`all_subgroups_known and not G`outer_equivalence then // Remove G`outer_equivalence once Magma bugs around automorphisms are fixed or worked around
+    /*if Get(G, "all_subgroups_known") then
         SaveSubgroupCache(G, S);
     end if;*/
 end intrinsic;
@@ -2393,7 +2361,7 @@ K1 and K2 are in the same class, but their quotients are different (the automorp
 }
     /* WARNING: This function can return incorrect results */
     assert Get(G, "solvable");
-    //L := G`outer_equivalence select Get(G, "SubGrpLatAut") else Get(G, "SubGrpLat");
+    //L := Get(G, "outer_equivalence") select Get(G, "SubGrpLatAut") else Get(G, "SubGrpLat");
     L := Get(G, "SubGrpLatAut");
     cycdist := AssociativeArray();
     top := L!1; // backward from how Magma internal lattices number
@@ -2442,7 +2410,7 @@ end intrinsic;
 
 intrinsic AMCCompare(N, i) -> LMFDBGrp, SubgroupLat
 {Compares results of the two all_minimal_chains algorithms in the pursuit of finding bugs}
-    G := MakeSmallGroup(N, i : set_params:=false);
+    G := MakeSmallGroup(N, i);
     t0 := Cputime();
     Lat := Get(G, "SubGrpLatAut");
     print "Lattice", Cputime() - t0;

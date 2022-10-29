@@ -1,5 +1,5 @@
 // Presentations are loaded from the folder representations
-intrinsic MakeSmallGroup(N::RngIntElt, i::RngIntElt : represent:=true, set_params:=true) -> Any
+intrinsic MakeSmallGroup(N::RngIntElt, i::RngIntElt : represent:=true) -> Any
     {Create an LMFDBGrp object for SmallGroup(N,i) and compute attributes}
     G := NewLMFDBGrp(SmallGroup(N, i), Sprintf("%o.%o", N, i));
     AssignBasicAttributes(G);
@@ -15,16 +15,12 @@ intrinsic MakeSmallGroup(N::RngIntElt, i::RngIntElt : represent:=true, set_param
             vprint User1: "New presentation found";
         end if;
     end if;
-    if set_params then
-        SetSubgroupParameters(G);
-        vprint User1: "Subgroup parameters set";
-    end if;
     return G;
 end intrinsic;
 
 // The timing data has the following structure:
 // [MakeSmallGroup (mostly RePresent if not loaded from a file),
-//  SetSubgroupParameters (mostly SubGrpLstAut and SubGrpLst),
+//  [[SetSubgroupParameters (mostly SubGrpLstAut and SubGrpLst)]] - old,
 //  Subgroups (inclusions and labeling),
 //  Characters (esp. characters_add_sort_and_labels),
 //  faithful_reps,
@@ -32,12 +28,9 @@ end intrinsic;
 intrinsic MakeSmallGroupData(N::RngIntElt, i::RngIntElt) -> Tup, SeqEnum
 {Create the information for saving a small group to several files.  Returns a triple (one for each file) of lists of strings (one for each entry to be saved), together with a sequence of timings}
     t0 := Cputime();
-    G := MakeSmallGroup(N,i : set_params := false);
+    G := MakeSmallGroup(N, i);
     ts := [Cputime() - t0];
     t0 := Cputime();
-    SetSubgroupParameters(G);
-    vprint User1: "Subgroup parameters set";
-    Append(~ts, Cputime() - t0);
     tasks := ["Subgroups", "Characters", "faithful_reps"];
     for task in tasks do
         vprint User1: "Starting", task;

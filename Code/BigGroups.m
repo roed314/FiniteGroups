@@ -99,7 +99,9 @@ If no holomorph:
 Compute and save automorphism group beforehand; deal with the fact that we sometimes can't compute Holomorph (can compute OuterFPGroup and then connected component
 Print timing output to be combined by cloud_start.py
 To compute aut lattice with edges in non-holomorph case, just collapse the conj lattice with edges (need to compute those subgroups anyway)
+Add normal_overs and normal_unders
 
+Change Presentation.m to not use Holomoprh
 Use semidirect products to select a better name (postprocess step so that we can work up from the bottom and include Lie group names if not stupid); make sure to modify other places names show up (subgroups table); make sure status variables like complex_characters_known are accurate (might have tried and failed)
 Write cloud_collect.py to collect results
 Write another job that modifies a full record along a group hom by mapping/lifting all elements
@@ -125,10 +127,3 @@ Check status of LoadSubgroupCache (used in SubgroupLattice)
 Separate computation of complex and rational character tables? (linked by labeling characters, so can't)
 
 ***********/
-
-
-intrinsic GetNormalData(G::LMFDBGrp) -> Any
-{}
-    G`normal_subgroups_known := true;
-    G`outer_equivalence := false; // we might be able to work up to automorphism....
-end intrinsic;

@@ -1619,9 +1619,9 @@ intrinsic wreath_product(G::LMFDBGrp) -> Any
         BC := CosetImage(B, C);
         n, d := TransitiveGroupIdentification(BC);
         T := Sprintf("%oT%o", d, n);
-        if G`all_subgroups_known or (Index(GG, A) le G`subgroup_index_bound and Index(GG, C) le G`subgroup_index_bound) then
+        L := BestSubgroupLat(G);
+        if L`index_bound eq 0 or (Index(GG, A) le L`index_bound and Index(GG, C) le L`index_bound) then
             S := Get(G, "Subgroups"); // triggers labeling of subgroups
-            L := BestSubgroupLat(G);
             A := L`subs[SubgroupIdentify(L, A @@ phi)];
             B := L`subs[SubgroupIdentify(L, B @@ phi)];
             C := L`subs[SubgroupIdentify(L, C @@ phi)];
@@ -1830,7 +1830,7 @@ intrinsic rank(G::LMFDBGrp) -> Any
     if r ne -1 then
         return r;
     end if;
-    if not G`subgroup_inclusions_known then return None(); end if;
+    if not Get(G, "subgroup_inclusions_known") then return None(); end if;
     subs := Get(G, "Subgroups");
     for r in [2..Get(G, "order")] do
         if &+[Get(s, "subgroup_order")^r * s`mobius_sub * s`count : s in subs] gt 0 then
@@ -1843,7 +1843,7 @@ end intrinsic;
 intrinsic eulerian_function(G::LMFDBGrp) -> Any
 {Calculates the Eulerian function of G for n = rank(G)}
     if Get(G, "order") eq 1 then return 1; end if;
-    if not G`subgroup_inclusions_known then return None(); end if;
+    if not Get(G, "subgroup_inclusions_known") then return None(); end if;
     r := Get(G,"rank");
     tot := &+[Get(s, "subgroup_order")^r * s`mobius_sub * s`count : s in Get(G, "Subgroups")];
     aut := Get(G, "aut_order");
@@ -1858,7 +1858,7 @@ intrinsic MinPermDeg(G::LMFDBGrp) -> RngSerPowElt
     m := Get(G, "order");
     N0 := NormalSubgroups(G);
     print [N`mobius_quo : N in N0];
-    if G`outer_equivalence then
+    if Get(G, "outer_equivalence") then
         L := SubGrpLatAut(G);
         Normals := [N : N in L`subs | N`cc_count eq Get(N, "subgroup_count")];
         Ambient := Get(G, "Holomorph");
@@ -1881,7 +1881,7 @@ intrinsic MinLinDeg(G::LMFDBGrp) -> RngSerPowElt
     R<x> := PowerSeriesRing(Integers() : Precision:=100);
     CT := Get(G, "MagmaCharacterTable");
     N0 := NormalSubgroups(G);
-    if G`outer_equivalence then
+    if Get(G, "outer_equivalence") then
         L := SubGrpLatAut(G);
         Normals := [N : N in L`subs | N`cc_count eq Get(N, "subgroup_count")];
         Ambient := Get(G, "Holomorph");
@@ -1952,7 +1952,7 @@ end intrinsic;
 intrinsic MinPermDegSplit(G::LMFDBGrp, K::LMFDBSubGrp) -> RngSerPowElt, RngSerPowElt, RngSerPowElt
 {K should be normal in G}
     R<x> := PowerSeriesRing(Integers() : Precision:=100);
-    assert not G`outer_equivalence;
+    assert not Get(G, "outer_equivalence");
     S := Get(G, "Subgroups");
     m := Get(G, "order");
     N0 := NormalSubgroups(G);
@@ -1964,7 +1964,6 @@ intrinsic MinPermDegSplit(G::LMFDBGrp, K::LMFDBSubGrp) -> RngSerPowElt, RngSerPo
     f2 := &+[N`mobius_quo * &*[(1 - x^(m div Get(H, "subgroup_order")))^(-1) : H in S | N`MagmaSubGrp subset H`core] : N in N2];
     GK := NewLMFDBGrp(G`MagmaGrp / K`MagmaSubGrp, "G/K");
     AssignBasicAttributes(GK);
-    SetSubgroupParameters(GK);
     f3 := MinPermDeg(GK);
     return f1, f2, f3;
 end intrinsic;

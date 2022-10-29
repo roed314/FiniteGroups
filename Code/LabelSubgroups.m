@@ -348,8 +348,8 @@ intrinsic LabelSubgroups(S::SubgroupLat)
         msubs := [x : x in subs | IsMaximal(G`MagmaGrp, x[1]`subgroup)];
         if index gt ibd and not is_sylow_order(G, Get(G, "order") div index) then
             subs := []; // We don't want to assign normal labels to subgroups beyond the index bound
-            if not G`normal_subgroups_known then nsubs := []; end if;
-            if not G`maximal_subgroups_known then msubs := []; end if;
+            if not Get(G, "normal_subgroups_known") then nsubs := []; end if;
+            if not Get(G, "maximal_subgroups_known") then msubs := []; end if;
         end if;
         tasks := [<subs, "">, <nsubs, ".N">, <msubs, ".M">];
         for task in tasks do
