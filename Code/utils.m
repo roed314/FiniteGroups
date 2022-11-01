@@ -232,6 +232,60 @@ intrinsic CremonaCode(num::RngIntElt) -> MonStgElt
     return Reverse(strg);
 end intrinsic;
 
+intrinsic SplitLabel(label::MonStgElt) -> SeqEnum
+{}
+    function chartype(c)
+        c := StringToCode(c);
+        if 48 le c and c le 57 then return 0; end if;
+        if 97 le c and c le 122 then return 1; end if;
+        if 65 le c and c le 90 then return 2; end if;
+        error "Invalid character type";
+    end function;
+    res := [];
+    t := -1;
+    for j in [1..#label] do
+        if t eq -1 then
+            i := j;
+            t := chartype(label[i]);
+        elif label[j] eq "." then
+            Append(~res, label[i..j-1]);
+            i := j+1;
+            t := -1;
+        else
+            tt := chartype(label[j]);
+            if tt ne t then
+                Append(~res, label[i..j-1]);
+                i := j;
+                t := tt;
+            end if;
+        end if;
+    end for;
+    Append(~res, label[i..#label]);
+    return res;
+end intrinsic;
+
+intrinsic CremonaUncode(code::MonStgElt) -> RngIntElt
+{Also works on normal integers}
+    digits := [StringToCode(c) : c in Eltseq(code)];
+    if &and[48 le c and c le 57 : c in digits] then
+        return StringToInteger(code);
+    elif &and[97 le c and c le 122 : c in digits] then
+        code := Join([CodeToString(c le 106 select c-49 else c-10) : c in digits], "");
+    elif &and[65 le c and c le 90 : c in digits] then
+        code := Join([CodeToString(c le 74 select c-17 else c-10) : c in digits], "");
+    else
+        error "Not a valid cremona code";
+    end if;
+    return StringToInteger(code, 26);
+end intrinsic;
+
+intrinsic SortLabels(labels::SeqEnum) -> SeqEnum
+{Sort labels appropriately by splitting on "." and converting the pieces into integers}
+    keys := [[CremonaUncode(c) : c in SplitLabel(label)] : label in labels];
+    ParallelSort(~keys, ~labels);
+    return labels;
+end intrinsic;
+
 intrinsic remove_whitespace(X::MonStgElt) -> MonStgElt
 { Strips spaces and carraige returns from string; much faster than StripWhiteSpace. }
     return Join(Split(Join(Split(X," "),""),"\n"),"");

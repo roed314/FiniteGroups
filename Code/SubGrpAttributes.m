@@ -236,7 +236,7 @@ intrinsic split(H::LMFDBSubGrp) -> Any
     comps := [el : el in S | Order(el`MagmaSubGrp) eq (Order(GG) div Order(HH))];
     for s in comps do
       K := s`MagmaSubGrp;
-      if #(K meet HH) eq 1 then 
+      if #(K meet HH) eq 1 then
         return true;
       end if;
     end for;
@@ -267,9 +267,9 @@ intrinsic direct(H::LMFDBSubGrp) -> Any // Need to be subgroup attribute file
   if not IsNormal(GG, HH) then
     return None();
   else
-    comps := complements(H);
+    comps := Get(H, "complements");
     for K in comps do
-      if #(K meet HH) eq 1 and IsNormal(GG, K) then
+      if IsNormal(GG, K) then
         return true;
       end if;
     end for;

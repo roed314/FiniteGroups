@@ -1619,7 +1619,7 @@ intrinsic wreath_product(G::LMFDBGrp) -> Any
         BC := CosetImage(B, C);
         n, d := TransitiveGroupIdentification(BC);
         T := Sprintf("%oT%o", d, n);
-        L := BestSubgroupLat(G);
+        L := Get(G, "BestSubgroupLat");
         if L`index_bound eq 0 or (Index(GG, A) le L`index_bound and Index(GG, C) le L`index_bound) then
             S := Get(G, "Subgroups"); // triggers labeling of subgroups
             A := L`subs[SubgroupIdentify(L, A @@ phi)];

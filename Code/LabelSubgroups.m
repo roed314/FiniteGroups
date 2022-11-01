@@ -342,6 +342,7 @@ intrinsic LabelSubgroups(S::SubgroupLat)
     ibd := S`index_bound;
     if ibd eq 0 then ibd := Get(G, "order"); end if;
     for index in Sort([k : k in Keys(by_ind)]) do
+        if index gt ibd then continue; end if;
         vprint User1: "Labeling subgroups of index", index;
         subs := by_ind[index];
         nsubs := [x : x in subs | IsNormal(G`MagmaGrp, x[1]`subgroup)];
@@ -353,11 +354,7 @@ intrinsic LabelSubgroups(S::SubgroupLat)
         end if;
         tasks := [<subs, "">, <nsubs, ".N">, <msubs, ".M">];
         for task in tasks do
-            subs := task[1];
-            suffix := task[2];
-            if #subs eq 0 then
-                continue;
-            elif #subs eq 1 then
+            if #subs eq 1 then
                 by_acode := aaa(subs, 0);
             else
                 avecs := {@ <not IsNormal(G`MagmaGrp, x[1]`subgroup), Get(x[1], "aut_gassman_vec")> : x in subs @};
@@ -373,16 +370,9 @@ intrinsic LabelSubgroups(S::SubgroupLat)
                 for anum in [1..#by_anum] do
                     if autjugacy then
                         sub := by_anum[anum][1];
-                        label := IntegerToString(index) * "." * CremonaCode(acode) * IntegerToString(anum);
-                        if #suffix eq 0 then
-                            // Normal labeling
-                            sub`aut_label := [index, acode, anum];
-                            sub`full_label := [index, acode, anum];
-                            sub`label := label;
-                        else
-                            // We don't set aut_label or full_label since they won't be used recursively in labeling (for maximal subgroups because there are no supergroups, and for normal subgroups since the Gassman class is enough)
-                            Append(~sub`special_labels, label * suffix);
-                        end if;
+                        sub`aut_label := [index, acode, anum];
+                        sub`full_label := [index, acode, anum];
+                        sub`label := IntegerToString(index) * "." * CremonaCode(acode) * IntegerToString(anum);
                     else
                         aclass := by_anum[anum];
                         if #aclass eq 1 then
@@ -399,17 +389,10 @@ intrinsic LabelSubgroups(S::SubgroupLat)
                                 by_cnum := SortGClass(csubs, false);
                             end if;
                             for cnum in [1..#by_cnum] do
-                                label := IntegerToString(index) * "." * CremonaCode(acode) * IntegerToString(anum) * "." * CremonaCode(ccode) * IntegerToString(cnum);
-                                if #suffix eq 0 then
-                                    // Normal labeling
-                                    sub := by_cnum[cnum];
-                                    sub`aut_label := [index, acode, anum];
-                                    sub`full_label := [index, acode, anum, ccode, cnum];
-                                    sub`label := label;
-                                else
-                                    // As above, don't need to set aut_label or full_label
-                                    Append(~sub`special_labels, label * suffix);
-                                end if;
+                                sub := by_cnum[cnum];
+                                sub`aut_label := [index, acode, anum];
+                                sub`full_label := [index, acode, anum, ccode, cnum];
+                                sub`label := IntegerToString(index) * "." * CremonaCode(acode) * IntegerToString(anum) * "." * CremonaCode(ccode) * IntegerToString(cnum);
                             end for;
                         end for;
                     end if;

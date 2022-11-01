@@ -11,13 +11,13 @@ IntegerListCols := ["cycle_type", "denominators", "factors_of_aut_order", "faith
 SmallintListCols := ["factors_of_order", "gens_used", "exponents_of_order"];
 NumericListCols := ["order_stats","cc_stats","div_stats","aut_stats","irrep_stats","ratrep_stats","field","perm_gens", "matZ_gens", "matFp_gens", "matZq_gens", "matZN_gens", "matFq_gens", "pmatFp_gens", "pmatFq_gens"];
 
-BoolCols := ["Agroup", "Zgroup", "abelian", "all_subgroups_known", "complex_characters_known", "rational_characters_known", "almost_simple", "central", "central_product", "characteristic", "cyclic", "direct", "direct_product", "faithful", "finite_matrix_group", "indecomposible", "irreducible", "maximal", "maximal_normal", "maximal_subgroups_known", "metabelian", "metacyclic", "minimal", "minimal_normal", "monomial", "nilpotent", "normal", "normal_subgroups_known", "outer_equivalence", "perfect", "prime", "primitive", "quasisimple", "rational", "semidirect_product", "simple", "solvable", "split", "stem", "subgroup_inclusions_known", "supersolvable", "sylow_subgroups_known", "wreath_product", "standard_generators", "quotient_cyclic", "quotient_abelian", "quotient_solvable", "proper", "complete", "central_factor"];
+BoolCols := ["Agroup", "Zgroup", "abelian", "all_subgroups_known", "complex_characters_known", "rational_characters_known", "almost_simple", "central", "central_product", "characteristic", "cyclic", "direct", "direct_product", "faithful", "finite_matrix_group", "indecomposible", "irreducible", "maximal", "maximal_normal", "maximal_subgroups_known", "metabelian", "metacyclic", "minimal", "minimal_normal", "monomial", "nilpotent", "normal", "normal_subgroups_known", "complements_known", "outer_equivalence", "perfect", "prime", "primitive", "quasisimple", "rational", "semidirect_product", "simple", "solvable", "split", "stem", "subgroup_inclusions_known", "supersolvable", "sylow_subgroups_known", "wreath_product", "standard_generators", "quotient_cyclic", "quotient_abelian", "quotient_solvable", "proper", "complete", "central_factor"];
 
 // creps has a gens which is not integer[]
 JsonbCols := ["quotient_fusion", "decomposition", "traces", "gens", "values", "direct_factorization", "representations"];
 
 SubgroupCols := ["centralizer", "kernel", "core", "center", "normal_closure", "normalizer", "sub1", "sub2"];
-SubgroupListCols := ["complements", "contains", "contained_in"];
+SubgroupListCols := ["complements", "contains", "contained_in", "normal_contains", "normal_contained_in"];
 
 EltCols := ["representative"];
 EltListCols := ["generators"];
