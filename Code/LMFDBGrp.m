@@ -75,6 +75,7 @@ declare attributes LMFDBGrp:
   easy_rank,
   rank,
   eulerian_function,
+  EulerianTimesAut,
   MagmaCenter,
   center_label,
   central_quotient,

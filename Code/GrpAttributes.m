@@ -700,15 +700,11 @@ intrinsic MagmaAutGroup(G::LMFDBGrp) -> Grp
         end try;
     end if;*/
     if assigned G`SavedAutomorphismGroup then
-        vprint User1: "Loading saved MagmaAutGroup";
-        t := Cputime();
         A := StringToGroup(G`SavedAutomorphismGroup : baseG := G`MagmaGrp);
-        vprint User1: "Complete in", Cputime() - t;
     else
-        vprint User1: "Starting MagmaAutGroup";
-        t := Cputime();
+        t0 := ReportStart(G, "MagmaAutGroup");
         A := AutomorphismGroup(G`MagmaGrp);
-        vprint User1: "Complete in", Cputime() - t;
+        ReportEnd(G, "MagmaAutGroup", t0);
     end if;
     return A;
 end intrinsic;
@@ -719,8 +715,11 @@ intrinsic SavedAutomorphismGroup(G::LMFDBGrp) -> MonStgElt
 end intrinsic;
 
 intrinsic aut_group(G::LMFDBGrp) -> MonStgElt
-    {returns label of the automorphism group}
-    return label(Get(G, "MagmaAutGroup"));
+{returns label of the automorphism group}
+    t0 := ReportStart(G, "LabelAutGroup");
+    s := label(Get(G, "MagmaAutGroup"));
+    ReportEnd(G, "LabelAutGroup", t0);
+    return s;
 end intrinsic;
 
 intrinsic aut_order(G::LMFDBGrp) -> RingIntElt
@@ -748,8 +747,11 @@ intrinsic outer_group(G::LMFDBGrp) -> Any
     if not PossiblyLabelable(N) then
         return None();
     end if;
-    aut:=Get(G, "MagmaAutGroup");
-    return label(OuterFPGroup(aut)); // this could be very slow, since isomorphism testing with finitely presented groups is hard
+    aut := Get(G, "MagmaAutGroup");
+    t0 := ReportStart(G, "LabelOuterGroup");
+    s := label(OuterFPGroup(aut)); // this could be very slow, since isomorphism testing with finitely presented groups is hard
+    ReportEnd(G, "LabelOuterGroup", t0);
+    return s;
 end intrinsic;
 
 intrinsic complete(G::LMFDBGrp) -> BoolElt
@@ -787,7 +789,9 @@ end intrinsic;
 
 intrinsic commutator_label(G::LMFDBGrp) -> Any
 {label string for Commutator Subgroup}
-    return label_subgroup(G, Get(G, "MagmaCommutator"));
+    t0 := ReportStart(G, "LabelCommutator");
+    s := label_subgroup(G, Get(G, "MagmaCommutator"));
+    ReportEnd(G, "LabelCommutator", t0);
 end intrinsic;
 
 
@@ -927,51 +931,51 @@ function GenHallSubgroupMinP(G,p)
   GPC,m:=PCGroup(G);
   return HallSubgroup(GPC,-p)@@m;
 end function;
- 
+
 intrinsic IsADirectProductHeuristic(G::Grp : steps:=50) -> Any
   {}
   vprint GroupName,2:"IsADirectProductHeuristic";
   if IsAbelian(G) then
-    if #G eq 1 then return false,0,0; end if;
+    if #G eq 1 then return false, _, _; end if;
     if IsPrimePower(#G) then
-      if IsCyclic(G)
-        then return false,0,0,[];
-        else A:=AbelianBasis(G);
-             return true, sub<G|A[1]>, sub<G|A[[2..#A]]>, [];
+      if IsCyclic(G) then
+        return false, _, _;
+      else A:=AbelianBasis(G);
+        return true, sub<G|A[1]>, sub<G|A[[2..#A]]>;
       end if;
     else
-      p:=PrimeDivisors(#G)[1];
-      S:=SylowSubgroup(G,p);
-      H:=GenHallSubgroupMinP(G,p);
-      return true,S,H,[];
+      p := PrimeDivisors(#G)[1];
+      S := SylowSubgroup(G,p);
+      H := GenHallSubgroupMinP(G,p);
+      return true, S, H;
     end if;
   end if;
   vprint GroupName,2:"IsADirectProductHeuristic: Centre";
-  Z:=Centre(G);
+  Z := Centre(G);
   vprint GroupName,2:"IsADirectProductHeuristic: Steps";
   for i:=1 to steps do
     repeat
       for i:=1 to 5 do
-        r:=Random(G);
+        r := Random(G);
         if IsSquarefree(Order(r)) then break; end if;
       end for;
-      g:=r^Random(Divisors(Order(r)));
+      g := r^Random(Divisors(Order(r)));
     until not (g in Z);
-    N1:=NormalClosure(G,sub<G|g>);
-    N2:=Centralizer(G,N1);
+    N1 := NormalClosure(G, sub<G|g>);
+    N2 := Centralizer(G,N1);
     if (#N1*#N2 eq #G) and (#(N1 meet N2) eq 1) and (#N2 ne 1) then
-      return true, N1, N2, [];    //! should be fixed in a new version of Magma
+      return true, N1, N2;    //! should be fixed in a new version of Magma
       //return true,eval Sprint(N1,"Magma"),eval Sprint(N2,"Magma");
     end if;
   end for;
   vprint GroupName,2:"IsADirectProductHeuristic: Done";
-  return false,0,0,[];
+  return false, _, _;
 end intrinsic;
 
 intrinsic DirectFactorization(GG::Grp : try_heuristic:=true, Ns:=[]) -> Any
 {Returns true if G is a nontrivial direct product, along with factors; otherwise returns false.}
   if try_heuristic then
-    heur_bool, N, K, Ns := IsADirectProductHeuristic(GG);
+    heur_bool, N, K := IsADirectProductHeuristic(GG);
     if heur_bool then
       return heur_bool, N, K, Ns;
     end if;
@@ -997,10 +1001,20 @@ intrinsic DirectFactorization(GG::Grp : try_heuristic:=true, Ns:=[]) -> Any
   return false, _, _, _;
 end intrinsic;
 
-intrinsic direct_factorization(GG::Grp : try_heuristic := true) -> Any
-  {}
-  fact_bool, N, K, Ns := DirectFactorization(GG : try_heuristic := try_heuristic);
+intrinsic direct_factorization(G::LMFDBGrp) -> Any
+{}
+  GG := G`MagmaGrp;
+  if Get(G, "simple") then return []; end if;
+  if not Get(G, "normal_subgroups_known") then return None(); end if;
+  if Get(G, "outer_equivalence") then
+    Ns := []; // compute the full set of normal subgroups inside DirectFactorization
+  else
+    Ns := [H`subgroup : H in Get(G, "NormSubGrpLat") | H`order ne 1 and H`order ne G`order];
+  end if;
+  t0 := ReportStart(G, "direct_factorization");
+  fact_bool, N, K, Ns := DirectFactorization(GG : Ns:=Ns, try_heuristic := try_heuristic);
   if not fact_bool then
+    ReportEnd(G, "direct_factorization", t0);
     return [];
   end if;
   facts := [N, K];
@@ -1022,7 +1036,9 @@ intrinsic direct_factorization(GG::Grp : try_heuristic := true) -> Any
     end if;
     facts := new_facts;
   end while;
-  return CollectDirectFactors(irred_facts);
+  facts := CollectDirectFactors(irred_facts);
+  ReportEnd(G, "direct_factorization", t0);
+  return facts;
 end intrinsic;
 
 intrinsic CollectDirectFactors(facts::SeqEnum) -> SeqEnum
@@ -1054,13 +1070,49 @@ end intrinsic;
 
 intrinsic semidirect_product(G::LMFDBGrp) -> Any
 {Returns true if G is a nontrivial semidirect product; otherwise returns false.}
-    return &or[#Get(H, "complements") gt 0 : H in Get(G, "NormalSubgroups") | Get(H, "subgroup_order") ne 1 and Get(H, "quotient_order") ne 1];
+    if Get(G, "normal_subgroups_known") and Get(G, "complements_known") then
+        // complements are stored in the full subgroup lattice
+        L := Get(G, "BestSubgroupLat");
+        for H in L`subs do
+            if H`order ne 1 and H`order ne G`order and Get(H, "normal") and #H`complements gt 0 then
+                return true;
+            end if;
+        end for;
+        if L`index_bound eq 0 then return false; end if;
+    end if;
+    if Get(G, "direct_product") then return true; end if;
+    // Perhaps we could try harder (searching through the subgroups thare are computed and calling Complements) but we don't yet since normal_subgroups_known and complements_known are true by default
+    return None();
 end intrinsic;
 
 intrinsic direct_product(G::LMFDBGrp) -> Any
-  {Returns true if G is a nontrivial direct product; otherwise returns false.}
-  fact_bool, _, _ := DirectFactorization(G`MagmaGrp);
-  return fact_bool;
+{Returns true if G is a nontrivial direct product; otherwise returns false.}
+    fact := Get(G, "direct_factorization");
+    if Type(fact) eq NoneType then
+        // Try to do just one decomposition
+        // This can succeed where direct_factorization failed if we were unable to label
+        // one of the terms
+        if Get(G, "normal_subgroups_known") then
+            if Get(G, "complements_known") then
+                // Scan for normal complements
+                L := Get(G, "BestSubgroupLat");
+                for H in L`subs do
+                    if H`order ne 1 and H`order ne G`order and Get(H, "normal") and &or[Get(L`subs[j], "normal") : j in H`complements] then
+                        return true;
+                    end if;
+                end for;
+                if L`index_bound eq 0 then return false; end if;
+            end if;
+            if not Get(G, "outer_equivalence") then
+                // We use the full DirectFactorization machinery
+                Ns := [N`subgroup : N in Get(G, "NormSubGrpLat")`subs];
+                return DirectFactorization(G`MagmaGrp : Ns:=Ns);
+            end if;
+        end if;
+        if IsADirectProductHeuristic(G`MagmaGrp) then return true; end if;
+        return None();
+    end if;
+    return (#fact gt 0);
 end intrinsic;
 
 /*
@@ -1078,10 +1130,9 @@ intrinsic direct_factorization_recursive(G::LMFDBGrp) -> SeqEnum
 end intrinsic;
 */
 
+/*
 intrinsic direct_factorization(G::LMFDBGrp) -> SeqEnum
 {}
-    return direct_factorization(G`MagmaGrp);
-/*
   fact_bool, Nsub, Ksub := DirectFactorization(G`MagmaGrp);
   if not fact_bool then
     return [];
@@ -1116,8 +1167,9 @@ intrinsic direct_factorization(G::LMFDBGrp) -> SeqEnum
   //irred_facts_mag := [ Get(el, "MagmaGrp") : el in irred_facts ];
   //assert IsIsomorphic(GG, DirectProduct(irred_facts_mag));
 
-  return CollectDirectFactors(irred_facts);*/
+  return CollectDirectFactors(irred_facts);
 end intrinsic;
+*/
 
 intrinsic CCpermutation(G::LMFDBGrp) -> SeqEnum
   {Get the permutation p which takes Magma's CC indeces and returns ours.}
@@ -1148,8 +1200,11 @@ intrinsic ClassMap(G::LMFDBGrp) -> Map
 end intrinsic;
 
 intrinsic MagmaConjugacyClasses(G::LMFDBGrp) -> SeqEnum
-  {Return Magma's Conjugacy classes.}
-  return ConjugacyClasses(G`MagmaGrp);
+{Return Magma's Conjugacy classes.}
+    t0 := ReportStart(G, "MagmaConjugacyClasses");
+    C := ConjugacyClasses(G`MagmaGrp);
+    ReportEnd(G, "MagmaConjugacyClasses", t0);
+    return C;
 end intrinsic;
 
 intrinsic MagmaGenerators(G::LMFDBGrp) -> SeqEnum
@@ -1170,6 +1225,7 @@ end intrinsic;
 intrinsic ConjugacyClasses(G::LMFDBGrp) ->  SeqEnum
 {The list of conjugacy classes for this group}
     cc := Get(G, "MagmaConjugacyClasses");
+    t0 := ReportStart(G, "LabelConjugacyClasses");
     cm := Get(G, "MagmaClassMap");
     pm := Get(G, "MagmaPowerMap");
     gens := Get(G, "MagmaGenerators");
@@ -1204,12 +1260,16 @@ intrinsic ConjugacyClasses(G::LMFDBGrp) ->  SeqEnum
         magccs[j]`powers := [perm[pm(ix,p)] : p in plist];
         magccs[j]`representative := cc[ix][3];
     end for;
+    ReportEnd(G, "LabelConjugacyClasses", t0);
     return magccs;
 end intrinsic;
 
 intrinsic MagmaCharacterTable(G::LMFDBGrp) -> Any
-  {Return Magma's character table.}
-  return CharacterTable(G`MagmaGrp);
+{Return Magma's character table.}
+    t0 := ReportStart(G, "MagmaCharacterTable");
+    CT := CharacterTable(G`MagmaGrp);
+    ReportEnd(G, "MagmaCharacterTable", t0);
+    return CT;
 end intrinsic;
 
 intrinsic irrep_stats(G::LMFDBGrp) -> Any
@@ -1233,10 +1293,12 @@ end intrinsic;
 
 
 intrinsic MagmaRationalCharacterTable(G::LMFDBGrp) -> Any
-  {Return Magma's rational character table.}
-  u, v := RationalCharacterTable(G`MagmaGrp);
-  G`MagmaCharacterMatching := v;
-  return u;
+{Return Magma's rational character table.}
+    t0 := ReportStart(G, "MagmaRationalCharacterTable");
+    u, v := RationalCharacterTable(G`MagmaGrp);
+    G`MagmaCharacterMatching := v;
+    ReportEnd(G, "MagmaRationalCharacterTable", t0);
+    return u;
 end intrinsic;
 
 intrinsic ratrep_stats(G::LMFDBGrp) -> Any
@@ -1289,9 +1351,8 @@ intrinsic QQCharacters(G::LMFDBGrp) -> Any
 end intrinsic;
 
 intrinsic CCCharacters(G::LMFDBGrp) -> Any
-{ Compute and return Q characters }
+{ Compute and return C characters }
     if Get(G, "complex_characters_known") then
-        print "Computing characters!";
         dummy := Get(G, "Characters");
         return G`CCCharacters;
     end if;
@@ -1436,7 +1497,6 @@ end intrinsic;
 
 intrinsic Characters(G::LMFDBGrp) ->  Tup
   {Initialize characters of an LMFDB group and return a list of complex characters and a list of rational characters}
-  t := Cputime();
   g := G`MagmaGrp;
   ct := Get(G,"MagmaCharacterTable");
   rct := Get(G,"MagmaRationalCharacterTable");
@@ -1446,8 +1506,7 @@ intrinsic Characters(G::LMFDBGrp) ->  Tup
   //cc:=Classes(g);
   cchars := [New(LMFDBGrpChtrCC) : c in ct];
   rchars := [New(LMFDBGrpChtrQQ) : c in rct];
-  vprint User1: "Magma character information found in", Cputime() - t;
-  t0 := Cputime();
+  t0 := ReportStart(G, "LMFDBComplexChar");
   t := t0;
   for j:=1 to #cchars do
     cchars[j]`Grp := G;
@@ -1465,7 +1524,9 @@ intrinsic Characters(G::LMFDBGrp) ->  Tup
       polredabscaches[d] := LoadPolredabsCache(d);
     end if;
     if not IsDefined(polredabscaches[d],thepoly) then
+      if d gt 16 then tpol := ReportStart(G, Sprintf("Polredabs%o", d)); end if;
       thepoly1 := Polredabs(thepoly);
+      if d gt 16 then ReportEnd(G, Sprintf("Polredabs%o", d), tpol); end if;
       polredabscaches[d][thepoly] := thepoly1;
       PolredabsCache(thepoly, thepoly1);
     end if;
@@ -1476,10 +1537,9 @@ intrinsic Characters(G::LMFDBGrp) ->  Tup
     cchars[j]`indicator := Integers()!Indicator(ct[j]);
     vprint User2: "FrobSchur", j, Cputime() - t1;
     cchars[j]`label := "placeholder";
-    vprint User2: "B", j, Cputime() - t;
     t := Cputime();
   end for;
-  vprint User1: "LMFDB complex character information computed in", Cputime() - t0;
+  ReportEnd(G, "LMFDBComplexChar", t0);
   t0 := Cputime();
   for j:=1 to #rchars do
     rchars[j]`Grp := G; // These don't have a group?
@@ -1497,23 +1557,27 @@ intrinsic Characters(G::LMFDBGrp) ->  Tup
     vprint User2: "C", j, Cputime() - t;
     t := Cputime();
   end for;
-  vprint User1: "LMFDB rational character information computed in", Cputime() - t0;
+  ReportEnd(G, "LMFDBRationalChar", t0);
+  t0 := Cputime();
   /* This still needs labels and ordering for both types */
   sortdata:=characters_add_sort_and_labels(G, cchars, rchars);
-  vprint User1: "Characters sorted and labeled in", Cputime() - t;
+  ReportEnd(G, "LabelChars", t0);
   return <cchars, rchars>;
 end intrinsic;
 
 intrinsic name(G::LMFDBGrp) -> Any
   {Returns Magma's name for the group.}
-  g:=G`MagmaGrp;
-  return GroupName(g);
+  t0 := ReportStart(G, "GroupName");
+  gn := GroupName(G`MagmaGrp);
+  ReportEnd(G, "GroupName", t0);
+  return gn;
 end intrinsic;
 
 intrinsic tex_name(G::LMFDBGrp) -> Any
   {Returns Magma's name for the group.}
-  g:=G`MagmaGrp;
-  gn:= GroupName(g: TeX:=true);
+  t0 := ReportStart(G, "TexName");
+  gn := GroupName(G`MagmaGrp: TeX:=true);
+  ReportEnd(G, "TexName", t0);
   return ReplaceString(gn, "\\", "\\\\");
 end intrinsic;
 
@@ -1576,6 +1640,7 @@ end intrinsic;
 
 intrinsic schur_multiplier(G::LMFDBGrp) -> Any
   {Returns abelian invariants for Schur multiplier by computing prime compoments and then merging them.}
+  t0 := ReportStart(G, "SchurMultiplier");
   invs := [];
   ps := Get(G, "factors_of_order");
   GG := Get(G, "MagmaGrp");
@@ -1592,6 +1657,7 @@ intrinsic schur_multiplier(G::LMFDBGrp) -> Any
       end if;
     end for;
   end for;
+  ReportEnd(G, "SchurMultiplier", t0);
   return AbelianInvariants(AbelianGroup(invs));
 end intrinsic;
 
@@ -1604,30 +1670,44 @@ intrinsic wreath_product(G::LMFDBGrp) -> Any
     // Need GrpPerm for IsWreathProduct function call below. Check and convert if not GrpPerm.
     if Type(GG) ne GrpPerm then
         // We find an efficient permutation representation.
-        ts := Get(G, "MagmaTransitiveSubgroup");
-        if Type(ts) eq NoneType then
-            return None();
+        reps := Get(G, "representations");
+        if IsDefined(reps, "Perm") then
+            d := reps["Perm"][d];
+            gens := reps["Perm"]["gens"];
+            GG := PermutationGroup<d | [DecodePerm(StringToInteger(g), d) : g in gens]>;
+            phi := 0;
+        else
+            ts := Get(G, "MagmaTransitiveSubgroup");
+            if Type(ts) eq NoneType then
+                return None();
+            end if;
+            phi, GG := CosetAction(GG, ts);
         end if;
-        phi, GG := CosetAction(GG, ts);
     else
         phi := IdentityHomomorphism(GG);
     end if;
+    t0 := ReportStart(G, "WreathProduct");
     isw := IsWreathProduct(GG);
+    ReportEnd(G, "WreathProduct", t0);
     if isw then
         // For some reason, Magma doesn't return 4 values when isw is false
         isw, A, B, C := IsWreathProduct(GG);
         BC := CosetImage(B, C);
         n, d := TransitiveGroupIdentification(BC);
         T := Sprintf("%oT%o", d, n);
-        L := Get(G, "BestSubgroupLat");
-        if L`index_bound eq 0 or (Index(GG, A) le L`index_bound and Index(GG, C) le L`index_bound) then
-            S := Get(G, "Subgroups"); // triggers labeling of subgroups
-            A := L`subs[SubgroupIdentify(L, A @@ phi)];
-            B := L`subs[SubgroupIdentify(L, B @@ phi)];
-            C := L`subs[SubgroupIdentify(L, C @@ phi)];
-            G`wreath_data := [A`label, B`label, C`label, T];
-        else
+        if phi cmpeq 0 then
             G`wreath_data := [GroupName(A: TeX:=true), GroupName(B: TeX:=true), T];
+        else
+            L := Get(G, "BestSubgroupLat");
+            if L`index_bound eq 0 or (Index(GG, A) le L`index_bound and Index(GG, C) le L`index_bound) then
+                S := Get(G, "Subgroups"); // triggers labeling of subgroups
+                A := L`subs[SubgroupIdentify(L, A @@ phi)];
+                B := L`subs[SubgroupIdentify(L, B @@ phi)];
+                C := L`subs[SubgroupIdentify(L, C @@ phi)];
+                G`wreath_data := [A`label, B`label, C`label, T];
+            else
+                G`wreath_data := [GroupName(A: TeX:=true), GroupName(B: TeX:=true), T];
+            end if;
         end if;
     end if;
     return isw;
@@ -1831,9 +1911,12 @@ intrinsic rank(G::LMFDBGrp) -> Any
         return r;
     end if;
     if not Get(G, "subgroup_inclusions_known") then return None(); end if;
-    subs := Get(G, "Subgroups");
+    L := Get(G, "BestSubgroupLat");
+    if L`index_bound ne 0 then return None(); end if;
     for r in [2..Get(G, "order")] do
-        if &+[Get(s, "subgroup_order")^r * s`mobius_sub * s`count : s in subs] gt 0 then
+        tot := &+[(H`order)^r * H`mobius_sub * Get(H, "subgroup_count") : H in L`subs];
+        if tot gt 0 then
+            G`EulerianTimesAut := tot;
             return r;
         end if;
     end for;
@@ -1844,10 +1927,9 @@ intrinsic eulerian_function(G::LMFDBGrp) -> Any
 {Calculates the Eulerian function of G for n = rank(G)}
     if Get(G, "order") eq 1 then return 1; end if;
     if not Get(G, "subgroup_inclusions_known") then return None(); end if;
-    r := Get(G,"rank");
-    tot := &+[Get(s, "subgroup_order")^r * s`mobius_sub * s`count : s in Get(G, "Subgroups")];
+    r := Get(G,"rank"); // sets EulerianTimesAut
+    tot := G`EulerianTimesAut;
     aut := Get(G, "aut_order");
-    //print "tot", tot, "aut", aut;
     assert tot ne 0 and IsDivisibleBy(tot, aut);
     return tot div aut;
 end intrinsic;

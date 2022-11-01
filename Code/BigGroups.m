@@ -87,13 +87,11 @@ Path to finishing computations:
 Harmonize the various place column names show up (IO.m, .tmpheader, .header, LMFDBGrp.m, postgres table...)
 Refine labeling: it may be too slow
 organize which columns are preloaded (hash, data from gps_transitive...)
-Can use Complements to do semidirect decompositions from NormalSubgroups
 Don't priorize weird Lie groups
 Compute and save automorphism group beforehand
-Print timing output to be combined by cloud_start.py
-Undo error on Holomorph
+Create hash_lookup folder (see Label.m)
 Run for matrix groups to test (Frattini seems to fail for example)
-Set subgroup_index_bound externally?
+Direct product broken for outer_equivalence
 
 Change Presentation.m to not use Holomoprh
 Use semidirect products to select a better name (postprocess step so that we can work up from the bottom and include Lie group names if not stupid); make sure to modify other places names show up (subgroups table); make sure status variables like complex_characters_known are accurate (might have tried and failed)

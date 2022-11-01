@@ -452,7 +452,7 @@ end intrinsic;
 
 intrinsic Holomorph(X::LMFDBGrp) -> Grp
 {}
-    error "Starting holomorph";
+    assert Get(X, "HaveHolomorph");
     G := X`MagmaGrp;
     A := Get(X, "MagmaAutGroup");
     H, inj := Holomorph(G, A);
@@ -547,7 +547,9 @@ end intrinsic;
 intrinsic CCAutCollapse(X::LMFDBGrp) -> Map
 {}
     CC := Get(X, "ConjugacyClasses");
-    if Get(X, "HaveHolomorph") then
+    use_hol := Get(X, "HaveHolomorph");
+    t0 := ReportStart(X, Sprintf("CCAutCollapse(%o)", use_hol select "hol" else "aut"));
+    if use_hol then
         Hol := Get(X, "Holomorph");
         inj := Get(X, "HolInj");
         D := Classify([1..#CC], func<i, j | IsConjugate(Hol, inj(CC[i]`representative), inj(CC[j]`representative))>);
@@ -575,6 +577,7 @@ intrinsic CCAutCollapse(X::LMFDBGrp) -> Map
             A[D[i][j]] := i;
         end for;
     end for;
+    ReportEnd(X, "CCAutCollapse", t0);
     return AssociativeArrayToMap(A, [1..#D]);
 end intrinsic;
 
@@ -622,6 +625,7 @@ end intrinsic;
 intrinsic IncludeNormalSubgroups(L::SubgroupLat)
 {Add data from the normal subgroup lattice to L}
     G := L`Grp;
+    t0 := ReportStart(G, "IncludeNormalSubgroups");
     GG := G`MagmaGrp;
     dummy := Get(G, "NormalSubgroups"); // triggers labeling for N
     N := BestNormalSubgroupLat(G);
@@ -701,11 +705,13 @@ intrinsic IncludeNormalSubgroups(L::SubgroupLat)
             H`normal := false;
         end if;
     end for;
+    ReportEnd(G, "IncludeNormalSubgroups", t0);
 end intrinsic;
 
 intrinsic IncludeMaximalSubgroups(L::SubgroupLat)
 {Should only be called when L`index_bound != 0}
     G := L`Grp;
+    t0 := ReportStart(G, "IncludeMaximalSubgroups");
     GG := G`MagmaGrp;
     have_norms := Get(G, "normal_subgroups_known");
     ordbd := G`order div L`index_bound;
@@ -739,6 +745,7 @@ intrinsic IncludeMaximalSubgroups(L::SubgroupLat)
         // Have to reset by_index since we have new subgroups
         L`by_index := by_index(L);
     end if;
+    ReportEnd(G, "IncludeMaximalSubgroups", t0);
 end intrinsic;
 
 intrinsic IncludeSylowSubgroups(L::SubgroupLat)
@@ -768,6 +775,7 @@ intrinsic TrimSubgroups(L::SubgroupLat)
 {Removes high-index subgroups if there are too many and sets the label for subgroups below the cutoff}
     // On input, we assume that L`subs is sorted by index
     X := L`Grp;
+    t0 := ReportStart(X, "TrimSubgroups");
     G := X`MagmaGrp;
     subs := L`subs;
     cut := NUM_SUBS_LIMIT_AUT - 1;
@@ -799,6 +807,7 @@ intrinsic TrimSubgroups(L::SubgroupLat)
     L`subs := subs[1..cut] cat [subs[i] : i in Sort(keep)];
     // Have to reset L`by_index since we changed the underlying subgroup list
     L`by_index := by_index(L);
+    ReportEnd(X, "TrimSubgroups", t0);
 end intrinsic;
 
 intrinsic SubGrpLstAut(X::LMFDBGrp) -> SubgroupLat
@@ -814,6 +823,7 @@ intrinsic SubGrpLstAut(X::LMFDBGrp) -> SubgroupLat
     res`index_bound := 0; // reset below if appropriate
     if Get(X, "solvable") and Get(X, "HaveHolomorph") then
         // In this case, we can use SubgroupsLift inside the holomorph to get autjugacy classes
+        t0 := ReportStart(X, "SolvAutSubs");
         subs := SolvAutSubs(X);
         Sort(~subs, func<x, y | y`order - x`order>);
         X`number_subgroup_autclasses := #subs;
@@ -833,15 +843,19 @@ intrinsic SubGrpLstAut(X::LMFDBGrp) -> SubgroupLat
         X`number_subgroups := nsubs;
         X`number_subgroup_classes := nconj;
         res`subs := [SubgroupLatElement(res, subs[i]`subgroup : i:=i) : i in [1..#subs]];
+        ReportEnd(X, "SolvAutSubs", t0);
     elif AllSubgroupsOk(G) then
         // In this case, we compute all subgroups and then group them by autjugacy
         tmp := Get(X, "SubGrpLst");
+        t0 := ReportStart(X, "CollapseSubGrpLst");
         res := CollapseLatticeByAutGrp(tmp);
         // compute before trimming
         X`number_subgroup_autclasses := #res`subs;
+        ReportEnd(X, "CollapseSubGrpLst", t0);
     else
         trim := false;
         // There may be too many subgroups, so we work by index
+        t0 := ReportStart(X, "SubGrpLstByDivisor");
         D := Reverse(Divisors(N));
         subs := [];
         extra_subs := [];
@@ -867,6 +881,7 @@ intrinsic SubGrpLstAut(X::LMFDBGrp) -> SubgroupLat
             res`subs[i]`cc_count := #subs[i];
         end for;
         if ordbd ne 1 then res`index_bound := N div ordbd; end if;
+        ReportEnd(X, "SubGrpLstByDivisor", t0);
     end if;
     if trim and #res`subs ge NUM_SUBS_CUTOFF_AUT then
         TrimSubgroups(res);
@@ -893,6 +908,7 @@ end intrinsic;
 intrinsic IncludeSpecialSubgroups(L::SubgroupLat)
 {}
     G := L`Grp;
+    t0 := ReportStart(G, "IncludeSpecialSubgroups");
     GG := G`MagmaGrp;
     /* special groups labeled */
     Z := Center(GG);
@@ -928,6 +944,7 @@ intrinsic IncludeSpecialSubgroups(L::SubgroupLat)
             Append(~L`subs, H);
         end if;
     end for;
+    ReportEnd(G, "IncludeSpecialSubgroups");
 end intrinsic;
 
 intrinsic SubgroupLatElement(L::SubgroupLat, H::Grp : i:=false, normalizer:=false, centralizer:=false, normal:=0, normal_closure:=false, gens:=false, subgroup_count:=false, standard:=false, recurse:=0) -> SubgroupLatElt
@@ -1548,6 +1565,7 @@ end function;
 */
 
 procedure ComputeLatticeEdges(~L, Ambient, inj : normal_lattice:=false)
+    t0 := ReportStart(L`Grp, "ComputeLatticeEdges");
     one := Identity(Ambient);
     n := L`Grp`order;
     C := AssociativeArray();
@@ -1661,6 +1679,7 @@ procedure ComputeLatticeEdges(~L, Ambient, inj : normal_lattice:=false)
             L`subs[i]`unders[j] := true;
         end for;
     end for;
+    ReportEnd(L`Grp, "ComputeLatticeEdges", t0);
 end procedure;
 
 intrinsic normal(H::SubgroupLatElt) -> BoolElt
@@ -1676,6 +1695,7 @@ end intrinsic;
 
 procedure SetClosures(~L)
     // Set normal and characteristic closures
+    t0 := ReportStart(L`Grp, "SetClosures");
     L`subs[1]`normal_closure := 1;
     L`subs[1]`characteristic_closure := 1;
     by_index := Get(L, "by_index");
@@ -1705,6 +1725,7 @@ procedure SetClosures(~L)
             end if;
         end for;
     end for;
+    ReportEnd(L`Grp, "SetClosures", t0);
 end procedure;
 
 /*AttachSpec("spec");
@@ -1729,14 +1750,14 @@ function SubgroupLattice_edges(G, aut)
         L := Get(G, "SubGrpLst");
         // This can't be put inside SubGrpLst since it would cause an infinite recursion when called from SubGrpLstAut because G`outer_equivalence is not yet set
         IncludeNormalSubgroups(L);
+        IncludeSpecialSubgroups(L); // just adds the labels since the subgroups already present
         Ambient := GG;
         inj := IdentityHomomorphism(GG);
     end if;
     ComputeLatticeEdges(~L, Ambient, inj);
-    vprint User1: "Setting normal and characteristic closures";
     SetClosures(~L);
-    vprint User1: "Setting mobius_sub";
     // Set the mobius functions
+    t0 := ReportStart(G, "MobiusSub");
     top := get_top(L);
     top`mobius_sub := 1; //μ_G(G) = 1
     // L`subs are not necessarily sorted by index
@@ -1755,8 +1776,8 @@ function SubgroupLattice_edges(G, aut)
         end for;
         //print "mobius_sub", x`mobius_sub;
     end for;
-    vprint User1: "Mobius function computed";
     L`inclusions_known := true;
+    ReportEnd(G, "MobiusSub", t0);
     return L;
 end function;
 
@@ -1803,6 +1824,7 @@ end intrinsic;
 intrinsic SubGrpLst(G::LMFDBGrp) -> SubgroupLat
 {The list of all subgroups up to conjugacy}
     // For now, we start with index 1 rather than order 1
+    t0 := ReportStart(G, "SubGrpLst");
     subs := Reverse(Subgroups(G`MagmaGrp));
     res := New(SubgroupLat);
     res`Grp := G;
@@ -1814,7 +1836,7 @@ intrinsic SubGrpLst(G::LMFDBGrp) -> SubgroupLat
     res`subs := [SubgroupLatElement(res, subs[i]`subgroup : i:=i, subgroup_count:=subs[i]`length) : i in [1..#subs]];
     // It would be nice to call IncludeNormalSubgroups(res) here when G`outer_equivalence is false,
     // but it causes an infinite recursion.  So we call it on the return value in BestSubgroupLattice and SubGrpLat
-    IncludeSpecialSubgroups(res); // just adds the labels since the subgroups already present
+    ReportEnd(G, "SubGrpLst", t0);
     return res;
 end intrinsic;
 
@@ -1853,6 +1875,7 @@ end function;
 
 intrinsic CollapseLatticeByAutGrp(L::SubgroupLat) -> SubgroupLat
 {Takes a lattice of subgroups up to conjugacy and produces one up to automorphism}
+    t0 := ReportStart(L`Grp, "CollapseLattice");
     res := New(SubgroupLat);
     G := L`Grp;
     res`Grp := G;
@@ -1865,6 +1888,7 @@ intrinsic CollapseLatticeByAutGrp(L::SubgroupLat) -> SubgroupLat
     // Have to make new SubgroupLatElements, since we're changing the lattice and modifying overs and unders
     res`subs := [CollapseLatElement(res, subs[i], i, lookup) : i in [1..#subs]];
     res`from_conj := <L, lookup, inv_lookup>;
+    ReportEnd(L`Grp, "CollapseLattice", t0);
     return res;
 end intrinsic;
 
@@ -2330,6 +2354,7 @@ intrinsic BestSubgroupLat(G::LMFDBGrp) -> SubgroupLat
             L := Get(G, "SubGrpLst");
             // This can't be put inside SubGrpLst since it would cause an infinite recursion when called from SubGrpLstAut because G`outer_equivalence is not yet set
             IncludeNormalSubgroups(L);
+            IncludeSpecialSubgroups(L); // just adds the labels since the subgroups already present
         end if;
     end if;
     return L;
@@ -2338,9 +2363,9 @@ end intrinsic;
 intrinsic Subgroups(G::LMFDBGrp) -> SeqEnum
     {The list of LMFDBSubGrps computed for this group}
     L := Get(G, "BestSubgroupLat");
-    vprint User1: "Labeling subgroups";
+    t0 := ReportStart(G, "LabelSubgroups");
     LabelSubgroups(L);
-    vprint User1: "Subgroups labelled";
+    ReportEnd(G, "LabelSubgroups", t0);
     return [LMFDBSubgroup(H) : H in L`subs];
     /*if Get(G, "all_subgroups_known") then
         SaveSubgroupCache(G, S);
@@ -2348,6 +2373,7 @@ intrinsic Subgroups(G::LMFDBGrp) -> SeqEnum
 end intrinsic;
 
 procedure SetMobiusQuo(~L, aut)
+    t0 := ReportStart(L`Grp, "SetMobiusQuo");
     L`subs[#L]`mobius_quo := 1;
     for i in [#L-1..1 by -1] do
         x := L`subs[i];
@@ -2361,6 +2387,7 @@ procedure SetMobiusQuo(~L, aut)
             end if;
         end for;
     end for;
+    ReportEnd(L`Grp, "SetMobiusQuo", t0);
 end procedure;
 
 intrinsic NormSubGrpLat(G::LMFDBGrp) -> SubgroupLat
@@ -2371,8 +2398,10 @@ intrinsic NormSubGrpLat(G::LMFDBGrp) -> SubgroupLat
     L`outer_equivalence := false;
     L`inclusions_known := true;
     L`index_bound := 0;
+    t0 := ReportStart(G, "NormSubGrpLat");
     subs := Reverse(NormalSubgroups(GG));
     L`subs := [SubgroupLatElement(L, subs[i]`subgroup : i:=i, normal:=true) : i in [1..#subs]];
+    ReportEnd(G, "NormSubGrpLat", t0);
     ComputeLatticeEdges(~L, GG, IdentityHomomorphism(GG) : normal_lattice:=true);
     SetClosures(~L);
     SetMobiusQuo(~L, false);
@@ -2388,8 +2417,10 @@ intrinsic NormSubGrpLatAut(G::LMFDBGrp) -> SubgroupLat
         L`outer_equivalence := true;
         L`inclusions_known := true;
         L`index_bound := 0;
+        t0 := ReportStart(G, "NormSubGrpLatAut");
         subs := SolvAutSubs(G : normal:=true);
         L`subs := [SubgroupLatElement(L, subs[i]`subgroup : i:=i, normal:=true) : i in [1..#subs]];
+        ReportEnd(G, "NormSubGrpLatAut", t0);
         ComputeLatticeEdges(~L, Get(G, "Holomorph"), Get(G, "HolInj"));
         SetClosures(~L);
         SetMobiusQuo(~L, true);
@@ -2416,7 +2447,9 @@ intrinsic NormalSubgroups(G::LMFDBGrp) -> Any
     // direct product should probably depend on this
     // should ideally get recycled when filling in normal subgroups (especially since complements are saved)
     L := BestNormalSubgroupLat(G);
+    t0 := ReportStart(G, "LabelNormalSubgroups");
     LabelNormalSubgroups(L);
+    ReportEnd(G, "LabelNormalSubgroups", t0);
     return [LMFDBSubgroup(H : normal_lattice:=true) : H in L`subs];
 end intrinsic;
 

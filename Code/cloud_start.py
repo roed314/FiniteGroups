@@ -8,6 +8,8 @@ import os
 import argparse
 import subprocess
 
+opj = os.path.join
+ope = os.path.exists
 parser = argparse.ArgumentParser("Dispatch to appropriate magma script")
 parser.add_argument("job", type=int, help="job number")
 
@@ -28,12 +30,25 @@ with open("DATA/manifest") as F:
             L = L[per_job * job: per_job * (job + 1)]
             os.makedirs(out, exist_ok=True)
             os.makedirs(timings, exist_ok=True)
-            subprocess.run('parallel --timeout %s "magma -b label:={1} %s >> errors 2>&1" ::: %s' % (timeout, script, " ".join(L)), shell=True)
+            os.makedirs(opj("DATA", "errors"), exist_ok=True)
+            subprocess.run('parallel --timeout %s "magma -b label:={1} %s >> DATA/errors/{1} 2>&1" ::: %s' % (timeout, script, " ".join(L)), shell=True)
             # Move the results to the standard output location
-            with open(os.path.expanduser("output"), "w") as Fout:
-                for label in os.listdir(out):
-                    with open(os.path.join(out, label)) as F:
-                        _ = Fout.write(F.read())
+            with open(os.path.expanduser("output"), "a") as Fout:
+                for label in L:
+                    o = opj(out, label)
+                    if ope(o):
+                        with open(o) as F:
+                            _ = Fout.write(F.read())
+                    e = opj("DATA", "errors", label)
+                    if ope(e):
+                        with open(e) as F:
+                            for line in F:
+                                _ = Fout.write(f"E{label}|{line}")
+                    t = opj(timings, label)
+                    if ope(t):
+                        with open(t) as F:
+                            for line in F:
+                                _ = Fout.write(f"T{label}|{line}")
             break
         else:
             job -= cnt

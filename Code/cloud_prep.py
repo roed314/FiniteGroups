@@ -25,16 +25,16 @@ elif args.phase == 2:
     ]
 elif args.phase == 3:
     todos = [
-        ("ComputeBasic", "basic", 2, 43200),
-        ("ComputeLabeling", "labeling", 2, 3600),
-        ("ComputeAut", "aut", 2, 3600),
-        ("ComputeConj", "conj", 2, 7200),
-        ("ComputeSchur", "schur", 2, 1800),
-        ("ComputeWreath", "wreath", 2, 1800),
-        ("ComputeCharC", "charc", 2, 7200),
-        ("ComputeCharQ", "charq", 2, 7200),
-        ("ComputeSubs", "subgroups", 2, 7200),
-        ("ComputeName", "name", 2, 7200),
+        ("ComputeBasic.m", "basic", 2, 43200),
+        ("ComputeLabeling.m", "labeling", 2, 3600),
+        ("ComputeAut.m", "aut", 2, 3600),
+        ("ComputeConj.m", "conj", 2, 7200),
+        ("ComputeSchur.m", "schur", 2, 1800),
+        ("ComputeWreath.m", "wreath", 2, 1800),
+        ("ComputeCharC.m", "charc", 2, 7200),
+        ("ComputeCharQ.m", "charq", 2, 7200),
+        ("ComputeSubs.m", "subgroups", 2, 7200),
+        ("ComputeName.m", "name", 2, 7200),
     ]
 
 total = 0
@@ -56,7 +56,7 @@ if args.phase > 1:
 for mag, todo, per_job, timeout in todos:
     D = f"DATA/{todo}.todo"
     Dout = f"DATA/{todo}s"
-    Dtiming = f"DATA/{todo}.timings"
+    Dtiming = f"DATA/timings"
     include.append(D)
     if os.path.isdir(D):
         n = (len(os.listdir(D)) - 1) // per_job + 1
@@ -66,7 +66,7 @@ for mag, todo, per_job, timeout in todos:
             for jb in FD:
                 n += 1
     total += n
-    manifest.append(f"{D} {Dout} {Dtiming} {mag}.m {n} {per_job} {timeout}")
+    manifest.append(f"{D} {Dout} {Dtiming} {mag} {n} {per_job} {timeout}")
 with open("DATA/manifest", "w") as F:
     _ = F.write("\n".join(manifest))
 
