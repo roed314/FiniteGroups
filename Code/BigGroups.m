@@ -43,7 +43,7 @@ Generate a list of subs/quos for hashing and identification (don't add them, but
 Other stuff (schur_multiplier, wreath_data)
 
 BASIC
-label|Agroup|Zgroup|elt_rep_type|abelian|center_label|composition_factors|composition_length|counter|cyclic|derived_length|elementary|exponent|exponents_of_order|factors_of_order|gens_used|hash|hyperelementary|metabelian|metacyclic|ngens|nilpotency_class|nilpotent|old_label|order|pc_code|perfect|perm_gens|pgroup|primary_abelian_invariants|quasisimple|simple|smith_abelian_invariants|solvable|supersolvable|sylow_subgroups_known|finite_matrix_group
+label|Agroup|Zgroup|elt_rep_type|abelian|center_label|composition_factors|composition_length|counter|cyclic|derived_length|elementary|exponent|exponents_of_order|factors_of_order|gens_used|hash|hyperelementary|metabelian|metacyclic|ngens|nilpotency_class|nilpotent|old_label|order|pc_code|perfect|perm_gens|pgroup|primary_abelian_invariants|quasisimple|simple|smith_abelian_invariants|solvable|supersolvable|sylow_subgroups_known
 LABELING
 label|abelian_quotient|central_quotient|commutator_label|frattini_label|frattini_quotient
 AUT STUFF
@@ -84,23 +84,27 @@ Path to finishing computations:
  c. Need to use Complements to find semidirect decompositions from NormalSubgroups
  d. Use 
 
-Harmonize the various place column names show up (IO.m, .tmpheader, .header, LMFDBGrp.m, postgres table...)
-Refine labeling: it may be too slow
 organize which columns are preloaded (hash, data from gps_transitive...)
 Don't priorize weird Lie groups
-Compute and save automorphism group beforehand
 Create hash_lookup folder (see Label.m)
-Run for matrix groups to test (Frattini seems to fail for example)
-Direct product broken for outer_equivalence
+Profile for HaveHolomorph
+Testing for many kinds of groups
 
 Change Presentation.m to not use Holomoprh
 Use semidirect products to select a better name (postprocess step so that we can work up from the bottom and include Lie group names if not stupid); make sure to modify other places names show up (subgroups table); make sure status variables like complex_characters_known are accurate (might have tried and failed)
-Write cloud_collect.py to collect results
+Write cloud_collect.py to collect results (combine rank and easy_rank)
+Add new columns:
+ * gps_groups (aut_gens aut_stats cc_stats complements_known complex_characters_known div_stats element_repr_type irrC_degree irrQ_degree irrep_stats linC_degree linFp_degree linFq_degree linQ_degree pc_rank permutation_degree rational_characters_known ratrep_stats representations)
+ * gps_subgroups (aut_quo_index aut_stab_index central_factor centralizer_order core_order normal_contained_in normal_contains quotient_hash subgroup_hash)
+Remove columns:
+ * finite_matrix_group, elt_rep_type, perm_gens, pc_code, gens_used, smallrep (replaced by irrC_degree)
+Regenerate .header files
 Write another job that modifies a full record along a group hom by mapping/lifting all elements
 Write scripts for adding more groups later
+Set diagramx
 
 Talk to Drew: Make sure that the version of Magma installed in the cloud has the appropriate libraries installed (Atlas, Trans32Id for example), and that LMFDB access is okay
-Columns to remove: finite_matrix_group, elt_rep_type, perm_gens, pc_code, gens_used, smallrep (replaced by irrC_degree)
+Columns to remove: 
 For discussion:
  * ngens (not very mathematically meaningful)
  * MinimalDegreePermutationRepresentation (could be wrong); improved by modifying magma to fix bug

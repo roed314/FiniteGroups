@@ -911,11 +911,11 @@ intrinsic IncludeSpecialSubgroups(L::SubgroupLat)
     t0 := ReportStart(G, "IncludeSpecialSubgroups");
     GG := G`MagmaGrp;
     /* special groups labeled */
-    Z := Center(GG);
-    D := CommutatorSubgroup(GG);
-    F := FittingSubgroup(GG);
-    Ph := FrattiniSubgroup(GG);
-    R := Radical(GG);
+    Z := Get(G, "MagmaCenter");
+    D := Get(G, "MagmaCommutator");
+    F := Get(G, "MagmaFitting");
+    Ph := Get(G, "MagmaFrattini");
+    R := Get(G, "MagmaRadical");
     So := Socle(G);  /* run special routine in case matrix group */
 
     // Add series
@@ -944,7 +944,7 @@ intrinsic IncludeSpecialSubgroups(L::SubgroupLat)
             Append(~L`subs, H);
         end if;
     end for;
-    ReportEnd(G, "IncludeSpecialSubgroups");
+    ReportEnd(G, "IncludeSpecialSubgroups", t0);
 end intrinsic;
 
 intrinsic SubgroupLatElement(L::SubgroupLat, H::Grp : i:=false, normalizer:=false, centralizer:=false, normal:=0, normal_closure:=false, gens:=false, subgroup_count:=false, standard:=false, recurse:=0) -> SubgroupLatElt
@@ -2324,12 +2324,12 @@ intrinsic LMFDBSubgroup(H::SubgroupLatElt : normal_lattice:=false) -> LMFDBSubGr
     res`contained_in := (assigned H`overs) select SortLabels([Lat`subs[k]`label : k in Keys(H`overs)]) else None();
     res`normal_contains := (assigned H`normal_unders) select SortLabels([Lat`subs[k]`label : k in H`normal_unders]) else None();
     res`normal_contained_in := (assigned H`normal_overs) select SortLabels([Lat`subs[k]`label : k in H`normal_overs]) else None();
+    res`complements := (assigned H`complements) select [Lat`subs[k] : k in H`complements] else None();
     res`mobius_sub := (assigned H`mobius_sub) select H`mobius_sub else None();
     res`mobius_quo := (assigned H`mobius_quo) select H`mobius_quo else None();
     if not normal_lattice then
         N := Get(H, "normalizer");
         res`normalizer := Lat`subs[N]`label;
-        res`normalizer_index := Get(G, "order") div Lat`subs[N]`order;
         res`normal_closure := Lat`subs[Get(H, "normal_closure")]`label;
         C := Get(H, "centralizer");
         res`centralizer := (Type(C) eq NoneType) select None() else Lat`subs[C]`label;
@@ -2455,7 +2455,7 @@ end intrinsic;
 
 intrinsic LowIndexSubgroups(G::LMFDBGrp, d::RngIntElt) -> SeqEnum
     {List of low index LMFDBSubGrps, or None if not computed}
-    m := G`subgroup_index_bound;
+    m := Get(G, "subgroup_index_bound");
     if d eq 0 then
         if m eq 0 then
             return Get(G, "Subgroups");
@@ -2482,6 +2482,8 @@ intrinsic LookupSubgroupLabel(G::LMFDBGrp, HH::Any) -> Any
     if Type(HH) eq MonStgElt then
         // already labeled
         return HH;
+    elif Type(HH) eq SubgroupLatElt then
+        return HH`label;
     else
         L := Get(G, "BestSubgroupLat");
         i := SubgroupIdentify(L, HH : error_if_missing:=false);

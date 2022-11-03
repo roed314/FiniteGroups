@@ -7,18 +7,23 @@ desc := Read(infile);
 SetVerbose("User1", 1); // for testing
 G := MakeBigGroup(desc, label);
 Preload(G);
-headers := [* "basic", "labeling", "conj", "aut", <"ConjugacyClasses", "conjagg">, "schur", "wreath", "charc", <"CCCharacters", "charcagg">, "charq", <"QQCharacters", "charqagg">, "sub", <"Subgroups", "subagg">, "name" *];
-t0 := Cputime();
+headers := [* "basic", "labeling", "aut1", "conj", "aut2", "schur", "wreath", "charc", "charq", "name", "sub", <"ConjugacyClasses", "conjagg">, <"CCCharacters", "charcagg">, <"QQCharacters", "charqagg">, <"Subgroups", "subagg1">, <"Subgroups", "subagg2"> *];
+// The following attributes depend on the Subgroup lattice, introducing an annoying dependence
+// ConjugacyClasses: centralizer
+// CCCharacters: center, kernel (could represent these in terms of conjugacy classes
 // Iteratively try to save different attributes, so that timeouts are handled gracefully
 for X in headers do
-    print "Starting", X, Cputime() - t0;
     if Type(X) eq MonStgElt then
+        t0 := ReportStart(G, "AllHeader" * X);
         WriteByTmpHeader(G, outfile, X);
+        ReportEnd(G, "AllHeader" * X, t0);
     else
         attr, Y := Explode(X);
-        s := Join([WriteByTmpHeader(H, outfile, Y) : H in Get(G, attr)], "\n");
-        PrintFile(outfile, s);
+        t0 := ReportStart(G, "AllHeader" * Y);
+        for H in Get(G, attr) do
+            WriteByTmpHeader(H, outfile, Y);
+        end for;
+        ReportEnd(G, "AllHeader" * X, t0);
     end if;
 end for;
-print "Done", label, Cputime() - t0;
 exit;

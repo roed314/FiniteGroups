@@ -561,6 +561,13 @@ end intrinsic;
 
 intrinsic MagmaMinimalNormalSubgroups(G::LMFDBGrp) -> SeqEnum
 {The minimal normal subgroups of G}
+    if Type(G`MagmaGrp) eq GrpMat then
+        // MinimalNormalSubgroups not implemented for matrix groups
+        assert Get(G, "normal_subgroups_known");
+        L := BestNormalSubgroupLat(G);
+        triv := Rep(Get(L, "by_index")[G`order])`i;
+        return [N`subgroup : N in L`subs | IsDefined(N`unders, triv)];
+    end if;
     return MinimalNormalSubgroups(G`MagmaGrp);
 end intrinsic;
 
@@ -699,8 +706,12 @@ intrinsic MagmaAutGroup(G::LMFDBGrp) -> Grp
         catch e;
         end try;
     end if;*/
-    if assigned G`SavedAutomorphismGroup then
-        A := StringToGroup(G`SavedAutomorphismGroup : baseG := G`MagmaGrp);
+    if assigned G`aut_gens then
+        ag := G`aut_gens;
+        GG := G`MagmaGrp;
+        gens := [LoadElt(Sprint(c), GG) : c in ag[1]];
+        auts := [[LoadElt(Sprint(c), GG) : c in f] : f in ag[2..#ag]];
+        A := AutomorphismGroup(GG, gens, auts);
     else
         t0 := ReportStart(G, "MagmaAutGroup");
         A := AutomorphismGroup(G`MagmaGrp);
@@ -709,10 +720,14 @@ intrinsic MagmaAutGroup(G::LMFDBGrp) -> Grp
     return A;
 end intrinsic;
 
-intrinsic SavedAutomorphismGroup(G::LMFDBGrp) -> MonStgElt
-{Saves the automorphism group to a string in a way that can be loaded later}
-    return GroupToString(Get(G, "MagmaAutGroup"));
-end intrinsic;
+intrinsic aut_gens(G::LMFDBGrp) -> SeqEnum
+{Returns a list of lists of integers encoding elements of the group.
+ The first list gives a set of generators of G, while later lists give the images of these generators under generators of the automorphism group of G}
+    A := Get(G, "MagmaAutGroup");
+    gens := Get(G, "Generators");
+    saved := [[SaveElt(g) : g in gens]] cat [[SaveElt(phi(g)) : g in gens] : phi in Generators(A)];
+    return saved;
+end intrinsic
 
 intrinsic aut_group(G::LMFDBGrp) -> MonStgElt
 {returns label of the automorphism group}
@@ -792,6 +807,7 @@ intrinsic commutator_label(G::LMFDBGrp) -> Any
     t0 := ReportStart(G, "LabelCommutator");
     s := label_subgroup(G, Get(G, "MagmaCommutator"));
     ReportEnd(G, "LabelCommutator", t0);
+    return s;
 end intrinsic;
 
 
@@ -803,7 +819,12 @@ end intrinsic;
 
 intrinsic MagmaFrattini(G::LMFDBGrp) -> Any
 { Frattini Subgroup}
-    return FrattiniSubgroup(G`MagmaGrp);
+    GG := G`MagmaGrp;
+    if Type(GG) eq GrpMat and not G`solvable then
+        // Magma's built in function fails
+        return &meet[H`subgroup : H in MaximalSubgroups(GG)];
+    end if;
+    return FrattiniSubgroup(GG);
 end intrinsic;
 
 
@@ -972,13 +993,11 @@ intrinsic IsADirectProductHeuristic(G::Grp : steps:=50) -> Any
   return false, _, _;
 end intrinsic;
 
-intrinsic DirectFactorization(GG::Grp : try_heuristic:=true, Ns:=[]) -> Any
+intrinsic DirectFactorization(GG::Grp : Ns:=[]) -> Any
 {Returns true if G is a nontrivial direct product, along with factors; otherwise returns false.}
-  if try_heuristic then
-    heur_bool, N, K := IsADirectProductHeuristic(GG);
-    if heur_bool then
-      return heur_bool, N, K, Ns;
-    end if;
+  heur_bool, N, K := IsADirectProductHeuristic(GG);
+  if heur_bool then
+    return heur_bool, N, K, Ns;
   end if;
   ordG := #GG;
   // deal with trivial group
@@ -1012,7 +1031,7 @@ intrinsic direct_factorization(G::LMFDBGrp) -> Any
     Ns := [H`subgroup : H in Get(G, "NormSubGrpLat") | H`order ne 1 and H`order ne G`order];
   end if;
   t0 := ReportStart(G, "direct_factorization");
-  fact_bool, N, K, Ns := DirectFactorization(GG : Ns:=Ns, try_heuristic := try_heuristic);
+  fact_bool, N, K, Ns := DirectFactorization(GG : Ns:=Ns);
   if not fact_bool then
     ReportEnd(G, "direct_factorization", t0);
     return [];
@@ -1024,7 +1043,7 @@ intrinsic direct_factorization(G::LMFDBGrp) -> Any
     new_facts := [];
     for fact in facts do
       Ns_fact := [el : el in Ns | el subset fact];
-      split_bool, Ni, Ki := DirectFactorization(fact: Ns := Ns_fact, try_heuristic := try_heuristic);
+      split_bool, Ni, Ki := DirectFactorization(fact: Ns := Ns_fact);
       if not split_bool then
         Append(~irred_facts, fact);
       else
@@ -1672,7 +1691,7 @@ intrinsic wreath_product(G::LMFDBGrp) -> Any
         // We find an efficient permutation representation.
         reps := Get(G, "representations");
         if IsDefined(reps, "Perm") then
-            d := reps["Perm"][d];
+            d := reps["Perm"]["d"];
             gens := reps["Perm"]["gens"];
             GG := PermutationGroup<d | [DecodePerm(StringToInteger(g), d) : g in gens]>;
             phi := 0;
@@ -1747,7 +1766,7 @@ intrinsic elt_rep_type(G:LMFDBGrp) -> Any
       return -Degree(G`MagmaGrp);
     elif Type(G`MagmaGrp) eq GrpMat then
         R := CoefficientRing(G`MagmaGrp);
-        if R eq Integers() then
+        if R cmpeq Integers() then
             return 1;
         elif Type(R) eq FldFin then
             return #R;
@@ -1757,12 +1776,6 @@ intrinsic elt_rep_type(G:LMFDBGrp) -> Any
     else
         error Sprintf("Unsupported group type %o", Type(G`MagmaGrp));
     end if;
-end intrinsic;
-
-/* should be improved when matrix groups are added */
-intrinsic finite_matrix_group(G:LMFDBGrp)-> Any
-{determines whether finite matrix group}
-  return None();
 end intrinsic;
 
 /* placeholder for when larger groups get added */

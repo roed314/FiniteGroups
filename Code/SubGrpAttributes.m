@@ -225,23 +225,13 @@ intrinsic central_factor(H::LMFDBSubGrp) -> BoolElt
 end intrinsic;
 
 intrinsic split(H::LMFDBSubGrp) -> Any
-  {Returns whether this sequence with H splits or not, null when non-normal}
-  GG := Get(H, "MagmaAmbient");
-  HH := H`MagmaSubGrp;
-  G := Get(H, "Grp");
-  S := Get(G, "Subgroups");
-  if not IsNormal(GG, HH) then
-    return None();
-  else
-    comps := [el : el in S | Order(el`MagmaSubGrp) eq (Order(GG) div Order(HH))];
-    for s in comps do
-      K := s`MagmaSubGrp;
-      if #(K meet HH) eq 1 then
-        return true;
-      end if;
-    end for;
-  end if;
-  return false;
+{Returns whether this sequence with H splits or not, null when non-normal}
+    if not Get(H, "normal") then return None(); end if;
+    if Get(H`Grp, "complements_known") then
+        return #Get(H, "complements") gt 0;
+    else
+        return None();
+    end if;
 end intrinsic;
 
 intrinsic projective_image(H::LMFDBSubGrp) -> Any // Need to be subgroup attribute file
@@ -249,27 +239,29 @@ intrinsic projective_image(H::LMFDBSubGrp) -> Any // Need to be subgroup attribu
   return label_quotient(H`Grp, H`MagmaSubGrp meet Center(H`MagmaAmbient));
 end intrinsic;
 
+RF := recformat<subgroup, order, length>;
 intrinsic complements(H::LMFDBSubGrp) -> Any
-  {Returns the subgroups K of G such that H ∩ K = e and G=HK in a list}
+{Returns the subgroups K of G such that H ∩ K = e and G=HK in a list}
+  // This is usually set when constructed from a SubgroupLatElt
   if not Get(H, "normal") then
       return [];
   end if;
+  if not Get(H`Grp, "complements_known") then return None(); end if;
   GG := Get(H, "MagmaAmbient");
   HH := H`MagmaSubGrp;
-  return Complements(GG, HH);
+  return [rec<RF|subgroup:=C> : C in Complements(GG, HH)];
 end intrinsic;
 
 
 intrinsic direct(H::LMFDBSubGrp) -> Any // Need to be subgroup attribute file
   {Returns whether this sequence with H direct or not, null when non-normal}
   GG := H`MagmaAmbient;
-  HH := H`MagmaSubGrp;
-  if not IsNormal(GG, HH) then
+  if not Get(H, "normal") then
     return None();
   else
     comps := Get(H, "complements");
     for K in comps do
-      if IsNormal(GG, K) then
+      if IsNormal(GG, K`subgroup) then
         return true;
       end if;
     end for;
@@ -307,7 +299,7 @@ intrinsic QuotientActionMap(H::LMFDBSubGrp : use_solv:=true) -> Any
         t := Cputime();
         try
             if Get(H, "split") then
-                Q := Get(H, "complements")[1];
+                Q := Get(H, "complements")[1]`subgroup;
                 //print "split", H`label;
                 f := hom<Q -> A| [<q, hom<N -> N | [<n, n^q> : n in Generators(N)]>> : q in Generators(Q)]>;
             else
@@ -475,15 +467,8 @@ intrinsic aut_weyl_group(H::LMFDBSubGrp) -> Any
     H`AutStab := N;
     H`aut_weyl_index := (#Ambient * #Z) div (#N * #GG);
     H`aut_centralizer_order := #(Z meet Stabilizer(Ambient, 1));
-    if (#N div #Z) gt 2000 or (#N div #Z) in [512, 1024, 1152, 1536, 1920] then
-        return None();
-    end if;
-    try
-        W := BestQuotient(N, Z);
-        return label(W);
-    catch e;
-        return None();
-    end try;
+    W := BestQuotient(N, Z);
+    return label(W);
 end intrinsic;
 
 intrinsic aut_centralizer_order(H::LMFDBSubGrp) -> Any
