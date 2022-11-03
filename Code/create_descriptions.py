@@ -132,7 +132,7 @@ def update_options(label, desc):
             update_options(label, edesc)
         return
     D = aliases[label]
-    if "T" in desc:
+    if "T" in desc and "MAT" not in desc:
         n, i = [int(c) for c in desc.split("T")]
         tbound[label] = min(tbound[label], n)
         if n in SnT and i == SnT[n]:
