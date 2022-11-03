@@ -89,7 +89,9 @@ Don't priorize weird Lie groups
 Create hash_lookup folder (see Label.m)
 Profile for HaveHolomorph
 Testing for many kinds of groups
+Update tex_name to fix bugs in \rm
 
+Make sure we have tex commands for all the Lie groups (like \AGL)
 Change Presentation.m to not use Holomoprh
 Use semidirect products to select a better name (postprocess step so that we can work up from the bottom and include Lie group names if not stupid); make sure to modify other places names show up (subgroups table); make sure status variables like complex_characters_known are accurate (might have tried and failed)
 Write cloud_collect.py to collect results (combine rank and easy_rank)

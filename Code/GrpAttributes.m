@@ -348,11 +348,10 @@ end intrinsic;
 intrinsic MagmaTransitiveSubgroup(G::LMFDBGrp) -> Any
     {Subgroup producing a minimal degree transitive faithful permutation representation}
     g := G`MagmaGrp;
-    S := Get(G, "Subgroups");
     if Get(G, "order") eq 1 then
         return g;
     end if;
-    m := G`subgroup_index_bound;
+    S := Get(G, "Subgroups");
     for j in [1..#S] do
         if m ne 0 and Get(S[j], "quotient_order") gt m then
             return None();
@@ -379,7 +378,9 @@ end intrinsic;
 intrinsic irrC_degree(G::LMFDBGrp) -> Any
 {}
     faith := Get(G, "faithful_reps");
-    if #faith eq 0 then
+    if Type(faith) eq NoneType then
+        return None();
+    elif #faith eq 0 then
         return -1;
     end if;
     return faith[1][1];

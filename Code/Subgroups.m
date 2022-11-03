@@ -2366,7 +2366,7 @@ intrinsic Subgroups(G::LMFDBGrp) -> SeqEnum
     t0 := ReportStart(G, "LabelSubgroups");
     LabelSubgroups(L);
     ReportEnd(G, "LabelSubgroups", t0);
-    return [LMFDBSubgroup(H) : H in L`subs];
+    return Sort([LMFDBSubgroup(H) : H in L`subs], func<H,K|K`order - H`order>);
     /*if Get(G, "all_subgroups_known") then
         SaveSubgroupCache(G, S);
     end if;*/

@@ -14,7 +14,7 @@ sys.path.append(os.path.expanduser(opj("~", "lmfdb")))
 from lmfdb import db
 from collections import defaultdict
 
-slookup = {rec["label"]: (rec["pc_code"], None, rec["gens_used"]) for rec in db.gps_groups.search({"solvable":True}, ["label", "pc_code", "gens_used"])}
+slookup = {rec["label"]: (rec["pc_code"], None, rec["gens_used"], True) for rec in db.gps_groups.search({"solvable":True}, ["label", "pc_code", "gens_used"])}
 nlookup = {rec["label"]: rec["perm_gens"] for rec in db.gps_groups.search({"solvable":False}, ["label", "perm_gens"])}
 sibling_bound = {rec["label"]: rec["bound_siblings"] for rec in db.gps_transitive.search({}, ["label", "bound_siblings"])}
 tbound = defaultdict(lambda: 48) # 48 is larger than any transitive degree in an nTt label
@@ -57,6 +57,11 @@ Spor_lookup = {
     "Co1": [("GLFp", 24, 2)],
 }
 SnT = dict(zip(range(2, 48), [1, 2, 5, 5, 16, 7, 50, 34, 45, 8, 301, 9, 63, 104, 1954, 10, 983, 8, 1117, 164, 59, 7, 25000, 211, 96, 2392, 1854, 8, 5712, 12, 2801324, 162, 115, 407, 121279, 11, 76, 306, 315842, 10, 9491, 10, 2113, 10923, 56, 6])) # The T-number for Sn in each degree; An is one less
+perf_chev_spor = defaultdict(list)
+with open(opj("DATA", "PerfChevSpor.txt")) as F:
+    for line in F:
+        desc, edesc = line.strip().split()
+        perf_chev_spor[desc].append(edesc)
 
 aliases = defaultdict(lambda: defaultdict(list))
 An = {}
@@ -96,11 +101,13 @@ def sortvec_from_desc(desc):
         cmd = desc.split("(")[0]
         lie_codes = ["GL", "SL", "Sp", "SO", "SOPlus", "SOMinus", "SU", "GO", "GOPlus", "GOMinus", "GU", "CSp", "CSO", "CSOPlus", "CSOMinus", "CSU", "CO", "COPlus", "COMinus", "CU", "Omega", "OmegaPlus", "OmegaMinus", "Spin", "SpinPlus", "SpinMinus", "PGL", "PSL", "PSp", "PSO", "PSOPlus", "PSOMinus", "PSU", "PGO", "PGOPlus", "PGOMinus", "PGU", "POmega", "POmegaPlus", "POmegaMinus", "PGammaL", "PSigmaL", "PSigmaSp", "PGammaU", "AGL", "ASL", "ASp", "AGammaL", "ASigmaL", "ASigmaSp"]
         d, q = [int(c) for c in desc.split("(")[1].split(")")[0].split(",")]
-        return "L", (d, lie_codes.index(cmd), q, cmd, desc)
+        return "Lie", (d, lie_codes.index(cmd), q, cmd, desc)
     elif "Perf" in desc:
+        raise RuntimeError # Should have been intercepted in update_options by perf_chev_spor
         i = int(desc[4:])
         return "Perm", (Perf_lookup[i], 5000000, desc)
     elif "Chev" in desc:
+        raise RuntimeError # Should have been intercepted in update_options by perf_chev_spor
         typ, q = desc[4:].rsplit(",", 1)
         d, k = Chev_lookup[typ]
         q = ZZ(q.replace("-D", ""))**k # remove derived subgroup code for 2F(4,2)-D
@@ -110,13 +117,20 @@ def sortvec_from_desc(desc):
         else:
             return "GLFp", (d, p, desc)
     elif desc in Spor_lookup:
+        raise RuntimeError # Should have been intercepted in update_options by perf_chev_spor
         for rec in Spor_lookup[desc]:
             return rec[0], rec[1:] + (desc,)
     else:
         raise ValueError("Unexpected description", desc)
 
-
+spor_chev = {}
 def update_options(label, desc):
+    if desc in perf_chev_spor:
+        if desc in Spor_lookup or "Chev" in desc:
+            spor_chev[label] = desc
+        for edesc in perf_chev_spor[desc]:
+            update_options(label, edesc)
+        return
     D = aliases[label]
     if "T" in desc:
         n, i = [int(c) for c in desc.split("T")]
@@ -140,7 +154,7 @@ def gens_from_desc(desc):
 def make_representations_dict(bob, lie):
     reps = {}
     for typ, data in in bob.items():
-        if typ == "L":
+        if typ == "Lie":
             reps["Lie"] = [{"family": cmd, "d": d, "q": q, "gens": gens_from_desc(liegens[desc])} for (d, code, q, cmd, desc) in lie]
         elif typ == "PC":
             d, pccode, compact, gens_used, desc = data
@@ -155,9 +169,14 @@ def make_representations_dict(bob, lie):
             b = int(desc.split("MAT")[0].split(",")[2])
             reps["GLZ"] = {"d": d, "b": b, "gens": gens_from_desc(desc)}
         elif typ in ["GLZq", "GLFq"]:
-            d, k, p, desc = data
-            q = p**k
-            reps[typ] = {"d": d, "q": q, "gens": gens_from_desc(desc)}
+            if "GLFp" not in bob:
+                d, k, p, desc = data
+                q = p**k
+                reps[typ] = {"d": d, "q": q, "gens": gens_from_desc(desc)}
+        elif typ in ["GLFp", "GLZN"]:
+            if not (typ == "GLZN" and ("GLFq" in bob or "GLFp" in bob)):
+                d, p, desc = data
+                reps[typ] = {"d": d, "p": p, "gens": gens_from_desc(desc)}
         else:
             raise NotImplementedError
     return reps
@@ -210,7 +229,7 @@ def getpc(F):
 for label in os.listdir(opj("DATA", "pcreps")):
     # We may be overwriting pccodes from the existing database, but that's okay: we recomputed the presentation and now have the compact form
     with open(opj("DATA", "pcreps", label)) as F:
-        slookup[label] = getpc(F)
+        slookup[label] = getpc(F) + (True,)
 for label in os.listdir(opj("DATA", "pcreps_fast")):
     if label in slookup: continue
     with open(opj("DATA", "pcreps_fast", label)) as F:
@@ -219,11 +238,11 @@ for label in os.listdir(opj("DATA", "pcreps_fast")):
         pccode1, compact1, gens_used1 = getpc(F)
     if len(gens_used1) < len(gens_used):
         pccode, compact, gens_used = pccode1, compact1, gens_used1
-    slookup[label] = (pccode, compact, gens_used)
+    slookup[label] = (pccode, compact, gens_used, False)
 for label in os.listdir(opj("DATA", "pcreps_fastest")):
     if label in slookup: continue
     with open(opj("DATA", "pcreps_fastest", label)) as F:
-        slookup[label] = getpc(F)
+        slookup[label] = getpc(F) + (False,)
 # pcreps_small?
 
 # There is a magma bug that prevents loading of pccodes in some cases.
@@ -235,15 +254,15 @@ for label in os.listdir(opj("DATA", "RePresentations")):
         data = F.read().split("[")[1].split("]")[0].strip().replace(" ", "")
         desc = f"{N}pc{data}\n"
         if label in slookup:
-            pccode, compact, gens_used = slookup[label]
+            pccode, compact, gens_used, optimal = slookup[label]
             if compact is None:
-                slookup[label] = (pccode, data, gens_used)
-        if ope(opj("DATA", "pcbug.todo", label)):
-            # Magma had a bug in the loading the pccode here; we record that we have the compact presentation
-            with open(opj("DATA", "pcbugs", label), "w") as Fout:
-                _ = Fout.write(desc)
-            os.unlink(opj("DATA", "pcbug.todo", label))
-for label, (pccode, compact, gens_used) in slookup.items():
+                slookup[label] = (pccode, data, gens_used, optimal)
+        #if ope(opj("DATA", "pcbug.todo", label)):
+        #    # Magma had a bug in the loading the pccode here; we record that we have the compact presentation
+        #    with open(opj("DATA", "pcbugs", label), "w") as Fout:
+        #        _ = Fout.write(desc)
+        #    os.unlink(opj("DATA", "pcbug.todo", label))
+for label, (pccode, compact, gens_used, optimal) in slookup.items():
     N = label.split(".")[0]
     if compact is None:
         desc = f"{N}PC{pccode}"
@@ -281,11 +300,10 @@ with open(opj("DATA", "abelian.txt")) as F:
 # Then compare (#gen for pc) to (deg of permrep)^3/5 to (deg of matrix group), choosing smallest, with a penalty for more complicated coefficient rings, favoring PC to Perm to Mat in case of tie
 best_of_breed = {}
 best_of_show = {}
-elt_repr_type = {}
 def sort_key(item):
     typ, vec = item
     n = vec[0]
-    if typ == "L":
+    if typ == "Lie":
         # We use the sort key from liegens
         desc = vec[-1]
         explicit_desc = liegens[desc]
@@ -312,9 +330,9 @@ problems = []
 for label, D in aliases.items():
     B = best_of_breed[label] = {typ: min(opts) for typ, opts in D.items()}
     if label in ab:
-        best_of_show[label] = B["PC"][-1]
+        best_of_show[label] = ("PC", B["PC"][-1])
     elif label in An or label in Sn:
-        best_of_show[label] = B["Perm"][-1]
+        best_of_show[label] = ("Perm", B["Perm"][-1])
         if label in An:
             family, n = "A", An[label]
         else:
@@ -357,11 +375,38 @@ for label, tbnd in tbound.items():
 # Double check output of Minrep using intransitive and transitive groups
 # Redo GL(n,Z) and small matrix representations for orders already in the LMFDB
 
-# RULES
-# compare 
+def texify_lie(desc):
+    cmd = desc.split("(")[0]
+    nq = desc.split("(")[1].split(")")[0]
+    n, q = [c.strip() for c in nq.split(",")]
+    if len(n) > 1:
+        n = "{%s}" % n
+    if len(q) > 1:
+        q = "{%s}" % q
+    return fr"\{cmd}_{n}(\mathbb{{F}}_{q})"
+def namify_sporchev(desc):
+    if desc == "Chev2F,4,2-D": # Tits group
+        return "2F(4,2)'"
+    elif desc.startswith("Chev"):
+        typ, n, q = desc[4:].split(",")
+        return f"{typ}({n},{q})"
+    return desc # sporadic
+def texify_sporchev(desc):
+    if desc == "Chev2F,4,2-D": # Tits group
+        return "2F(4,2)'"
+    elif desc.startswith("Chev"):
+        typ, n, q = desc[4:].split(",")
+        if typ[0].isdigit():
+            typ = "{}^%s%s" % (typ[0], typ[1:])
+        return f"{typ}_{n}({q})"
+    elif desc[-1].isidigt():
+        return r"\operatorname{" + desc[:-1] + "}_" + desc[-1]
+    return r"\operatorname{" + desc + "}"
 
 special_names = []
 to_add = {}
+HASH_LOOKUP = defaultdict(list)
+PRELOAD = {}
 with open(opj("DATA", "to_add.txt")) as F:
     for line in F:
         line = line.strip()
@@ -374,27 +419,36 @@ with open(opj("DATA", "to_add.txt")) as F:
             N, hsh = label.split(".")
         if not small and hsh != r"\N":
             os.makedirs(opj("DATA", "hash_lookup", str(N)), exist_ok=True)
-            with open(opj("DATA", "hash_lookup", str(N), str(hsh)), "a") as F:
-                _ = F.write(label + "\n")
-        permdeg = minrep.get(label, (None,))[0]
-        pccode = slookup.get(label, (None,))[0]
-        tpermdeg = smalltrans.get(label, None)
-        representations = make_representations_dict(best_of_breed[label], aliases[label].get("L"))
-        GLZgens = best_of_breed[label].get("GLZ", (None,))[-1]
-        GLFpgens = best_of_breed[label].get("GLFp", (None,))[-1]
-        if GLFpgens is None:
-            GLZNgens = best_of_breed[label].get("GLZq", best_of_breed[label].get("GLZN", (None,)))[-1]
-            GLFqgens = best_of_breed[label].get("GLFq", (None,))[-1]
+            #with open(opj("DATA", "hash_lookup", str(N), str(hsh)), "a") as F:
+            #    _ = F.write(label + "\n")
+            HASH_LOOKUP[N, hsh].append(label)
+        bob = best_of_breed[label]
+        bos = best_of_show[label]
+        special_names.extend([{"family": desc.split("(")[0], "parameters": {"n": n, "q": q}, "label": label} for (n, code, q, cmd, desc) in aliases[label].get("Lie", [])])
+        preload = {"label": label, "hash": hsh}
+        # We want to recompute transitive_degree but not permutation_degree
+        if label in smalltrans:
+            preload["transitive_degree"] = str(smalltrans[label])
+        preload["permutation_degree"] = str(minrep.get(label, (r"\N",))[0])
+        preload["linQ_degree"] = str(bob.get("GLZ", (r"\N",))[0])
+        if label in slookup and slookup[label][3]:
+            preload["pc_rank"] = str(len(slookup[label][2]))
         else:
-            GLZNgens = GLFqgens = None
-        permgens = best_of_breed[label].get("Perm", (None,))[-1]
-        special_names.extend([{"family": desc.split("(")[0], "parameters": {"n": n, "q": q}, "label": label} for (n, code, q, cmd, desc) in aliases[label].get("L", [])])
-        # Also permutation_degree, irrC_degree, irrQ_degree, linC_degree, linFp_degree, linFq_degree, linQ_degree, pc_rank, element_repr_type, representations
-        # Save group_name for groups of Lie type
-        # Remove "PC" and use liegens to pop "L" from best_of_breed
-        # set aut_group, aut_order, etc when known
-        # Save gens_used in representations, save hash
+            preload["pc_rank"] = r"\N"
+        preload["element_repr_type"] = bos[0]
+        preload["representations"] = make_representations_dict(bob, aliases[label].get("Lie"))
+        if bos[0] == "Lie":
+            preload["name"] = bos[1]
+            preload["tex_name"] = texify_lie(bos[1])
+        elif label in spor_chev:
+            desc = spor_chev[label]
+            preload["name"] = namify_sporchev(desc)
+            preload["tex_name"] = texify_sporchev(desc)
+        if label in aut:
+            preload["aut_group"] = aut[label]
+            preload["aut_order"] = aut[label].split(".")[0]
+        # Also linC_degree, linFp_degree, linFq_degree
         to_add[label] = (best_of_show[label], hsh, permdeg, tpermdeg, pccode, permgens, GLZgens, GLFpgens, GLZNgens, GLFqgens, GLZNgens) # also various reps: perm_gens, mat_gens, etc
         #with open(opj("DATA", "descriptions", label), "w") as F:
-        #    _ = F.write(best_of_show[label])
+        #    _ = F.write(bos[1])
 print("Finished in", walltime() - t0)
