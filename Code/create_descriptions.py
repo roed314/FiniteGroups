@@ -448,7 +448,8 @@ with open(opj("DATA", "to_add.txt")) as F:
             preload["aut_group"] = aut[label]
             preload["aut_order"] = aut[label].split(".")[0]
         # Also linC_degree, linFp_degree, linFq_degree
-        to_add[label] = (best_of_show[label], hsh, permdeg, tpermdeg, pccode, permgens, GLZgens, GLFpgens, GLZNgens, GLFqgens, GLZNgens) # also various reps: perm_gens, mat_gens, etc
+        PRELOAD[label] = preload
+        to_add[label] = bos[1]
         #with open(opj("DATA", "descriptions", label), "w") as F:
         #    _ = F.write(bos[1])
 print("Finished in", walltime() - t0)
