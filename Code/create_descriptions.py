@@ -153,7 +153,7 @@ def gens_from_desc(desc):
 
 def make_representations_dict(bob, lie):
     reps = {}
-    for typ, data in in bob.items():
+    for typ, data in bob.items():
         if typ == "Lie":
             reps["Lie"] = [{"family": cmd, "d": d, "q": q, "gens": gens_from_desc(liegens[desc])} for (d, code, q, cmd, desc) in lie]
         elif typ == "PC":
