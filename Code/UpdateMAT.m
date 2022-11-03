@@ -9,7 +9,7 @@ n := StringToInteger(n);
 total := StringToInteger(total);
 
 lines := Split(Read(file), "\n");
-for i in [1..#lines by total] do
+for i in [n..#lines by total] do
     line := lines[i];
     label, desc := Explode(Split(line, " "));
     if "Mat" in desc then
