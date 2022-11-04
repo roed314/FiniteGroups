@@ -1030,7 +1030,7 @@ intrinsic direct_factorization(G::LMFDBGrp) -> Any
   if Get(G, "outer_equivalence") then
     Ns := []; // compute the full set of normal subgroups inside DirectFactorization
   else
-    Ns := [H`subgroup : H in Get(G, "NormSubGrpLat") | H`order ne 1 and H`order ne G`order];
+    Ns := [H`subgroup : H in Get(G, "NormSubGrpLat")`subs | H`order ne 1 and H`order ne G`order];
   end if;
   t0 := ReportStart(G, "direct_factorization");
   fact_bool, N, K, Ns := DirectFactorization(GG : Ns:=Ns);
