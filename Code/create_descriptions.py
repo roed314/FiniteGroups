@@ -119,7 +119,7 @@ def make_representations_dict(bob, lie, liegens, nTt_to_gens):
         elif typ == "PC":
             d, pccode, compact, gens_used, desc = data
             reps["PC"] = {"code": pccode, "gens": gens_used}
-            if compact is not None:
+            if compact:
                 reps["PC"]["pres"] = [int(c) for c in compact.split(",")]
         elif typ == "Perm":
             d, i, desc = data
@@ -453,7 +453,7 @@ def create_data():
             if label in aut:
                 preload["aut_group"] = aut[label]
                 preload["aut_order"] = aut[label].split(".")[0]
-            # Also linC_degree, linFp_degree, linFq_degree
+            # Also linC_degree, linFp_degree, linFq_degree, number_conjugacy_classes (and other things from gps_transitive?)
             PRELOAD[label] = preload
             to_add[label] = bos[1]
             with open(opj("DATA", "descriptions", label), "w") as F:

@@ -85,9 +85,7 @@ Path to finishing computations:
  d. Use 
 
 deal with real_problems
-organize which columns are preloaded (hash, data from gps_transitive...)
-Don't priorize weird Lie groups
-Create hash_lookup folder (see Label.m)
+organize which columns are preloaded (data from gps_transitive...)
 Profile for HaveHolomorph
 Testing for many kinds of groups
 Update tex_name to fix bugs in \rm
