@@ -1695,7 +1695,7 @@ intrinsic wreath_product(G::LMFDBGrp) -> Any
         if IsDefined(reps, "Perm") then
             d := reps["Perm"]["d"];
             gens := reps["Perm"]["gens"];
-            GG := PermutationGroup<d | [DecodePerm(StringToInteger(g), d) : g in gens]>;
+            GG := PermutationGroup<d | [DecodePerm(g, d) : g in gens]>;
             phi := 0;
         else
             ts := Get(G, "MagmaTransitiveSubgroup");
