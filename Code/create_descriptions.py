@@ -275,7 +275,12 @@ print("PC reps loaded in", walltime() - t0)
 minrep = {}
 for label in os.listdir(opj("DATA", "minreps")):
     with open(opj("DATA", "minreps", label)) as F:
-        orig, d, gens = F.read().strip().split("|")
+        line = F.read().strip()
+        if line.count("|") == 2:
+            orig, d, gens = line.split("|")
+        elif line.count("|") == 3:
+            duplabel, orig, d, gens = line.split("|")
+            assert label == duplabel
         gens = gens.replace("{", "").replace("}", "")
         if "T" in orig and orig.split("T")[0] == d:
             desc = orig
