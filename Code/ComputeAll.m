@@ -1,11 +1,11 @@
 
 AttachSpec("spec");
 SetColumns(0);
-SetNThreads(1);
+
 infile := "DATA/descriptions/" * label;
 outfile := "DATA/computes/" * label;
 desc := Read(infile);
-SetVerbose("User1", 1); // for testing
+//SetVerbose("User1", 1); // for testing
 G := MakeBigGroup(desc, label);
 Preload(G);
 headers := [* "basic", "labeling", "aut1", "conj", "aut2", "schur", "wreath", "charc", "charq", "name", "sub", <"ConjugacyClasses", "conjagg">, <"CCCharacters", "charcagg">, <"QQCharacters", "charqagg">, <"Subgroups", "subagg1">, <"Subgroups", "subagg2"> *];
