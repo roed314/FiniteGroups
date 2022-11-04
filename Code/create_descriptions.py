@@ -424,8 +424,8 @@ def create_data():
                 N, hsh = label.split(".")
             if not small and hsh != r"\N":
                 os.makedirs(opj("DATA", "hash_lookup", str(N)), exist_ok=True)
-                #with open(opj("DATA", "hash_lookup", str(N), str(hsh)), "a") as F:
-                #    _ = F.write(label + "\n")
+                with open(opj("DATA", "hash_lookup", str(N), str(hsh)), "a") as F:
+                    _ = F.write(label + "\n")
                 HASH_LOOKUP[N, hsh].append(label)
             bob = best_of_breed[label]
             bos = best_of_show[label]
@@ -456,8 +456,8 @@ def create_data():
             # Also linC_degree, linFp_degree, linFq_degree
             PRELOAD[label] = preload
             to_add[label] = bos[1]
-            #with open(opj("DATA", "descriptions", label), "w") as F:
-            #    _ = F.write(bos[1])
+            with open(opj("DATA", "descriptions", label), "w") as F:
+                _ = F.write(bos[1])
             with open(opj("DATA", "preload", label), "w") as F:
                 preitems = preload.items()
                 header = "|".join(attr for (attr, value) in preitems)
