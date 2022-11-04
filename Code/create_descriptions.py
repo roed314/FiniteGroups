@@ -331,6 +331,7 @@ def sort_key(item):
     else:
         raise NotImplementedError
 
+special_names = []
 problems = []
 for label, D in aliases.items():
     B = best_of_breed[label] = {typ: min(opts) for typ, opts in D.items()}
@@ -408,7 +409,6 @@ def texify_sporchev(desc):
         return r"\operatorname{" + desc[:-1] + "}_" + desc[-1]
     return r"\operatorname{" + desc + "}"
 
-special_names = []
 to_add = {}
 HASH_LOOKUP = defaultdict(list)
 PRELOAD = {}
