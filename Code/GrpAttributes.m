@@ -1942,8 +1942,13 @@ intrinsic eulerian_function(G::LMFDBGrp) -> Any
 {Calculates the Eulerian function of G for n = rank(G)}
     if Get(G, "order") eq 1 then return 1; end if;
     if not Get(G, "subgroup_inclusions_known") then return None(); end if;
-    r := Get(G,"rank"); // sets EulerianTimesAut
-    tot := G`EulerianTimesAut;
+    r := Get(G,"rank"); // sets EulerianTimesAut unless easy_rank
+    if assigned G`EulerianTimesAut then
+        tot := G`EulerianTimesAut;
+    else
+        L := Get(G, "BestSubgroupLat");
+        tot := &+[(H`order)^r * H`mobius_sub * Get(H, "subgroup_count") : H in L`subs];
+    end if;
     aut := Get(G, "aut_order");
     assert tot ne 0 and IsDivisibleBy(tot, aut);
     return tot div aut;
