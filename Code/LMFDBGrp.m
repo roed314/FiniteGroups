@@ -3,6 +3,8 @@ declare verbose LMFDBGrp, 1;
 declare type LMFDBGrp;
 declare attributes LMFDBGrp:
   MagmaGrp,
+  PermutationGrp,
+  HomToPermutationGrp,
   ElementReprHom,
   ElementReprCovers,
   Subgroups,
@@ -41,6 +43,7 @@ declare attributes LMFDBGrp:
   CCReps,
   QQRepsAsCC,
   Characters,
+  AllSubgroupsOk,
   IsoToOldPresentation, // set by the various RePresent intrinsics in Presentation.m
   SubByGass, // used in MinReps.m
   label,

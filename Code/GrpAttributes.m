@@ -448,9 +448,8 @@ intrinsic perm_gens(G::LMFDBGrp) -> Any
 end intrinsic;
 
 intrinsic Generators(G::LMFDBGrp) -> Any
-    {Returns the chosen generators of the underlying group}
-    ert := Get(G, "elt_rep_type");
-    if ert eq 0 then
+{Returns the chosen generators of the underlying group}
+    if Type(G`MagmaGrp) eq GrpPC then
         gu := Get(G, "gens_used");
         gens := SetToSequence(PCGenerators(G`MagmaGrp));
         if Type(gu) ne NoneType then
@@ -1659,6 +1658,22 @@ somewhere else in the loop. */
     end if;
 end intrinsic;
 
+intrinsic PermutationGrp(G::LMFDBGrp) -> Any
+{Returns a permutation group isomorphic to this group}
+    reps := Get(G, "representations");
+    if IsDefined(reps, "Perm") then
+        d := reps["Perm"]["d"];
+        gens := reps["Perm"]["gens"];
+        return PermutationGroup<d | [DecodePerm(g, d) : g in gens]>;
+    else
+        GG := G`MagmaGrp;
+        GG, phi := MyQuotient(GG, sub<GG|> : max_orbits:=4, num_checks:=3);
+        G`HomToPermutationGrp := phi;
+        return GG;
+    end if;
+end intrinsic;
+
+
 intrinsic schur_multiplier(G::LMFDBGrp) -> Any
   {Returns abelian invariants for Schur multiplier by computing prime compoments and then merging them.}
   t0 := ReportStart(G, "SchurMultiplier");
@@ -1667,9 +1682,8 @@ intrinsic schur_multiplier(G::LMFDBGrp) -> Any
   GG := Get(G, "MagmaGrp");
   // Need GrpPerm for pMultiplicator function calls below. Check and convert if not GrpPerm.
   if Type(GG) ne GrpPerm then
-       // We find an efficient permutation representation.
-       ts:=Get(G, "MagmaTransitiveSubgroup");
-       GG:=CosetImage(GG,ts);
+    // We find an efficient permutation representation.
+    GG := Get(G, "PermutationGrp");
   end if;
   for p in ps do
     for el in pMultiplicator(GG,p) do
@@ -1691,19 +1705,8 @@ intrinsic wreath_product(G::LMFDBGrp) -> Any
     // Need GrpPerm for IsWreathProduct function call below. Check and convert if not GrpPerm.
     if Type(GG) ne GrpPerm then
         // We find an efficient permutation representation.
-        reps := Get(G, "representations");
-        if IsDefined(reps, "Perm") then
-            d := reps["Perm"]["d"];
-            gens := reps["Perm"]["gens"];
-            GG := PermutationGroup<d | [DecodePerm(g, d) : g in gens]>;
-            phi := 0;
-        else
-            ts := Get(G, "MagmaTransitiveSubgroup");
-            if Type(ts) eq NoneType then
-                return None();
-            end if;
-            phi, GG := CosetAction(GG, ts);
-        end if;
+        GG := Get(G, "PermutationGrp");
+        phi := assigned G`HomToPermutationGrp select G`HomToPermutationGrp else 0;
     else
         phi := IdentityHomomorphism(GG);
     end if;

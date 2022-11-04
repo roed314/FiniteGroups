@@ -10,16 +10,17 @@ NUM_SUBS_CUTOFF_AUT := 4096; // if G has at least this many subgroups up to auto
 NUM_SUBS_LIMIT_AUT := 1024; // if we compute up to an index bound, we set it so that less than this many subgroups up to automorphism are stored
 LAT_CUTOFF := 4096; // if G has less than this many subgroups up to automorphism, we compute inclusion relations for the lattices of subgroups (both up-to-automorphism and, if present, up-to-conjugacy)
 
-function AllSubgroupsOk(G)
+intrinsic AllSubgroupsOk(G::LMFDBGrp) -> BoolElt
+{}
     // A simple heuristic on whether Subgroups(G) might take a very long time
-    E := ElementaryAbelianSeriesCanonical(G);
+    E := ElementaryAbelianSeriesCanonical(G`MagmaGrp);
     for i in [1..#E-1] do
         if Factorization(Order(E[i]) div Order(E[i+1]))[1][2] gt VS_QUOTIENT_CUTOFF then
             return false;
         end if;
     end for;
     return true;
-end function;
+end intrinsic;
 
 intrinsic outer_equivalence(G::LMFDBGrp) -> Any
 {Whether subgroups are computed up to automorphism (vs only up to conjugacy)}
@@ -28,7 +29,7 @@ intrinsic outer_equivalence(G::LMFDBGrp) -> Any
     // Instead, we set a numerical variable during the computation of byA that serves as a proxy: the number of subgroups above the cutoff
     a := Get(G, "AutAboveCutoff");
     b := Get(G, "AutIndexBound");
-    if a ge NUM_SUBS_CUTOFF_CONJ or b ne 0 or not AllSubgroupsOk(G`MagmaGrp) then
+    if a ge NUM_SUBS_CUTOFF_CONJ or b ne 0 or not Get(G, "AllSubgroupsOk") then
         // too many subgroups up to automorphism, so we don't need to compute the list up to conjugacy
         //printf "%o subgroups up to automorphism (min order %o, ok %o), so not computing up to conjugacy\n", #byA, byA[1]`order, AllSubgroupsOk(GG);
         return true;
@@ -134,6 +135,7 @@ declare attributes SubgroupLat:
         subs,
         by_index,
         by_index_aut,
+        ordered_subs,
         conjugator,
         aut_class,
         aut_orbit,
@@ -399,6 +401,11 @@ intrinsic by_index(Int::SubgroupLatInterval) -> Assoc
         Append(~AA[ind], H);
     end for;
     return AA;
+end intrinsic;
+
+intrinsic ordered_subs(L::SubgroupLat) -> SeqEnum
+{Subgroups ordered by index}
+    return &cat[bi[m] : m in Sort([k : k in Keys(Get(L, "by_index"))])];
 end intrinsic;
 
 intrinsic by_index_aut(L::SubgroupLat) -> Assoc
@@ -784,7 +791,7 @@ intrinsic TrimSubgroups(L::SubgroupLat)
         cut -:= 1;
     end while;
     ordbd := subs[cut]`order;
-    indbd := G`order div ordbd;
+    indbd := X`order div ordbd;
     // We will add normal, complements, Sylow and maximal subgroups back in later.
     // The only subgroups we don't want to throw away are the core-free ones with index up to 47,
     // since these will give transitive group representations
@@ -844,7 +851,7 @@ intrinsic SubGrpLstAut(X::LMFDBGrp) -> SubgroupLat
         X`number_subgroup_classes := nconj;
         res`subs := [SubgroupLatElement(res, subs[i]`subgroup : i:=i) : i in [1..#subs]];
         ReportEnd(X, "SolvAutSubs", t0);
-    elif AllSubgroupsOk(G) then
+    elif Get(X, "AllSubgroupsOk") then
         // In this case, we compute all subgroups and then group them by autjugacy
         tmp := Get(X, "SubGrpLst");
         t0 := ReportStart(X, "CollapseSubGrpLst");
@@ -875,7 +882,7 @@ intrinsic SubGrpLstAut(X::LMFDBGrp) -> SubgroupLat
         if count lt NUM_SUBS_CUTOFF_AUT then
             subs cat:= extra_subs;
         end if;
-        ordbd := subs[#subs]`order;
+        ordbd := subs[#subs][1]`order;
         res`subs := [SubgroupLatElement(res, subs[i][1]`subgroup : i:=i) : i in [1..#subs]];
         for i in [1..#subs] do
             res`subs[i]`cc_count := #subs[i];
@@ -1696,25 +1703,26 @@ end intrinsic;
 procedure SetClosures(~L)
     // Set normal and characteristic closures
     t0 := ReportStart(L`Grp, "SetClosures");
-    L`subs[1]`normal_closure := 1;
-    L`subs[1]`characteristic_closure := 1;
-    by_index := Get(L, "by_index");
-    sorted_i := &cat[[x`i : x in by_index[m]] : m in Sort([k : k in Keys(by_index)]) | L`index_bound eq 0 or m le L`index_bound];
-    for i in sorted_i do
-        H := L`subs[i];
+    subs := Get(L, "ordered_subs");
+    subs[1]`normal_closure := 1;
+    subs[1]`characteristic_closure := 1;
+    ord_bnd := (L`index_bound eq 0) select 1 else (L`Grp`order div L`index_bound);
+    for k in #subs do
+        H := subs[k];
+        if H`order lt ord_bnd then break; end if; // stop at index bound
         mark := AssociativeArray();
         for prop in ["normal", "characteristic"] do
             attr := prop * "_closure";
             mark[prop] := [];
             if Get(H, prop) then
-                H``attr := i;
+                H``attr := H`i;
                 current_layer := Keys(H`unders);
                 while #current_layer gt 0 do
                     next_layer := {@ @};
                     for j in current_layer do
-                        cur := L`subs[j];
+                        cur := L`subs[j]; // the layer indices are into L`subs rather than ordered_subs
                         if not Get(cur, prop) then
-                            cur``attr := i;
+                            cur``attr := H`i;
                             next_layer join:= {@ k : k->t in cur`unders @};
                         end if;
                     end for;
@@ -1757,27 +1765,28 @@ function SubgroupLattice_edges(G, aut)
     ComputeLatticeEdges(~L, Ambient, inj);
     SetClosures(~L);
     // Set the mobius functions
-    t0 := ReportStart(G, "MobiusSub");
-    top := get_top(L);
-    top`mobius_sub := 1; //μ_G(G) = 1
-    // L`subs are not necessarily sorted by index
-    by_index := Get(L, "by_index");
-    sorted_i := &cat[[x`i : x in by_index[m]] : m in Sort([k : k in Keys(by_index)]) | L`index_bound eq 0 or m le L`index_bound];
-    for i in sorted_i[2..#L] do
-        x := L`subs[i];
-        x`mobius_sub := 0;
-        //print "x", x`i;
-        for j in half_interval(x, "overs", {}) do
-            y := L`subs[j];
-            if x`i eq y`i then continue; end if;
-            n := NumberOfInclusions(x, y);
-            //print x`i, y`i, y`subgroup_count, n, y`mobius_sub, x`subgroup_count;
-            x`mobius_sub -:= (y`subgroup_count * n * y`mobius_sub) div x`subgroup_count;
+    if L`index_bound eq 0 then
+        t0 := ReportStart(G, "MobiusSub");
+        top := get_top(L);
+        top`mobius_sub := 1; //μ_G(G) = 1
+        subs := Get(L, "ordered_subs");
+        // L`subs are not necessarily sorted by index
+        for i in [2..#L] do
+            x := subs[i];
+            x`mobius_sub := 0;
+            //print "x", x`i;
+            for j in half_interval(x, "overs", {}) do
+                y := L`subs[j]; // the layer indices are into L`subs rather than ordered_subs
+                if x`i eq y`i then continue; end if;
+                n := NumberOfInclusions(x, y);
+                //print x`i, y`i, y`subgroup_count, n, y`mobius_sub, x`subgroup_count;
+                x`mobius_sub -:= (y`subgroup_count * n * y`mobius_sub) div x`subgroup_count;
+            end for;
+            //print "mobius_sub", x`mobius_sub;
         end for;
-        //print "mobius_sub", x`mobius_sub;
-    end for;
-    L`inclusions_known := true;
-    ReportEnd(G, "MobiusSub", t0);
+        L`inclusions_known := true;
+        ReportEnd(G, "MobiusSub", t0);
+    end if;
     return L;
 end function;
 
@@ -2366,7 +2375,7 @@ intrinsic Subgroups(G::LMFDBGrp) -> SeqEnum
     t0 := ReportStart(G, "LabelSubgroups");
     LabelSubgroups(L);
     ReportEnd(G, "LabelSubgroups", t0);
-    return Sort([LMFDBSubgroup(H) : H in L`subs], func<H,K|Get(K, "subgroup_order") - Get(H, "subgroup_order")>);
+    return [LMFDBSubgroup(H) : H in Get(L, "ordered_subs")];
     /*if Get(G, "all_subgroups_known") then
         SaveSubgroupCache(G, S);
     end if;*/
@@ -2374,12 +2383,13 @@ end intrinsic;
 
 procedure SetMobiusQuo(~L, aut)
     t0 := ReportStart(L`Grp, "SetMobiusQuo");
-    L`subs[#L]`mobius_quo := 1;
+    subs := Get(L, "ordered_subs");
+    subs[#L]`mobius_quo := 1;
     for i in [#L-1..1 by -1] do
-        x := L`subs[i];
+        x := subs[i];
         x`mobius_quo := 0;
         for j in half_interval(x, "unders", {}) do
-            y := L`subs[j];
+            y := L`subs[j]; // the layer indices are into L`subs rather than ordered_subs
             if x`i ne y`i then
                 // both are normal, so there is only 1 inclusion unless working up to automorphism
                 n := aut select NumberOfInclusions(y, x) else 1;
@@ -2486,6 +2496,7 @@ intrinsic LookupSubgroupLabel(G::LMFDBGrp, HH::Any) -> Any
         return HH`label;
     else
         L := Get(G, "BestSubgroupLat");
+        S := Get(G, "Subgroups"); // triggers labeling
         i := SubgroupIdentify(L, HH : error_if_missing:=false);
         if i eq -1 then
             return "\\N";

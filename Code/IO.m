@@ -104,6 +104,10 @@ intrinsic SaveJsonb(inp::SeqEnum) ->  MonStgElt
 {assuming list of strings or integers (or embedded lists of these) only}
     return "[" * Join([SaveJsonb(x) : x in inp], ",") * "]";
 end intrinsic;
+intrinsic SaveJsonb(inp::Tup) -> MonStgElt
+{assuming list of strings or integers (or embedded lists of these) only}
+    return "[" * Join([SaveJsonb(x) : x in inp], ",") * "]";
+end intrinsic;
 intrinsic SaveJsonb(inp::Assoc) -> MonStgElt
 {saving a dictionary}
     return "{" * Join([Sprintf("%o:%o", SaveJsonb(k), SaveJsonb(v)) : k -> v in inp], ",") * "}";

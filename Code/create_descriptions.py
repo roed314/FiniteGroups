@@ -28,12 +28,13 @@ def load_lmfdb_data():
     slookup = {rec["label"]: (rec["pc_code"], None, rec["gens_used"], True) for rec in db.gps_groups.search({"solvable":True}, ["label", "pc_code", "gens_used"])}
     #nlookup = {rec["label"]: rec["perm_gens"] for rec in db.gps_groups.search({"solvable":False}, ["label", "perm_gens"])}
     sibling_bound = {rec["label"]: rec["bound_siblings"] for rec in db.gps_transitive.search({}, ["label", "bound_siblings"])}
+    nconj = {rec["label"]: rec["num_conj_classes"] for rec in db.gps_transitive.search({}, ["label", "num_conj_classes"])}
     tbound = defaultdict(lambda: 48) # 48 is larger than any transitive degree in an nTt label
     for rec in db.gps_transitive.search({"gapid":{"$ne":0}}, ["order", "gapid", "n"]):
         label = f"{rec['order']}.{rec['gapid']}"
         tbound[label] = min(tbound[label], rec["n"])
     print("LMFDB data loaded in", walltime() - t0)
-    return slookup, sibling_bound, tbound
+    return slookup, sibling_bound, tbound, nTtconj
 
 def load_perf_chev_spor():
     perf_chev_spor = defaultdict(list)
@@ -82,13 +83,13 @@ def sortvec_from_desc(desc):
     else:
         raise ValueError("Unexpected description", desc)
 
-def update_options(aliases, spor_chev, An, Sn, tbound, perf_chev_spor, label, desc):
+def update_options(aliases, spor_chev, An, Sn, tbound, perf_chev_spor, nconj, nTtconj, sibling_bound_by_label, sibling_bound, label, desc):
     if desc in perf_chev_spor:
         Spors = ["J1", "J2", "HS", "J3", "McL", "He", "Ru", "Co3", "Co2", "Co1"]
         if desc in Spors or "Chev" in desc:
             spor_chev[label] = desc
         for edesc in perf_chev_spor[desc]:
-            update_options(aliases, spor_chev, An, Sn, tbound, perf_chev_spor, label, edesc)
+            update_options(aliases, spor_chev, An, Sn, tbound, perf_chev_spor, nconj, nTtconj, sibling_bound_by_label, sibling_bound, label, edesc)
         return
     D = aliases[label]
     if "T" in desc and "MAT" not in desc:
@@ -98,6 +99,9 @@ def update_options(aliases, spor_chev, An, Sn, tbound, perf_chev_spor, label, de
             Sn[label] = n
         elif n in SnT and i == SnT[n] - 1:
             An[label] = n
+        nconj[label] = nTtconj[desc]
+        if desc in sibling_bound:
+            sibling_bound_by_label[label] = max(sibling_bound_by_label[label], sibling_bound[desc])
     typ, vec = sortvec_from_desc(desc)
     D[typ].append(vec)
 
@@ -141,7 +145,7 @@ def make_representations_dict(bob, lie, liegens, nTt_to_gens):
             raise NotImplementedError
     return reps
 
-def load_aliases(tbound):
+def load_aliases(tbound, nTtconj, sibling_bound):
     perf_chev_spor = load_perf_chev_spor()
 
     t0 = walltime()
@@ -150,6 +154,8 @@ def load_aliases(tbound):
     An = {}
     Sn = {}
     aut = {}
+    nconj = {}
+    sibling_bound_by_label = defaultdict(int)
     with open(opj("DATA", "aliases.txt")) as F:
         for line in F:
             label, desc = line.strip().split()
@@ -158,21 +164,21 @@ def load_aliases(tbound):
                 assert G0 not in aut
                 aut[G0] = label
             else:
-                update_options(aliases, spor_chev, An, Sn, tbound, perf_chev_spor, label, desc)
+                update_options(aliases, spor_chev, An, Sn, tbound, perf_chev_spor, nconj, nTtconj, sibling_bound_by_label, sibling_bound, label, desc)
     print("Aliases loaded in", walltime() - t0)
 
     with open(opj("DATA", "mat_aliases.txt")) as F:
         for line in F:
             label, desc = line.strip().split()
-            update_options(aliases, spor_chev, An, Sn, tbound, perf_chev_spor, label, desc)
+            update_options(aliases, spor_chev, An, Sn, tbound, perf_chev_spor, nconj, nTtconj, sibling_bound_by_label, sibling_bound, label, desc)
     print("Matrix aliases loaded in", walltime() - t0)
 
     with open(opj("DATA", "TinyLie.txt")) as F:
         for line in F:
             label, desc = line.strip().split()
-            update_options(aliases, spor_chev, An, Sn, tbound, perf_chev_spor, label, desc)
+            update_options(aliases, spor_chev, An, Sn, tbound, perf_chev_spor, nconj, nTtconj, sibling_bound_by_label, sibling_bound, label, desc)
     print("Tiny lie loaded in", walltime() - t0)
-    return aliases, spor_chev, An, Sn, aut
+    return aliases, spor_chev, An, Sn, aut, nconj, sibling_bound_by_label
 
 def load_liegens():
     t0 = walltime()
@@ -398,14 +404,14 @@ def texify_sporchev(desc):
     return r"\operatorname{" + desc + "}"
 
 def create_data():
-    slookup, sibling_bound, tbound = load_lmfdb_data()
-    aliases, spor_chev, An, Sn, aut = load_aliases(tbound)
+    slookup, sibling_bound, tbound, nTtconj = load_lmfdb_data()
+    aliases, spor_chev, An, Sn, aut, nconj, sibling_bound_by_label = load_aliases(tbound, nTtconj, sibling_bound)
     liegens = load_liegens()
     nTt_to_gens = load_nTt_to_gens()
     load_pcdata(aliases, slookup)
     minrep = load_minrep(aliases)
     best_of_breed, best_of_show, special_names, problems = find_best(aliases, An, Sn, liegens)
-    smalltrans = find_smalltrans(tbound, sibling_bound)
+    smalltrans = find_smalltrans(tbound, sibling_bound_by_label)
 
     to_add = {}
     HASH_LOOKUP = defaultdict(list)
@@ -453,7 +459,11 @@ def create_data():
             if label in aut:
                 preload["aut_group"] = aut[label]
                 preload["aut_order"] = aut[label].split(".")[0]
-            # Also linC_degree, linFp_degree, linFq_degree, number_conjugacy_classes (and other things from gps_transitive?)
+            if label in nconj:
+                preload["number_conjugacy_classes"] = nconj[label]
+            if sibling_bound_by_label.get(label, 47) < 47 and int(label.split(".")[0]) > 2000:
+                preload["AllSubgroupsOk"] = "f"
+            # Also linC_degree, linFp_degree, linFq_degree
             PRELOAD[label] = preload
             to_add[label] = bos[1]
             with open(opj("DATA", "descriptions", label), "w") as F:

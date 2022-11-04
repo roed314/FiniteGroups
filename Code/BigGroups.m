@@ -85,12 +85,27 @@ Path to finishing computations:
  d. Use 
 
 deal with real_problems
-organize which columns are preloaded (data from gps_transitive...)
 Profile for HaveHolomorph
 Testing for many kinds of groups
+Caching polredabs data
 Update tex_name to fix bugs in \rm
 hash_lookup seems to be missing orders: 9999360
-Caching polredabs data
+1728.12585: Runtime error in 'Read': Cannot open file "DATA/tmp7928613970740592946.out" (No such file or directory)
+E16000.bp|Runtime error in 'FPGroup': Incorrect group order detected
+E5184.su triggering error "subgroups not closed under automorphism" on line 340 of Subgroups.m
+
+E15552.ko|In file "/home/roed/cloud_test/GrpAttributes.m", line 1098, column 79:
+E15552.ko|>> Get(H, "normal") and #H`complements gt 0 then
+E15552.ko|                          ^
+E15552.ko|Runtime error in `: Attribute 'complements' for this structure is valid but not assigned
+
+E80000.ze|Internal error in permc_random_base_change_basim_sub() at permc/chbase.c, line 488
+Segfaults on 1696.201, 390624.d, 192720.b, 18000000.u, 1632586752.fi, 13060694016.zk, 13060694016.pu, 52242776064.um, 4553936640000.a, 78364164096.dm, 142818689064960.g, 564221981491200.i
+
+Known errors:
+E2684354560.fb|Runtime error: Index too large for coset enumeration - giving up (in MagmaAutGrp)
+E50824368.bp|Current total memory usage: 157699.9MB, failed memory request: 211106232508416.0MB
+
 
 Make sure we have tex commands for all the Lie groups (like \AGL)
 Change Presentation.m to not use Holomoprh

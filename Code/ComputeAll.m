@@ -13,6 +13,7 @@ headers := [* "basic", "labeling", "aut1", "conj", "aut2", "schur", "wreath", "c
 // ConjugacyClasses: centralizer
 // CCCharacters: center, kernel (could represent these in terms of conjugacy classes
 // Iteratively try to save different attributes, so that timeouts are handled gracefully
+tstart := Cputime();
 for X in headers do
     if Type(X) eq MonStgElt then
         t0 := ReportStart(G, "AllHeader" * X);
@@ -27,4 +28,5 @@ for X in headers do
         ReportEnd(G, "AllHeader" * Y, t0);
     end if;
 end for;
+ReportEnd(G, "AllFinished", tstart);
 exit;

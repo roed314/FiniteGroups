@@ -102,7 +102,11 @@ Estimates on how long it will take to run for the small group orders
 }
     if CanIdentifyGroup(Order(G)) then
         return IdentifyGroup(G)[2];
-    elif IsAbelian(G) then
+    end if;
+    if Type(G) eq GrpFP or Type(G) eq GrpAuto then
+        G := PermutationGroup(G);
+    end if;
+    if IsAbelian(G) then
         return CollapseIntList(AbelianInvariants(G));
     else
         return CollapseIntList(Sort([[Order(G), EasyHash(G)]] cat [[H`order, EasyHash(H`subgroup)] : H in MaximalSubgroups(G)]));
