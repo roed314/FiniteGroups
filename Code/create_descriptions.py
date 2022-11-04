@@ -147,6 +147,7 @@ def gens_from_desc(desc):
     for mid in ["Perm", "MAT"]:
         if mid in desc:
             gens = desc.split(mid)[1]
+            if not gens: return [] # trivial group
             return [int(c) for c in gens.split(",")]
     if "T" in desc:
         return nTt_to_gens[desc]
