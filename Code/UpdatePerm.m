@@ -1,5 +1,5 @@
 // We normally store transitive permutation groups in the nTt format, but it's helpful to have them sometimes in the Perm format (since this specifies the generators)
-// Usage: parallel -j64 magma -b file:=FILE outfolder:=FOLD n:={1} total:=64 UpdatePerm.m :: {1..64}
+// Usage: parallel -j64 magma -b file:=FILE outfolder:=FOLD n:={1} total:=64 UpdatePerm.m ::: {1..64}
 
 SetColumns(0);
 AttachSpec("spec");

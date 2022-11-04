@@ -406,7 +406,7 @@ def texify_sporchev(desc):
         if typ[0].isdigit():
             typ = "{}^%s%s" % (typ[0], typ[1:])
         return f"{typ}_{n}({q})"
-    elif desc[-1].isidigt():
+    elif desc[-1].isdigit():
         return r"\operatorname{" + desc[:-1] + "}_" + desc[-1]
     return r"\operatorname{" + desc + "}"
 
