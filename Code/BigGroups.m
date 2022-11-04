@@ -84,6 +84,7 @@ Path to finishing computations:
  c. Need to use Complements to find semidirect decompositions from NormalSubgroups
  d. Use 
 
+deal with real_problems
 organize which columns are preloaded (hash, data from gps_transitive...)
 Don't priorize weird Lie groups
 Create hash_lookup folder (see Label.m)

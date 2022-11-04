@@ -294,7 +294,7 @@ def find_best(aliases, An, Sn, liegens):
             desc = vec[-1]
             explicit_desc = liegens[desc]
             newitem = sortvec_from_desc(explicit_desc)
-            return sort_key(newitem, liegens)
+            return sort_key(newitem)
         elif typ == "PC":
             return (n,) + (0,) + vec[1:]
         elif typ == "Perm":
@@ -441,7 +441,8 @@ def create_data():
             else:
                 preload["pc_rank"] = r"\N"
             preload["element_repr_type"] = bos[0]
-            preload["representations"] = make_representations_dict(bob, aliases[label].get("Lie"), liegens, nTt_to_gens)
+            repD = make_representations_dict(bob, aliases[label].get("Lie"), liegens, nTt_to_gens)
+            preload["representations"] = str(repD).replace("'", '"').replace(" ", "")
             if bos[0] == "Lie":
                 preload["name"] = bos[1]
                 preload["tex_name"] = texify_lie(bos[1])
@@ -457,5 +458,10 @@ def create_data():
             to_add[label] = bos[1]
             #with open(opj("DATA", "descriptions", label), "w") as F:
             #    _ = F.write(bos[1])
+            with open(opj("DATA", "preload", label), "w") as F:
+                preitems = preload.items()
+                header = "|".join(attr for (attr, value) in preitems)
+                data = "|".join(value for (attr, value) in preitems)
+                _ = F.write(f"{header}\n{data}\n")
     print("Finished in", walltime() - t0)
     return to_add, HASH_LOOKUP, PRELOAD
