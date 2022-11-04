@@ -352,6 +352,7 @@ intrinsic MagmaTransitiveSubgroup(G::LMFDBGrp) -> Any
         return g;
     end if;
     S := Get(G, "Subgroups");
+    m := Get(G, "subgroup_index_bound");
     for j in [1..#S] do
         if m ne 0 and Get(S[j], "quotient_order") gt m then
             return None();

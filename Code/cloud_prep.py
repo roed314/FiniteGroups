@@ -21,7 +21,7 @@ if args.phase == 1:
     ]
 elif args.phase == 2:
     todos = [
-        ("ComputeAll", "compute", 2, 1800),
+        ("ComputeAll.m", "compute", 1, 1800),
     ]
 elif args.phase == 3:
     todos = [

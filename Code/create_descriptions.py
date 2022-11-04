@@ -457,7 +457,7 @@ def create_data():
             PRELOAD[label] = preload
             to_add[label] = bos[1]
             with open(opj("DATA", "descriptions", label), "w") as F:
-                _ = F.write(bos[1])
+                _ = F.write(bos[1] + "\n")
             with open(opj("DATA", "preload", label), "w") as F:
                 preitems = preload.items()
                 header = "|".join(attr for (attr, value) in preitems)

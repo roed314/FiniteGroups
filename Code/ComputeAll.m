@@ -1,6 +1,7 @@
 
 AttachSpec("spec");
 SetColumns(0);
+SetNThreads(1);
 infile := "DATA/descriptions/" * label;
 outfile := "DATA/computes/" * label;
 desc := Read(infile);
