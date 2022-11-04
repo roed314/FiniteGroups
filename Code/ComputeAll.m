@@ -24,7 +24,7 @@ for X in headers do
         for H in Get(G, attr) do
             WriteByTmpHeader(H, outfile, Y);
         end for;
-        ReportEnd(G, "AllHeader" * X, t0);
+        ReportEnd(G, "AllHeader" * Y, t0);
     end if;
 end for;
 exit;
