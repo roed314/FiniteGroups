@@ -45,6 +45,7 @@ include = [
     "*.py",
     "*.header",
     "*.tmpheader",
+    "Polredabs/*",
     "DATA/manifest",
 ]
 if args.phase > 1:

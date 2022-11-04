@@ -89,6 +89,8 @@ organize which columns are preloaded (data from gps_transitive...)
 Profile for HaveHolomorph
 Testing for many kinds of groups
 Update tex_name to fix bugs in \rm
+hash_lookup seems to be missing orders: 9999360
+Caching polredabs data
 
 Make sure we have tex commands for all the Lie groups (like \AGL)
 Change Presentation.m to not use Holomoprh
