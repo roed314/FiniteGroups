@@ -17,6 +17,8 @@ opj = os.path.join
 def get_data(datafile):
     codes = {}
     data = {} # We don't use a defaultdict since we want to detect an invalid code
+    data["E"] = defaultdict(list)
+    data["T"] = defaultdict(list)
     if args.phase > 1:
         for head in os.listdir():
             if head.endswith(".tmpheader"):
@@ -31,7 +33,7 @@ def get_data(datafile):
             line = line.strip()
             if not line: continue
             label, outdata = line.split("|", 1)
-            if args.phase == 1:
+            if False: #args.phase == 1:
                 if line.count("|") == 3:
                     # minrep data
                     os.unlink(opj("DATA", "minrep.todo", label))
