@@ -405,6 +405,7 @@ end intrinsic;
 
 intrinsic ordered_subs(L::SubgroupLat) -> SeqEnum
 {Subgroups ordered by index}
+    bi := Get(L, "by_index");
     return &cat[bi[m] : m in Sort([k : k in Keys(Get(L, "by_index"))])];
 end intrinsic;
 
@@ -1707,7 +1708,7 @@ procedure SetClosures(~L)
     subs[1]`normal_closure := 1;
     subs[1]`characteristic_closure := 1;
     ord_bnd := (L`index_bound eq 0) select 1 else (L`Grp`order div L`index_bound);
-    for k in #subs do
+    for k in [1..#subs] do
         H := subs[k];
         if H`order lt ord_bnd then break; end if; // stop at index bound
         mark := AssociativeArray();
