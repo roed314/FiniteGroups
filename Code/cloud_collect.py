@@ -64,16 +64,16 @@ def get_timing_info(datafile):
     stats = defaultdict(list)
     for label, lines in times.items():
         if lines[-1].startswith("Finished AllFinished in "):
-            finished[label] = float(lines[-1].split("in")[1].strip())
+            finished[label] = float(lines[-1].split(" in ")[1].strip())
         else:
             lastline = lines[-1]
-            if "in" in lastline:
-                lastline = lastline.split("in")[0].strip()
+            if " in " in lastline:
+                lastline = lastline.split(" in ")[0].strip()
             unfinished[lastline] += 1
         for line in lines:
-            if "in" in line:
-                task = line.split("in")[0].replace("Starting", "").strip()
-                time = float(line.split("in")[1].strip())
+            if " in " in line:
+                task = line.split(" in ")[0].replace("Starting", "").strip()
+                time = float(line.split(" in ")[1].strip())
                 stats[task].append(time)
     maxs = [(-max(ts), task) for (task, ts) in stats.items()]
     maxs.sort()
