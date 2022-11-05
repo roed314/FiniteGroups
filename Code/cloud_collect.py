@@ -19,7 +19,7 @@ def get_data(datafile):
     data = {} # We don't use a defaultdict since we want to detect an invalid code
     data["E"] = defaultdict(list)
     data["T"] = defaultdict(list)
-    if args.phase > 1:
+    if True: # args.phase > 1:
         for head in os.listdir():
             if head.endswith(".tmpheader"):
                 with open(head) as F:
