@@ -63,6 +63,7 @@ def get_timing_info(datafile):
     finished = {}
     stats = defaultdict(list)
     for label, lines in times.items():
+        lines = [x.split("|")[-1] for x in lines] # remove labels
         if lines[-1].startswith("Finished AllFinished in "):
             finished[label] = float(lines[-1].split(" in ")[1].strip())
         else:
