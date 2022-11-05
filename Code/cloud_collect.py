@@ -59,7 +59,7 @@ def get_data(datafile):
 def get_timing_info(datafile):
     data = get_data(datafile)
     times = data["T"]
-    unfinished = Counter
+    unfinished = Counter()
     finished = {}
     stats = defaultdict(list)
     for label, lines in times.items():
