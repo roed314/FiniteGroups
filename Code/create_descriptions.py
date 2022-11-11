@@ -99,7 +99,8 @@ def update_options(aliases, spor_chev, An, Sn, tbound, perf_chev_spor, nconj, nT
             Sn[label] = n
         elif n in SnT and i == SnT[n] - 1:
             An[label] = n
-        nconj[label] = nTtconj[desc]
+        if desc in nTtconj:
+            nconj[label] = nTtconj[desc]
         if desc in sibling_bound:
             sibling_bound_by_label[label] = max(sibling_bound_by_label[label], sibling_bound[desc])
     typ, vec = sortvec_from_desc(desc)
