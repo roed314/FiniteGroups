@@ -422,8 +422,9 @@ def create_data():
         for line in F:
             line = line.strip()
             if " " in line:
-                label, hsh, disp, comp = line.strip().split()
-                small = label.split(".")[1].isdigit()
+                label, hsh, disp, comp = line.split()
+                N, small = label.split(".")
+                small = small.isdigit()
             else:
                 small = True
                 disp = comp = label = line

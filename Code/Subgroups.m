@@ -869,8 +869,12 @@ intrinsic SubGrpLstAut(X::LMFDBGrp) -> SubgroupLat
         extra_subs := [];
         count := 0;
         for d in D do
+            t1 := ReportStart(X, f"SubGrpLstDivisor ({d})");
             dsubs := Subgroups(G : OrderEqual := d);
+            ReportEnd(X, f"SubGrpLstDivisor ({d})", t1);
+            t1 := ReportStart(X, f"SubGrpLstSplitDivisor ({d})");
             dsubs := SplitByAuts([dsubs], X : use_order := false);
+            ReportEnd(X, f"SubGrpLstSplitDivisor ({d})", t1);
             count +:= #dsubs;
             if count ge NUM_SUBS_CUTOFF_AUT then
                 break;

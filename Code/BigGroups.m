@@ -84,12 +84,13 @@ Path to finishing computations:
  c. Need to use Complements to find semidirect decompositions from NormalSubgroups
  d. Use 
 
+Save subgroup generators for centralizers of cc and for kernels of characters so that we don't need to construct subgroup lattice in these cases
 deal with real_problems
-Profile for HaveHolomorph
+*Profile for HaveHolomorph
 Testing for many kinds of groups
 Caching polredabs data
 Update tex_name to fix bugs in \rm
-hash_lookup seems to be missing orders: 9999360
+**hash_lookup seems to be missing orders: 9999360
 1728.12585: Runtime error in 'Read': Cannot open file "DATA/tmp7928613970740592946.out" (No such file or directory)
 E16000.bp|Runtime error in 'FPGroup': Incorrect group order detected
 E5184.su triggering error "subgroups not closed under automorphism" on line 340 of Subgroups.m
