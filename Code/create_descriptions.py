@@ -432,7 +432,7 @@ def create_data():
                 N, hsh = label.split(".")
             if not small and hsh != r"\N":
                 os.makedirs(opj("DATA", "hash_lookup", str(N)), exist_ok=True)
-                with open(opj("DATA", "hash_lookup", str(N), str(hsh)), "a") as F:
+                with open(opj("DATA", "hash_lookup", str(N), hsh), "a") as F:
                     _ = F.write(label + "\n")
                 HASH_LOOKUP[N, hsh].append(label)
             bob = best_of_breed[label]
@@ -462,7 +462,7 @@ def create_data():
                 preload["aut_group"] = aut[label]
                 preload["aut_order"] = aut[label].split(".")[0]
             if label in nconj:
-                preload["number_conjugacy_classes"] = nconj[label]
+                preload["number_conjugacy_classes"] = str(nconj[label])
             if sibling_bound_by_label.get(label, 47) < 47 and int(label.split(".")[0]) > 2000:
                 preload["AllSubgroupsOk"] = "f"
             # Also linC_degree, linFp_degree, linFq_degree
