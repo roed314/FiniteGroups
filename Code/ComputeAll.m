@@ -8,7 +8,7 @@ desc := Read(infile);
 //SetVerbose("User1", 1); // for testing
 G := MakeBigGroup(desc, label);
 Preload(G);
-headers := [* "basic", "labeling", "aut1", "conj", "aut2", "schur", "wreath", "charc", "charq", "name", "sub", <"ConjugacyClasses", "conjagg">, <"CCCharacters", "charcagg">, <"QQCharacters", "charqagg">, <"Subgroups", "subagg1">, <"Subgroups", "subagg2"> *];
+headers := [* "basic", "labeling", "aut1", "conj", "aut2", "wreath", "charc", "charq", "name", "sub", <"ConjugacyClasses", "conjagg">, <"CCCharacters", "charcagg">, <"QQCharacters", "charqagg">, <"Subgroups", "subagg1">, <"Subgroups", "subagg2", "schur"> *];
 // The following attributes depend on the Subgroup lattice, introducing an annoying dependence
 // ConjugacyClasses: centralizer
 // CCCharacters: center, kernel (could represent these in terms of conjugacy classes
