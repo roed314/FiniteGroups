@@ -28,7 +28,7 @@ def load_lmfdb_data():
     slookup = {rec["label"]: (rec["pc_code"], None, rec["gens_used"], True) for rec in db.gps_groups.search({"solvable":True}, ["label", "pc_code", "gens_used"])}
     #nlookup = {rec["label"]: rec["perm_gens"] for rec in db.gps_groups.search({"solvable":False}, ["label", "perm_gens"])}
     sibling_bound = {rec["label"]: rec["bound_siblings"] for rec in db.gps_transitive.search({}, ["label", "bound_siblings"])}
-    nconj = {rec["label"]: rec["num_conj_classes"] for rec in db.gps_transitive.search({}, ["label", "num_conj_classes"])}
+    nTtconj = {rec["label"]: rec["num_conj_classes"] for rec in db.gps_transitive.search({}, ["label", "num_conj_classes"])}
     tbound = defaultdict(lambda: 48) # 48 is larger than any transitive degree in an nTt label
     for rec in db.gps_transitive.search({"gapid":{"$ne":0}}, ["order", "gapid", "n"]):
         label = f"{rec['order']}.{rec['gapid']}"
