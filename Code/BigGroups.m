@@ -90,7 +90,6 @@ deal with real_problems
 *Profile for HaveHolomorph
 Testing for many kinds of groups
 Caching polredabs data
-Update tex_name to fix bugs in \rm
 hash_lookup seemed to be missing orders: double check that it got fixed
 ** 1728.12585: Runtime error in 'Read': Cannot open file "DATA/tmp7928613970740592946.out" (No such file or directory)
 E1.1|various errors
@@ -116,7 +115,7 @@ E50824368.bp|Current total memory usage: 157699.9MB, failed memory request: 2111
 
 Make sure we have tex commands for all the Lie groups (like \AGL)
 Change Presentation.m to not use Holomoprh
-Use semidirect products to select a better name (postprocess step so that we can work up from the bottom and include Lie group names if not stupid); make sure to modify other places names show up (subgroups table); make sure status variables like complex_characters_known are accurate (might have tried and failed)
+Use semidirect products to select a better name and fix latex errors (postprocess step so that we can work up from the bottom and include Lie group names if not stupid); make sure to modify other places names show up (subgroups table); make sure status variables like complex_characters_known are accurate (might have tried and failed)
 Write cloud_collect.py to collect results (combine rank and easy_rank)
 Add new columns:
  * gps_groups (aut_gens aut_stats cc_stats complements_known complex_characters_known div_stats element_repr_type irrC_degree irrQ_degree irrep_stats linC_degree linFp_degree linFq_degree linQ_degree pc_rank permutation_degree rational_characters_known ratrep_stats representations)
