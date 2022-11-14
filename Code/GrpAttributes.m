@@ -867,7 +867,9 @@ end intrinsic;
 intrinsic order_stats(G::LMFDBGrp) -> Any
 {returns the list of pairs [o, m] where m is the number of elements of order o}
     A := AssociativeArray();
-    if G`abelian then
+    if G`order eq 1 then
+        return [[1, 1]];
+    elif G`abelian then
         primary := AssociativeArray();
         for q in Get(G, "primary_abelian_invariants") do
             _, p, e := IsPrimePower(q);
@@ -1003,7 +1005,7 @@ intrinsic DirectFactorization(GG::Grp : Ns:=[]) -> Any
   ordG := #GG;
   // deal with trivial group
   if ordG eq 1 then
-    return false, _, _;
+    return false, _, _, _;
   end if;
   if #Ns eq 0 then
     //Ns := NormalSubgroups(GG);
