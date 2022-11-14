@@ -4,8 +4,13 @@ import sys
 import argparse
 from collections import defaultdict
 
-opj, ops = os.path.join, os.path.split
-root = ops(ops(os.getcwd())[0])[0]
+opj, ops, ope = os.path.join, os.path.split, os.path.exists
+root = os.getcwd()
+while not ope(opj(root, "lmfdb")):
+    newroot = ops(root)[0]
+    if root == newroot:
+        raise ModuleNotFoundError("No path to the LMFDB in the current directory")
+    root = newroot
 sys.path.append(opj(root, "lmfdb"))
 # Importing db from the LMFDB prints a bunch of garbage, so we disable printing for a bit
 savedstdout = sys.stdout
