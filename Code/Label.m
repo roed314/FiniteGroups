@@ -6,7 +6,7 @@ end intrinsic;
 intrinsic GroupsWithHash(N::RngIntElt, h::RngIntElt) -> List
 {Loads groups from the hash folder}
     hfile := Sprintf("DATA/hash_lookup/%o/%o", N, h);
-    ok := OpenTest(hfile);
+    ok := OpenTest(hfile, "r");
     if ok then
         labels := Split(Read(hfile), "\n");
         descs := [strip(Read("DATA/descriptions/" * label)) : label in labels];

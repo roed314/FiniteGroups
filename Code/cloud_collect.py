@@ -2,7 +2,7 @@
 
 # Move the output file to be collected into the DATA directory, named output{n}.txt, where n is the phase.
 
-import os
+import os, re
 import argparse
 from collections import defaultdict, Counter
 
@@ -56,8 +56,9 @@ def get_data(datafile):
                 # create todo files for the next phase (for 2->3)
     return data
 
-def get_timing_info(datafile):
-    data = get_data(datafile)
+def get_timing_info(datafile=None, data=None):
+    if data is None:
+        data = get_data(datafile)
     times = data["T"]
     unfinished = Counter()
     finished = {}
@@ -81,3 +82,50 @@ def get_timing_info(datafile):
     avgs = [(-sum(ts)/len(ts), task) for (task, ts) in stats.items()]
     avgs.sort()
     return unfinished, finished, maxs, avgs, stats
+
+err_location_re = re.compile(r'In file "(.*)", line (\d+), column (\d+):')
+schur_re = re.compile("Runtime error in 'pMultiplicator': Cohomology failed")
+basim_re = re.compile("Internal error in permc_random_base_change_basim_sub() at permc/chbase.c, line 488")
+aut_closed_re = re.compile("Runtime error: subgroups not closed under automorphism")
+internal_re = re.compile(r'Magma: Internal error')
+myquo_re = re.compile(r"Degree \d+=[\d\+]+ \(prior best")
+def get_errors(datafile=None, data=None):
+    if data is None:
+        data = get_data(datafile)
+    errors = data["E"]
+    located = defaultdict(list)
+    #internalD = defaultdict(list)
+    knownD = defaultdict(list)
+    unknown = []
+    # Search for the last occurence of a file number
+    for label, errlines in errors.items():
+        lastloc = None
+        internal = False
+        segfault = False
+        for i, line in enumerate(errlines):
+            if myquo_re.search(line): continue
+            m = err_location_re.search(line)
+            if m:
+                lastloc = i
+                loc = m.groups()
+                continue
+            if internal_re.search(line):
+                internal = True
+                continue
+            elif schur_re.search(line):
+                known = "schur"
+                break
+            elif basim_re.search(line):
+                known = "basim"
+                break
+            elif aut_closed_re.search(line):
+                known = "autclosed"
+                break
+        else:
+            if lastloc is not None:
+                located[loc].append((label, errlines[lastloc+1:]))
+            elif internal:
+                unknown.append((label, errlines))
+            continue
+        knownD[known].append(label)
+    return localed, knownD, unknown
