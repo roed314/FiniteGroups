@@ -128,4 +128,4 @@ def get_errors(datafile=None, data=None):
                 unknown.append((label, errlines))
             continue
         knownD[known].append(label)
-    return localed, knownD, unknown
+    return located, knownD, unknown
