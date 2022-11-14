@@ -1800,7 +1800,7 @@ end intrinsic;
 
 intrinsic gens_used(G::GrpPC) -> SeqEnum
 {The indices of the PCGenerators so that every PCGenerator is a power of one of these}
-    if G`order eq 1 then return []; end if;
+    if #G eq 1 then return []; end if;
     ps := PCPrimes(G);
     gens := PCGenerators(G);
     return [1] cat [i : i in [2..#gens] | gens[i] ne gens[i-1]^ps[i-1]];
