@@ -84,17 +84,11 @@ Path to finishing computations:
  c. Need to use Complements to find semidirect decompositions from NormalSubgroups
  d. Use 
 
-Save subgroup generators for centralizers of cc and for kernels of characters so that we don't need to construct subgroup lattice in these cases
 deal with real_problems and fake_problems
-*Profile for HaveHolomorph
+*Profile for HaveHolomorph, double check that the two methods give same results.
 Caching polredabs data
 E16000.bp|Runtime error in 'FPGroup': Incorrect group order detected
 E5184.su triggering error "subgroups not closed under automorphism" on line 340 of Subgroups.m
-
-E15552.ko|In file "/home/roed/cloud_test/GrpAttributes.m", line 1098, column 79:
-E15552.ko|>> Get(H, "normal") and #H`complements gt 0 then
-E15552.ko|                          ^
-E15552.ko|Runtime error in `: Attribute 'complements' for this structure is valid but not assigned
 
 E80000.ze|Internal error in permc_random_base_change_basim_sub() at permc/chbase.c, line 488
 Segfaults on 40.12, 1696.201, 390624.d, 192720.b, 18000000.u, 1632586752.fi, 13060694016.zk, 13060694016.pu, 52242776064.um, 4553936640000.a, 78364164096.dm, 142818689064960.g, 564221981491200.i
@@ -114,7 +108,7 @@ E120.5,336.114|SymmetricBilinearForm: G must be irreducible (heisenbug?  Don't s
 Make sure we have tex commands for all the Lie groups (like \AGL)
 Change Presentation.m to not use Holomoprh
 Use semidirect products to select a better name and fix latex errors (postprocess step so that we can work up from the bottom and include Lie group names if not stupid); make sure to modify other places names show up (subgroups table); make sure status variables like complex_characters_known are accurate (might have tried and failed)
-Write cloud_collect.py to collect results (combine rank and easy_rank)
+Write cloud_collect.py to collect results (combine rank and easy_rank; reattach center and kernel to characters from charc_centers and charc_kernels
 Add new columns:
  * gps_groups (aut_gens aut_stats cc_stats complements_known complex_characters_known div_stats element_repr_type irrC_degree irrQ_degree irrep_stats linC_degree linFp_degree linFq_degree linQ_degree pc_rank permutation_degree rational_characters_known ratrep_stats representations)
  * gps_subgroups (aut_quo_index aut_stab_index central_factor centralizer_order core_order normal_contained_in normal_contains quotient_hash subgroup_hash)

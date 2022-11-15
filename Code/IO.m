@@ -17,10 +17,10 @@ BoolCols := ["Agroup", "Zgroup", "abelian", "all_subgroups_known", "complex_char
 JsonbCols := ["quotient_fusion", "decomposition", "traces", "gens", "values", "direct_factorization", "representations"];
 
 SubgroupCols := ["centralizer", "kernel", "core", "center", "normal_closure", "normalizer", "sub1", "sub2"];
-SubgroupListCols := ["complements", "contains", "contained_in", "normal_contains", "normal_contained_in"];
+SubgroupListCols := ["complements", "contains", "contained_in", "normal_contains", "normal_contained_in", "charc_centers", "charc_kernels", "conj_centralizers"];
 
 EltCols := ["representative"];
-EltListCols := ["generators"];
+EltListCols := ["generators", "charc_center_gens", "charc_kernel_gens", "conj_centralizer_gens"];
 //QuotListCols := ["generator_images"];
 
 // The following is to be able to have a global variable
@@ -275,13 +275,26 @@ intrinsic SaveElt(out::GrpElt, G::LMFDBGrp) -> MonStgElt
 end intrinsic;
 
 intrinsic LoadEltList(inp::MonStgElt, G::LMFDBGrp) -> SeqEnum
-    {}
-    assert inp[1] eq "{" and inp[#inp] eq "}";
-    return [LoadElt(x, G) : x in Split(Substring(inp, 2, #inp-2), ",")];
+{}
+    i := 1; k := #inp;
+    while inp[i] eq " " do i +:= 1; end while;
+    while inp[k] eq " " do k -:= 1; end while;
+    if inp[1] eq "{" and inp[#inp] eq "}" then
+        // Need to strip interior whitespace to handle empty list [  ] appropriately
+        while inp[i+1] eq " " do i +:= 1; end while;
+        while inp[k-1] eq " " do k -:= 1; end while;
+        return [LoadEltList(x) : x in splitagg(inp[i+1..k-1], ",")];
+    else
+        return LoadElt(inp, G);
+    end if;
 end intrinsic;
 intrinsic SaveEltList(out::SeqEnum, G::LMFDBGrp) -> MonStgElt
-    {}
-    return "{" * Join([SaveElt(x, G) : x in out], ",") * "}";
+{}
+    return "{" * Join([SaveEltList(x, G) : x in out], ",") * "}";
+end intrinsic;
+intrinsic SaveEltList(out::GrpElt, G::LMFDBGrp) -> MonStgElt
+{base case}
+    return SaveElt(out, G);
 end intrinsic;
 
 intrinsic LoadSubgroupList(inp::MonStgElt, G::LMFDBGrp) -> SeqEnum

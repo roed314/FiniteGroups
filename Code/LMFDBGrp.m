@@ -156,6 +156,12 @@ declare attributes LMFDBGrp:
   MagmaMinimalNormalSubgroups,
   Zgroup,
   Agroup,
+  charc_center_gens,
+  charc_kernel_gens,
+  charc_centers,
+  charc_kernels,
+  conj_centralizer_gens,
+  conj_centralizers,
   //ModDecompUniq,
   wreath_product,
   wreath_data,
@@ -568,4 +574,9 @@ intrinsic Get(G::Any, attr::MonStgElt) -> Any
     G``attr := val;
     return val;
   end if;
+end intrinsic;
+
+intrinsic GetGrp(G::LMFDBGrp) -> LMFDBGrp
+{For compatibility for other GetGrp functions}
+    return G;
 end intrinsic;

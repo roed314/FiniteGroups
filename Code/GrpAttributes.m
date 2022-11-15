@@ -1517,6 +1517,43 @@ intrinsic characters_add_sort_and_labels(G::LMFDBGrp, cchars::Any, rchars::Any) 
 end intrinsic;
 
 
+// We don't want to have to compute the subgroup lattice at the same time as computing the characters
+// Thus we split up the process of identifying the center and kernel into two steps: writing down generators, and then identifying the subgroups (as part of the same run that computes the subgroup lattice)
+
+intrinsic charc_center_gens(G::LMFDBGrp) -> SeqEnum
+{}
+    return [[g : g in Generators(Get(chi, "center"))] : chi in Get(G, "CCCharacters")];
+end intrinsic;
+
+intrinsic charc_kernel_gens(G::LMFDBGrp) -> SeqEnum
+{}
+    return [[g : g in Generators(Get(chi, "kernel"))] : chi in Get(G, "CCCharacters")];
+end intrinsic;
+
+intrinsic charc_centers(G::LMFDBGrp) -> SeqEnum
+{}
+    GG := G`MagmaGrp;
+    return [sub<GG|gens> : gens in Get(G, "charc_center_gens")];
+end intrinsic;
+
+intrinsic charc_kernels(G::LMFDBGrp) -> SeqEnum
+{}
+    GG := G`MagmaGrp;
+    return [sub<GG|gens> : gens in Get(G, "charc_kernel_gens")];
+end intrinsic;
+
+intrinsic conj_centralizer_gens(G::LMFDBGrp) -> SeqEnum
+{}
+    return [[g : g in Generators(Get(cc, "centralizer"))] : cc in Get(G, "ConjugacyClasses")];
+end intrinsic;
+
+intrinsic conj_centralizers(G::LMFDBGrp) -> SeqEnum
+{}
+    GG := G`MagmaGrp;
+    return [sub<GG|gens> : gens in Get(G, "conj_centralizer_gens")];
+end intrinsic;
+
+
 intrinsic Characters(G::LMFDBGrp) ->  Tup
   {Initialize characters of an LMFDB group and return a list of complex characters and a list of rational characters}
   g := G`MagmaGrp;
