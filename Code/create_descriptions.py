@@ -191,6 +191,13 @@ def load_liegens():
     print("Lie aliases loaded in", walltime() - t0)
     return liegens
 
+def load_homs():
+    homs = {}
+    for label in os.listdir(opj("DATA", "homs")):
+        with open(opj("DATA", "homs", label)) as F:
+            homs[label] = F.read().strip()
+    return homs
+
 def load_nTt_to_gens():
     nTt_to_gens = {}
     with open(opj("DATA", "nTt_to_Perm.txt")) as F:
@@ -287,7 +294,7 @@ def load_ab():
     with open(opj("DATA", "abelian.txt")) as F:
         return set(F.read().strip().split("\n"))
 
-def find_best(aliases, An, Sn, liegens):
+def find_best(aliases, An, Sn, liegens, homs):
     # Pick best representative in each category
     # Abelian always PC
     # Use permutations for Sn and An
@@ -350,7 +357,11 @@ def find_best(aliases, An, Sn, liegens):
                 else:
                     problems.append(label)
                     comp = desc
-                best_of_show[label] = (typ, f"{comp}---->{desc}")
+                if label in homs:
+                    best_of_show[label] = (typ, homs[label])
+                else:
+                    print(f"Warning: no stored hom for {label}: {comp}---->{desc}")
+                    best_of_show[label] = (typ, f"{comp}---->{desc}")
             else:
                 if typ == "Lie":
                     # We make sure that the chosen description is first in aliases[label]["Lie"]
@@ -411,7 +422,8 @@ def create_data():
     nTt_to_gens = load_nTt_to_gens()
     load_pcdata(aliases, slookup)
     minrep = load_minrep(aliases)
-    best_of_breed, best_of_show, special_names, problems = find_best(aliases, An, Sn, liegens)
+    homs = load_homs()
+    best_of_breed, best_of_show, special_names, problems = find_best(aliases, An, Sn, liegens, homs)
     smalltrans = find_smalltrans(tbound, sibling_bound_by_label)
 
     to_add = {}

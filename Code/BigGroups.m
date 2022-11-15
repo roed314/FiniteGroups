@@ -86,7 +86,7 @@ Path to finishing computations:
 
 deal with real_problems and fake_problems
 *Profile for HaveHolomorph, double check that the two methods give same results.
-Caching polredabs data
+Caching polredabs data (for now, just copied manually)
 E16000.bp|Runtime error in 'FPGroup': Incorrect group order detected
 E5184.su triggering error "subgroups not closed under automorphism" on line 340 of Subgroups.m
 
