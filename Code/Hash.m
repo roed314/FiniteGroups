@@ -452,8 +452,12 @@ intrinsic IdentifyGroups(Glist::SeqEnum : hashes:=0) -> SeqEnum
         F := Open(fname, "w");
         Write(F, Join(toid, "\n"));
         Flush(F);
+        delete F;
         System("sync");
+        System("sleep 0.1");
         System(Sprintf("./identify.py --input %o --output %o.out", fname, fname));
+        System("sync");
+        System("sleep 0.1");
         possibilities := [[<StringToInteger(c) : c in Split(label, ".")> : label in Split(x, "|")] : x in Split(Read(fname * ".out"), "\n") | #x gt 0];
         System(Sprintf("rm %o %o.out", fname, fname));
         assert #possibilities eq #toid;
