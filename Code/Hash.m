@@ -459,8 +459,8 @@ intrinsic IdentifyGroups(Glist::SeqEnum : hashes:=0) -> SeqEnum
         System("sync");
         System("sleep 0.1");
         possibilities := [[<StringToInteger(c) : c in Split(label, ".")> : label in Split(x, "|")] : x in Split(Read(fname * ".out"), "\n") | #x gt 0];
-        System(Sprintf("rm %o %o.out", fname, fname));
         assert #possibilities eq #toid;
+        System(Sprintf("rm %o %o.out", fname, fname));
         // This will need to be updated when we add support for large orders
         StanPres := AssociativeArray();
         for i in [1..#Glist] do
