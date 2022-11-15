@@ -448,7 +448,8 @@ intrinsic IdentifyGroups(Glist::SeqEnum : hashes:=0) -> SeqEnum
     end for;
     toid := [x : x in toid];
     if #toid gt 0 then
-        fname := Sprintf("DATA/tmp%o", CollapseIntList(hashes));
+        fname := Split(Pipe("mktemp", ""), "\n")[1];
+        //fname := Sprintf("DATA/tmp%o", CollapseIntList(hashes));
         F := Open(fname, "w");
         Write(F, Join(toid, "\n"));
         Flush(F);
@@ -459,7 +460,10 @@ intrinsic IdentifyGroups(Glist::SeqEnum : hashes:=0) -> SeqEnum
         System("sync");
         System("sleep 0.1");
         possibilities := [[<StringToInteger(c) : c in Split(label, ".")> : label in Split(x, "|")] : x in Split(Read(fname * ".out"), "\n") | #x gt 0];
-        assert #possibilities eq #toid;
+        if #possibilities ne #toid then
+            print "Identify script did not produce the correct number of possibilities", fname;
+            assert false;
+        end if;
         System(Sprintf("rm %o %o.out", fname, fname));
         // This will need to be updated when we add support for large orders
         StanPres := AssociativeArray();
