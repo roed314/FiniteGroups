@@ -677,8 +677,8 @@ intrinsic IncludeNormalSubgroups(L::SubgroupLat)
     if Get(G, "complements_known") then
         for i in [1..#N] do
             H := N`subs[i];
-            Hnew := L`subs[lookup[i]];
-            Hnew`complements := [];
+            k := lookup[i];
+            L`subs[k]`complements := [];
             Comps := Complements(GG, H`subgroup);
             if #Comps eq 0 then continue; end if;
             if L`outer_equivalence then
@@ -694,23 +694,23 @@ intrinsic IncludeNormalSubgroups(L::SubgroupLat)
                         // New subgroup
                         j := #L + 1;
                         Cnew := SubgroupLatElement(L, C : i:=j);
-                        label := Split(Hnew`label, ".");
+                        // L has not yet been labeled, so we instead use the labeling on N
+                        label := Split(H`label, ".");
                         label[1] := Sprint(G`order div Cnew`order);
-                        label[#label] := label[#label] * "C" * Sprint(compnum);
+                        label[#label] := "NC" * Sprint(compnum);
                         Cnew`label := Join(label, ".");
                         Append(~L`subs, Cnew);
                     end if;
                 end if;
-                Append(~(Hnew`complements), j);
+                Append(~(L`subs[k]`complements), j);
             end for;
         end for;
         // Added more subgroups, so again have to reset L`by_index
         L`by_index := by_index(L);
     end if;
     for i in [1..#L] do
-        H := L`subs[i];
-        if not assigned H`normal then
-            H`normal := false;
+        if not assigned L`subs[i]`normal then
+            L`subs[i]`normal := false;
         end if;
     end for;
     ReportEnd(G, "IncludeNormalSubgroups", t0);
@@ -1874,8 +1874,33 @@ function CollapseLatElement(L, subcls, i, lookup)
     x`subgroup_count := &+[Get(H, "subgroup_count") : H in subcls];
     x`normalizer := lookup[Get(A, "normalizer")];
     x`normal_closure := lookup[Get(A, "normal_closure")];
+    for attr in ["normal", "characteristic", "easy_hash", "aut_gassman_vec"] do
+        if assigned A``attr then
+            x``attr := A``attr;
+        end if;
+    end for;
+    x`normal := Get(A, "normal");
+    if assigned A`complements then
+        x`complements := [lookup[j] : j in A`complements];
+    end if;
+    if assigned A`normal_overs then
+        x`normal_overs := {lookup[j] : j in A`normal_overs};
+    end if;
+    if assigned A`normal_unders then
+        x`normal_unders := {lookup[j] : j in A`normal_unders};
+    end if;
     if assigned A`characteristic_closure then
         x`characteristic_closure := lookup[A`characteristic_closure];
+    end if;
+    // Certain subgroups, like complements, already have a label
+    N := L`Grp`order;
+    if L`index_bound ne 0 and N div A`order gt L`index_bound and assigned A`label then
+        lab := Split(A`label, ".");
+        if lab[#lab] in ["M", "N"] then // maximal or normal subgroups beyond index bound
+            x`label := Join([lab[1], lab[2], lab[#lab]], ".");
+        elif lab[#lab][1..2] in ["CF", "NC"] then // corefree or normal complement subgroup beyond index bound; it would probably be best to redo numbering so that it's 1..k, but I'm not going to worry
+            x`label := A`label;
+        end if;
     end if;
     C := Get(A, "centralizer");
     x`centralizer := Type(C) eq NoneType select None() else lookup[C];
