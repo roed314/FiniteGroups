@@ -84,19 +84,10 @@ Path to finishing computations:
  c. Need to use Complements to find semidirect decompositions from NormalSubgroups
  d. Use 
 
-Errors on trivial group
 Save subgroup generators for centralizers of cc and for kernels of characters so that we don't need to construct subgroup lattice in these cases
-deal with real_problems
+deal with real_problems and fake_problems
 *Profile for HaveHolomorph
-Testing for many kinds of groups
 Caching polredabs data
-hash_lookup seemed to be missing orders: double check that it got fixed
-** 1728.12585: Runtime error in 'Read': Cannot open file "DATA/tmp7928613970740592946.out" (No such file or directory)
-E1.1|various errors
-E120.5,336.114|SymmetricBilinearForm: G must be irreducible
-E162.54,324.175|misc.m", line 61, column 21 (outer_group constructing coset table)
-E256.14764|LabelSubgroups.m", line 274, column 34 ('aut_label' for this structure is valid but not assigned)
-E256.56086,256.56087|grpauto.m", line 28, column 21 (FPGroup: Group too large for regular representation)
 E16000.bp|Runtime error in 'FPGroup': Incorrect group order detected
 E5184.su triggering error "subgroups not closed under automorphism" on line 340 of Subgroups.m
 
@@ -109,8 +100,15 @@ E80000.ze|Internal error in permc_random_base_change_basim_sub() at permc/chbase
 Segfaults on 40.12, 1696.201, 390624.d, 192720.b, 18000000.u, 1632586752.fi, 13060694016.zk, 13060694016.pu, 52242776064.um, 4553936640000.a, 78364164096.dm, 142818689064960.g, 564221981491200.i
 
 Known errors:
+E162.54,324.175|misc.m", line 61, column 21 (outer_group constructing coset table)
 E2684354560.fb|Runtime error: Index too large for coset enumeration - giving up (in MagmaAutGrp)
 E50824368.bp|Current total memory usage: 157699.9MB, failed memory request: 211106232508416.0MB
+E256.56086(+155)|package/Group/GrpPerm/aut/grpauto.m:28:21(F, phi := FPGroup(P);)|Runtime error in 'FPGroup': Group too large for regular representation
+
+Heisenbugs:
+E504.157(+8)|Subgroups.m:1780:22(x := subs[i];)|Runtime error in '[]': Sequence index 36 should be in the range 1 to 35"
+E1728.37907(+0)|package/Group/GrpPerm/aut/grpauto.m:55:12(x := P![Position(Y,g^-1*y*g) : y in Y ];)|Runtime error in '!': Illegal coercion
+E120.5,336.114|SymmetricBilinearForm: G must be irreducible (heisenbug?  Don't see now)
 
 
 Make sure we have tex commands for all the Lie groups (like \AGL)

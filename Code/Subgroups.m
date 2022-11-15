@@ -824,11 +824,6 @@ intrinsic SubGrpLstAut(X::LMFDBGrp) -> SubgroupLat
     N := Get(X, "order");
     trim := true;
     ordbd := 1;
-    res := New(SubgroupLat);
-    res`Grp := X;
-    res`outer_equivalence := true;
-    res`inclusions_known := false;
-    res`index_bound := 0; // reset below if appropriate
     if Get(X, "solvable") and Get(X, "HaveHolomorph") then
         // In this case, we can use SubgroupsLift inside the holomorph to get autjugacy classes
         t0 := ReportStart(X, "SolvAutSubs");
@@ -850,6 +845,11 @@ intrinsic SubGrpLstAut(X::LMFDBGrp) -> SubgroupLat
         X`number_normal_subgroups := nnorm;
         X`number_subgroups := nsubs;
         X`number_subgroup_classes := nconj;
+        res := New(SubgroupLat);
+        res`Grp := X;
+        res`outer_equivalence := true;
+        res`inclusions_known := false;
+        res`index_bound := 0; // reset when trimming if appropriate
         res`subs := [SubgroupLatElement(res, subs[i]`subgroup : i:=i) : i in [1..#subs]];
         ReportEnd(X, "SolvAutSubs", t0);
     elif Get(X, "AllSubgroupsOk") then
@@ -863,36 +863,49 @@ intrinsic SubGrpLstAut(X::LMFDBGrp) -> SubgroupLat
     else
         trim := false;
         // There may be too many subgroups, so we work by index
+        // We construct a lattice to pass in to CollapseLatticeByAutGrp,
+        // building the subgroups one index at a time
         t0 := ReportStart(X, "SubGrpLstByDivisor");
         D := Reverse(Divisors(N));
-        subs := [];
-        extra_subs := [];
-        count := 0;
+        tmp := New(SubgroupLat);
+        tmp`Grp := X;
+        tmp`outer_equivalence := false; tmp`inclusions_known := false;
+        bi := AssociativeArray(); bia := AssociativeArray();
+        ccount := 0; acount := 0;
+        dbreak := 0;
         for d in D do
             t1 := ReportStart(X, Sprintf("SubGrpLstDivisor (%o)", d));
             dsubs := Subgroups(G : OrderEqual := d);
             ReportEnd(X, Sprintf("SubGrpLstDivisor (%o)", d), t1);
+            if #dsubs eq 0 then continue; end if;
+            dsubs := [SubgroupLatElement(tmp, dsubs[i]`subgroup : i:=i+ccount) : i in [1..#dsubs]];
+            bi[N div d] := dsubs;
             t1 := ReportStart(X, Sprintf("SubGrpLstSplitDivisor (%o)", d));
-            dsubs := SplitByAuts([dsubs], X : use_order := false);
+            bia[N div d] := SplitByAuts([dsubs], X : use_order := false);
             ReportEnd(X, Sprintf("SubGrpLstSplitDivisor (%o)", d), t1);
-            count +:= #dsubs;
-            if count ge NUM_SUBS_CUTOFF_AUT then
+            ccount +:= #dsubs;
+            acount +:= #bia[N div d];
+            if acount ge NUM_SUBS_CUTOFF_AUT then
+                if dbreak eq 0 then dbreak := N div d; end if;
+                for dd -> v in bi do
+                    if dd ge dbreak then
+                        Remove(~bi, dd);
+                        Remove(~bia, dd);
+                    end if;
+                end for;
                 break;
-            elif count ge NUM_SUBS_LIMIT_AUT then
-                extra_subs cat:= dsubs;
-            else
-                subs cat:= dsubs;
+            elif acount ge NUM_SUBS_LIMIT_AUT and dbreak eq 0 then
+                dbreak := N div d;
             end if;
         end for;
-        if count lt NUM_SUBS_CUTOFF_AUT then
-            subs cat:= extra_subs;
+        tmp`subs := &cat[bi[d] : d in Sort([k : k in Keys(bi)])];
+        tmp`index_bound := Max(Keys(bi));
+        if tmp`index_bound eq N then
+            tmp`index_bound := 0;
         end if;
-        ordbd := subs[#subs][1]`order;
-        res`subs := [SubgroupLatElement(res, subs[i][1]`subgroup : i:=i) : i in [1..#subs]];
-        for i in [1..#subs] do
-            res`subs[i]`cc_count := #subs[i];
-        end for;
-        if ordbd ne 1 then res`index_bound := N div ordbd; end if;
+        tmp`by_index := bi;
+        tmp`by_index_aut := bia;
+        res := CollapseLatticeByAutGrp(tmp);
         ReportEnd(X, "SubGrpLstByDivisor", t0);
     end if;
     if trim and #res`subs ge NUM_SUBS_CUTOFF_AUT then

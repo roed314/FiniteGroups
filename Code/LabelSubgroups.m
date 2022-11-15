@@ -312,6 +312,8 @@ intrinsic LabelNormalSubgroups(S::SubgroupLat)
             for anum in [1..#by_anum] do
                 if autjugacy then
                     sub := by_anum[anum][1];
+                    sub`aut_label := [index, acode, anum];
+                    sub`full_label := [index, acode, anum];
                     sub`label := Sprintf("%o.%o%o.N", index, CremonaCode(acode), IntegerToString(anum));
                 else
                     aclass := by_anum[anum];

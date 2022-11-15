@@ -271,22 +271,22 @@ intrinsic monomial(G::LMFDBGrp) -> BoolElt
         stat := [false : c in ct];
         ls := LowIndexSubgroups(G, maxd);
         if Type(ls) eq NoneType then
-          return None();
+            return None();
         else
-          hh := <z`MagmaSubGrp : z in ls>;
-          for h in hh do
-              lc := LinearCharacters(h);
-              indc := <Induction(z,g) : z in lc>;
-              for c1 in indc do
-                  p := Position(ct, c1);
-                  if p gt 0 then
-                      Remove(~ct, p);
-                  end if;
-              end for;
-              if #ct eq 0 then
-                  return true;
-              end if;
-          end for;
+            hh := <z`MagmaSubGrp : z in ls>;
+            for h in hh do
+                lc := LinearCharacters(h);
+                indc := <Induction(z,g) : z in lc>;
+                for c1 in indc do
+                    p := Position(ct, c1);
+                    if p gt 0 then
+                        Remove(~ct, p);
+                    end if;
+                end for;
+                if #ct eq 0 then
+                    return true;
+                end if;
+            end for;
         end if;
     end if;
     return false;

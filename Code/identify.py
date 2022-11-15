@@ -6,7 +6,8 @@ from collections import defaultdict
 
 opj, ops, ope = os.path.join, os.path.split, os.path.exists
 root = os.getcwd()
-while not ope(opj(root, "lmfdb")):
+# This repo contains an LMFDB folder, and some OSes (like OS X) are not case sensitive
+while not (ope(opj(root, "lmfdb")) and ope(opj(root, "lmfdb", "start-lmfdb.py"))):
     newroot = ops(root)[0]
     if root == newroot:
         raise ModuleNotFoundError("No path to the LMFDB in the current directory")
