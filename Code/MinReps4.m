@@ -44,5 +44,5 @@ else
 end if;
 PrintFile(outfile, Sprintf("%o|%o|%o|%o", label, desc, Degree(P), SavePerms([phi(psi(g)) : g in gens])));
 PrintFile(timefile, Cputime() - t0);
-//System("rm " * infile);
+System("rm " * infile);
 exit;
