@@ -733,7 +733,12 @@ end intrinsic
 intrinsic aut_group(G::LMFDBGrp) -> MonStgElt
 {returns label of the automorphism group}
     t0 := ReportStart(G, "LabelAutGroup");
-    s := label(Get(G, "MagmaAutGroup"));
+    if not PossiblyLabelable(Get(G, "aut_order")) then
+        return None();
+    end if;
+    aut := Get(G, "MagmaAutGroup");
+    aut := PermutationGroup(aut);
+    s := label(aut);
     ReportEnd(G, "LabelAutGroup", t0);
     return s;
 end intrinsic;
@@ -765,7 +770,9 @@ intrinsic outer_group(G::LMFDBGrp) -> Any
     end if;
     aut := Get(G, "MagmaAutGroup");
     t0 := ReportStart(G, "LabelOuterGroup");
-    s := label(OuterFPGroup(aut)); // this could be very slow, since isomorphism testing with finitely presented groups is hard
+    out := OuterFPGroup(aut);
+    out := PermutationGroup(out);
+    s := label(out); // this could be very slow, since isomorphism testing with finitely presented groups is hard
     ReportEnd(G, "LabelOuterGroup", t0);
     return s;
 end intrinsic;
