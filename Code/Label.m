@@ -10,7 +10,8 @@ intrinsic GroupsWithHash(N::RngIntElt, h::RngIntElt) -> List
     if ok then
         labels := Split(Read(hfile), "\n");
         descs := [strip(Read("DATA/descriptions/" * label)) : label in labels];
-        return [* <labels[i], StringToGroup(descs[i])> : i in [1..#labels] *];
+        homs := [* StringToGroupHom(descs[i]) : i in [1..#labels] *];
+        return [* <labels[i], ">>" in descs[i] select Codomain(homs[i]) else Domain(homs[i])> : i in [1..#labels] *];
     else
         return [* *];
     end if;
