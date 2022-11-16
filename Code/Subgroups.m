@@ -676,7 +676,7 @@ intrinsic IncludeNormalSubgroups(L::SubgroupLat)
     // SubgroupIdentify sets L`by_index, which needs to be reset since we added subgroups
     L`by_index := by_index(L);
     ibnd := L`index_bound;
-    t1 := ReportStart(G, "ComputingComplements");
+    t1 := ReportStart(G, "ComputeComplements");
     if Get(G, "complements_known") then
         for i in [1..#N] do
             H := N`subs[i];
@@ -711,7 +711,7 @@ intrinsic IncludeNormalSubgroups(L::SubgroupLat)
         // Added more subgroups, so again have to reset L`by_index
         L`by_index := by_index(L);
     end if;
-    ReportEnd(G, "ComputingComplements", t1);
+    ReportEnd(G, "ComputeComplements", t1);
     for i in [1..#L] do
         if not assigned L`subs[i]`normal then
             L`subs[i]`normal := false;

@@ -433,8 +433,25 @@ intrinsic DefaultAttributes(c::Cat) -> SeqEnum
     all_attrs := GetAttributes(c);
     for attr in all_attrs do
         if attr in defaults then continue; end if;
-        // Blacklist attributes that aren't working
+        // Blacklist attributes that shouldn't be included
         blacklist := [
+                      // Temporary attributes (used to help divide up the computation into multiple jobs)
+                      "charc_center_gens",
+                      "charc_centers",
+                      "charc_kernel_gens",
+                      "charc_kernels",
+                      "conj_centralizer_gens",
+                      "conj_centralizers",
+                      "easy_rank",
+
+                      // Deprecated attributes
+                      "elt_rep_type",
+                      "pc_code",
+                      "perm_gens",
+                      "smallrep",
+                      "gens_used",
+                      "finite_matrix_group",
+
                       // Group attributes
 
                       // Subgroup attributes
@@ -547,6 +564,8 @@ intrinsic AttrType(attr::MonStgElt) -> MonStgElt
         return "integer";
     elif attr in SmallintCols then
         return "smallint";
+    elif attr in BigintCols then
+        return "bigint";
     elif attr in NumericCols then
         return "numeric";
     elif attr in BoolCols then

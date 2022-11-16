@@ -87,8 +87,9 @@ Path to finishing computations:
 deal with real_problems and fake_problems
 *Profile for HaveHolomorph, double check that the two methods give same results.
 Caching polredabs data (for now, just copied manually)
+Bug in Complements (reported to Magma)
 E16000.bp|Runtime error in 'FPGroup': Incorrect group order detected
-E5184.su triggering error "subgroups not closed under automorphism" on line 340 of Subgroups.m
+E5184.su triggering error "subgroups not closed under automorphism" on line 340 of Subgroups.m (from Comps := [C[1] : C in SplitByAuts([Comps], G : use_order:=false)];)
 
 E80000.ze|Internal error in permc_random_base_change_basim_sub() at permc/chbase.c, line 488
 Segfaults on 40.12, 1696.201, 390624.d, 192720.b, 18000000.u, 1632586752.fi, 13060694016.zk, 13060694016.pu, 52242776064.um, 4553936640000.a, 78364164096.dm, 142818689064960.g, 564221981491200.i
@@ -111,6 +112,42 @@ Use semidirect products to select a better name and fix latex errors (postproces
 Write cloud_collect.py to collect results (combine rank and easy_rank; reattach center and kernel to characters from charc_centers and charc_kernels
 Add new columns:
  * gps_groups (aut_gens aut_stats cc_stats complements_known complex_characters_known div_stats element_repr_type irrC_degree irrQ_degree irrep_stats linC_degree linFp_degree linFq_degree linQ_degree pc_rank permutation_degree rational_characters_known ratrep_stats representations)
+
+db.gps_groups.add_column("linFp_degree", "integer", "The minimum size matrix group over a finite prime field where this group arises as a subgroup")
+db.gps_groups.add_column("representations", "jsonb", "Dictionary containing best representations of each type: polycyclic, permutation, matrix/Z, matrix/Fp, matrix/Fq, matrix/Zn, Lie.  The keys are strings: PC, Perm, GLZ, GLFp, GLFq, GLZn, Lie.  The values give enough information to reconstruct the representation, including some subset of gens (generators encoded as integers except for PC, when it gives the positions of the polycyclic generators that are not powers of other generators), code (for PC gives an integer encoding the structure as in GAP's PcGroupCode or Magma's SmallGroupDecoding), d (gives the degree for permutation and matrix groups), p or q (size of base ring for matrix groups), pres (for PC gives a list of integers to be input to Magma's PCGroup), family (for Lie groups gives a string describing a classical name for the family), b (for GLZ gives an integer so that entries are encoded in the range 0..b-1 and shifted by b//2)")
+db.gps_groups.add_column("complements_known", "boolean", "Whether complements are stored for all normal subgroups")
+db.gps_groups.add_column("irrC_degree", "integer", "the smallest degree of a faithful irreducible complex representation, or -1 if there is none")
+db.gps_groups.add_column("linC_degree", "integer", "the smallest degree of a faithful complex representation")
+db.gps_groups.add_column("irrQ_degree", "integer", "the smallest degree of a faithful irreducible rational representation, or -1 if there is none")
+db.gps_groups.add_column("linQ_degree", "integer", "the smallest degree of a faithful rational representation")
+db.gps_groups.add_column("irrep_stats", "numeric[]", "The list of pairs [d,m] where m is the number of complex irreducible representations of G of dimension d")
+db.gps_groups.add_column("div_stats", "numeric[]", "The list of quadruples [o, s, k, m] where m is the number of divisions of order o containing k conjugacy classes of size s")
+db.gps_groups.add_column("aut_stats", "numeric[]", "The list of quadruples [o, s, k, m] where m is the number of autjugacy classes of order o containing k conjugacy classes of size s")
+db.gps_groups.add_column("ratrep_stats", "numeric[]", "The list of pairs [d,m] where m is the number of rational irreducible representations of G of dimension d")
+db.gps_groups.add_column("cc_stats", "numeric[]", "The list of triples [o, s, m] where m is the number of conjugacy classes of order o and size s")
+db.gps_groups.add_column("rational_characters_known", "boolean", "Whether the rational character table is stored")
+db.gps_groups.add_column("complex_characters_known", "boolean", "Whether the complex character table is stored")
+db.gps_groups.add_column("permutation_degree", "integer", "the minimum degree where this group arises as a subgroup of Sn")
+db.gps_groups.add_column("aut_gens", "numeric[]", "Generators of the automorphism group, encoded as a list of lists of integers (or decimals if GLZ); the first gives a list of generators of G and the others give the images of these generators under a sequence of automorphisms generating the automorphism group")
+db.gps_groups.add_column("pc_rank", "smallint", "The smallest number of generators needed for a polycyclic presentation of this group; null if unknown or not solvable")
+db.gps_groups.add_column("element_repr_type", "text", "A string giving one of the keys of the representations dictionary, showing which representation is used in displaying elements")
+db.gps_groups.drop_column("elt_rep_type")
+db.gps_groups.drop_column("finite_matrix_group")
+db.gps_groups.drop_column("pc_code")
+db.gps_groups.drop_column("perm_gens")
+db.gps_groups.drop_column("smallrep")
+db.gps_groups.drop_column("gens_used")
+
+db.gps_subgroups.add_column("centralizer_order", "numeric", "The order of the centralizer of this subgroup")
+db.gps_subgroups.add_column("core_order", "numeric", "The order of the core of this subgroup")
+db.gps_subgroups.add_column("subgroup_hash", "bigint", "The hash of the subgroup")
+db.gps_subgroups.add_column("quotient_hash", "bigint", "The hash of the quotient (null if not normal)")
+db.gps_subgroups.add_column("normal_contains", "text[]", "The labels of the normal subgroups minimally contained in this one (null if this subgroup is not normal)")
+db.gps_subgroups.add_column("normal_contained_in", "text[]", "The labels of the normal subgroups minimally containing this one (null if this subgroup is not normal)")
+db.gps_subgroups.add_column("aut_stab_index", "numeric", "The index of Stab_A(H) in Aut(G); 1 for characteristic subgroups")
+db.gps_subgroups.add_column("aut_quo_index", "numeric", "The index of the image of Stab_A(H) in Aut(G/H)")
+db.gps_subgroups.add_column("central_factor", "boolean", "H is a central factor of G if it is nontrivial, noncentral, normal and generates G together with its centralizer.  In such a case, G will be a nontrivial central product of H with its centralizer.  Moreover, any nonabelian group that has some nontrivial central product decomposition will have one of this form")
+
  * gps_subgroups (aut_quo_index aut_stab_index central_factor centralizer_order core_order normal_contained_in normal_contains quotient_hash subgroup_hash)
 Remove columns:
  * finite_matrix_group, elt_rep_type, perm_gens, pc_code, gens_used, smallrep (replaced by irrC_degree)

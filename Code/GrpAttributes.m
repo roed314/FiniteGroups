@@ -40,7 +40,7 @@ intrinsic number_divisions(G::LMFDBGrp) -> Any
 end intrinsic;
 
 intrinsic aut_stats(G::LMFDBGrp) -> Any
-{returns the list of triples [o, s, k, m] where m is the number of autjugacy classes of order o containing k conjugacy classes of size s}
+{returns the list of quadruples [o, s, k, m] where m is the number of autjugacy classes of order o containing k conjugacy classes of size s}
     // Don't want to use CCAutCollapse since that triggers computation of the rational character table
     CC := Get(G, "MagmaConjugacyClasses");
     if Get(G, "HaveHolomorph") then
@@ -941,7 +941,7 @@ intrinsic cc_stats(G::LMFDBGrp) -> Any
 end intrinsic;
 
 intrinsic div_stats(G::LMFDBGrp) -> Any
-{returns the list of triples [o, s, k, m] where m is the number of divisions of order o containing k conjugacy classes of size s}
+{returns the list of quadruples [o, s, k, m] where m is the number of divisions of order o containing k conjugacy classes of size s}
     if G`abelian then
         return [[pair[1], 1, EulerPhi(pair[1]), pair[2] div EulerPhi(pair[1])] : pair in Get(G, "order_stats")];
     elif IsCpxCq(G`order) then
