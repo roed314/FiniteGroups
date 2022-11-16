@@ -449,16 +449,10 @@ intrinsic IdentifyGroups(Glist::SeqEnum : hashes:=0) -> SeqEnum
     toid := [x : x in toid];
     if #toid gt 0 then
         fname := Split(Pipe("mktemp", ""), "\n")[1];
-        //fname := Sprintf("DATA/tmp%o", CollapseIntList(hashes));
         F := Open(fname, "w");
         Write(F, Join(toid, "\n"));
-        Flush(F);
         delete F;
-        System("sync");
-        System("sleep 0.1");
         System(Sprintf("./identify.py --input %o --output %o.out", fname, fname));
-        System("sync");
-        System("sleep 0.1");
         possibilities := [[<StringToInteger(c) : c in Split(label, ".")> : label in Split(x, "|")] : x in Split(Read(fname * ".out"), "\n") | #x gt 0];
         if #possibilities ne #toid then
             print "Identify script did not produce the correct number of possibilities", fname;

@@ -129,3 +129,6 @@ def get_errors(datafile=None, data=None):
             continue
         knownD[known].append(label)
     return located, knownD, unknown
+
+def show_errors(label, data):
+    print("\n".join(data["E"][label]))

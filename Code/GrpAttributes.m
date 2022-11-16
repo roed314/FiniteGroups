@@ -737,8 +737,9 @@ intrinsic aut_group(G::LMFDBGrp) -> MonStgElt
         return None();
     end if;
     aut := Get(G, "MagmaAutGroup");
-    aut := PermutationGroup(aut);
-    s := label(aut);
+    m, P, Y := ClassAction(aut);
+    assert #P eq Get(G, "aut_order");
+    s := label(P);
     ReportEnd(G, "LabelAutGroup", t0);
     return s;
 end intrinsic;
@@ -768,11 +769,14 @@ intrinsic outer_group(G::LMFDBGrp) -> Any
     if not PossiblyLabelable(N) then
         return None();
     end if;
+    GG := G`MagmaGrp;
     aut := Get(G, "MagmaAutGroup");
     t0 := ReportStart(G, "LabelOuterGroup");
-    out := OuterFPGroup(aut);
-    out := PermutationGroup(out);
-    s := label(out); // this could be very slow, since isomorphism testing with finitely presented groups is hard
+    m, P, Y := ClassAction(aut);
+    inners := [P![Position(Y,g^-1*y*g) : y in Y] : g in Generators(GG)];
+    inners := sub<P | inners>;
+    out := BestQuotient(P, inners);
+    s := label(out);
     ReportEnd(G, "LabelOuterGroup", t0);
     return s;
 end intrinsic;
