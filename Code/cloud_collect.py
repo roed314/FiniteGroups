@@ -203,7 +203,7 @@ def write_upload_files(data, overwrite=False):
         for code in codes:
             cols = tmps[code]
             label_loc = cols.index("label")
-            missing = [gp_label for gp_label in finished if gl_label not in data[code]]
+            missing = [gp_label for gp_label in finished if gp_label not in data[code]]
             if missing:
                 raise ValueError("Missing %s entries for %s: %s..." % (len(missing), code, missing[0]))
             for gp_label, lines in data[code].items():
