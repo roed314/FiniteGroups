@@ -227,9 +227,15 @@ def write_upload_files(data, overwrite=False):
             D["center"] = centers[int(D["counter"])-1]
             D["kernel"] = kernels[int(D["counter"])-1]
         # Fix wreath_data, which needed more quotes
-        if D["wreath_data"][0] == "{" and D["wreath_data"][-1] == "}":
-            assert "(" not in D["wreath_data"] # want to know if there's a Lie group here
-            D["wreath_data"] = '{"' + '","'.join(D["wreath_data"][1:-1].split(",")) + '"}'
+        if gpD["wreath_data"][0] == "{" and D["wreath_data"][-1] == "}":
+            assert "(" not in gpD["wreath_data"] # want to know if there's a Lie group here
+            gpD["wreath_data"] = '{"' + '","'.join(D["wreath_data"][1:-1].split(",")) + '"}'
+        # Fix *_stats, which should have used { } rather than < >
+        gpD["irrep_stats"] = gpD["irrep_stats"].replace("<","{").replace(">","}")
+        gpD["ratrep_stats"] = gpD["ratrep_stats"].replace("<","{").replace(">","}")
+        gpD["aut_stats"] = gpD["aut_stats"].replace("<","{").replace(">","}")
+        gpD["div_stats"] = gpD["div_stats"].replace("<","{").replace(">","}")
+        gpD["cc_stats"] = gpD["cc_stats"].replace("<","{").replace(">","}")
     for oname, (final_cols, final_types) in finals.items():
         with open(opj("DATA", oname+".txt"), "w") as F:
             _ = F.write("|".join(final_cols) + "\n" + "|".join(final_types) + "\n\n")
