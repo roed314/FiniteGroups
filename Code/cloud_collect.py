@@ -194,7 +194,7 @@ def write_upload_files(data, overwrite=False):
         "GrpConjCls": "J",
         "GrpChtrCC": "C",
         "GrpChtrQQ": "Q",
-        "Grp": "aAbcqjltnmsw",
+        "Grp": "aAbcqjltmsw",
     }
     out = defaultdict(lambda: defaultdict(lambda: defaultdict(dict)))
     for oname, codes in final_to_tmp.items():
