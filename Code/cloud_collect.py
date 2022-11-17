@@ -229,7 +229,7 @@ def write_upload_files(data, overwrite=False):
         # Fix wreath_data, which needed more quotes
         if gpD["wreath_data"][0] == "{" and gpD["wreath_data"][-1] == "}":
             assert "(" not in gpD["wreath_data"] # want to know if there's a Lie group here
-            gpD["wreath_data"] = '{"' + '","'.join(D["wreath_data"][1:-1].split(",")) + '"}'
+            gpD["wreath_data"] = '{"' + '","'.join(gpD["wreath_data"][1:-1].split(",")) + '"}'
         # Fix *_stats, which should have used { } rather than < >
         gpD["irrep_stats"] = gpD["irrep_stats"].replace("<","{").replace(">","}")
         gpD["ratrep_stats"] = gpD["ratrep_stats"].replace("<","{").replace(">","}")
