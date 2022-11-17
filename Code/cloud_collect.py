@@ -236,6 +236,14 @@ def write_upload_files(data, overwrite=False):
         gpD["aut_stats"] = gpD["aut_stats"].replace("<","{").replace(">","}")
         gpD["div_stats"] = gpD["div_stats"].replace("<","{").replace(">","}")
         gpD["cc_stats"] = gpD["cc_stats"].replace("<","{").replace(">","}")
+        # Set diagram_x, diagram_aut_x, and diagram_norm_x
+        # For testing purposes, we just set these to 0
+        for label, D in out["GrpSubGrp"][gp_label].items():
+            D["diagram_x"] = D["diagram_aut_x"] = "0"
+            if D["normal"] == "t":
+                D["diagram_norm_x"] = "0"
+            else:
+                D["diagram_norm_x"] = r"\N"
     for oname, (final_cols, final_types) in finals.items():
         with open(opj("DATA", oname+".txt"), "w") as F:
             _ = F.write("|".join(final_cols) + "\n" + "|".join(final_types) + "\n\n")
