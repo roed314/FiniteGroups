@@ -209,6 +209,7 @@ def write_upload_files(data, overwrite=False):
             for gp_label, lines in data[code].items():
                 if gp_label in finished:
                     for line in lines:
+                        #### FIX SOME BUGS FROM SaveIntegerList
                         line = line.split("|")
                         assert len(line) == len(cols)
                         label = line[label_loc]
@@ -225,6 +226,10 @@ def write_upload_files(data, overwrite=False):
         for label, D in out["GrpChtrCC"][gp_label].items():
             D["center"] = centers[int(D["counter"])-1]
             D["kernel"] = kernels[int(D["counter"])-1]
+        # Fix wreath_data, which needed more quotes
+        if D["wreath_data"][0] == "{" and D["wreath_data"][-1] == "}":
+            assert "(" not in D["wreath_data"] # want to know if there's a Lie group here
+            D["wreath_data"] = '{"' + '","'.join(D["wreath_data"][1:-1].split(",")) + '"}'
     for oname, (final_cols, final_types) in finals.items():
         with open(opj("DATA", oname+".txt"), "w") as F:
             _ = F.write("|".join(final_cols) + "\n" + "|".join(final_types) + "\n\n")
