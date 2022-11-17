@@ -238,7 +238,7 @@ def write_upload_files(data, overwrite=False):
         gpD["cc_stats"] = gpD["cc_stats"].replace("<","{").replace(">","}")
         # Set diagram_x, diagram_aut_x, and diagram_norm_x
         # For testing purposes, we just set these to 0
-        for label, D in out["GrpSubGrp"][gp_label].items():
+        for label, D in out["SubGrp"][gp_label].items():
             D["diagram_x"] = D["diagram_aut_x"] = "0"
             if D["normal"] == "t":
                 D["diagram_norm_x"] = "0"
