@@ -138,6 +138,9 @@ db.gps_groups.drop_column("perm_gens")
 db.gps_groups.drop_column("smallrep")
 db.gps_groups.drop_column("gens_used")
 
+db.gps_groups.drop_column("hash")
+db.gps_groups.add_column("hash", "bigint", "Isomorphism-invariant hash for the group")
+
 db.gps_subgroups.add_column("centralizer_order", "numeric", "The order of the centralizer of this subgroup")
 db.gps_subgroups.add_column("core_order", "numeric", "The order of the core of this subgroup")
 db.gps_subgroups.add_column("subgroup_hash", "bigint", "The hash of the subgroup")

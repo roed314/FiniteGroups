@@ -242,8 +242,10 @@ def write_upload_files(data, overwrite=False):
             D["diagram_x"] = D["diagram_aut_x"] = "0"
             if D["normal"] == "t":
                 D["diagram_norm_x"] = "0"
+                D["diagramx"] = "{0,0,0,0}"
             else:
                 D["diagram_norm_x"] = r"\N"
+                D["diagramx"] = "{0,0}"
     for oname, (final_cols, final_types) in finals.items():
         with open(opj("DATA", oname+".txt"), "w") as F:
             _ = F.write("|".join(final_cols) + "\n" + "|".join(final_types) + "\n\n")

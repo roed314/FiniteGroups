@@ -282,6 +282,8 @@ declare attributes LMFDBSubGrp:
   standard_generators,
   diagram_x,
   diagram_aut_x,
+  diagram_norm_x,
+  diagramx,
   projective_image,
   subgroup_tex,
   ambient_tex,
