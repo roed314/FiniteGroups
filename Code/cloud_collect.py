@@ -196,7 +196,7 @@ def write_upload_files(data, overwrite=False):
         "GrpChtrQQ": "Q",
         "Grp": "aAbcqjltnmsw",
     }
-    out = defaultdict(lambda: defaultdict(dict))
+    out = defaultdict(lambda: defaultdict(lambda: defaultdict(dict)))
     for oname, codes in final_to_tmp.items():
         if not overwrite and ope(oname+".txt"):
             raise ValueError("File %s.txt already exists" % oname)
@@ -212,10 +212,22 @@ def write_upload_files(data, overwrite=False):
                         line = line.split("|")
                         assert len(line) == len(cols)
                         label = line[label_loc]
-                        out[oname][label].update(dict(zip(cols, line)))
-        # Sort them....
-        final_cols, final_types = finals[oname]
+                        out[oname][gp_label][label].update(dict(zip(cols, line)))
+    # Sort them....
+    # Update centers, kernels and centralizers from the corresponding columns
+    for gp_label, gpD in out["Grp"].items():
+        gpD = gpD[gp_label]
+        centers = gpD["charc_centers"][1:-1].split(",")
+        kernels = gpD["charc_kernels"][1:-1].split(",")
+        centralizers = gpD["conj_centralizers"][1:-1].split(",")
+        for label, D in out["GrpConjCls"][gp_label].items():
+            D["centralizer"] = centralizers[int(D["counter"])-1]
+        for label, D in out["GrpChtrCC"][gp_label].items():
+            D["center"] = centers[int(D["counter"])-1]
+            D["kernel"] = kernels[int(D["counter"])-1]
+    for oname, (final_cols, final_types) in finals.items():
         with open(opj("DATA", oname+".txt"), "w") as F:
             _ = F.write("|".join(final_cols) + "\n" + "|".join(final_types) + "\n\n")
-            for label, D in out[oname].items():
-                _ = F.write("|".join(D[col] for col in final_cols) + "\n")
+            for gp_label, gpD in out[oname].items():
+                for label, D in gpD.items():
+                    _ = F.write("|".join(D[col] for col in final_cols) + "\n")
