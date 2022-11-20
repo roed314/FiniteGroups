@@ -48,7 +48,7 @@ for X in headers do
     if Type(X) eq MonStgElt then
         print X, compare[X];
     else
-        pring X, compare[X[2]];
+        print X, compare[X[2]];
     end if;
 end for;
 print "Correctness comparison";
