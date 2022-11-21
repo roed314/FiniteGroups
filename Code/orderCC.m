@@ -198,13 +198,21 @@ intrinsic ordercc(G::LMFDBGrp, gens::SeqEnum: dorandom:=true) -> Any
     end while;
     return priorities, val, expos;
   end function;
+  vprint User1: "Starting kys loop", #kys, dorandom;
+  ctr := 0;
   for k in kys do
     if #step2[k] eq 1 and #Rep(step2[k]) eq 1 then
       ; // nothing to do
     else
       // random group elements until we hit a class we need
+      vprint User1: "ctr", ctr;
       needmoregens:=true;
+      pwrctr := 0;
       while needmoregens do
+        if IsPowerOf(pwrctr, 2) then
+          vprint User1: "pwrctr", pwrctr;
+        end if;
+        pwrctr +:= 1;
         needmoregens:=false;
         for divi in step2[k] do
           if priorities[Rep(divi)] gt ncc then
@@ -243,6 +251,7 @@ intrinsic ordercc(G::LMFDBGrp, gens::SeqEnum: dorandom:=true) -> Any
           end if;
         end if;
       end while;
+      ctr +:= 1;
     end if;
     // We now have enough apex generators for these divisions
     for divi in step2[k] do
