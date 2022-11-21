@@ -231,12 +231,12 @@ intrinsic Valid(C::LMFDBSubgroupCache) -> BoolElt
     return assigned C`description;
 end intrinsic;
 
-function SplitByAuts(L, G : use_order:=true, use_hash:=true, use_gassman:=false, aut:=true)
+function SplitByAuts(L, G : use_order:=true, use_hash:=true, use_gassman:=false, aut:=true, fill_orbits:=false)
     // when aut is false we are using this function to group subgroups up to CONJUGACY,
     // in cases where the subgroups were iteratively found up to conjugacy inside a smaller group
     // than G
-    // L is a list of lists of records or SubgroupLatElts, including `order and `subgroup
-    // It should be closed under the action of the automorphism group
+    // L is a list of lists of records, SubgroupLatElts or subgroups (if record, includes `order and `subgroup)
+    // It should be closed under the action of the automorphism group (up to conjugacy), unless fill_orbits is set to true in which case additional conjugacy classes of subgroups will be added (fill_orbits should only be used when L consists of actual subgroups, rather than records or SubgroupLatElts)
     // Gassman class is slow in holomorphs
     function check_done(M)
         return &and[#x eq 1 : x in M];
@@ -317,13 +317,16 @@ function SplitByAuts(L, G : use_order:=true, use_hash:=true, use_gassman:=false,
         outs := [f : f in Generators(Aut) | not IsInner(f)];
         use_graph := true;
     end if;
-    for chunk in L do
+    for chunki in [1..#L] do
+        chunk := L[chunki];
         if #chunk gt 1 then
             if use_graph then
                 edges := [{Integers()|} : _ in [1..#chunk]];
-                for f in outs do
-                    for i in [1..#chunk] do
-                        H1 := get_subgroup(chunk[i]);
+                orig_len := #chunk;
+                i := 1;
+                while i le #chunk do
+                    H1 := get_subgroup(chunk[i]);
+                    for f in outs do
                         H2 := f(H1);
                         // check first if fixed by f, since this is common and means no edge
                         if IsConjugate(GG, H1, H2) then
@@ -338,12 +341,20 @@ function SplitByAuts(L, G : use_order:=true, use_hash:=true, use_gassman:=false,
                             end if;
                         end for;
                         if not found then
-                            error "subgroups not closed under automorphism";
+                            if fill_orbits then
+                                Append(~chunk, H2);
+                                Append(~edges, {Integers()|});
+                                Include(~(edges[i]), #chunk);
+                            else
+                                error "subgroups not closed under automorphism";
+                            end if;
                         end if;
                     end for;
-                end for;
+                    i +:= 1;
+                end while;
                 V := Graph<#chunk| edges : SparseRep := true>;
-                newL cat:= [[chunk[i] : i in Sort([Index(j) : j in comp])] : comp in Components(V)];
+                // We restrict i to being less than orig_len so that the return value only contains subgroups that were passed in.
+                newL cat:= [[chunk[i] : i in Sort([Index(j) : j in comp]) | i le orig_len] : comp in Components(V)];
             else
                 new_chunk := [];
                 for s in chunk do
@@ -685,7 +696,7 @@ intrinsic IncludeNormalSubgroups(L::SubgroupLat)
             Comps := Complements(GG, H`subgroup);
             if #Comps eq 0 then continue; end if;
             if L`outer_equivalence then
-                Comps := [C[1] : C in SplitByAuts([Comps], G : use_order:=false)];
+                Comps := [C[1] : C in SplitByAuts([Comps], G : use_order:=false, fill_orbits:=true)];
             end if;
             compnum := 1;
             for C in Comps do

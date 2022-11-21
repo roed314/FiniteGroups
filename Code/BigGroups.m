@@ -93,6 +93,7 @@ E5184.su triggering error "subgroups not closed under automorphism" on line 340 
 
 E80000.ze|Internal error in permc_random_base_change_basim_sub() at permc/chbase.c, line 488
 Bug in Complements (reported to Magma): Segfaults on 40.12, 1696.201, 390624.d, 192720.b, 18000000.u, 1632586752.fi, 13060694016.zk, 13060694016.pu, 52242776064.um, 4553936640000.a, 78364164096.dm, 142818689064960.g, 564221981491200.i
+Slow LabelConjugacyClasses: 564221981491200.i
 
 Known errors:
 E162.54,324.175|misc.m", line 61, column 21 (outer_group constructing coset table)
