@@ -108,6 +108,7 @@ intrinsic ordercc(G::LMFDBGrp, gens::SeqEnum: dorandom:=true) -> Any
     cc := Get(G, "MagmaConjugacyClasses");
     cm := Get(G, "MagmaClassMap");
     pm := Get(G, "MagmaPowerMap");
+    t0 := ReportStart(G, "ordercc");
     ncc:=#cc;
     if gens eq [] then
         gens := [Id(g)];
@@ -122,6 +123,7 @@ intrinsic ordercc(G::LMFDBGrp, gens::SeqEnum: dorandom:=true) -> Any
         // Just in case the identity is not first
         if j eq 1 then ismax[pm(1, cc[1][1])] := false; end if;
     end for;
+    ReportEnd(G, "ismax", t0);
     step1 := AssociativeArray();
     for division in Get(G, "MagmaDivisions") do
         os := [division[1], division[2]];
@@ -131,6 +133,7 @@ intrinsic ordercc(G::LMFDBGrp, gens::SeqEnum: dorandom:=true) -> Any
             step1[os] := [division[3]];
         end if;
     end for;
+    ReportEnd(G, "ordercc-step1", t0);
 
   // Step2 partitions based on [order of rep, size of class, size of divisions]
   step2:=AssociativeArray();
@@ -148,6 +151,7 @@ intrinsic ordercc(G::LMFDBGrp, gens::SeqEnum: dorandom:=true) -> Any
       end for;
     end for;
   end for;
+  ReportEnd(G, "ordercc-step2", t0);
 
   // Initialization for random group elements
   if dorandom then
@@ -157,6 +161,7 @@ intrinsic ordercc(G::LMFDBGrp, gens::SeqEnum: dorandom:=true) -> Any
     order_seq := [Order(z) : z in gens];
     state := [];
   end if;
+  ReportEnd(G, "ordercc-randinit", t0);
 
   // Within a division, or between divisions which are as yet
   // unordered, we break ties via the priority, which is essentially
@@ -246,6 +251,7 @@ intrinsic ordercc(G::LMFDBGrp, gens::SeqEnum: dorandom:=true) -> Any
       end for;
     end for;
   end for; // End of keys loop
+  ReportEnd(G, "ordercc-keys-loop", t0);
   ParallelSort(~finalkeys,~cc);
   labels:=["" : z in cc]; divcnt:=0;
   oord:=0;

@@ -84,15 +84,15 @@ Path to finishing computations:
  c. Need to use Complements to find semidirect decompositions from NormalSubgroups
  d. Use 
 
+Set diagramx
 deal with real_problems and fake_problems
+Fix overly aggressive preloading of tex_name (F5, S5)
 *Profile for HaveHolomorph, double check that the two methods give same results.
-Caching polredabs data (for now, just copied manually)
-Bug in Complements (reported to Magma)
 E16000.bp|Runtime error in 'FPGroup': Incorrect group order detected
 E5184.su triggering error "subgroups not closed under automorphism" on line 340 of Subgroups.m (from Comps := [C[1] : C in SplitByAuts([Comps], G : use_order:=false)];)
 
 E80000.ze|Internal error in permc_random_base_change_basim_sub() at permc/chbase.c, line 488
-Segfaults on 40.12, 1696.201, 390624.d, 192720.b, 18000000.u, 1632586752.fi, 13060694016.zk, 13060694016.pu, 52242776064.um, 4553936640000.a, 78364164096.dm, 142818689064960.g, 564221981491200.i
+Bug in Complements (reported to Magma): Segfaults on 40.12, 1696.201, 390624.d, 192720.b, 18000000.u, 1632586752.fi, 13060694016.zk, 13060694016.pu, 52242776064.um, 4553936640000.a, 78364164096.dm, 142818689064960.g, 564221981491200.i
 
 Known errors:
 E162.54,324.175|misc.m", line 61, column 21 (outer_group constructing coset table)
@@ -106,12 +106,11 @@ E1728.37907(+0)|package/Group/GrpPerm/aut/grpauto.m:55:12(x := P![Position(Y,g^-
 E120.5,336.114|SymmetricBilinearForm: G must be irreducible (heisenbug?  Don't see now)
 
 
-Make sure we have tex commands for all the Lie groups (like \AGL)
 Change Presentation.m to not use Holomoprh
 Use semidirect products to select a better name and fix latex errors (postprocess step so that we can work up from the bottom and include Lie group names if not stupid); make sure to modify other places names show up (subgroups table); make sure status variables like complex_characters_known are accurate (might have tried and failed)
 Write cloud_collect.py to collect results (combine rank and easy_rank; reattach center and kernel to characters from charc_centers and charc_kernels
+
 Add new columns:
- * gps_groups (aut_gens aut_stats cc_stats complements_known complex_characters_known div_stats element_repr_type irrC_degree irrQ_degree irrep_stats linC_degree linFp_degree linFq_degree linQ_degree pc_rank permutation_degree rational_characters_known ratrep_stats representations)
 
 db.gps_groups.add_column("linFp_degree", "integer", "The minimum size matrix group over a finite prime field where this group arises as a subgroup")
 db.gps_groups.add_column("representations", "jsonb", "Dictionary containing best representations of each type: polycyclic, permutation, matrix/Z, matrix/Fp, matrix/Fq, matrix/Zn, Lie.  The keys are strings: PC, Perm, GLZ, GLFp, GLFq, GLZn, Lie.  The values give enough information to reconstruct the representation, including some subset of gens (generators encoded as integers except for PC, when it gives the positions of the polycyclic generators that are not powers of other generators), code (for PC gives an integer encoding the structure as in GAP's PcGroupCode or Magma's SmallGroupDecoding), d (gives the degree for permutation and matrix groups), p or q (size of base ring for matrix groups), pres (for PC gives a list of integers to be input to Magma's PCGroup), family (for Lie groups gives a string describing a classical name for the family), b (for GLZ gives an integer so that entries are encoded in the range 0..b-1 and shifted by b//2)")
@@ -157,10 +156,8 @@ Remove columns:
 Regenerate .header files
 Write another job that modifies a full record along a group hom by mapping/lifting all elements
 Write scripts for adding more groups later
-Set diagramx
 
 Talk to Drew: Make sure that the version of Magma installed in the cloud has the appropriate libraries installed (Atlas, Trans32Id for example), and that LMFDB access is okay
-Columns to remove: 
 For discussion:
  * ngens (not very mathematically meaningful)
  * MinimalDegreePermutationRepresentation (could be wrong); improved by modifying magma to fix bug
@@ -177,5 +174,7 @@ new stuff (permutation degree, linear degree, etc)....
 Check permutation_degree (rerun in progress)
 Check status of LoadSubgroupCache (used in SubgroupLattice)
 Separate computation of complex and rational character tables? (linked by labeling characters, so can't)
+update identify.py to only use psycopg2 rather than lmfdb (not require Sage)
+Caching polredabs data (for now, just copied manually)
 
 ***********/

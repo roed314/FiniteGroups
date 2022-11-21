@@ -1260,9 +1260,13 @@ intrinsic ConjugacyClasses(G::LMFDBGrp) ->  SeqEnum
     cc := Get(G, "MagmaConjugacyClasses");
     t0 := ReportStart(G, "LabelConjugacyClasses");
     cm := Get(G, "MagmaClassMap");
+    ReportEnd(G, "MagmaClassMap", t0);
     pm := Get(G, "MagmaPowerMap");
+    ReportEnd(G, "MagmaPowerMap", t0);
     gens := Get(G, "MagmaGenerators");
+    ReportEnd(G, "MagmaGenerators", t0);
     ordercc, _, labels := ordercc(G, gens);
+    ReportEnd(G, "ordercc", t0);
     // We determine the number of rational characters
 
     // perm will convert given index to the one out of ordercc
@@ -1273,6 +1277,7 @@ intrinsic ConjugacyClasses(G::LMFDBGrp) ->  SeqEnum
         perm[cm(ordercc[j])] := j;
         perminv[j] := cm(ordercc[j]);
     end for;
+    ReportEnd(G, "perminv", t0);
     G`CCpermutation := perm;
     G`CCpermutationInv := perminv;
     sset := {1..#cc};
@@ -1281,6 +1286,7 @@ intrinsic ConjugacyClasses(G::LMFDBGrp) ->  SeqEnum
     magccs := [ New(LMFDBGrpConjCls) : j in cc];
     gord := Get(G, "order");
     plist := [z[1] : z in Factorization(gord) * Factorization(EulerPhi(Get(G, "exponent")))];
+    ReportEnd(G, "plist", t0);
     //gord:=Get(G, 'Order');
     for j:=1 to #cc do
         ix := perm[j];
