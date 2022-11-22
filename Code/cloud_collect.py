@@ -105,7 +105,6 @@ def get_errors(datafile="output", data=None):
     for label, errlines in errors.items():
         lastloc = None
         internal = False
-        segfault = False
         for i, line in enumerate(errlines):
             if myquo_re.search(line): continue
             m = err_location_re.search(line)
@@ -194,7 +193,7 @@ def write_upload_files(data, overwrite=False):
         "GrpConjCls": "J",
         "GrpChtrCC": "C",
         "GrpChtrQQ": "Q",
-        "Grp": "aAbcqjltmsw",
+        "Grp": "abcqjltmswngo",
     }
     out = defaultdict(lambda: defaultdict(lambda: defaultdict(dict)))
     for oname, codes in final_to_tmp.items():

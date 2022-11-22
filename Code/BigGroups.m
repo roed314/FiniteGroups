@@ -84,22 +84,30 @@ Path to finishing computations:
  c. Need to use Complements to find semidirect decompositions from NormalSubgroups
  d. Use 
 
+Split aut_group from outer_group
 Set diagramx
 deal with real_problems and fake_problems
 Fix overly aggressive preloading of tex_name (F5, S5)
 *Profile for HaveHolomorph, double check that the two methods give same results.
 E16000.bp|Runtime error in 'FPGroup': Incorrect group order detected
-E5184.su triggering error "subgroups not closed under automorphism" on line 340 of Subgroups.m (from Comps := [C[1] : C in SplitByAuts([Comps], G : use_order:=false)];)
 
-E80000.ze|Internal error in permc_random_base_change_basim_sub() at permc/chbase.c, line 488
-Bug in Complements (reported to Magma): Segfaults on 40.12, 1696.201, 390624.d, 192720.b, 18000000.u, 1632586752.fi, 13060694016.zk, 13060694016.pu, 52242776064.um, 4553936640000.a, 78364164096.dm, 142818689064960.g, 564221981491200.i
+E230496.r(+0)|GrpAttributes.m:776:17(inners := [P![Position(Y,g^-1*y*g) : y in Y] : g in Generators(GG)];)|Runtime error in '!': Illegal coercion
+E46656.hz(+7)|Subgroups.m:668:23(Hnew := L`subs[j];)|Runtime error in '[]': Sequence index 987 should be in the range 1 to 822
 Slow LabelConjugacyClasses: 564221981491200.i
+
+Magma bugs:
+Bug in Complements (reported to Magma): Segfaults on 40.12, 1696.201, 390624.d, 192720.b, 18000000.u, 1632586752.fi, 13060694016.zk, 13060694016.pu, 52242776064.um, 4553936640000.a, 78364164096.dm, 142818689064960.g, 564221981491200.i
+E80000.ze|Internal error in permc_random_base_change_basim_sub() at permc/chbase.c, line 488
+
 
 Known errors:
 E162.54,324.175|misc.m", line 61, column 21 (outer_group constructing coset table)
 E2684354560.fb|Runtime error: Index too large for coset enumeration - giving up (in MagmaAutGrp)
 E50824368.bp|Current total memory usage: 157699.9MB, failed memory request: 211106232508416.0MB
 E256.56086(+155)|package/Group/GrpPerm/aut/grpauto.m:28:21(F, phi := FPGroup(P);)|Runtime error in 'FPGroup': Group too large for regular representation
+E4299816960000.de(+0)|GrpAttributes.m:740:27(m, P, Y := ClassAction(aut);)|Runtime error in 'ClassAction': Set cardinality too large (>=2^31)
+E2937600.a=CSp(4,4)(+0)|package/Group/GrpMat/ClassicalConj/GOConjugacy.m(cc, L := ClassicalConjugacyClasses(tp,d,q);)|Runtime error in 'ClassicalConjugacyClasses': Type must be one of { GO, O+, Omega-, SO+, Sp, GL, Omega, GU, GO+, SO, Omega+, O-, SL, SO-, O, SU, GO- }
+E53130.1(+1)|package/RepThry/AlgChtr/Char0/General/ChtrTable/chtr_table.m:2259:34(T := LinearCharacters(G);)|Runtime error in 'LinearCharacters': Monomial overflow (too many monomials to be represented)
 
 Heisenbugs:
 E504.157(+8)|Subgroups.m:1780:22(x := subs[i];)|Runtime error in '[]': Sequence index 36 should be in the range 1 to 35"
@@ -177,5 +185,6 @@ Check status of LoadSubgroupCache (used in SubgroupLattice)
 Separate computation of complex and rational character tables? (linked by labeling characters, so can't)
 update identify.py to only use psycopg2 rather than lmfdb (not require Sage)
 Caching polredabs data (for now, just copied manually)
+E5184.su triggering error "subgroups not closed under automorphism" on line 340 of Subgroups.m (from Comps := [C[1] : C in SplitByAuts([Comps], G : use_order:=false)];)
 
 ***********/

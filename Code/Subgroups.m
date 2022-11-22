@@ -662,6 +662,13 @@ intrinsic IncludeNormalSubgroups(L::SubgroupLat)
         lookup[i] := j;
     end for;
     ReportEnd(G, "IdentifyNormalSubgroups", t1);
+    if L`outer_equivalence then
+        t1 := ReportStart(G, "ComputeNormalCounts");
+        for i in [1..#N] do
+            dummy := Get(L`subs[lookup[i]], "subgroup_count");
+        end for;
+        ReportEnd(G, "ComputeNormalCounts", t1);
+    end if;
     for i in [1..#N] do
         j := lookup[i];
         H := N`subs[i];
@@ -671,9 +678,7 @@ intrinsic IncludeNormalSubgroups(L::SubgroupLat)
         Hnew`normalizer := 1;
         Hnew`normal_closure := j;
         Hnew`characteristic_closure := lookup[H`characteristic_closure];
-        if L`outer_equivalence then
-            dummy := Get(Hnew, "subgroup_count");
-        else
+        if not L`outer_equivalence then // other case handled above
             Hnew`subgroup_count := 1;
         end if;
         Hnew`cc_count := Hnew`subgroup_count;

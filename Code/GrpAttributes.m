@@ -23,15 +23,7 @@ end intrinsic;
 
 intrinsic number_autjugacy_classes(G::LMFDBGrp) -> Any
 {Number of orbits of the automorphism group on elements}
-    A := Get(G, "CCAutCollapse");
-    CC := Get(G, "ConjugacyClasses");
-    D := [[] : _ in [1..#Codomain(A)]];
-    for k in [1..#CC] do
-        Append(~D[A(k)], k);
-        // set the aut label to the label of the first equivalent conjugacy class
-        CC[k]`aut_label := CC[D[A(k)][1]]`label;
-    end for;
-    return #Codomain(A);
+    return &+[quad[4] : quad in Get(G, "aut_stats")];
 end intrinsic;
 
 intrinsic number_divisions(G::LMFDBGrp) -> Any
@@ -145,6 +137,41 @@ intrinsic solvability_type(G::LMFDBGrp) -> RngIntElt
         return 11;
     elif Get(G, "solvable") then
         return 12;
+    else
+        return 13;
+    end if;
+end intrinsic;
+
+intrinsic backup_solvability_type(G::LMFDBGrp) -> RngIntElt
+{A version of solvability_type that skips the computation of monomial, which may not be feasible (character table)}
+    if Get(G, "cyclic") then
+        return 0;
+    elif Get(G, "abelian") then
+        if Get(G, "metacyclic") then
+            return 1;
+        else
+            return 2;
+        end if;
+    elif Get(G, "nilpotent") then
+        if Get(G, "metacyclic") then
+            return 3;
+        elif Get(G, "metabelian") then
+            return 4;
+        else
+            return 5;
+        end if;
+    elif Get(G, "metacyclic") then
+        return 6;
+    elif Get(G, "metabelian") then
+        if Get(G, "supersolvable") then
+            return 7;
+        else
+            return 16;
+        end if;
+    elif Get(G, "supersolvable") then
+        return 10;
+    elif Get(G, "solvable") then
+        return 17;
     else
         return 13;
     end if;
@@ -737,7 +764,9 @@ intrinsic aut_group(G::LMFDBGrp) -> MonStgElt
         return None();
     end if;
     aut := Get(G, "MagmaAutGroup");
+    vprint User1: "MagmaAutGroup complete";
     m, P, Y := ClassAction(aut);
+    vprint User1: "ClassAction complete";
     assert #P eq Get(G, "aut_order");
     s := label(P);
     ReportEnd(G, "LabelAutGroup", t0);
@@ -1257,16 +1286,20 @@ end intrinsic;
 
 intrinsic ConjugacyClasses(G::LMFDBGrp) ->  SeqEnum
 {The list of conjugacy classes for this group}
-    cc := Get(G, "MagmaConjugacyClasses");
     t0 := ReportStart(G, "LabelConjugacyClasses");
+    cc := Get(G, "MagmaConjugacyClasses");
+    t1 := ReportStat(G, "MagmaClassMap");
     cm := Get(G, "MagmaClassMap");
-    ReportEnd(G, "MagmaClassMap", t0);
+    ReportEnd(G, "MagmaClassMap", t1);
+    t1 := ReportStart("MagmaPowerMap");
     pm := Get(G, "MagmaPowerMap");
-    ReportEnd(G, "MagmaPowerMap", t0);
+    ReportEnd(G, "MagmaPowerMap", t1);
+    t1 := ReportStart("MagmaGenerators");
     gens := Get(G, "MagmaGenerators");
-    ReportEnd(G, "MagmaGenerators", t0);
+    ReportEnd(G, "MagmaGenerators", t1);
+    t1 := ReportStart(G, "ordercc");
     ordercc, _, labels := ordercc(G, gens);
-    ReportEnd(G, "ordercc", t0);
+    ReportEnd(G, "ordercc", t1);
     // We determine the number of rational characters
 
     // perm will convert given index to the one out of ordercc
@@ -1277,7 +1310,6 @@ intrinsic ConjugacyClasses(G::LMFDBGrp) ->  SeqEnum
         perm[cm(ordercc[j])] := j;
         perminv[j] := cm(ordercc[j]);
     end for;
-    ReportEnd(G, "perminv", t0);
     G`CCpermutation := perm;
     G`CCpermutationInv := perminv;
     sset := {1..#cc};
@@ -1286,7 +1318,6 @@ intrinsic ConjugacyClasses(G::LMFDBGrp) ->  SeqEnum
     magccs := [ New(LMFDBGrpConjCls) : j in cc];
     gord := Get(G, "order");
     plist := [z[1] : z in Factorization(gord) * Factorization(EulerPhi(Get(G, "exponent")))];
-    ReportEnd(G, "plist", t0);
     //gord:=Get(G, 'Order');
     for j:=1 to #cc do
         ix := perm[j];
@@ -1561,7 +1592,11 @@ end intrinsic;
 
 intrinsic conj_centralizer_gens(G::LMFDBGrp) -> SeqEnum
 {}
-    return [[g : g in Generators(Get(cc, "centralizer"))] : cc in Get(G, "ConjugacyClasses")];
+    if Get(G, "complex_characters_known") or Get(G, "rational_characters_known") then
+        return [[g : g in Generators(Get(cc, "centralizer"))] : cc in Get(G, "ConjugacyClasses")];
+    else
+        return [];
+    end if;
 end intrinsic;
 
 intrinsic conj_centralizers(G::LMFDBGrp) -> SeqEnum

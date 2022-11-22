@@ -1,6 +1,18 @@
+intrinsic SetAutCCLabels(G::LMFDBGrp)
+{}
+    A := Get(G, "CCAutCollapse");
+    CC := Get(G, "ConjugacyClasses");
+    D := [[] : _ in [1..#Codomain(A)]];
+    for k in [1..#CC] do
+        Append(~D[A(k)], k);
+        // set the aut label to the label of the first equivalent conjugacy class
+        CC[k]`aut_label := CC[D[A(k)][1]]`label;
+    end for;
+end intrinsic;
+
 intrinsic aut_label(C::LMFDBGrpConjCls) -> MonStgElt
 {}
-    col := Get(C`Grp, "number_autjugacy_classes"); // sets aut_label
+    SetAutCCLabels(C`Grp);
     return C`aut_label;
 end intrinsic;
 
