@@ -378,14 +378,18 @@ intrinsic MagmaTransitiveSubgroup(G::LMFDBGrp) -> Any
     if Get(G, "order") eq 1 then
         return g;
     end if;
-    S := Get(G, "Subgroups");
-    m := Get(G, "subgroup_index_bound");
-    for j in [1..#S] do
-        if m ne 0 and Get(S[j], "quotient_order") gt m then
-            return None();
+    L := Get(G, "BestSubgroupLat");
+    m := L`index_bound;
+    N := G`order;
+    for H in Get(L, "ordered_subs") do
+        if m ne 0 then
+            ind := N div H`order;
+            if ind gt m then
+                return None();
+            end if;
         end if;
-        if #Get(S[j], "core") eq 1 then
-            return S[j]`MagmaSubGrp;
+        if Get(H, "core_order") eq 1 then
+            return H`subgroup;
         end if;
     end for;
     return None();

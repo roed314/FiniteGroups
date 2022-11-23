@@ -184,7 +184,7 @@ intrinsic GoodCoredSubgroups(G::Grp, N::Grp, max_orbits::RngIntElt : num_checks:
         cur_check +:= 1;
         Hs := RandomCoredSubgroups(G, N, max_orbits : max_tries:=max_tries);
         d := &+[Index(G, H) : H in Hs];
-        vprint User1: Sprintf("Degree %o=%o (prior best %o)\n", d, Join(Sort([Sprint(Index(G, H)) : H in Hs]), "+"), best_degree);
+        vprint User1: Sprintf("Degree %o=%o (prior best %o)", d, Join(Sort([Sprint(Index(G, H)) : H in Hs]), "+"), best_degree);
         if d lt best_degree then
             cur_check := 0;
             best_degree := d;

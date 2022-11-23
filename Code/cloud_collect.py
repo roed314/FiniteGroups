@@ -65,10 +65,15 @@ def get_timing_info(datafile="output", data=None):
         data = get_data(datafile)
     times = data["T"]
     unfinished = Counter()
+    skips = Counter()
     finished = {}
     stats = defaultdict(list)
     for label, lines in times.items():
         lines = [x.split("|")[-1] for x in lines] # remove labels
+        # Get skipped codes:
+        if lines[-1].startswith("Skip-"):
+            skips[lines[-1][5:].strip()] += 1
+            lines = lines[:-1]
         if lines[-1].startswith("Finished AllFinished in "):
             finished[label] = float(lines[-1].split(" in ")[1].strip())
         else:
@@ -85,7 +90,7 @@ def get_timing_info(datafile="output", data=None):
     maxs.sort()
     avgs = [(-sum(ts)/len(ts), task) for (task, ts) in stats.items()]
     avgs.sort()
-    return unfinished, finished, maxs, avgs, stats
+    return unfinished, finished, maxs, avgs, stats, skips
 
 err_location_re = re.compile(r'In file "(.*)", line (\d+), column (\d+):')
 schur_re = re.compile("Runtime error in 'pMultiplicator': Cohomology failed")
@@ -159,16 +164,25 @@ def labels_by_type(data):
         L.sort(key=sort_key)
     return finished, unfinished, errors
 
-def tmpheaders():
+def tmpheaders(summarize=False):
     # Return a dictionary giving the columns included in each tmpheader, indexed by the one-letter code included at the beginning of each corresponding output line
     codes = {}
+    heads = {}
     for head in os.listdir():
         if head.endswith(".tmpheader"):
             with open(head) as F:
                 code, attrs = F.read().strip().split("\n")
-            assert code not in codes
+            if summarize:
+                heads[head[:-10]] = code
+            else:
+                assert code not in codes
             codes[code] = attrs.split("|")
-    return codes
+    if summarize:
+        for head, code in sorted(heads.items()):
+            print(code, head, "|".join(codes[code]))
+            print()
+    else:
+        return codes
 
 def headers():
     # Return a dictionary giving the the columns and types in each header, indexed by the header name

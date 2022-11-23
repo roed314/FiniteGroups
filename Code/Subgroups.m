@@ -123,6 +123,8 @@ declare attributes SubgroupLatElt:
         centralizer,
         normal,
         characteristic,
+        core,
+        core_order,
         complements,
         normal_closure,
         characteristic_closure;
@@ -799,6 +801,16 @@ intrinsic IncludeSylowSubgroups(L::SubgroupLat)
     L`by_index := by_index(L);
 end intrinsic;
 
+intrinsic core(H::SubgroupLatElt) -> Grp
+{}
+    return Core(H`Lat`Grp`MagmaGrp, H`subgroup);
+end intrinsic;
+
+intrinsic core_order(H::SubgroupLatElt) -> RngIntElt
+{}
+    return #Get(H, "core");
+end intrinsic;
+
 intrinsic TrimSubgroups(L::SubgroupLat)
 {Removes high-index subgroups if there are too many and sets the label for subgroups below the cutoff}
     // On input, we assume that L`subs is sorted by index
@@ -823,7 +835,7 @@ intrinsic TrimSubgroups(L::SubgroupLat)
                 ctr := 1;
                 for i in [1..#V] do
                     H := V[i];
-                    if #Core(G, H`subgroup) eq 1 and H`order ne 1 then
+                    if Get(H, "core_order") eq 1 and H`order ne 1 then
                         Include(~keep, H`i);
                         H`label := Sprintf("%o.CF%o", m, ctr);
                         ctr +:= 1;
@@ -836,6 +848,11 @@ intrinsic TrimSubgroups(L::SubgroupLat)
     // Have to reset L`by_index since we changed the underlying subgroup list
     L`by_index := by_index(L);
     ReportEnd(X, "TrimSubgroups", t0);
+end intrinsic;
+
+intrinsic SubGrpLstByDivisorTerminate(X::LMFDBGrp) -> RngIntElt
+{Can be set externally to stop computation of subgroups at a particular index}
+    return 0;
 end intrinsic;
 
 intrinsic SubGrpLstAut(X::LMFDBGrp) -> SubgroupLat
@@ -2418,6 +2435,8 @@ intrinsic LMFDBSubgroup(H::SubgroupLatElt : normal_lattice:=false) -> LMFDBSubGr
         C := Get(H, "centralizer");
         res`centralizer := (Type(C) eq NoneType) select None() else Lat`subs[C]`label;
         res`centralizer_order := (Type(C) eq NoneType) select None() else Lat`subs[C]`order;
+        res`core := Get(H, "core");
+        res`core_order := Get(H, "core_order");
     end if;
     AssignBasicAttributes(res);
     return res;

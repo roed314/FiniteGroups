@@ -9,7 +9,7 @@ if not assigned label then
 end if;
 if not assigned codes then
     // default order for computing invariants
-    codes := "blajgqcqtsJCQSLm";
+    codes := "blajJzcCrqQsSLhtguomw";
 end if;
 
 infile := "DATA/descriptions/" * label;

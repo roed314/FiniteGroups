@@ -103,7 +103,22 @@ with open("DATA/manifest") as F:
             os.makedirs(out, exist_ok=True)
             os.makedirs(timings, exist_ok=True)
             os.makedirs(opj("DATA", "errors"), exist_ok=True)
-            codes = "blajgqcqtsJCQSLm"
+            # We want dependencies as close as possible to each other, so that failures in between don't mean we need to recompute
+            dependencies = {
+                "a": "JsSLhguo", # depend on MagmaAutGroup (might be possible to change subgroup labeling to function without automorphism group, but it would require a lot of work)
+                "j": "JzcCrqQsSLhu", # depend on MagmaConjugacyClasses
+                "J": "zCrQsSLh", # depend on ConjugacyClasses
+                "z": "sSLh", # depend on conj_centralizer_gens
+                "c": "CrqQh", # depend on MagmaCharacterTable
+                "C": "rQh", # depend on Characters
+                "r": "h", # depend on charc_center_gens/charc_kernel_gens
+                "q": "cCrQh", # depend on MagmaRationalCharacterTable (TODO: back dependence bad)
+                "Q": "Crh", # depend on Characters (TODO: back dependence bad)
+                "s": "SLh", # depend on BestSubgroupLat
+                "S": "sLh", # depend on Subgroups (TODO: back dependence bad)
+            }
+            # You can call tmpheaders(summarize=True) from cloud_collect.py to get a summary of the codes
+            codes = "blajJzcCrqQsSLhtguomw"
             skipped = ""
             while codes:
                 done, finished, time_used, last_time_line, err = run(label, codes, timeout)
@@ -113,9 +128,10 @@ with open("DATA/manifest") as F:
                 # In most cases, we'll just skip the code that caused a timeout, but there are some exceptions
                 # If there was no error, and the total time used by prior codes was more than 75% of the allocated time we just retry
                 # For some timeouts/errors, we can adjust the preload parameters in the hope of succeeding:
-                #1 When complement failing on a PC group (or more generally?), try switching to permutation representation
-                #2 Backup labeling strategy (conjugacy classes, subgroups)
-                #3 If failing on 
+                #1 If stuck computing all subgroups, try computing them one order at a time
+                #2 If stuck computing a particular order, stop before that order
+                #3 When complement failing on a PC group (or more generally?), try switching to permutation representation
+                #4 Backup labeling strategy (conjugacy classes, subgroups)
                 if not err:
                     if last_time_line == "Starting SubGrpLst":
                         set_preload("AllSubgroupsOk", "f")
@@ -128,15 +144,17 @@ with open("DATA/manifest") as F:
                     #elif last_time_line == "ComputeComplements":
                     #    # Try to find a permutation rep to run on
                     elif time_used <= 0.75 * timeout:
-                        skipped += codes[0]
-                        codes = codes[1:]
+                        for code in codes[0] + dependencies.get(codes[0], ""):
+                            skipped += code
+                            codes = codes.replace(code, "")
                 else:
                     # Ideally, we'd have some known errors that are possible to work around here
-                    skipped += codes[0]
-                    codes = codes[1:]
+                    for code in codes[0] + dependencies.get(codes[0], ""):
+                        skipped += code
+                        codes = codes.replace(code, "")
             if skipped:
                 with open("output", "a") as Fout:
-                    _ = Fout.write(f"T{label}|Skip-{skipped}")
+                    _ = Fout.write(f"T{label}|Skip-{skipped}\n")
             break
         else:
             job -= cnt
