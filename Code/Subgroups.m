@@ -893,7 +893,19 @@ intrinsic SubGrpLstAut(X::LMFDBGrp) -> SubgroupLat
         bi := AssociativeArray(); bia := AssociativeArray();
         ccount := 0; acount := 0;
         dbreak := 0;
+        terminate := Get(X, "SubGrpLstByDivisorTerminate");
         for d in D do
+            if d eq terminate then
+                if dbreak ne 0 then
+                    for dd -> v in bi do
+                        if dd ge dbreak then
+                            Remove(~bi, dd);
+                            Remove(~bia, dd);
+                        end if;
+                    end for;
+                end if;
+                break;
+            end if;
             t1 := ReportStart(X, Sprintf("SubGrpLstDivisor (%o)", d));
             dsubs := Subgroups(G : OrderEqual := d);
             ReportEnd(X, Sprintf("SubGrpLstDivisor (%o)", d), t1);

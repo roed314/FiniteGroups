@@ -90,6 +90,10 @@ deal with real_problems and fake_problems
 Fix overly aggressive preloading of tex_name (F5, S5)
 *Profile for HaveHolomorph, double check that the two methods give same results.
 E16000.bp|Runtime error in 'FPGroup': Incorrect group order detected
+Use semidirect products to select a better name and fix latex errors (postprocess step so that we can work up from the bottom and include Lie group names if not stupid); make sure to modify other places names show up (subgroups table); make sure status variables like complex_characters_known are accurate (might have tried and failed)
+Write cloud_collect.py to collect results (combine rank and easy_rank, solvability_type and backup_solvability_type; fill in nulls)
+
+
 
 E230496.r(+0)|GrpAttributes.m:776:17(inners := [P![Position(Y,g^-1*y*g) : y in Y] : g in Generators(GG)];)|Runtime error in '!': Illegal coercion
 E46656.hz(+7)|Subgroups.m:668:23(Hnew := L`subs[j];)|Runtime error in '[]': Sequence index 987 should be in the range 1 to 822
@@ -116,8 +120,6 @@ E120.5,336.114|SymmetricBilinearForm: G must be irreducible (heisenbug?  Don't s
 
 
 Change Presentation.m to not use Holomoprh
-Use semidirect products to select a better name and fix latex errors (postprocess step so that we can work up from the bottom and include Lie group names if not stupid); make sure to modify other places names show up (subgroups table); make sure status variables like complex_characters_known are accurate (might have tried and failed)
-Write cloud_collect.py to collect results (combine rank and easy_rank; reattach center and kernel to characters from charc_centers and charc_kernels
 
 Add new columns:
 

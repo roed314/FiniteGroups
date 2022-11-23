@@ -44,6 +44,7 @@ declare attributes LMFDBGrp:
   QQRepsAsCC,
   Characters,
   AllSubgroupsOk,
+  SubGrpLstByDivisorTerminate,
   IsoToOldPresentation, // set by the various RePresent intrinsics in Presentation.m
   SubByGass, // used in MinReps.m
   label,
@@ -60,6 +61,7 @@ declare attributes LMFDBGrp:
   solvable,
   supersolvable,
   solvability_type,
+  backup_solvability_type,
   nilpotent,
   metacyclic,
   metabelian,
