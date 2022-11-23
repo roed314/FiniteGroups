@@ -1294,7 +1294,7 @@ intrinsic ConjugacyClasses(G::LMFDBGrp) ->  SeqEnum
     t1 := ReportStart(G, "MagmaPowerMap");
     pm := Get(G, "MagmaPowerMap");
     ReportEnd(G, "MagmaPowerMap", t1);
-    t1 := ReportStart("MagmaGenerators");
+    t1 := ReportStart(G, "MagmaGenerators");
     gens := Get(G, "MagmaGenerators");
     ReportEnd(G, "MagmaGenerators", t1);
     t1 := ReportStart(G, "ordercc");
