@@ -13,6 +13,7 @@ opj = os.path.join
 ope = os.path.exists
 err_location_re = re.compile(r'In file "(.*)", line (\d+), column (\d+):')
 schur_re = re.compile("Runtime error in 'pMultiplicator': Cohomology failed")
+basim_re = re.compile("Internal error in permc_random_base_change_basim_sub() at permc/chbase.c, line 488")
 internal_re = re.compile(r'Magma: Internal error')
 
 parser = argparse.ArgumentParser("Dispatch to appropriate magma script")
