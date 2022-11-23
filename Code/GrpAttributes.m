@@ -1288,7 +1288,7 @@ intrinsic ConjugacyClasses(G::LMFDBGrp) ->  SeqEnum
 {The list of conjugacy classes for this group}
     t0 := ReportStart(G, "LabelConjugacyClasses");
     cc := Get(G, "MagmaConjugacyClasses");
-    t1 := ReportStat(G, "MagmaClassMap");
+    t1 := ReportStart(G, "MagmaClassMap");
     cm := Get(G, "MagmaClassMap");
     ReportEnd(G, "MagmaClassMap", t1);
     t1 := ReportStart("MagmaPowerMap");
