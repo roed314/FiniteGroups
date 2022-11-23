@@ -22,7 +22,7 @@ Preload(G);
 files := Split(Pipe("ls", ""), "\n");
 code_lookup := AssociativeArray();
 for fname in files do
-    if fname[#fname-9..#fname] eq ".tmpheader" then
+    if #fname gt 10 and fname[#fname-9..#fname] eq ".tmpheader" then
         base := fname[1..#fname-10];
         code := Split(Read(fname), "\n")[1];
         code_lookup[code] := base;
