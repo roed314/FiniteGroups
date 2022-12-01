@@ -441,9 +441,9 @@ intrinsic ordercc(G::LMFDBGrp, gens::SeqEnum: dorandom:=true) -> Any
     for divi in v do
       ky := [k[1],k[2],#divi];
       if IsDefined(step2, ky) then
-        Include(~step2[ky], divi);
+        Append(~step2[ky], divi);
       else
-        step2[ky] := {divi};
+        step2[ky] := [divi];
       end if;
       for u in divi do
         revmap[u] := ky;
@@ -461,7 +461,7 @@ intrinsic ordercc(G::LMFDBGrp, gens::SeqEnum: dorandom:=true) -> Any
   // Just the key to step 2 plus the priority
   finalkeys:= [[0,0,0,0] : z in cc];
   // utility for below, gen is a class index
-  setpriorities:=function(adiv,val,gen,priorities,expos)
+  setpriorities:=function(adiv,cnt,gen,priorities,expos)
     notdone:=0;
     for j in adiv do
       if priorities[j] gt ncc then notdone+:=1; end if;
@@ -474,15 +474,30 @@ intrinsic ordercc(G::LMFDBGrp, gens::SeqEnum: dorandom:=true) -> Any
 //"Testing", gen, " to ", sgn*pcnt," got ", ac, priorities;
           if priorities[ac] gt ncc then
             notdone -:=1;
-            priorities[ac]:=val;
+            priorities[ac]:=cnt;
             expos[ac] := sgn*pcnt;
-            val+:=1;
+            cnt+:=1;
           end if;
         end for;
       end if;
       pcnt+:=1;
     end while;
-    return priorities, val, expos;
+    return priorities, cnt, expos;
+  end function;
+  setpriorities_recursive := function(adiv, cnt, gen, priorities, expos)
+    priorities, cnt, expos := setpriorities(adiv, cnt, gen, priorities, expos);
+    divisors := Divisors(cc[gen][1]);
+    for k:=2 to #divisors-1 do
+      newgen := pm(gen, divisors[k]);
+      powerdiv := revmap[newgen];
+      for divi in step2[powerdiv] do
+        if newgen in divi then
+          priorities, cnt, expos := setpriorities(divi, cnt, newgen, priorities, expos);
+          break;
+        end if;
+      end for;
+    end for;
+    return priorities, cnt, expos;
   end function;
 
   // We divide keys into those that should be labeled by enumeration (small)
@@ -491,6 +506,9 @@ intrinsic ordercc(G::LMFDBGrp, gens::SeqEnum: dorandom:=true) -> Any
   small_keys := [];
   T := NewMaximalSubgroupTree(g);
   for ky -> divilist in step2 do
+      if #divilist eq 1 and #Rep(divilist) eq 1 then
+          continue; // nothing to do
+      end if;
       //t2 := Cputime();
       //tn := 0;
       //tm := 0;
@@ -505,6 +523,7 @@ intrinsic ordercc(G::LMFDBGrp, gens::SeqEnum: dorandom:=true) -> Any
       repss := [];
       Zss := [];
       for divi in divilist do
+          if not ismax[Rep(divi)] then continue; end if;
           for u in divi do
               //t3 := Cputime();
               c, path, reps, Zs := narrow(T, cc[u][3]);
@@ -529,7 +548,7 @@ intrinsic ordercc(G::LMFDBGrp, gens::SeqEnum: dorandom:=true) -> Any
                   dctr +:= 1;
               end for;
               mseq, loc := Min(mreps);
-              priorities, cnt, expos := setpriorities(divi, cnt, diviL[loc], priorities, expos);
+              priorities, cnt, expos := setpriorities_recursive(divi, cnt, diviL[loc], priorities, expos);
           end for;
           Append(~small_keys, ky);
           //vprint User1: "Completed ky", sprint(ky), Cputime() - t2, tn, tm;
@@ -553,65 +572,52 @@ intrinsic ordercc(G::LMFDBGrp, gens::SeqEnum: dorandom:=true) -> Any
   //vprint User1: "Starting big_keys loop", #big_keys, dorandom;
   //ctr := 0;
   for k in big_keys do
-    if #step2[k] eq 1 and #Rep(step2[k]) eq 1 then
-      ; // nothing to do
-    else
-      //ctr +:= 1;
-      // random group elements until we hit a class we need
-      //vprint User1: "ctr", ctr;
-      needmoregens:=true;
-      //pwrctr := 0;
-      while needmoregens do
-        //if IsPowerOf(pwrctr, 2) then
-        //  vprint User1: "pwrctr", pwrctr;
-        //end if;
-        //pwrctr +:= 1;
-        needmoregens:=false;
-        for divi in step2[k] do
-          if priorities[Rep(divi)] gt ncc then
-            needmoregens:=true;
-            break;
-          end if;
-        end for;
-        if needmoregens then
-          if dorandom then
-            ggcl := rlist[1];
-            randomG(~cache, ~rlist, ~ggcl);
-          else
-            ggcl := Id(g);
-            nonrandomG(~state, gens, order_seq, ~ggcl);
-          end if;
-          gcl:=cm(ggcl);
-          if ismax[gcl] and priorities[gcl] gt ncc then
-            mydivkey:=revmap[gcl];
-            for dd in step2[mydivkey] do
-              if gcl in dd then
-                priorities, cnt, expos:=setpriorities(dd,cnt,gcl,priorities,expos);
-                break;
-              end if;
-            end for;
-            divisors:=Divisors(cc[gcl][1]);
-            for kk:=2 to #divisors-1 do
-              newgen:=pm(gcl,divisors[kk]);
-              powerdiv:=revmap[newgen];
-              for dd in step2[powerdiv] do
-                if newgen in dd then
-                  priorities, cnt, expos:=setpriorities(dd,cnt,newgen,priorities,expos);
-                  break;
-                end if;
-              end for;
-            end for;
-          end if;
+    //ctr +:= 1;
+    // random group elements until we hit a class we need
+    //vprint User1: "ctr", ctr;
+    needmoregens:=true;
+    //pwrctr := 0;
+    while needmoregens do
+      //if IsPowerOf(pwrctr, 2) then
+      //  vprint User1: "pwrctr", pwrctr;
+      //end if;
+      //pwrctr +:= 1;
+      needmoregens:=false;
+      for divi in step2[k] do
+        if priorities[Rep(divi)] gt ncc then
+          needmoregens:=true;
+          break;
         end if;
-      end while;
-    end if;
-    // We now have enough apex generators for these divisions
-    for divi in step2[k] do
+      end for;
+      if needmoregens then
+        if dorandom then
+          ggcl := rlist[1];
+          randomG(~cache, ~rlist, ~ggcl);
+        else
+          ggcl := Id(g);
+          nonrandomG(~state, gens, order_seq, ~ggcl);
+        end if;
+        gcl:=cm(ggcl);
+        if ismax[gcl] and priorities[gcl] gt ncc then
+          mydivkey:=revmap[gcl];
+          for dd in step2[mydivkey] do
+            if gcl in dd then
+              priorities, cnt, expos:=setpriorities_recursive(dd,cnt,gcl,priorities,expos);
+              break;
+            end if;
+          end for;
+        end if;
+      end if;
+    end while;
+  end for; // End of keys loop
+  for k -> divilist in step2 do
+    // We now have enough apex generators for all divisions
+    for divi in divilist do
       for aclass in divi do
         finalkeys[aclass] := [k[1],k[2],k[3], priorities[aclass],expos[aclass]];
       end for;
     end for;
-  end for; // End of keys loop
+  end for;
   ReportEnd(G, "ordercc-keys-loop", t0);
   ParallelSort(~finalkeys,~cc);
   labels:=["" : z in cc]; divcnt:=0;
