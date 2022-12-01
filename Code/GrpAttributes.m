@@ -1250,13 +1250,19 @@ intrinsic CCpermutationInv(G::LMFDBGrp) -> SeqEnum
 end intrinsic;
 
 intrinsic MagmaPowerMap(G::LMFDBGrp) -> Any
-  {Return Magma's powermap.}
-  return PowerMap(G`MagmaGrp);
+{Return Magma's powermap.}
+    t0 := ReportStart(G, "MagmaPowerMap");
+    pm := PowerMap(G`MagmaGrp);
+    ReportEnd(G, "MagmaPowerMap", t0);
+    return pm;
 end intrinsic;
 
 intrinsic MagmaClassMap(G::LMFDBGrp) -> Map
-  {Return Magma's ClassMap.}
-  return ClassMap(G`MagmaGrp);
+{Return Magma's ClassMap.}
+    t0 := ReportStart(G, "MagmaClassMap");
+    cm := ClassMap(G`MagmaGrp);
+    ReportEnd(G, "MagmaClassMap", t0);
+    return cm;
 end intrinsic;
 
 intrinsic ClassMap(G::LMFDBGrp) -> Map
@@ -1292,18 +1298,11 @@ intrinsic ConjugacyClasses(G::LMFDBGrp) ->  SeqEnum
 {The list of conjugacy classes for this group}
     t0 := ReportStart(G, "LabelConjugacyClasses");
     cc := Get(G, "MagmaConjugacyClasses");
-    t1 := ReportStart(G, "MagmaClassMap");
     cm := Get(G, "MagmaClassMap");
-    ReportEnd(G, "MagmaClassMap", t1);
-    t1 := ReportStart(G, "MagmaPowerMap");
     pm := Get(G, "MagmaPowerMap");
-    ReportEnd(G, "MagmaPowerMap", t1);
-    t1 := ReportStart(G, "MagmaGenerators");
     gens := Get(G, "MagmaGenerators");
-    ReportEnd(G, "MagmaGenerators", t1);
-    t1 := ReportStart(G, "ordercc");
     ordercc, _, labels := ordercc(G, gens);
-    ReportEnd(G, "ordercc", t1);
+
     // We determine the number of rational characters
 
     // perm will convert given index to the one out of ordercc

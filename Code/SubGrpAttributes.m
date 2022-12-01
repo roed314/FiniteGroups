@@ -522,3 +522,11 @@ intrinsic proper(H::LMFDBSubGrp) -> Any
   HH := H`MagmaSubGrp;
   return (Order(HH) ne 1 and Index(GG, HH) ne 1);
 end intrinsic;
+
+/* TODO
+intrinsic diagramx(H::LMFDBSubGrp) -> Any
+{A list of integer x-coordinates (between 0 and 10000) of length 2 (outer_equivalence and not normal), 4(outer_equivalence and normal or not outer_equivalence and not normal), or 8 (not outer_equivalence and normal)}
+    if Get(H`Grp, "outer_equivalence") then
+        if Get(H, "normal") then
+            
+*/

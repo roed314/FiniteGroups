@@ -84,22 +84,19 @@ Path to finishing computations:
  c. Need to use Complements to find semidirect decompositions from NormalSubgroups
  d. Use 
 
-Split aut_group from outer_group
 Set diagramx
 deal with real_problems and fake_problems
 Fix overly aggressive preloading of tex_name (F5, S5)
 *Profile for HaveHolomorph, double check that the two methods give same results.
-E16000.bp|Runtime error in 'FPGroup': Incorrect group order detected
+Slow LabelConjugacyClasses: 564221981491200.i
+E46656.hz(+7)|Subgroups.m:668:23(Hnew := L`subs[j];)|Runtime error in '[]': Sequence index 987 should be in the range 1 to 822
+Save to preload things like LabeledConjugacyClasses
+
 Use semidirect products to select a better name and fix latex errors (postprocess step so that we can work up from the bottom and include Lie group names if not stupid); make sure to modify other places names show up (subgroups table); make sure status variables like complex_characters_known are accurate (might have tried and failed)
 Write cloud_collect.py to collect results (combine rank and easy_rank, solvability_type and backup_solvability_type; fill in nulls)
 
-
-
-E230496.r(+0)|GrpAttributes.m:776:17(inners := [P![Position(Y,g^-1*y*g) : y in Y] : g in Generators(GG)];)|Runtime error in '!': Illegal coercion
-E46656.hz(+7)|Subgroups.m:668:23(Hnew := L`subs[j];)|Runtime error in '[]': Sequence index 987 should be in the range 1 to 822
-Slow LabelConjugacyClasses: 564221981491200.i
-
 Magma bugs:
+E230496.r(+0)|GrpAttributes.m:776:17(inners := [P![Position(Y,g^-1*y*g) : y in Y] : g in Generators(GG)];)|Runtime error in '!': Illegal coercion
 Bug in Complements (reported to Magma): Segfaults on 40.12, 1696.201, 390624.d, 192720.b, 18000000.u, 1632586752.fi, 13060694016.zk, 13060694016.pu, 52242776064.um, 4553936640000.a, 78364164096.dm, 142818689064960.g, 564221981491200.i
 E80000.ze|Internal error in permc_random_base_change_basim_sub() at permc/chbase.c, line 488
 
@@ -117,6 +114,7 @@ Heisenbugs:
 E504.157(+8)|Subgroups.m:1780:22(x := subs[i];)|Runtime error in '[]': Sequence index 36 should be in the range 1 to 35"
 E1728.37907(+0)|package/Group/GrpPerm/aut/grpauto.m:55:12(x := P![Position(Y,g^-1*y*g) : y in Y ];)|Runtime error in '!': Illegal coercion
 E120.5,336.114|SymmetricBilinearForm: G must be irreducible (heisenbug?  Don't see now)
+E16000.bp|Runtime error in 'FPGroup': Incorrect group order detected
 
 
 Change Presentation.m to not use Holomoprh

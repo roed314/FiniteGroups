@@ -477,6 +477,11 @@ intrinsic Holomorph(X::LMFDBGrp) -> Grp
     G := X`MagmaGrp;
     A := Get(X, "MagmaAutGroup");
     H, inj := Holomorph(G, A);
+    // Work around a Magma bug with an incorrect holomorph
+    if #H ne #A * #G then
+        H := Normalizer(H, inj(G));
+        assert #H eq #A * #G;
+    end if;
     X`HolInj := inj;
     return H;
 end intrinsic;
