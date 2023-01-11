@@ -3,7 +3,7 @@
 from sage.all import ZZ
 from collections import defaultdict
 
-def load_file(filename, bigfile=None, mediumfile=None, smallfile=None):
+def load_file(filename, bigfile=None, mediumfile=None, smallfile=None, tinyfile=None):
     groups = defaultdict(list)
     with open(filename) as F:
         reported = True
@@ -27,23 +27,38 @@ def load_file(filename, bigfile=None, mediumfile=None, smallfile=None):
                 big = (order > 2000 or order == 1024)
                 medium = (order in [512, 1536])
                 small = (order in [128*k for k in [5,6,7,9,10,11,13,14,15]])
-                s = f"{dim},0Mat{','.join(entries)}"
-                if big and bigfile is not None or medium and mediumfile is not None or small and smallfile is not None:
-                    entries = [ZZ(c) for c in entries]
-                    entries = [entries[i*dim**2:(i+1)*dim**2] for i in range(ngens)]
+                tiny = not big
+                entries = [ZZ(c) for c in entries]
+                m = min(entries)
+                M = max(entries)
+                if abs(M) > abs(m):
+                    b = 2 * abs(M)
+                else:
+                    b = 2 * abs(m) + 1
+                shift = (b - 1) // 2
+                entries = [entries[i*dim**2:(i+1)*dim**2] for i in range(ngens)]
+                codes = [str(sum(b**i * (mat[i] + shift) for i in range(dim**2))) for mat in entries]
+                s = f"{dim},0,{b}MAT{','.join(codes)}"
+                if big and bigfile is not None or medium and mediumfile is not None or small and smallfile is not None or tiny and tinyfile is not None:
                     entries = [[mat[i*dim:(i+1)*dim] for i in range(dim)] for mat in entries]
                     G = libgap.Group(entries)
-                    if not (G.IsSimple() or G.IsPerfect() and order <= 50000):
-                        if small:
+                    if tiny:
+                        if medium:
+                            label = f"{order}.?"
+                        else:
                             label = ".".join(str(c) for c in G.IdGroup())
-                            with open(smallfile, "a") as Fout:
-                                _ = Fout.write(label + "\n")
-                        elif medium:
-                            with open(mediumfile, "a") as Fout:
-                                _ = Fout.write(s + "\n")
-                        elif big:
-                            with open(bigfile, "a") as Fout:
-                                _ = Fout.write(s + "\n")
+                    if small and smallfile is not None:
+                        with open(smallfile, "a") as Fout:
+                            _ = Fout.write(label + "\n")
+                    elif medium and mediumfile is not None:
+                        with open(mediumfile, "a") as Fout:
+                            _ = Fout.write(s + "\n")
+                    elif big:
+                        with open(bigfile, "a") as Fout:
+                            _ = Fout.write(s + "\n")
+                    if tiny and tinyfile is not None:
+                        with open(tinyfile, "a") as Fout:
+                            _ = Fout.write(f"{label} {s}\n")
                 groups[order].append(s)
                 reported = True
                 continue

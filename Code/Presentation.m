@@ -191,8 +191,6 @@ gens_to_pc := function(GG, best)
     // We have to fill in powers of our chosen generators since magma wants prime relative orders
     filled := [];
     H := sub<GG|>;
-    gens_used := [];
-    used_tracker := -1;
     for tup in best do
         g := tup[1];
         r := tup[2];
@@ -204,14 +202,11 @@ gens_to_pc := function(GG, best)
                 g := g^p;
             end for;
         end for;
-        used_tracker +:= #segment;
-        Append(~gens_used, used_tracker);
         filled cat:= Reverse(segment);
         H := tup[3];
     end for;
     // Magma has a descending filtration, so we switch to that here.
     Reverse(~filled);
-    gens_used := [#filled - i : i in gens_used];
     vprint User1: "filled", [<tup[1], tup[2], #tup[3]> : tup in filled];
     F := FreeGroup(#filled);
     rels := {};
@@ -257,7 +252,7 @@ gens_to_pc := function(GG, best)
     vprint User1: "rels", rels;
     H := quo< GrpPC : F | rels >;
     to_old := hom<H -> GG | [<PCGenerators(H)[i], gens[i]> : i in [1..#gens]]>;
-    return H, gens_used, to_old;
+    return H, to_old;
 end function;
 
 function pick_best_gens(gens)
@@ -373,8 +368,7 @@ The following groups took more than an hour to RePresent (timed out)
 256.52508
 */
 intrinsic RePresent(G::LMFDBGrp : reset_attrs:=true, use_aut:=true)
-{Changes G`MagmaGrp and sets G`gens_used to give a more human readable presentation.
-If not solvable, just sets gens_used to [1..Ngens(G)].
+{Changes G`MagmaGrp to a better presentation.
 This function is only safe to call on a newly created group, since it changes MagmaGrp (and thus invalidates a lot of attributes)}
     //print "#gensA", #gens;
     // Figure out which gives the "best" presentation.  Desired features:
@@ -387,13 +381,12 @@ This function is only safe to call on a newly created group, since it changes Ma
         chains := all_minimal_chains(G : use_aut:=use_aut);
         gens := [chain_to_gens(chain) : chain in chains];
         best := pick_best_gens(gens);
-        H, gens_used, to_old := gens_to_pc(GG, best);
+        H, to_old := gens_to_pc(GG, best);
 
         // Now we build a new PC group with an isomorphism to our given one.
         //print sprint([x : x in GetAttributes(LMFDBGrp) | assigned G``x]);
         //[CCAutCollapse,CCpermutation,CCpermutationInv]
         G`MagmaGrp := H;
-        G`gens_used := Sort(gens_used);
         G`IsoToOldPresentation := to_old;
         // We have to reset Holomorph, HolInj, ClassMap to use the new group
         // We could instead compose with the isomorphism between the new and old group, but that seems
@@ -412,7 +405,6 @@ This function is only safe to call on a newly created group, since it changes Ma
             G`CCAutCollapse := CCAutCollapse(G);
         end if;
     else
-        G`gens_used := [i : i in [1..Ngens(G`MagmaGrp)]];
         G`IsoToOldPresentation := IdentityHomomorphism(G`MagmaGrp);
     end if;
 end intrinsic;
@@ -432,9 +424,8 @@ intrinsic RePresentFastest(G::LMFDBGrp)
     Reverse(~chain);
 
     gens := chain_to_gens(chain);
-    Gnew, gens_used, to_old := gens_to_pc(GG, gens);
+    Gnew, to_old := gens_to_pc(GG, gens);
     G`MagmaGrp := Gnew;
-    G`gens_used := Sort(gens_used);
     G`IsoToOldPresentation := to_old;
 end intrinsic;
 
@@ -457,16 +448,14 @@ intrinsic RePresentRand(G::LMFDBGrp : reps:=60)
 {Randomly construct chains and pick the best}
     gens := [chain_to_gens(random_chain(G`MagmaGrp)) : _ in [1..reps]];
     best := pick_best_gens(gens);
-    Gnew, gens_used, to_old := gens_to_pc(G`MagmaGrp, best);
+    Gnew, to_old := gens_to_pc(G`MagmaGrp, best);
     G`MagmaGrp := Gnew;
-    G`gens_used := Sort(gens_used);
     G`IsoToOldPresentation := to_old;
 end intrinsic;
 
 intrinsic RePresentFast(G::LMFDBGrp)
-{Changes G`MagmaGrp and sets G`gens_used to give a more human readable presentation.
+{Changes G`MagmaGrp to give a more human readable presentation.
 Much faster than RePresent, but may not give as good a presentation.
-If not solvable, just sets gens_used to [1..Ngens(G)].
 This function is only safe to call on a newly created group, since it changes MagmaGrp (and thus invalidates a lot of attributes)}
     // We greedily build from the top down.
     // This version will only work with permutation groups, and will struggle with groups that are close to abelian
@@ -487,8 +476,5 @@ This function is only safe to call on a newly created group, since it changes Ma
     end while;
     Reverse(~chain);
     gens := chain_to_gens(chain);
-    H, gens_used, to_old := gens_to_pc(GG, gens);
-    G`MagmaGrp := H;
-    G`gens_used := Sort(gens_used);
-    G`IsoToOldPresentation := to_old;
+    G`MagmaGrp, G`IsoToOldPresentation := gens_to_pc(GG, gens);
 end intrinsic;

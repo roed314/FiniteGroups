@@ -1,21 +1,24 @@
-intrinsic label(C::LMFDBGrpConjCls) -> MonStgElt
-  {}
-  gp_label := Get(C, "group");
-  o := Get(C, "MagmaConjCls")[1];
-  // J := capital_letter_code(C) ? TODO
-  //return Sprintf("%o.%o%o", gp_label, o, J);
-  return Sprintf("%o.%o", gp_label, o);
+intrinsic SetAutCCLabels(G::LMFDBGrp)
+{}
+    A := Get(G, "CCAutCollapse");
+    CC := Get(G, "ConjugacyClasses");
+    D := [[] : _ in [1..#Codomain(A)]];
+    for k in [1..#CC] do
+        Append(~D[A(k)], k);
+        // set the aut label to the label of the first equivalent conjugacy class
+        CC[k]`aut_label := CC[D[A(k)][1]]`label;
+    end for;
 end intrinsic;
 
 intrinsic aut_label(C::LMFDBGrpConjCls) -> MonStgElt
 {}
-    col := Get(C`Grp, "number_autjugacy_classes"); // sets aut_label
+    SetAutCCLabels(C`Grp);
     return C`aut_label;
 end intrinsic;
 
 intrinsic group(C::LMFDBGrpConjCls) -> MonStgElt
     {return label of ambient group of C}
-    return label(C`Grp);
+    return (C`Grp)`label;
 end intrinsic;
 
 intrinsic size(C::LMFDBGrpConjCls) -> Any
@@ -36,27 +39,16 @@ intrinsic order(C::LMFDBGrpConjCls) -> Any
   return CC[1];
 end intrinsic;
 
-// TODO
-// not sure how to do this...
-// Currently returns the subgroup rather than its label
 intrinsic centralizer(C::LMFDBGrpConjCls) -> Any
   {}
-  gp_label := Get(C, "group");
-  //G := LoadGrp(gp_label, );
   g := Get(C, "representative");
   return Centralizer(Parent(g), g);
-end intrinsic;
-
-// TODO
-intrinsic powers(C::LMFDBGrpConjCls) -> Any
-  {}
-  return None();
 end intrinsic;
 
 intrinsic representative(C::LMFDBGrpConjCls) -> Any
   {}
   CC := Get(C, "MagmaConjCls");
-  return CC[3]; // this may need to change depending on how elts are represented in ambient group
+  return CC[3];
 end intrinsic;
 
 intrinsic GetGrp(C::LMFDBGrpConjCls) -> Grp
@@ -71,15 +63,15 @@ end intrinsic;
 
 intrinsic degree(C::LMFDBGrpPermConjCls) -> Any
     {the degree of the group, n in Sn}
-    CC := Get(C, "MagmaConjCls"); 
-    P:=Parent(CC[3]); // For a magma class CC, CC[3] gives a representative.
+    CC := Get(C, "MagmaConjCls");
+    P := Parent(CC[3]); // For a magma class CC, CC[3] gives a representative.
     return Degree(P);
 end intrinsic;
 
 intrinsic centralizer(C::LMFDBGrpPermConjCls) -> Any
   {Label for the isomorphism class of the centralizer of an element in this conjugacy class}
   CC := Get(C, "MagmaConjCls");
-  C1:=Centralizer(Parent(CC[3]), CC[3]); //For a magma class CC, CC[3] gives a representative.
+  C1 := Centralizer(Parent(CC[3]), CC[3]); //For a magma class CC, CC[3] gives a representative.
   return label(C1);
 end intrinsic;
 

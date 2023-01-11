@@ -11,7 +11,7 @@ if done then
     exit;
 end if;
 desc := Read(infile);
-print desc;
+//print desc;
 G0 := StringToGroup(desc);
 G := G0;
 t0 := Cputime();
@@ -42,7 +42,7 @@ elif Type(G0) eq GrpPC then
 else
     gens := Generators(G0);
 end if;
-PrintFile(outfile, Sprintf("%o|%o|%o", desc, Degree(P), SavePerms([phi(psi(g)) : g in gens])));
+PrintFile(outfile, Sprintf("%o|%o|%o|%o", label, desc, Degree(P), SavePerms([phi(psi(g)) : g in gens])));
 PrintFile(timefile, Cputime() - t0);
 System("rm " * infile);
 exit;

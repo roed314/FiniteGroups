@@ -262,8 +262,6 @@ function SortGClass(L, aut)
         access := func<x|x[1]>;
         okey := "aut_overs";
         lkey := "aut_label";
-        Ambient := Get(GG, "Holomorph");
-        inj := Get(GG, "HolInj");
     else
         Lat := L[1]`Lat;
         GG := Lat`Grp;
@@ -287,32 +285,78 @@ function SortGClass(L, aut)
     return ans;
 end function;
 
+function aaa(L, key) // {key: L} in Python
+    aa := AssociativeArray(); aa[key] := L; return aa;
+end function;
+
+intrinsic LabelNormalSubgroups(S::SubgroupLat)
+{creates and assigns the short_label for each element of a lattice of normal subgroups}
+    G := S`Grp;
+    autjugacy := Get(S, "outer_equivalence");
+    by_ind := Get(S, "by_index_aut");
+    for index in Sort([k : k in Keys(by_ind)]) do
+        subs := by_ind[index];
+        if #subs eq 1 then
+            by_acode := aaa(subs, 0);
+        else
+            avecs := {@ Get(x[1], "aut_gassman_vec") : x in subs @};
+            Sort(~avecs);
+            by_acode := IndexFibers(subs, func<x|Index(avecs, Get(x[1], "aut_gassman_vec"))-1>);
+        end if;
+        for acode -> asubs in by_acode do
+            if #asubs eq 1 then
+                by_anum := asubs;
+            else
+                by_anum := SortGClass(asubs, true);
+            end if;
+            for anum in [1..#by_anum] do
+                if autjugacy then
+                    sub := by_anum[anum][1];
+                    sub`aut_label := [index, acode, anum];
+                    sub`full_label := [index, acode, anum];
+                    sub`label := Sprintf("%o.%o%o.N", index, CremonaCode(acode), IntegerToString(anum));
+                else
+                    aclass := by_anum[anum];
+                    if #aclass eq 1 then
+                        by_ccode := aaa(aclass, 0);
+                    else
+                        cvecs := {@ Get(x, "gassman_vec") : x in aclass @};
+                        Sort(~cvecs);
+                        by_ccode := IndexFibers(aclass, func<x|Index(cvecs, Get(x, "gassman_vec"))-1>);
+                    end if;
+                    for ccode -> csubs in by_ccode do
+                        // Normal, so gassman vec is enough to determine
+                        label := Sprintf("%o.%o%o.%o.N", index, CremonaCode(acode), anum, CremonaCode(ccode));
+                        by_cnum := csubs;
+                        by_cnum[1]`label := label;
+                    end for;
+                end if;
+            end for;
+        end for;
+    end for;
+end intrinsic;
+
 intrinsic LabelSubgroups(S::SubgroupLat)
 {creates and assigns the full_label and short_label for each element of a subgroup lattice}
     G := S`Grp;
     autjugacy := Get(S, "outer_equivalence");
-    function aaa(L, key) // {key: L} in Python
-        aa := AssociativeArray(); aa[key] := L; return aa;
-    end function;
     by_ind := Get(S, "by_index_aut");
     ibd := S`index_bound;
     if ibd eq 0 then ibd := Get(G, "order"); end if;
     for index in Sort([k : k in Keys(by_ind)]) do
+        if index gt ibd then continue; end if;
+        vprint User1: "Labeling subgroups of index", index;
         subs := by_ind[index];
         nsubs := [x : x in subs | IsNormal(G`MagmaGrp, x[1]`subgroup)];
         msubs := [x : x in subs | IsMaximal(G`MagmaGrp, x[1]`subgroup)];
         if index gt ibd and not is_sylow_order(G, Get(G, "order") div index) then
             subs := []; // We don't want to assign normal labels to subgroups beyond the index bound
-            if not G`normal_subgroups_known then nsubs := []; end if;
-            if not G`maximal_subgroups_known then msubs := []; end if;
+            if not Get(G, "normal_subgroups_known") then nsubs := []; end if;
+            if not Get(G, "maximal_subgroups_known") then msubs := []; end if;
         end if;
         tasks := [<subs, "">, <nsubs, ".N">, <msubs, ".M">];
         for task in tasks do
-            subs := task[1];
-            suffix := task[2];
-            if #subs eq 0 then
-                continue;
-            elif #subs eq 1 then
+            if #subs eq 1 then
                 by_acode := aaa(subs, 0);
             else
                 avecs := {@ <not IsNormal(G`MagmaGrp, x[1]`subgroup), Get(x[1], "aut_gassman_vec")> : x in subs @};
@@ -328,16 +372,9 @@ intrinsic LabelSubgroups(S::SubgroupLat)
                 for anum in [1..#by_anum] do
                     if autjugacy then
                         sub := by_anum[anum][1];
-                        label := IntegerToString(index) * "." * CremonaCode(acode) * IntegerToString(anum);
-                        if #suffix eq 0 then
-                            // Normal labeling
-                            sub`aut_label := [index, acode, anum];
-                            sub`full_label := [index, acode, anum];
-                            sub`label := label;
-                        else
-                            // We don't set aut_label or full_label since they won't be used recursively in labeling (for maximal subgroups because there are no supergroups, and for normal subgroups since the Gassman class is enough)
-                            Append(~sub`special_labels, label * suffix);
-                        end if;
+                        sub`aut_label := [index, acode, anum];
+                        sub`full_label := [index, acode, anum];
+                        sub`label := IntegerToString(index) * "." * CremonaCode(acode) * IntegerToString(anum);
                     else
                         aclass := by_anum[anum];
                         if #aclass eq 1 then
@@ -354,17 +391,10 @@ intrinsic LabelSubgroups(S::SubgroupLat)
                                 by_cnum := SortGClass(csubs, false);
                             end if;
                             for cnum in [1..#by_cnum] do
-                                label := IntegerToString(index) * "." * CremonaCode(acode) * IntegerToString(anum) * "." * CremonaCode(ccode) * IntegerToString(cnum);
-                                if #suffix eq 0 then
-                                    // Normal labeling
-                                    sub := by_cnum[cnum];
-                                    sub`aut_label := [index, acode, anum];
-                                    sub`full_label := [index, acode, anum, ccode, cnum];
-                                    sub`label := label;
-                                else
-                                    // As above, don't need to set aut_label or full_label
-                                    Append(~sub`special_labels, label * suffix);
-                                end if;
+                                sub := by_cnum[cnum];
+                                sub`aut_label := [index, acode, anum];
+                                sub`full_label := [index, acode, anum, ccode, cnum];
+                                sub`label := IntegerToString(index) * "." * CremonaCode(acode) * IntegerToString(anum) * "." * CremonaCode(ccode) * IntegerToString(cnum);
                             end for;
                         end for;
                     end if;

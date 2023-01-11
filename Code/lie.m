@@ -1,6 +1,6 @@
 // Add groups of lie type up to certain bounds
 // We skip GL2 (since this was handled elsewhere, including subgroups), and skip the first few Sp4 and GSp4 (subgroups were added up to 11)
-// Usage: magma -b outfolder:=/data/ lie.m
+// Usage: magma -b lie.m
 
 SetColumns(0);
 AttachSpec("hashspec");
@@ -75,13 +75,15 @@ sporadic := ["J1", "J2", "HS", "J3", "McL", "He", "Ru", "Co3", "Co2"]; // Can't 
 // the Mathieu groups are in the transitive database
 // Could also include (in increasing order of ugliness) Suz, F22, Ly, J4, HN, ON, Th, E(8,2), Fi23; Fi24, B and M aren't really reasonable
 
-smallmedfile := outfolder * "SmallMedLie.txt";
-aliasfile := outfolder * "LieAliases.txt";
+tinyfile := "DATA/TinyLie.txt";
+smallmedfile := "DATA/SmallMedLie.txt";
+aliasfile := "DATA/LieAliases.txt";
+gensfile := "DATA/LieGens.txt";
 med := [];
 meddata := [];
 medperm := [];
 medpermdata := [];
-bigfile := outfolder * "BigLie.txt"; // input for hashing script
+bigfile := "DATA/BigLie.txt"; // input for hashing script
 sizes := AssociativeArray();
 // Fill in missing orders from the groups that we've skipped
 sizes["GO(3,25)"] := #GO(3,25);
@@ -118,19 +120,41 @@ for idat in classical cat classical_perm do
             if IsPrimePower(q) then
                 fullname := Sprintf("%o(%o,%o)", name, d, q);
                 print "Const", fullname;
-                Append(~groups, <fullname, func(d, q)>);
+                // Ugh, Magma doesn't support GrpMat for ASp, AGammaL, ASigmaL, ASigmaSp, AGL(1,q)
+                if name[1] eq "A" and not (name eq "AGL" and d eq 1 or name in ["ASp", "AGammaL", "ASigmaL", "ASigmaSp"]) then
+                    G := func(GrpMat, d, q);
+                else
+                    G := func(d, q);
+                end if;
+                if name[1] eq "P" then
+                    if "amma" in name or "igma" in name then
+                        lift := name[2] * name[#name];
+                    else
+                        lift := name[2..#name];
+                    end if;
+                    lift := eval lift;
+                    lift := lift(d, q);
+                else
+                    lift := G;
+                end if;
+                Append(~groups, <fullname, G, lift>);
             end if;
         end for;
     end for;
 end for;
 for desc in chevalley cat sporadic do
     print "Const", desc;
-    Append(~groups, <desc, StringToGroup(desc)>);
+    G := StringToGroup(desc);
+    Append(~groups, <desc, G, G>);
 end for;
-for pair in groups do
-    fullname := pair[1];
-    G := pair[2];
+for trip in groups do
+    fullname := trip[1];
+    G := trip[2];
+    LG := trip[3];
     print fullname;
+    PrintFile(gensfile, Sprintf("%o %o", fullname, GroupToString(LG : use_id:=false)));
+    // Computing size of these can be slow
+    if fullname in sporadic then continue; end if;
     sizes[fullname] := #G;
     if CanIdentifyGroup(#G) then
         gid := IdentifyGroup(G);
@@ -138,8 +162,11 @@ for pair in groups do
         PrintFile(aliasfile,  Sprintf("%o %o", fullname, gid));
         if #G gt 2000 or #G gt 500 and Valuation(#G,2) gt 6 then
             PrintFile(smallmedfile, gid);
+        else
+            // The Lie descriptions for tiny groups were skipped in the original run
+            PrintFile(tinyfile, Sprintf("%o %o", gid, fullname));
         end if;
-    elif #G in [512, 1152, 1536, 1920] then
+/*    elif #G in [512, 1152, 1536, 1920] then
         if Type(G) eq GrpPerm then
             Append(~medperm, G);
             Append(~medpermdata, fullname);
@@ -159,10 +186,10 @@ for pair in groups do
             continue;
         end if;
         descriptions[s] := fullname;
-        PrintFile(bigfile, fullname);
+        PrintFile(bigfile, fullname);*/
     end if;
 end for;
-medid := IdentifyGroups(med);
+/*medid := IdentifyGroups(med);
 for i in [1..#med] do
     label := Sprintf("%o.%o", medid[i][1], medid[i][2]);
     PrintFile(aliasfile, Sprintf("%o %o", meddata[i], label)
@@ -173,5 +200,5 @@ for i in [1..#medperm] do
     label := Sprintf("%o.%o", medid[i][1], medid[i][2]);
     PrintFile(aliasfile, Sprintf("%o %o", medpermdata[i], label)
     PrintFile(smallmedfile, label);
-end for;
+end for;*/
 exit;

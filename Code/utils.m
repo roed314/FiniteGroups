@@ -28,12 +28,32 @@ intrinsic ReplaceString(s::MonStgElt, fs::MonStgElt, ts::MonStgElt) -> MonStgElt
 end intrinsic;
 
 intrinsic ReplaceString(s::MonStgElt, fs::[MonStgElt], ts::[MonStgElt]) -> MonStgElt
-  {Return a string obtained from the string s by replacing all occurences of strings in fs with strings in ts.}
-  // assert not (true in [ts[i] in s : i in [1..#ts]]);
-  for i:=1 to #fs do
-    s:=ReplaceString(s,fs[i],ts[i]);
-  end for;
-  return s;
+{Return a string obtained from the string s by replacing all occurences of strings in fs with strings in ts.}
+    // assert not (true in [ts[i] in s : i in [1..#ts]]);
+    for i:=1 to #fs do
+        s:=ReplaceString(s,fs[i],ts[i]);
+    end for;
+    return s;
+end intrinsic;
+
+intrinsic PySplit(s::MonStgElt, sep::MonStgElt : limit:=-1) -> SeqEnum[MonStgElt]
+{Splits using Python semantics (different when #sep > 1, and different when sep at beginning or end)}
+    if #sep eq 0 then
+        error "Empty separator";
+    end if;
+    i := 1;
+    j := 0;
+    ans := [];
+    while limit gt 0 or limit eq -1 do
+        if limit ne -1 then limit -:= 1; end if;
+        pos := Index(s, sep, i);
+        if pos eq 0 then break; end if;
+        j := pos - 1;
+        Append(~ans, s[i..j]);
+        i := j + #sep + 1;
+    end while;
+    Append(~ans, s[i..#s]);
+    return ans;
 end intrinsic;
 
 // procedure versions
@@ -181,6 +201,16 @@ intrinsic IndexFibers(S::SeqEnum, f::UserProgram) -> Assoc
     return A;
 end intrinsic;
 
+intrinsic CountFibers(S::SeqEnum, f::UserProgram : sort:=true) -> SeqEnum
+{Given a list of objects S and a function f on S creates an list of pairs <y, m> where m is the number of s in S with f(s) = y.}
+    A := IndexFibers(S, f);
+    C := [<y, #vals> : y -> vals in A];
+    if sort then
+        Sort(~C);
+    end if;
+    return C;
+end intrinsic;
+
 intrinsic AssociativeArrayToMap(xs :: Assoc, codomain) -> Map
   {The map from Keys(xs) to codomain implied by xs.}
   return map<Keys(xs) -> codomain | k :-> xs[k]>;
@@ -202,7 +232,61 @@ intrinsic CremonaCode(num::RngIntElt) -> MonStgElt
     return Reverse(strg);
 end intrinsic;
 
-intrinsic strip(X::MonStgElt) -> MonStgElt
+intrinsic SplitLabel(label::MonStgElt) -> SeqEnum
+{}
+    function chartype(c)
+        c := StringToCode(c);
+        if 48 le c and c le 57 then return 0; end if;
+        if 97 le c and c le 122 then return 1; end if;
+        if 65 le c and c le 90 then return 2; end if;
+        error "Invalid character type";
+    end function;
+    res := [];
+    t := -1;
+    for j in [1..#label] do
+        if t eq -1 then
+            i := j;
+            t := chartype(label[i]);
+        elif label[j] eq "." then
+            Append(~res, label[i..j-1]);
+            i := j+1;
+            t := -1;
+        else
+            tt := chartype(label[j]);
+            if tt ne t then
+                Append(~res, label[i..j-1]);
+                i := j;
+                t := tt;
+            end if;
+        end if;
+    end for;
+    Append(~res, label[i..#label]);
+    return res;
+end intrinsic;
+
+intrinsic CremonaUncode(code::MonStgElt) -> RngIntElt
+{Also works on normal integers}
+    digits := [StringToCode(c) : c in Eltseq(code)];
+    if &and[48 le c and c le 57 : c in digits] then
+        return StringToInteger(code);
+    elif &and[97 le c and c le 122 : c in digits] then
+        code := Join([CodeToString(c le 106 select c-49 else c-10) : c in digits], "");
+    elif &and[65 le c and c le 90 : c in digits] then
+        code := Join([CodeToString(c le 74 select c-17 else c-10) : c in digits], "");
+    else
+        error "Not a valid cremona code";
+    end if;
+    return StringToInteger(code, 26);
+end intrinsic;
+
+intrinsic SortLabels(labels::SeqEnum) -> SeqEnum
+{Sort labels appropriately by splitting on "." and converting the pieces into integers}
+    keys := [[CremonaUncode(c) : c in SplitLabel(label)] : label in labels];
+    ParallelSort(~keys, ~labels);
+    return labels;
+end intrinsic;
+
+intrinsic remove_whitespace(X::MonStgElt) -> MonStgElt
 { Strips spaces and carraige returns from string; much faster than StripWhiteSpace. }
     return Join(Split(Join(Split(X," "),""),"\n"),"");
 end intrinsic;
@@ -210,7 +294,16 @@ end intrinsic;
 intrinsic sprint(X::.) -> MonStgElt
 { Sprints object X with spaces and carraige returns stripped. }
     if Type(X) eq Assoc then return Join(Sort([ $$(k) cat "=" cat $$(X[k]) : k in Keys(X)]),":"); end if;
-    return strip(Sprintf("%o",X));
+    return remove_whitespace(Sprintf("%o",X));
+end intrinsic;
+
+intrinsic strip(X::MonStgElt) -> MonStgElt
+{ Removes whitespace from beginning and end of a string}
+    i := 1;
+    while X[i] in [" ", "\n", "\t"] do i +:= 1; end while;
+    j := #X;
+    while X[j] in [" ", "\n", "\t"] do j -:= 1; end while;
+    return X[i..j];
 end intrinsic;
 
 intrinsic find_process_id(N::RngIntElt, i::RngIntElt : Nlower:=1) -> RngIntElt
@@ -223,6 +316,9 @@ end intrinsic;
 // Moved from IO.m so that it could be used while just attaching hashspec
 
 function is_iterative_description(desc)
+    if "--" in desc then // using A--homdesc-->B format
+        return false;
+    end if;
     for i in [1..#desc - 1] do
         if desc[i] eq "-" and not desc[i+1] in "123456789" then
             return true;
@@ -274,12 +370,98 @@ function IntegerToHex(n, b)
     return "0"^(b-#s) * s;
 end function;
 
-intrinsic StringToGroup(s::MonStgElt) -> Grp
+intrinsic SplitMatrixCodes(L::MonStgElt, d::RngIntElt, Rcode::MonStgElt) -> SeqEnum, Rng
+{Given a string L representing a list of matrices via MatricesToHexList, returns a list of lists of integers giving the corresponding matrices together with the base ring}
+    b := 1;
+    if Rcode eq "0" then
+        R := Integers();
+        // b := #L div d^2; // This doesn't work, since we can't distinguish between 2 generators with b=1 and 1 generator with b=2.
+        b := 1; // This won't always hold, but all matrix groups added so far have entries in -1,0,1.
+    elif Rcode[1] eq "q" then
+        q := StringToInteger(Rcode[2..#Rcode]);
+        _, p := IsPrimePower(q);
+        b := 1 + Ilog(16, p-1);
+        R := GF(q);
+    else
+        N := StringToInteger(Rcode);
+        b := 1 + Ilog(16, N-1);
+        R := Integers(N);
+    end if;
+    if "," in L then
+        L := [StringToInteger(c) : c in Split(L, ",")];
+    else
+        assert IsDivisibleBy(#L, d^2);
+        if Rcode eq "0" then
+            L := [HexToSignedInteger(L[i..i+b-1]) : i in [1..#L by b]];
+        else
+            L := [HexToInteger(L[i..i+b-1]) : i in [1..#L by b]];
+        end if;
+    end if;
+    assert IsDivisibleBy(#L, d^2);
+    if Rcode[1] eq "q" then
+        k := Degree(R);
+        L := [R!L[i..i+k-1] : i in [1..#L by k]];
+    end if;
+    return [L[i..i+d^2-1] : i in [1..#L by d^2]], R;
+end intrinsic;
+
+intrinsic SplitMATRIXCodes(L::MonStgElt, d::RngIntElt, Rcode::MonStgElt, b::MonStgElt) -> SeqEnum, Rng
+{}
+    if Rcode eq "0" then
+        R := Integers();
+        b := StringToInteger(b);
+        shift := (b - 1) div 2;
+    elif Rcode[1] eq "q" then
+        q := StringToInteger(Rcode[2..#Rcode]);
+        _, p := IsPrimePower(q);
+        b := p;
+        R := GF(q);
+    else
+        N := StringToInteger(Rcode);
+        b := N;
+        R := Integers(N);
+    end if;
+    L := [StringToInteger(c) : c in Split(L, ",")];
+    L := [IntegerToSequence(mat, b) : mat in L];
+    function Pad(X, m)
+        return #X ge m select X else X cat [0 : i in [1..m-#X]];
+    end function;
+    if Rcode[1] eq "q" then
+        k := Degree(R);
+        L := [Pad(mat, k*d^2) : mat in L];
+        L := [[R!mat[i..i+k-1] : i in [1..#mat by k]] : mat in L];
+    elif Rcode eq "0" then
+        L := [[c - shift : c in Pad(mat, d^2)] : mat in L];
+    else
+        L := [Pad(mat, d^2) : mat in L];
+    end if;
+    return L, R;
+end intrinsic;
+
+function dbcFromdR(dR)
+    dR := Split(dR, ",");
+    if dR[2] eq "0" then
+        d, Rcode, b := Explode(dR);
+    else
+        d, Rcode := Explode(dR);
+        b := "";
+    end if;
+    d := StringToInteger(d);
+    return d, b, Rcode;
+end function;
+
+intrinsic StringToGroup(s::MonStgElt : baseG:=0) -> Grp
 {}
     // We want to support iterated constructions separated by hyphens, but also need to handle negative signs
+    s := strip(s);
     if is_iterative_description(s) then
         path := Split(s, "-");
-        G := StringToGroup(path[1]);
+        if baseG cmpeq 0 then
+            G := StringToGroup(path[1]);
+        else
+            // We need to be able to specify an existing group for PC groups rather than creating a new one.
+            G := baseG;
+        end if;
         for zig in path[2..#path] do
             if zig[1] eq "A" then
                 // Since computing the automorphism group can be expensive, we allow storage of the actual automorphisms
@@ -287,30 +469,10 @@ intrinsic StringToGroup(s::MonStgElt) -> Grp
                     G := AutomorphismGroup(G);
                 else
                     gens, auts := Explode(Split(zig[2..#zig], ";"));
-                    gens := [StringToInteger(c) : c in Split(gens, ",")];
-                    auts := [StringToInteger(c) : c in Split(auts, ",")];
+                    gens := [LoadElt(c, G) : c in Split(gens, ",")];
+                    auts := Split(auts, ",");
                     auts := [auts[i..i+#gens-1] : i in [1..#auts by #gens]];
-                    if Type(G) eq GrpPerm then
-                        n := Degree(G);
-                        gens := [DecodePerm(gen, n) : gen in gens];
-                        auts := [[DecodePerm(x, n) : x in imgs] : imgs in auts];
-                    elif Type(G) eq GrpMat then
-                        d := Dimension(G);
-                        R := CoefficientRing(G);
-                        if Type(R) eq FldFin and Degree(R) gt 1 then
-                            k := Degree(R);
-                            gens := [R!gens[i..i+k-1] : i in [1..#gens by k]];
-                            auts := [[R!imgs[i..i+k-1] : i in [1..#imgs by k]] : imgs in auts];
-                        end if;
-                        gens := [G!gens[i..i+d^2-1] : i in [1..#gens by d^2]];
-                        auts := [[G!imgs[i..i+d^2-1] : i in [1..#imgs by d^2]] : imgs in auts];
-                    elif Type(G) eq GrpPC then
-                        n := NumberOfPCGenerators(G);
-                        gens := [G!gens[i..i+n-1] : i in [1..#gens by n]];
-                        auts := [[G!imgs[i..i+n-1] : i in [1..#imgs by n]] : imgs in auts];
-                    else
-                        error "Unsupported group type", Type(G);
-                    end if;
+                    auts := [[LoadElt(c, G) : c in phi] : phi in auts];
                     G := AutomorphismGroup(G, gens, auts);
                 end if;
             elif zig eq "Z" then
@@ -343,48 +505,28 @@ intrinsic StringToGroup(s::MonStgElt) -> Grp
         q := StringToInteger(q);
         return ChevalleyGroup(series, n, q);
     elif "Mat" in s then
-        dR, L := Explode(Split(s, "Mat"));
+        dR, L := Explode(PySplit(s, "Mat"));
         d, Rcode := Explode(Split(dR, ","));
         d := StringToInteger(d);
-        b := 1;
-        if Rcode eq "0" then
-            R := Integers();
-            b := #L div d^2;
-        elif Rcode[1] eq "q" then
-            q := StringToInteger(Rcode[2..#Rcode]);
-            _, p := IsPrimePower(q);
-            b := 1 + Ilog(16, p-1);
-            R := GF(q);
-        else
-            N := StringToInteger(Rcode);
-            b := 1 + Ilog(16, N-1);
-            R := Integers(N);
-        end if;
-        if "," in L then
-            L := [StringToInteger(c) : c in Split(L, ",")];
-        else
-            assert IsDivisibleBy(#L, d^2);
-            if Rcode eq "0" then
-                L := [HexToSignedInteger(L[i..i+b-1]) : i in [1..#L by b]];
-            else
-                L := [HexToInteger(L[i..i+b-1]) : i in [1..#L by b]];
-            end if;
-        end if;
-        assert IsDivisibleBy(#L, d^2);
-        if Rcode[1] eq "q" then
-            k := Degree(R);
-            L := [R!L[i..i+k-1] : i in [1..#L by k]];
-        end if;
-        L := [L[i..i+d^2-1] : i in [1..#L by d^2]];
+        L, R := SplitMatrixCodes(L, d, Rcode);
+        return MatrixGroup<d, R| L >;
+    elif "MAT" in s then // encode matrices as integers rather than hex strings
+        dR, L := Explode(PySplit(s, "MAT"));
+        d, b, Rcode := dbcFromdR(dR);
+        L, R := SplitMATRIXCodes(L, d, Rcode, b);
         return MatrixGroup<d, R| L >;
     elif "Perm" in s then
-        n, L := Explode(Split(s, "Perm"));
+        n, L := Explode(PySplit(s, "Perm"));
         n := StringToInteger(n);
         L := [DecodePerm(StringToInteger(c), n) : c in Split(L, ",")];
         return PermutationGroup<n | L>;
     elif "PC" in s then
-        N, code := Explode([StringToInteger(c) : c in Split(s, "PC")]);
+        N, code := Explode([StringToInteger(c) : c in PySplit(s, "PC")]);
         return SmallGroupDecoding(code, N);
+    elif "pc" in s then
+        N, compact := Explode(PySplit(s, "pc"));
+        compact := [StringToInteger(c) : c in Split(compact, ",")];
+        return PCGroup(compact);
     elif s[#s] eq ")" and #Split(s, "(") eq 2 then
         // We just use the Magma command to store classical matrix groups, since we can then recover
         // the homomorphism in the projective case
@@ -392,8 +534,12 @@ intrinsic StringToGroup(s::MonStgElt) -> Grp
         cmd, data := Explode(Split(s[1..#s-1], "("));
         n, q := Explode([StringToInteger(c) : c in Split(data, ",")]);
         assert cmd in ["GL", "SL", "Sp", "SO", "SOPlus", "SOMinus", "SU", "GO", "GOPlus", "GOMinus", "GU", "CSp", "CSO", "CSOPlus", "CSOMinus", "CSU", "CO", "COPlus", "COMinus", "CU", "Omega", "OmegaPlus", "OmegaMinus", "Spin", "SpinPlus", "SpinMinus", "PGL", "PSL", "PSp", "PSO", "PSOPlus", "PSOMinus", "PSU", "PGO", "PGOPlus", "PGOMinus", "PGU", "POmega", "POmegaPlus", "POmegaMinus", "PGammaL", "PSigmaL", "PSigmaSp", "PGammaU", "AGL", "ASL", "ASp", "AGammaL", "ASigmaL", "ASigmaSp"];
-        cmd := eval cmd;
-        return cmd(n, q);
+        CMD := eval cmd;
+        if cmd in ["AGL", "ASL"] then // wish we could do "ASp", "AGammaL", "ASigmaL", "ASigmaSp"
+            return CMD(GrpMat, n, q);
+        else
+            return CMD(n, q);
+        end if;
     elif s in ["J1", "J2", "HS", "J3", "McL", "He", "Ru", "Co3", "Co2", "Co1"] then
         return StringToGroup(sporadic_codes[s]);
     elif "." in s then
@@ -485,41 +631,76 @@ intrinsic StringToPermGroup(s::MonStgElt) -> GrpPerm
     end if;
 end intrinsic;
 
+intrinsic CoefficientRingCode(R::Rng) -> MonStgElt
+{}
+    if Type(R) eq RngInt then
+        return "0";
+    elif Type(R) eq RngIntRes then
+        return Sprint(Modulus(R));
+    elif Type(R) eq FldFin then
+        p := Characteristic(R);
+        k := Degree(R);
+        if k eq 1 then
+            return Sprint(#R);
+        elif DefiningPolynomial(R) ne ConwayPolynomial(p, k) then
+            error "Matrix rings over finite fields not defined by a Conway polynomial are unsupported";
+        else
+            return Sprintf("q%o", #R);
+        end if;
+    else
+        error "Unsupported coefficient ring", R;
+    end if;
+end intrinsic;
+
 intrinsic MatricesToHexlist(L::SeqEnum, R::Rng) -> SeqEnum, MonStgElt
 {}
     L := &cat[Eltseq(g) : g in L];
     if Type(R) eq RngInt then
-        R := "0";
         b := Max([1 + Ilog(16, Integers()!(2*Abs(c+1/2))) : c in L]); // only need 1 digit for -8, but 2 for 8; deals with c=0 correctly
-        L := [IntegerToHex(c, b) : c in L];
     elif Type(R) eq RngIntRes then
         b := 1 + Ilog(16, Modulus(R) - 1);
-        L := [IntegerToHex(c, b) : c in L];
-        R := Sprint(Modulus(R));
     elif Type(R) eq FldFin then
         p := Characteristic(R);
         b := 1 + Ilog(16, p-1);
-        k := Degree(R);
-        if k eq 1 then
-            R := Sprint(p);
-        elif DefiningPolynomial(R) ne ConwayPolynomial(p, k) then
-            error "Matrix rings over finite fields not defined by a Conway polynomial are unsupported";
-        else
+        if Degree(R) gt 1 then
             L := &cat[Eltseq(a) : a in L];
-            R := Sprintf("q%o", #R);
         end if;
-        L := [IntegerToHex(c, b) : c in L];
-    else
-        error "Unsupported coefficient ring", R;
     end if;
-    return L, R;
+    return [IntegerToHex(c, b) : c in L], CoefficientRingCode(R);
+end intrinsic;
+
+intrinsic MatricesToIntegers(L::SeqEnum, R::Rng) -> SeqEnum, MonStgElt
+{}
+    L := [Eltseq(g) : g in L];
+    Rcode := CoefficientRingCode(R);
+    if Type(R) eq RngInt then
+        Lcat := &cat(L);
+        m := Min(Lcat);
+        M := Max(Lcat);
+        if Abs(M) gt Abs(m) then
+            b := 2*Abs(M);
+        else
+            b := 2*Abs(m) + 1;
+        end if;
+        // b = 2 supports 0,1; b=3 supports -1,0,1; b=4 supports -1,0,1,2
+        shift := (b - 1) div 2;
+        L := [[c + shift : c in mat] : mat in L];
+        Rcode *:= Sprintf(",%o", b);
+    else
+        b := Characteristic(R);
+        if Type(R) eq FldFin and Degree(R) gt 1 then
+            L := [&cat[Eltseq(a) : a in mat] : mat in L];
+        end if;
+        L := [[Integers()!a : a in mat] : mat in L];
+    end if;
+    return [SequenceToInteger(mat, b) : mat in L], Rcode;
 end intrinsic;
 
 intrinsic GroupToString(G::Grp : use_id:=true) -> MonStgElt
 {}
     // This produces a string from which the group can be reconstructed, up to isomorphism
     // Note that it does not guarantee the same presentation or choice of generators
-    N := #G;
+    N := use_id select #G else 0;
     if Type(G) eq GrpAuto then
         A := G;
         G := Group(G);
@@ -530,36 +711,23 @@ intrinsic GroupToString(G::Grp : use_id:=true) -> MonStgElt
             gens := Generators(G);
         end if;
         auts := &cat[[phi(g) : g in gens] : phi in Generators(A)];
-        if Type(G) eq GrpPC then
-            gens := &cat[ElementToSequence(g) : g in gens];
-            auts := &cat[ElementToSequence(im) : im in auts];
-        elif Type(G) eq GrpPerm then
-            gens := [EncodePerm(g) : g in gens];
-            auts := [EncodePerm(im) : im in auts];
-        elif Type(G) eq GrpMat then
-            gens := &cat[Eltseq(g) : g in gens];
-            auts := &cat[Eltseq(im) : im in auts];
-            R := CoefficientRing(G);
-            if Type(R) eq FldFin and Degree(R) gt 1 then
-                gens := &cat[Eltseq(a) : a in gens];
-                auts := &cat[Eltseq(a) : a in auts];
-            end if;
-        else
-            error "Unsupported group type", Type(G);
-        end if;
+        gens := [SaveElt(g) : g in gens];
+        auts := [SaveElt(gimg) : gimg in auts];
         return Sprintf("%o-A%o;%o", Gdesc, Join([Sprint(g) : g in gens], ","), Join([Sprint(a) : a in auts], ","));
     elif use_id and CanIdentifyGroup(N) then
         return Sprintf("%o.%o", N, IdentifyGroup(G)[2]);
     elif Type(G) eq GrpPerm then
-        if IsTransitive(G) and Degree(G) lt 48 then
+        if use_id and IsTransitive(G) and Degree(G) lt 48 then
             t,n := TransitiveGroupIdentification(G);
             return Sprintf("%oT%o", n, t);
         else
             return Sprintf("%oPerm%o", Degree(G), Join([Sprint(EncodePerm(g)) : g in Generators(G)], ","));
         end if;
     elif Type(G) eq GrpMat then
-        L, R := MatricesToHexlist([g : g in Generators(G)], CoefficientRing(G));
-        return Sprintf("%o,%oMat%o", Dimension(G), R, &*[Sprint(c) : c in L]);
+        // L, R := MatricesToHexlist([g : g in Generators(G)], CoefficientRing(G));
+        // return Sprintf("%o,%oMat%o", Dimension(G), R, &*[Sprint(c) : c in L]);
+        L, R := MatricesToIntegers([g : g in Generators(G)], CoefficientRing(G));
+        return Sprintf("%o,%oMAT%o", Dimension(G), R, Join([Sprint(c) : c in L], ","));
     else
         if Type(G) eq GrpAb then
             G := PCGroup(G);
@@ -595,6 +763,112 @@ intrinsic SubgroupToString(G::Grp, H::Grp) -> MonStgElt
     else
         error Sprintf("Unsupported subgroup type %o of order %o", Type(H), #H);
     end if;
+end intrinsic;
+
+intrinsic StringToGroupHom(s::MonStgElt) -> Map, BoolElt
+{Returns the map described, together with a boolean describing whether elements should be lifted from the codomain to the domain (indicated by a >> arrowhead) or mapped from the domain to the codomain (true in first case, false in second)}
+    if "--" in s then
+        // Describe the homomorphism explicitly
+        pieces := PySplit(s, "--");
+        if #pieces ne 3 then
+            error "Invalid hom string with", #pieces-1, "-- segments";
+        end if;
+        G, f, HH := Explode(pieces);
+        assert #HH gt 1 and HH[1] eq ">";
+        if HH[2] eq ">" then
+            cover := true;
+            HH := HH[3..#HH];
+        else
+            cover := false;
+            HH := HH[2..#HH];
+        end if;
+        G := StringToGroup(G);
+        H := StringToGroup(HH);
+        if Type(H) eq GrpMat then
+            if "MAT" in HH then
+                dR, L := Explode(PySplit(HH, "MAT"));
+                d, b, Rcode := dbcFromdR(dR);
+            elif "Mat" in HH then
+                dR, L := Explode(PySplit(HH, "Mat"));
+                d, b, Rcode := dbcFromdR(dR);
+            else
+                assert IsFinite(CoefficientRing(H));
+                d := Degree(H);
+                b := "";
+            end if;
+            f := SplitMATRIXCodes(f, d, Rcode, b);
+        else
+            f := Split(f, ",");
+            f := [LoadElt(m, H) : m in f];
+        end if;
+        Ggens := [g : g in Generators(G)];
+        assert #Ggens eq #f;
+        return hom<G -> H | [Ggens[i] -> f[i] : i in [1..#Ggens]]>, cover;
+    elif s[#s] eq ")" and #Split(s, "(") eq 2 and Split(s, "(")[1] in ["PGL", "PSL", "PSp", "PSO", "PSOPlus", "PSOMinus", "PSU", "PGO", "PGOPlus", "PGOMinus", "PGU", "POmega", "POmegaPlus", "POmegaMinus", "PGammaL", "PSigmaL", "PSigmaSp", "PGammaU"] then
+        cmd, data := Explode(Split(s[1..#s-1], "("));
+        n, q := Explode([StringToInteger(c) : c in Split(data, ",")]);
+        if "amma" in cmd or "igma" in cmd then
+            up := cmd[2] * cmd[#cmd]; // GL, SL, Sp or GU
+        else
+            up := cmd[2..#cmd];
+        end if;
+        up := eval up;
+        cmd := eval cmd;
+        G := up(n, q);
+        P, S := cmd(n, q);
+        nonzero := [Min([i : i in [1..Degree(v)] | v[i] ne 0]) : v in S];
+        function Slook(v)
+            for i in [1..#S] do
+                if v eq S[i] * v[nonzero[i]] / S[i][nonzero[i]] then
+                    return i;
+                end if;
+            end for;
+        end function;
+        f := hom<G -> P | [g -> P![Slook(v * g) : v in S] : g in Generators(G)]>;
+        return f, true;
+    else
+        // The identity homomorphism on a single group
+        G := StringToGroup(s);
+        return IdentityHomomorphism(G), false;
+    end if;
+end intrinsic;
+
+intrinsic GroupHomToString(f::Map : cover:=false, GG:="", HH:="") -> MonStgElt
+{}
+    G := Domain(f);
+    H := Codomain(f);
+    if G cmpeq H and &and[f(g) eq g : g in Generators(G)] then
+        return GroupToString(G : use_id:=false);
+    end if;
+    if #GG eq 0 then
+        GG := GroupToString(G : use_id:=false);
+    end if;
+    if #HH eq 0 then
+        HH := GroupToString(H : use_id:=false);
+    end if;
+    arrowhead := cover select ">>" else ">";
+    if Type(H) eq GrpMat then
+        L, R := MatricesToIntegers([f(g) : g in Generators(G)], CoefficientRing(H));
+        fdef := Join([Sprint(c) : c in L], ",");
+    else
+        fdef := Join([SaveElt(f(x)) : x in Generators(G)], ",");
+    end if;
+    return GG * "--" * fdef * "--" * arrowhead * HH;
+end intrinsic;
+
+// Computing the hom for projective groups like PGL can get slow, so we save them
+intrinsic PStringToHomString(s::MonStgElt) -> MonStgElt
+{}
+    f := StringToGroupHom(s);
+    desc := PySplit(GroupHomToString(f), "--")[2];
+    cmd, data := Explode(Split(s[1..#s-1], "("));
+    n, q := Explode([StringToInteger(c) : c in Split(data, ",")]);
+    if "amma" in cmd or "igma" in cmd then
+        up := cmd[2] * cmd[#cmd]; // GL, SL, Sp or GU
+    else
+        up := cmd[2..#cmd];
+    end if;
+    return Sprintf("%o(%o,%o)--%o-->>%o", up, n, q, desc, s);
 end intrinsic;
 
 /*

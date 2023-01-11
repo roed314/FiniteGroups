@@ -3,6 +3,8 @@ LMFDB = LMFDB
 
 data: glnc glnq cchar qchar ccs groups subs
 
+datafixed: ccharfixed qchar ccs groupsfixed subsfixed
+
 diagramx:
 	cat $(LMFDB)/grdata? > $(LMFDB)/grdata.out
 
@@ -31,22 +33,31 @@ uploadgraph: diagramx diagramxaut
 	cd $(LMFDB); sage -python grfinish.py; cd ..
 
 groups:
-	find $(FOLDER)/groups -type f -exec cat '{}' ';' | sort -u | cat LMFDBGrp.header  - > $(LMFDB)/groups.data
+	find $(FOLDER)/groups -type f -exec cat '{}' ';' | LC_ALL=C sort -u | cat LMFDBGrp.header  - > $(LMFDB)/groups.data
+
+groupsfixed:
+	find $(FOLDER)/groups_fixed -type f -exec cat '{}' ';' | LC_ALL=C sort -u | cat LMFDBGrp.header  - > $(LMFDB)/groups.data
 
 subs:
-	find $(FOLDER)/subgroups -type f -exec cat '{}' ';' | sort -u | cat LMFDBSubGrp.header - > $(LMFDB)/subs.data
+	find $(FOLDER)/subgroups -type f -exec cat '{}' ';' | LC_ALL=C sort -u | cat LMFDBSubGrp.header - > $(LMFDB)/subs.data
+
+subsfixed:
+	find $(FOLDER)/subgroups_fixed -type f -exec cat '{}' ';' | LC_ALL=C sort -u | cat LMFDBSubGrp_fixed.header - > $(LMFDB)/subs.data
 
 glnc:
-	find $(FOLDER)/glnc -type f -exec cat '{}' ';' | sort -u | cat LMFDBRepCC.header - > $(LMFDB)/glnc.data
+	find $(FOLDER)/glnc -type f -exec cat '{}' ';' | LC_ALL=C sort -u | cat LMFDBRepCC.header - > $(LMFDB)/glnc.data
 
 glnq:
-	find $(FOLDER)/glnq -type f -exec cat '{}' ';' | sort -u | cat LMFDBRepQQ.header - > $(LMFDB)/glnq.data
+	find $(FOLDER)/glnq -type f -exec cat '{}' ';' | LC_ALL=C sort -u | cat LMFDBRepQQ.header - > $(LMFDB)/glnq.data
 
 qchar:
-	find $(FOLDER)/characters_qq -type f -exec cat '{}' ';' | sort -u | cat LMFDBGrpChtrQQ.header - > $(LMFDB)/qchar.data
+	find $(FOLDER)/characters_qq -type f -exec cat '{}' ';' | LC_ALL=C sort -u | cat LMFDBGrpChtrQQ.header - > $(LMFDB)/qchar.data
 
 cchar:
-	find $(FOLDER)/characters_cc -type f -exec cat '{}' ';' | sort -u | cat LMFDBGrpChtrCC.header - > $(LMFDB)/cchar.data
+	find $(FOLDER)/characters_cc -type f -exec cat '{}' ';' | LC_ALL=C sort -u | cat LMFDBGrpChtrCC.header - > $(LMFDB)/cchar.data
+
+ccharfixed:
+	find $(FOLDER)/characters_cc_fixed -type f -exec cat '{}' ';' | LC_ALL=C sort -u | cat LMFDBGrpChtrCC.header - > $(LMFDB)/cchar.data
 
 ccs:
 	find $(FOLDER)/groups_cc -type f -exec cat '{}' ';' | sort -u | cat LMFDBGrpConjCls.header - > $(LMFDB)/ccs.data

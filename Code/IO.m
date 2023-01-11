@@ -1,27 +1,26 @@
-TextCols := ["abelian_quotient", "acted", "actor", "ambient", "aut_group", "bravais_class", "c_class", "center_label", "central_quotient", "commutator_label", "coset_action_label", "crystal_symbol", "factor1", "factor2", "family", "frattini_label", "frattini_quotient", "group", "image", "knowl", "label", "short_label", "aut_label", "magma_cmd", "name", "old_label", "outer_group", "product", "proj_label", "projective_image", "q_class", "quotient", "quotient_action_image", "subgroup", "tex_name", "q_character", "carat_label", "subgroup_tex", "ambient_tex", "quotient_tex", "weyl_group", "aut_weyl_group", "quotient_action_kernel"];
+TextCols := ["abelian_quotient", "acted", "actor", "ambient", "aut_group", "bravais_class", "c_class", "center_label", "central_quotient", "commutator_label", "coset_action_label", "crystal_symbol", "factor1", "factor2", "family", "frattini_label", "frattini_quotient", "group", "image", "knowl", "label", "short_label", "aut_label", "magma_cmd", "name", "old_label", "outer_group", "product", "proj_label", "projective_image", "q_class", "quotient", "quotient_action_image", "subgroup", "tex_name", "q_character", "carat_label", "subgroup_tex", "ambient_tex", "quotient_tex", "weyl_group", "aut_weyl_group", "quotient_action_kernel", "element_repr_type"];
 
-IntegerCols := ["alias_spot", "arith_equiv", "aut_counter", "auts", "cdim", "commutator_count", "counter", "counter_by_index", "cyc_order_mat", "cyc_order_traces", "cyclotomic_n", "degree", "diagram_x", "diagram_aut_x", "dim", "elementary", "exponent", "extension_counter", "hyperelementary", "indicator", "multiplicity", "n", "number_characteristic_subgroups", "number_conjugacy_classes", "number_autjugacy_classes", "number_divisions", "number_normal_subgroups", "number_subgroup_classes", "number_subgroup_autclasses", "number_subgroups", "parity", "priority", "q", "qdim", "quotients_complenetess", "rep", "schur_index", "sibling_completeness", "size", "smallrep", "t", "transitive_degree", "hash"];
-SmallintCols := ["elt_rep_type", "composition_length", "derived_length", "ngens", "nilpotency_class", "pgroup", "sylow", "rank", "subgroup_index_bound", "solvability_type"];
-BigintCols := ["mobius_sub", "mobius_quo"];
-NumericCols := ["hall", "eulerian_function", "order", "aut_order", "outer_order", "ambient_order", "subgroup_order", "quotient_order", "quotient_action_kernel_order", "aut_centralizer_order", "aut_weyl_index", "aut_stab_index", "aut_quo_index", "count", "conjugacy_class_count", "pc_code", "core_order", "normalizer_index", "centralizer_order"];
+IntegerCols := ["alias_spot", "arith_equiv", "aut_counter", "auts", "cdim", "commutator_count", "counter", "counter_by_index", "cyc_order_mat", "cyc_order_traces", "cyclotomic_n", "degree", "diagram_x", "diagram_aut_x", "diagram_norm_x", "dim", "elementary", "exponent", "extension_counter", "hyperelementary", "indicator", "multiplicity", "n", "number_characteristic_subgroups", "number_conjugacy_classes", "number_autjugacy_classes", "number_divisions", "number_normal_subgroups", "number_subgroup_classes", "number_subgroup_autclasses", "number_subgroups", "parity", "priority", "q", "qdim", "quotients_complenetess", "rep", "schur_index", "sibling_completeness", "size", "smallrep", "t", "transitive_degree", "irrC_degree", "irrQ_degree", "linC_degree", "linQ_degree", "linFp_degree", "linFq_degree", "permutation_degree"];
+SmallintCols := ["elt_rep_type", "composition_length", "derived_length", "ngens", "nilpotency_class", "pgroup", "sylow", "easy_rank", "rank", "pc_rank", "subgroup_index_bound", "solvability_type", "backup_solvability_type"];
+BigintCols := ["mobius_sub", "mobius_quo", "hash", "subgroup_hash", "quotient_hash"];
+NumericCols := ["hall", "eulerian_function", "order", "aut_order", "outer_order", "ambient_order", "subgroup_order", "quotient_order", "quotient_action_kernel_order", "aut_centralizer_order", "aut_weyl_index", "aut_stab_index", "aut_quo_index", "count", "conjugacy_class_count", "pc_code", "core_order", "centralizer_order", "SubGrpLstByDivisorTerminate"];
 
 TextListCols := ["composition_factors", "special_labels", "wreath_data"];
 
-IntegerListCols := ["cycle_type", "denominators", "factors_of_aut_order", "faithful_reps", "powers", "primary_abelian_invariants", "schur_multiplier", "smith_abelian_invariants", "subgroup_fusion", "nt","qvalues","trace_field"];
-SmallintListCols := ["factors_of_order", "gens_used", "exponents_of_order"];
-NumericListCols := ["order_stats","field"];
+IntegerListCols := ["cycle_type", "denominators", "factors_of_aut_order", "faithful_reps", "powers", "primary_abelian_invariants", "schur_multiplier", "smith_abelian_invariants", "subgroup_fusion", "nt","qvalues", "trace_field"];
+SmallintListCols := ["factors_of_order", "gens_used", "exponents_of_order", "diagramx"];
+NumericListCols := ["order_stats","cc_stats","div_stats","aut_stats","irrep_stats","ratrep_stats","field","perm_gens", "aut_gens"];
 
-BoolCols := ["Agroup", "Zgroup", "abelian", "all_subgroups_known", "almost_simple", "central", "central_product", "characteristic", "cyclic", "direct", "direct_product", "faithful", "finite_matrix_group", "indecomposible", "irreducible", "maximal", "maximal_normal", "maximal_subgroups_known", "metabelian", "metacyclic", "minimal", "minimal_normal", "monomial", "nilpotent", "normal", "normal_subgroups_known", "outer_equivalence", "perfect", "prime", "primitive", "quasisimple", "rational", "semidirect_product", "simple", "solvable", "split", "stem", "subgroup_inclusions_known", "supersolvable", "sylow_subgroups_known", "wreath_product", "standard_generators", "quotient_cyclic", "quotient_abelian", "quotient_solvable", "proper", "complete"];
+BoolCols := ["Agroup", "Zgroup", "abelian", "all_subgroups_known", "complex_characters_known", "rational_characters_known", "almost_simple", "central", "central_product", "characteristic", "cyclic", "direct", "direct_product", "faithful", "indecomposible", "irreducible", "maximal", "maximal_normal", "maximal_subgroups_known", "metabelian", "metacyclic", "minimal", "minimal_normal", "monomial", "nilpotent", "normal", "normal_subgroups_known", "complements_known", "outer_equivalence", "perfect", "prime", "primitive", "quasisimple", "rational", "semidirect_product", "simple", "solvable", "split", "stem", "subgroup_inclusions_known", "supersolvable", "sylow_subgroups_known", "wreath_product", "standard_generators", "quotient_cyclic", "quotient_abelian", "quotient_solvable", "proper", "complete", "central_factor", "AllSubgroupsOk"];
 
 // creps has a gens which is not integer[]
-JsonbCols := ["quotient_fusion","decomposition","traces", "gens","values","direct_factorization"];
+JsonbCols := ["quotient_fusion", "decomposition", "traces", "gens", "values", "direct_factorization", "representations"];
 
-PermsCols := ["perm_gens"];
 SubgroupCols := ["centralizer", "kernel", "core", "center", "normal_closure", "normalizer", "sub1", "sub2"];
-SubgroupListCols := ["complements", "contains", "contained_in"];
+SubgroupListCols := ["complements", "contains", "contained_in", "normal_contains", "normal_contained_in", "charc_centers", "charc_kernels", "conj_centralizers"];
 
 EltCols := ["representative"];
-EltListCols := ["generators"];
+EltListCols := ["generators", "charc_center_gens", "charc_kernel_gens", "conj_centralizer_gens"];
 //QuotListCols := ["generator_images"];
 
 // The following is to be able to have a global variable
@@ -68,7 +67,8 @@ intrinsic SaveIntegerList(out::SeqEnum) ->  MonStgElt
     {}
     //return "{" * Join([IntegerToString(o) : o in out], ",") * "}";
     out_str := Sprint(out);
-    ReplaceString(~out_str, ["[","]"," ","\n"],["{","}","", ""]);
+    ReplaceString(~out_str, ["[","]","<",">"," ","\n"],["{","}","{","}","", ""]);
+    if out_str eq "{{}}" then out_str := "{}"; end if; // Postgres can't handle nested lists of length 0....
     return out_str;
 end intrinsic;
 
@@ -80,70 +80,92 @@ intrinsic LoadTextList(inp::MonStgElt) -> SeqEnum
 end intrinsic;
 intrinsic SaveTextList(out::SeqEnum) ->  MonStgElt
     {}
-    return "{" * Join(out, ",") * "}";
+    return "{\"" * Join(out, "\",\"") * "\"}";
 end intrinsic;
 
 
-strgsave:=function(strg);
-   if Type(strg) eq MonStgElt then
-      return "\"" cat strg cat "\"";
-   else
-      return strg;
-   end if;
-end function;
-
-listprocess:=function(L);
-   newout:="[ ";
-   for i in [1..#L] do
-      subL:=L[i];
-      if Type(subL) eq SeqEnum or Type(subL) eq List or Type(subL) eq Tup then
-         out_piece:=$$(subL);   
-      else 
-         out_piece:=Sprint(strgsave(subL));  
-      end if;
-      if i ne #L then
-         out_piece:=out_piece cat ", ";
-      end if;
-      newout:=newout cat out_piece;
-   end for;
-   newout  := newout cat " ]";
-   return newout;
-end function;
-
-
-removestars:=function(L);
-   for i in [1..#L] do
-      if Type(L[i]) eq List then
-          L[i]:=$$(L[i]);
-      end if;
-   end for;
-   typeL:={Type(L[i]) : i in [1..#L]};
-   if #typeL eq 1 then
-      newL:=[L[i] : i in [1..#L]];
-   else 
-      newL:=L;
-   end if;
-   return newL;
-end function;
-
-intrinsic LoadJsonb(inp::MonStgElt) -> List
-    {assuming lists of strings or integers only}
-    assert inp[1] eq "[" and inp[#inp] eq "]";
-    ReplaceString(~inp,["[","]"],["[*","*]"]);
-    magma_inp:=eval inp;
-    return removestars(magma_inp);
+intrinsic SaveJsonb(inp::MonStgElt) -> MonStgElt
+{Save a string by wrapping with quotes}
+    return "\"" * inp * "\"";
 end intrinsic;
-intrinsic SaveJsonb(out::List) ->  MonStgElt
+intrinsic SaveJsonb(inp::RngIntElt) -> MonStgElt
+{Save an integer}
+    return Sprint(inp);
+end intrinsic;
+intrinsic SaveJsonb(inp::FldRatElt) -> MonStgElt
+{Save an integer}
+    assert Denominator(inp) eq 1;
+    return Sprint(inp);
+end intrinsic;
+intrinsic SaveJsonb(inp::List) ->  MonStgElt
 {assuming list of strings or integers (or embedded lists of these) only}
-    return listprocess(out);
+    return "[" * Join([SaveJsonb(x) : x in inp], ",") * "]";
 end intrinsic;
-intrinsic SaveJsonb(out::SeqEnum[List]) ->  MonStgElt
+intrinsic SaveJsonb(inp::SeqEnum) ->  MonStgElt
 {assuming list of strings or integers (or embedded lists of these) only}
-    return listprocess(out);
+    return "[" * Join([SaveJsonb(x) : x in inp], ",") * "]";
 end intrinsic;
-intrinsic SaveJsonb(out::SeqEnum) ->  MonStgElt
+intrinsic SaveJsonb(inp::Tup) -> MonStgElt
 {assuming list of strings or integers (or embedded lists of these) only}
-    return listprocess(out);
+    return "[" * Join([SaveJsonb(x) : x in inp], ",") * "]";
+end intrinsic;
+intrinsic SaveJsonb(inp::Assoc) -> MonStgElt
+{saving a dictionary}
+    return "{" * Join([Sprintf("%o:%o", SaveJsonb(k), SaveJsonb(v)) : k -> v in inp], ",") * "}";
+end intrinsic;
+
+function splitagg(inp, spliton)
+    level := 0;
+    strlevel := Integers(2)!0; // strings don't nest: they're just on or off
+    out := [];
+    i := 1;
+    for j in [1..#inp] do
+        if inp[j] in ["[", "{"] then
+            level +:= 1;
+        elif inp[j] in ["]", "}"] then
+            level -:= 1;
+        elif inp[j] eq "\"" then
+            strlevel +:= 1;
+        elif level eq 0 and strlevel eq 0 and inp[j] eq spliton then
+            Append(~out, inp[i..j-1]);
+            i := j+1;
+        end if;
+    end for;
+    if i le #inp then
+        Append(~out, inp[i..#inp]);
+    end if;
+    return out;
+end function;
+intrinsic LoadJsonb(inp::MonStgElt) -> Any
+{Supports lists and dictionaries (iteratively), with strings and integers as leaves}
+    i := 1; k := #inp;
+    while inp[i] eq " " do i +:= 1; end while;
+    while inp[k] eq " " do k -:= 1; end while;
+    if inp[i] eq "[" and inp[k] eq "]" then
+        // Need to strip interior whitespace to handle empty list [  ] appropriately
+        while inp[i+1] eq " " do i +:= 1; end while;
+        while inp[k-1] eq " " do k -:= 1; end while;
+        out := [* LoadJsonb(x) : x in splitagg(inp[i+1..k-1], ",") *];
+        try
+            return [x : x in out];
+        catch e;
+            return out;
+        end try;
+    elif inp[i] eq "{" and inp[k] eq "}" then
+        // Need to strip interior whitespace to handle empty dict { } appropriately
+        while inp[i+1] eq " " do i +:= 1; end while;
+        while inp[k-1] eq " " do k -:= 1; end while;
+        out := AssociativeArray();
+        for x in splitagg(inp[i+1..k-1], ",") do
+            yz := splitagg(x, ":"); assert #yz eq 2;
+            out[LoadJsonb(yz[1])] := LoadJsonb(yz[2]);
+        end for;
+        return out;
+    elif inp[i] eq "\"" and inp[k] eq "\"" and &and[inp[j] ne "\"" : j in [i+1..k-1]] then
+        return inp[i+1..k-1];
+    else
+        return StringToInteger(inp);
+    end if;
 end intrinsic;
 
 
@@ -156,10 +178,8 @@ intrinsic SavePerms(out::SeqEnum) -> MonStgElt
     return SaveIntegerList([EncodePerm(o) : o in out]);
 end intrinsic;
 
-intrinsic LoadElt(inp::MonStgElt, G::LMFDBGrp) -> Any
-    {}
-    // For PCGroups, we have loaded the group from its pc_code since we're using a different presentation
-    GG := G`MagmaGrp;
+intrinsic LoadElt(inp::MonStgElt, GG::Grp) -> Any
+{}
     if Type(GG) eq GrpPC then
         n := StringToInteger(inp);
         v := [];
@@ -171,13 +191,51 @@ intrinsic LoadElt(inp::MonStgElt, G::LMFDBGrp) -> Any
         return GG!v;
     elif Type(GG) eq GrpPerm then
         n := Degree(GG);
-        return GG!DecodePerm(inp, n);
+        return GG!DecodePerm(StringToInteger(inp), n);
+    elif Type(GG) eq GrpMat then
+        d := Degree(GG);
+        Rcode := CoefficientRingCode(CoefficientRing(GG));
+        if Rcode eq "0" then
+            inp, b := Explode(Split(inp, "."));
+            b := Reverse(b);
+        else
+            b := ""; // b not used
+        end if;
+        L, R := SplitMATRIXCodes(inp, d, Rcode, b);
+        return GG!(L[1]);
     else
-        error "Other group types not yet supported";
+        error "Other group types not supported";
     end if;
 end intrinsic;
+
+intrinsic LoadElt(inp::MonStgElt, G::LMFDBGrp) -> Any
+{}
+    if assigned G`ElementReprCovers then
+        assert assigned G`ElementReprHom;
+        cover := G`ElementReprCovers;
+        f := G`ElementReprHom;
+        if cover then
+            GG := Domain(f);
+        else
+            GG := Codomain(f);
+        end if;
+    else
+        GG := G`MagmaGrp;
+    end if;
+    // For PCGroups, we have loaded the group from its pc_code since we're using a different presentation
+    inp := LoadElt(inp, GG);
+    if assigned G`ElementReprCovers then
+        if cover then
+            inp := inp @ f;
+        else
+            inp := inp @@ f;
+        end if;
+    end if;
+    return inp;
+end intrinsic;
+
 intrinsic SaveElt(out::GrpElt) -> MonStgElt
-    {}
+{}
     GG := Parent(out);
     if Type(out) eq GrpPCElt then
         n := 0;
@@ -190,19 +248,54 @@ intrinsic SaveElt(out::GrpElt) -> MonStgElt
         return IntegerToString(n);
     elif Type(out) eq GrpPermElt then
         return IntegerToString(EncodePerm(out));
+    elif Type(out) eq GrpMatElt then
+        L, R := MatricesToIntegers([Matrix(out)], CoefficientRing(out));
+        R := Split(R, ",");
+        if #R eq 2 then // characteristic 0, where we need to explicitly record b
+            return Sprintf("%o.%o", L[1], Reverse(R[2]));
+        else
+            return Sprint(L[1]);
+        end if;
     else
-        error "Other group types not yet supported";
+        error "Other group types not supported";
     end if;
 end intrinsic;
 
-intrinsic LoadEltList(inp::MonStgElt, G::LMFDBGrp) -> SeqEnum
-    {}
-    assert inp[1] eq "{" and inp[#inp] eq "}";
-    return [LoadElt(x, G) : x in Split(Substring(inp, 2, #inp-2), ",")];
+intrinsic SaveElt(out::GrpElt, G::LMFDBGrp) -> MonStgElt
+{}
+    if assigned G`ElementReprCovers then
+        assert assigned G`ElementReprHom;
+        f := G`ElementReprHom;
+        if G`ElementReprCovers then
+            out := out @@ f;
+        else
+            out := out @ f;
+        end if;
+    end if;
+    return SaveElt(out);
 end intrinsic;
-intrinsic SaveEltList(out::SeqEnum) -> MonStgElt
-    {}
-    return "{" * Join([SaveElt(x) : x in out], ",") * "}";
+
+intrinsic LoadEltList(inp::MonStgElt, G::LMFDBGrp) -> SeqEnum
+{}
+    i := 1; k := #inp;
+    while inp[i] eq " " do i +:= 1; end while;
+    while inp[k] eq " " do k -:= 1; end while;
+    if inp[1] eq "{" and inp[#inp] eq "}" then
+        // Need to strip interior whitespace to handle empty list [  ] appropriately
+        while inp[i+1] eq " " do i +:= 1; end while;
+        while inp[k-1] eq " " do k -:= 1; end while;
+        return [LoadEltList(x) : x in splitagg(inp[i+1..k-1], ",")];
+    else
+        return LoadElt(inp, G);
+    end if;
+end intrinsic;
+intrinsic SaveEltList(out::SeqEnum, G::LMFDBGrp) -> MonStgElt
+{}
+    return "{" * Join([SaveEltList(x, G) : x in out], ",") * "}";
+end intrinsic;
+intrinsic SaveEltList(out::GrpElt, G::LMFDBGrp) -> MonStgElt
+{base case}
+    return SaveElt(out, G);
 end intrinsic;
 
 intrinsic LoadSubgroupList(inp::MonStgElt, G::LMFDBGrp) -> SeqEnum
@@ -232,8 +325,6 @@ intrinsic LoadAttr(attr::MonStgElt, inp::MonStgElt, obj::Any) -> Any
         return LoadIntegerList(inp);
     elif attr in TextListCols then
         return LoadTextList(inp);
-    elif attr in PermsCols then
-        return LoadPerms(inp, Get(obj, "transitive_degree"));
     elif attr in EltCols then
         return LoadElt(inp, GetGrp(obj));
     elif attr in EltListCols then
@@ -272,12 +363,10 @@ intrinsic SaveAttr(attr::MonStgElt, val::Any, obj::Any) -> MonStgElt
         return SaveIntegerList(val);
     elif attr in TextListCols then
         return SaveTextList(val);
-    elif attr in PermsCols then
-        return SavePerms(val);
     elif attr in EltCols then
-        return SaveElt(val);
+        return SaveElt(val, GetGrp(obj));
     elif attr in EltListCols then
-        return SaveEltList(val);
+        return SaveEltList(val, GetGrp(obj));
     elif attr in SubgroupCols then
         if attr eq "sub1" then
             G := Get(obj, "G1");
@@ -321,7 +410,6 @@ intrinsic TransitiveLMFDBGrp(n::RngIntElt, t::RngIntElt) -> LMFDBGrp
 {}
     G := NewLMFDBGrp(TransitiveGroup(n, t), "TEST.1");
     AssignBasicAttributes(G);
-    SetBigSubgroupParameters(G);
     return G;
 end intrinsic;
 
@@ -346,14 +434,32 @@ intrinsic DefaultAttributes(c::Cat) -> SeqEnum
     all_attrs := GetAttributes(c);
     for attr in all_attrs do
         if attr in defaults then continue; end if;
-        // Blacklist attributes that aren't working
+        // Blacklist attributes that shouldn't be included
         blacklist := [
+                      // Temporary attributes (used to help divide up the computation into multiple jobs)
+                      "charc_center_gens",
+                      "charc_centers",
+                      "charc_kernel_gens",
+                      "charc_kernels",
+                      "conj_centralizer_gens",
+                      "conj_centralizers",
+                      "easy_rank",
+                      "backup_solvability_type",
+
+                      // Deprecated attributes
+                      "elt_rep_type",
+                      "pc_code",
+                      "perm_gens",
+                      "smallrep",
+                      "gens_used",
+                      "finite_matrix_group",
+
                       // Group attributes
 
                       // Subgroup attributes
                       "alias_spot",
                       "aut_counter",
-		      "extension_counter",
+		      "extension_counter"
 		      //  "diagram_x", returns 0 now
 		      //"generators",
 		      //"standard_generators"
@@ -364,7 +470,7 @@ intrinsic DefaultAttributes(c::Cat) -> SeqEnum
 
                       // This attributes are TEMPORARILY blacklisted while we try to figure out
                       // which are difficult for large groups
-                      "transitive_degree", // should be set in advance for the actual transitive groups
+/*                      "transitive_degree", // should be set in advance for the actual transitive groups
                       "almost_simple", // NormalSubgroups -> Subgroups
                       "aut_group", // Sometimes MagmaAutGroup is slow
                       "aut_order", // Sometimes MagmaAutGroup is slow
@@ -404,14 +510,11 @@ intrinsic DefaultAttributes(c::Cat) -> SeqEnum
                       "smallrep", // faithful_reps None
                       "tex_name", // GroupName can be very slow
                       "wreath_data", // IsWreathProduct is slow
-                      "wreath_product" // IsWreathProduct is slow
+                      "wreath_product" // IsWreathProduct is slow*/
                       ];
 
         greylist := [
 	     // Attributes which return none and need to be worked on later
-
-                     // Group attributes
-                     "finite_matrix_group",
 
                      // Subgroup attributes
                      "quotient_fusion",
@@ -463,6 +566,8 @@ intrinsic AttrType(attr::MonStgElt) -> MonStgElt
         return "integer";
     elif attr in SmallintCols then
         return "smallint";
+    elif attr in BigintCols then
+        return "bigint";
     elif attr in NumericCols then
         return "numeric";
     elif attr in BoolCols then
@@ -477,8 +582,6 @@ intrinsic AttrType(attr::MonStgElt) -> MonStgElt
         return "numeric[]";
     elif attr in TextListCols then
         return "text[]";
-    elif attr in PermsCols then
-        return "numeric[]";
     elif attr in EltCols then
         return "numeric";
     elif attr in EltListCols then
@@ -526,3 +629,41 @@ intrinsic PrintGLnData(G::LMFDBGrp: sep:="|") -> Tup
             [SaveLMFDBObject(cr: sep:=sep) : cr in creps]>;
 end intrinsic;
 
+intrinsic WriteByTmpHeader(G::Any, filename::MonStgElt, header::MonStgElt: sep:="|")
+{}
+    code, attrs := Explode(Split(Read(header * ".tmpheader"), "\n"));
+    attrs := Split(attrs, sep);
+    s := code * SaveLMFDBObject(G: attrs:=attrs, sep:=sep);
+    PrintFile(filename, s);
+end intrinsic;
+
+intrinsic Preload(G::LMFDBGrp : sep:="|")
+{Load attributes from DATA/preload/label}
+    data := "";
+    havedata, F := OpenTest("DATA/preload/" * G`label, "r");
+    if havedata then
+        header, data := Explode(Split(Read(F), "\n"));
+        header := Split(header, sep);
+        data := Split(data, sep: IncludeEmpty := true);
+        assert #header eq #data;
+        for i in [1..#data] do
+            attr := header[i];
+            G``attr := LoadAttr(attr, data[i], G);
+        end for;
+    end if;
+end intrinsic;
+
+intrinsic ReportStart(G::LMFDBGrp, job::MonStgElt) -> FldReElt
+{}
+    msg := "Starting " * job;
+    PrintFile("DATA/timings/" * G`label, msg);
+    vprint User1: msg;
+    return Cputime();
+end intrinsic;
+
+intrinsic ReportEnd(G::LMFDBGrp, job::MonStgElt, t0::FldReElt)
+{}
+    msg := Sprintf("Finished %o in %o", job, Cputime() - t0);
+    PrintFile("DATA/timings/" * G`label, msg);
+    vprint User1: msg;
+end intrinsic;

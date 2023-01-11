@@ -2,4 +2,6 @@
   lehmer.m
   utils.m
   Hash.m
+  Quotients.m
+  IO.m
 }

@@ -184,7 +184,7 @@ intrinsic GoodCoredSubgroups(G::Grp, N::Grp, max_orbits::RngIntElt : num_checks:
         cur_check +:= 1;
         Hs := RandomCoredSubgroups(G, N, max_orbits : max_tries:=max_tries);
         d := &+[Index(G, H) : H in Hs];
-        printf "Degree %o=%o (prior best %o)\n", d, Join(Sort([Sprint(Index(G, H)) : H in Hs]), "+"), best_degree;
+        vprint User1: Sprintf("Degree %o=%o (prior best %o)", d, Join(Sort([Sprint(Index(G, H)) : H in Hs]), "+"), best_degree);
         if d lt best_degree then
             cur_check := 0;
             best_degree := d;
@@ -207,4 +207,37 @@ Note that this can be used as a less optimal but sometimes faster version of Min
     // I'm not sure where this bug came from, but I saw cases with incorrect cores so we double check.
     assert #K eq #N and #Q eq (#G div #N);
     return Q, rho;
+end intrinsic;
+
+intrinsic BestQuotient(G::Grp, N::Grp) -> Grp, Map
+{Choose either quo<G|N> or MyQuotient(G, N) depending on index and type}
+    if Type(G) eq GrpPC or Index(G, N) lt 1000000 then
+        Q, proj := quo<G | N>;
+    else
+        Q, proj :=  MyQuotient(G, N : max_orbits:=4, num_checks:=3);
+    end if;
+    return Q, proj;
+end intrinsic;
+
+
+intrinsic Index(G::GrpAuto, N::GrpAuto : check:=false) -> RngIntElt
+{}
+    if check then
+        assert Group(G) eq Group(N);
+        assert &and[n in G : n in Generators(N)];
+    end if;
+    return #G div #N;
+end intrinsic;
+
+intrinsic Random(G::GrpAuto : word_len:=40) -> GrpAutoElt
+{}
+    gens := [<g, Order(g)> : g in Generators(G)];
+    gens := [pair : pair in gens | pair[2] ne 1];
+    r := Identity(G);
+    for i in [1..word_len] do
+        j := Random(1,#gens);
+        k := Random(0,gens[j][2]-1);
+        r *:= gens[j][1]^k;
+    end for;
+    return r;
 end intrinsic;
