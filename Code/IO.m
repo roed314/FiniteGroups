@@ -656,6 +656,7 @@ end intrinsic;
 intrinsic ReportStart(G::LMFDBGrp, job::MonStgElt) -> FldReElt
 {}
     msg := "Starting " * job;
+    System("mkdir -p DATA/timings/");
     PrintFile("DATA/timings/" * G`label, msg);
     vprint User1: msg;
     return Cputime();
@@ -664,6 +665,7 @@ end intrinsic;
 intrinsic ReportEnd(G::LMFDBGrp, job::MonStgElt, t0::FldReElt)
 {}
     msg := Sprintf("Finished %o in %o", job, Cputime() - t0);
+    System("mkdir -p DATA/timings/");
     PrintFile("DATA/timings/" * G`label, msg);
     vprint User1: msg;
 end intrinsic;
