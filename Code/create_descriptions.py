@@ -193,10 +193,14 @@ def load_liegens():
 
 def load_homs():
     homs = {}
+    homcods = set()
     for label in os.listdir(opj("DATA", "homs")):
         with open(opj("DATA", "homs", label)) as F:
             homs[label] = F.read().strip()
-    return homs
+    for label in os.listdir(opj("DATA", "homcods")):
+        with open(opj("DATA", "homcods", label)) as F:
+            homcods.add(F.read().strip())
+    return homs, homcods
 
 def load_nTt_to_gens():
     nTt_to_gens = {}
@@ -294,7 +298,7 @@ def load_ab():
     with open(opj("DATA", "abelian.txt")) as F:
         return set(F.read().strip().split("\n"))
 
-def find_best(aliases, An, Sn, liegens, homs):
+def find_best(aliases, An, Sn, liegens, homs, homcods):
     # Pick best representative in each category
     # Abelian always PC
     # Use permutations for Sn and An
@@ -320,6 +324,10 @@ def find_best(aliases, An, Sn, liegens, homs):
         elif typ == "GLZq":
             return (n+1,) + (4,) + vec[1:]
         elif typ == "GLZN":
+            desc = vec[-1]
+            if desc in homcods:
+                # prioritize descriptions where we already have a map with that codomain computed
+                return (n+2,) + (5, -1) + vec[2:]
             return (n+2,) + (5,) + vec[1:]
         elif typ == "GLFq":
             return (n+2,) + (6,) + vec[1:]
@@ -422,8 +430,8 @@ def create_data():
     nTt_to_gens = load_nTt_to_gens()
     load_pcdata(aliases, slookup)
     minrep = load_minrep(aliases)
-    homs = load_homs()
-    best_of_breed, best_of_show, special_names, problems = find_best(aliases, An, Sn, liegens, homs)
+    homs, homcods = load_homs()
+    best_of_breed, best_of_show, special_names, problems = find_best(aliases, An, Sn, liegens, homs, homcods)
     smalltrans = find_smalltrans(tbound, sibling_bound_by_label)
 
     to_add = {}
