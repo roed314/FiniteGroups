@@ -59,22 +59,24 @@ def sortvec_from_desc(desc, homcods):
             # prefer Z/N to finite fields (easier to display)
             p, k = ZZ(q[1:]).is_prime_power(get_data=True)
             if k > 1:
-                return "GLFq", (d, k, p, desc)
+                return "GLFq", (d, 1, k, p, desc)
             else:
-                return "GLFp", (d, p, desc)
+                return "GLFp", (d, 1, p, desc)
         elif q == "0":
             return "GLZ", (d, desc)
         else:
             p, k = ZZ(q).is_prime_power(get_data=True)
             if desc in homcods:
                 # prioritize descriptions where we already have a map with that codomain computed
-                p = -1
-            if k == 0: # not a prime power
-                return "GLZN", (d, p, desc)
-            elif k == 1: # prime
-                return "GLFp", (d, p, desc)
+                priority = 0
             else:
-                return "GLZq", (d, k, p, desc)
+                priority = 1
+            if k == 0: # not a prime power
+                return "GLZN", (d, priority, p, desc)
+            elif k == 1: # prime
+                return "GLFp", (d, priority, p, desc)
+            else:
+                return "GLZq", (d, priority, k, p, desc)
     elif "T" in desc:
         n, i = [int(c) for c in desc.split("T")]
         return "Perm", (n, i, desc)
@@ -138,12 +140,12 @@ def make_representations_dict(bob, lie, liegens, nTt_to_gens):
             reps["GLZ"] = {"d": d, "b": b, "gens": gens_from_desc(desc, nTt_to_gens)}
         elif typ in ["GLZq", "GLFq"]:
             if "GLFp" not in bob:
-                d, k, p, desc = data
+                d, priority, k, p, desc = data
                 q = p**k
                 reps[typ] = {"d": d, "q": q, "gens": gens_from_desc(desc, nTt_to_gens)}
         elif typ in ["GLFp", "GLZN"]:
             if not (typ == "GLZN" and ("GLFq" in bob or "GLFp" in bob)):
-                d, p, desc = data
+                d, priority, p, desc = data
                 reps[typ] = {"d": d, "p": p, "gens": gens_from_desc(desc, nTt_to_gens)}
         else:
             raise NotImplementedError
@@ -470,9 +472,6 @@ def create_data():
                     _ = Fout.write(label + "\n")
                 HASH_LOOKUP[N, hsh].append(label)
             bob = best_of_breed[label]
-            if "PC" not in bob:
-                with open(opj("DATA", "solvable.todo", label), "w") as Fout:
-                    _ = Fout.write(comp)
             bos = best_of_show[label]
             special_names.extend([{"family": desc.split("(")[0], "parameters": {"n": n, "q": q}, "label": label} for (n, code, q, cmd, desc) in aliases[label].get("Lie", [])])
             preload = {"label": label, "hash": hsh}

@@ -1,4 +1,4 @@
-// USAGE: ls DATA/pcrep_fast.todo | parallel -j100 --timeout 600 magma -b label:={1} PCreps.m
+// USAGE: ls DATA/pcrep_fast.todo | parallel -j100 --timeout 600 magma -b label:={1} PCreps_fast.m
 
 AttachSpec("spec");
 SetColumns(0);
@@ -14,7 +14,7 @@ if done then
 end if;
 
 G0 := StringToGroup(Read(infile));
-if Type(G0) eq GrpMat and Type(CoefficientRing(G0)) eq RngIntRes then
+if Type(G0) eq GrpMat then
     G0, psi := MatGroupToPermGroup(G0);
 else
     psi := IdentityHomomorphism(G0);
