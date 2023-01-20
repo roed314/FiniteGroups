@@ -534,6 +534,8 @@ intrinsic ordercc(G::LMFDBGrp, gens::SeqEnum: dorandom:=true) -> Any
               Append(~Zss, Zs);
           end for;
       end for;
+      // It's possible that none of the divisions in divilist were maximal, in which case cs is empty
+      if #cs eq 0 then continue; end if;
       small_cnt := Max(cs);
       small := (small_cnt le SMALL_THRESHOLD or small_cnt * size le SMALL_SCALE * G`order);
       if small then

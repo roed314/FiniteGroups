@@ -84,8 +84,8 @@ Path to finishing computations:
  c. Need to use Complements to find semidirect decompositions from NormalSubgroups
  d. Use 
 
+Add PGL homs to descriptions
 Set diagramx
-deal with real_problems and fake_problems
 Fix overly aggressive preloading of tex_name (F5, S5)
 *Profile for HaveHolomorph, double check that the two methods give same results.
 Slow LabelConjugacyClasses: 564221981491200.i
@@ -187,5 +187,6 @@ Separate computation of complex and rational character tables? (linked by labeli
 update identify.py to only use psycopg2 rather than lmfdb (not require Sage)
 Caching polredabs data (for now, just copied manually)
 E5184.su triggering error "subgroups not closed under automorphism" on line 340 of Subgroups.m (from Comps := [C[1] : C in SplitByAuts([Comps], G : use_order:=false)];)
+deal with real_problems and fake_problems
 
 ***********/
