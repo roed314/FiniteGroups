@@ -21,7 +21,7 @@ elif "---->" in desc then
     assert #G eq #H;
 
     // Option 1: just brute force it with IsIsomorphic
-    //ok, f := IsIsomorphic(G, H); // this was failing
+    ok, f := IsIsomorphic(G, H); // this was failing
 
     // Option 2: Find all core-free subgroups and use CosetAction and IsConjugate
     //SG := Subgroups(G);
@@ -54,6 +54,7 @@ elif "---->" in desc then
     //f := hom<G -> H | [g -> ((g @ rhoA)^c) @@ rhoB : g in Generators(G)]>;
 
     // Option 3: Use stored information from minreps and pcreps
+    /*
     ok := OpenTest("DATA/minreps/" * label, "r");
     permrep := "";
     if ok then
@@ -108,6 +109,7 @@ elif "---->" in desc then
         // Formal composites aren't very functional
         f := hom<G -> H | [Ggens[i] -> fGH(Ggens[i]) : i in [1..#Ggens]]>;
         assert #Kernel(f) eq 1;
+        */
     end if;
     fdesc := GroupHomToString(f : GG:=GG, HH:=HH);
 else
