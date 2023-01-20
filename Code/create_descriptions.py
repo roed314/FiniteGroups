@@ -199,10 +199,10 @@ def load_homs():
     homcods = set()
     for label in os.listdir(opj("DATA", "homs")):
         with open(opj("DATA", "homs", label)) as F:
-            homs[label] = F.read().strip()
-    for label in os.listdir(opj("DATA", "homcods")):
-        with open(opj("DATA", "homcods", label)) as F:
-            homcods.add(F.read().strip())
+            hom = F.read().strip()
+            homs[label] = hom
+            cod = hom.split("-->")[1]
+            homcods.add(cod)
     return homs, homcods
 
 def load_nTt_to_gens():
