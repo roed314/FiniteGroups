@@ -109,8 +109,8 @@ elif "---->" in desc then
         // Formal composites aren't very functional
         f := hom<G -> H | [Ggens[i] -> fGH(Ggens[i]) : i in [1..#Ggens]]>;
         assert #Kernel(f) eq 1;
-        */
     end if;
+    */
     fdesc := GroupHomToString(f : GG:=GG, HH:=HH);
 else
     error Sprintf("Unrecognized homomorphism specification for %o", label);
