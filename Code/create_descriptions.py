@@ -297,6 +297,19 @@ def load_minrep(aliases):
     print("Minreps loaded in", walltime() - t0)
     return minrep
 
+def load_permrep(aliases, bound=256):
+    # Get permutation presentations as long as their degree is at most bound
+    # We just add to aliases and don't return anything
+    t0 = walltime()
+    for label in os.listdir(opj("DATA", "permreps")):
+        with open(opj("DATA", "permreps", label)) as F:
+            desc = F.read().strip()
+            if "Perm" in desc:
+                d, gens = desc.split("Perm")
+                d = int(d)
+                if d <= bound:
+                    aliases[label]["Perm"].append((d, 1000000, desc))
+
 def load_ab():
     # Get set of abelian labels
     with open(opj("DATA", "abelian.txt")) as F:
@@ -431,6 +444,7 @@ def create_data():
     nTt_to_gens = load_nTt_to_gens()
     load_pcdata(aliases, slookup)
     minrep = load_minrep(aliases)
+    load_permrep(aliases)
     best_of_breed, best_of_show, special_names, problems = find_best(aliases, An, Sn, liegens, homs, homcods)
     smalltrans = find_smalltrans(tbound, sibling_bound_by_label)
 
@@ -452,10 +466,13 @@ def create_data():
                 N, hsh = label.split(".")
             if not small and hsh != r"\N":
                 os.makedirs(opj("DATA", "hash_lookup", str(N)), exist_ok=True)
-                with open(opj("DATA", "hash_lookup", str(N), hsh), "a") as F:
-                    _ = F.write(label + "\n")
+                with open(opj("DATA", "hash_lookup", str(N), hsh), "a") as Fout:
+                    _ = Fout.write(label + "\n")
                 HASH_LOOKUP[N, hsh].append(label)
             bob = best_of_breed[label]
+            if "PC" not in bob:
+                with open(opj("DATA", "solvable.todo", label), "w") as Fout:
+                    _ = Fout.write(comp)
             bos = best_of_show[label]
             special_names.extend([{"family": desc.split("(")[0], "parameters": {"n": n, "q": q}, "label": label} for (n, code, q, cmd, desc) in aliases[label].get("Lie", [])])
             preload = {"label": label, "hash": hsh}
@@ -488,12 +505,12 @@ def create_data():
             # Also linC_degree, linFp_degree, linFq_degree
             PRELOAD[label] = preload
             to_add[label] = bos[1]
-            with open(opj("DATA", "descriptions", label), "w") as F:
-                _ = F.write(bos[1] + "\n")
-            with open(opj("DATA", "preload", label), "w") as F:
+            with open(opj("DATA", "descriptions", label), "w") as Fout:
+                _ = Fout.write(bos[1] + "\n")
+            with open(opj("DATA", "preload", label), "w") as Fout:
                 preitems = preload.items()
                 header = "|".join(attr for (attr, value) in preitems)
                 data = "|".join(value for (attr, value) in preitems)
-                _ = F.write(f"{header}\n{data}\n")
+                _ = Fout.write(f"{header}\n{data}\n")
     print("Finished in", walltime() - t0)
     return to_add, HASH_LOOKUP, PRELOAD
