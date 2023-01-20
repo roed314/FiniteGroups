@@ -233,10 +233,11 @@ def load_pcdata(aliases, slookup):
         if label in slookup: continue
         with open(opj("DATA", "pcreps_fast", label)) as F:
             pccode, compact, gens_used = getpc(F)
-        with open(opj("DATA", "pcreps_fastest", label)) as F:
-            pccode1, compact1, gens_used1 = getpc(F)
-        if len(gens_used1) < len(gens_used):
-            pccode, compact, gens_used = pccode1, compact1, gens_used1
+        if ope(opj("DATA", "pcreps_fastest", label)):
+            with open(opj("DATA", "pcreps_fastest", label)) as F:
+                pccode1, compact1, gens_used1 = getpc(F)
+            if len(gens_used1) < len(gens_used):
+                pccode, compact, gens_used = pccode1, compact1, gens_used1
         slookup[label] = (pccode, compact, gens_used, False)
     for label in os.listdir(opj("DATA", "pcreps_fastest")):
         if label in slookup: continue
