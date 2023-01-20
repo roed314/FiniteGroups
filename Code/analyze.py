@@ -232,3 +232,5 @@ def description_classification():
     print("| --- | " + " | ".join("---" for col in columns) + " |")
     for source in sources:
         print(f"| {source} | " + " | ".join(f"{len(by_row[source].intersection(by_column[col]))}" for col in columns) + " |")
+
+    return all_labels, sources, columns, by_row, by_column

@@ -1,9 +1,14 @@
 intrinsic NewLMFDBGrp(GG::Grp, lab::MonStgElt) -> LMFDBGrp
-  {Create a new LMFDBGrp object G with G`MagmaGrp := magma_gp and G`label := lab}
-  G := New(LMFDBGrp);
-  G`MagmaGrp := GG;
-  G`label := lab;
-  return G;
+{Create a new LMFDBGrp object G with G`MagmaGrp := magma_gp and G`label := lab}
+    G := New(LMFDBGrp);
+    // PC groups don't have an Order attribute
+    if Type(G) eq GrpMat or Type(G) eq GrpPerm then
+        N := StringToInteger(Split(lab, ".")[1]);
+        GG`Order := N;
+    end if;
+    G`MagmaGrp := GG;
+    G`label := lab;
+    return G;
 end intrinsic;
 
 intrinsic GetBasicAttributesGrp() -> Any
