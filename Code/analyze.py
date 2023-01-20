@@ -182,7 +182,7 @@ def description_classification():
                     raise ValueError
     for label in os.listdir("preload"):
         with open(opj("preload", label)) as F:
-            lines = F.read().strip().split("\n")
+            lines = [line.split("|") for line in F.read().strip().split("\n")]
             ldata = dict(zip(lines[0], lines[1]))
             reps = ldata["representations"]
             if '"Perm"' in reps:
