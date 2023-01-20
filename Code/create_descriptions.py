@@ -44,7 +44,7 @@ def load_perf_chev_spor():
             perf_chev_spor[desc].append(edesc)
     return perf_chev_spor
 
-def sortvec_from_desc(desc):
+def sortvec_from_desc(desc, homcods):
     if "Perm" in desc:
         n = int(desc.split("Perm")[0])
         # favor transitive groups of the same degree
@@ -66,6 +66,9 @@ def sortvec_from_desc(desc):
             return "GLZ", (d, desc)
         else:
             p, k = ZZ(q).is_prime_power(get_data=True)
+            if desc in homcods:
+                # prioritize descriptions where we already have a map with that codomain computed
+                p = -1
             if k == 0: # not a prime power
                 return "GLZN", (d, p, desc)
             elif k == 1: # prime
@@ -83,13 +86,13 @@ def sortvec_from_desc(desc):
     else:
         raise ValueError("Unexpected description", desc)
 
-def update_options(aliases, spor_chev, An, Sn, tbound, perf_chev_spor, nconj, nTtconj, sibling_bound_by_label, sibling_bound, label, desc):
+def update_options(aliases, spor_chev, An, Sn, tbound, perf_chev_spor, nconj, nTtconj, sibling_bound_by_label, sibling_bound, label, desc, homcods):
     if desc in perf_chev_spor:
         Spors = ["J1", "J2", "HS", "J3", "McL", "He", "Ru", "Co3", "Co2", "Co1"]
         if desc in Spors or "Chev" in desc:
             spor_chev[label] = desc
         for edesc in perf_chev_spor[desc]:
-            update_options(aliases, spor_chev, An, Sn, tbound, perf_chev_spor, nconj, nTtconj, sibling_bound_by_label, sibling_bound, label, edesc)
+            update_options(aliases, spor_chev, An, Sn, tbound, perf_chev_spor, nconj, nTtconj, sibling_bound_by_label, sibling_bound, label, edesc, homcods)
         return
     D = aliases[label]
     if "T" in desc and "MAT" not in desc:
@@ -103,7 +106,7 @@ def update_options(aliases, spor_chev, An, Sn, tbound, perf_chev_spor, nconj, nT
             nconj[label] = nTtconj[desc]
         if desc in sibling_bound:
             sibling_bound_by_label[label] = max(sibling_bound_by_label[label], sibling_bound[desc])
-    typ, vec = sortvec_from_desc(desc)
+    typ, vec = sortvec_from_desc(desc, homcods)
     D[typ].append(vec)
 
 def gens_from_desc(desc, nTt_to_gens):
@@ -146,7 +149,7 @@ def make_representations_dict(bob, lie, liegens, nTt_to_gens):
             raise NotImplementedError
     return reps
 
-def load_aliases(tbound, nTtconj, sibling_bound):
+def load_aliases(tbound, nTtconj, sibling_bound, homcods):
     perf_chev_spor = load_perf_chev_spor()
 
     t0 = walltime()
@@ -165,19 +168,19 @@ def load_aliases(tbound, nTtconj, sibling_bound):
                 assert G0 not in aut
                 aut[G0] = label
             else:
-                update_options(aliases, spor_chev, An, Sn, tbound, perf_chev_spor, nconj, nTtconj, sibling_bound_by_label, sibling_bound, label, desc)
+                update_options(aliases, spor_chev, An, Sn, tbound, perf_chev_spor, nconj, nTtconj, sibling_bound_by_label, sibling_bound, label, desc, homcods)
     print("Aliases loaded in", walltime() - t0)
 
     with open(opj("DATA", "mat_aliases.txt")) as F:
         for line in F:
             label, desc = line.strip().split()
-            update_options(aliases, spor_chev, An, Sn, tbound, perf_chev_spor, nconj, nTtconj, sibling_bound_by_label, sibling_bound, label, desc)
+            update_options(aliases, spor_chev, An, Sn, tbound, perf_chev_spor, nconj, nTtconj, sibling_bound_by_label, sibling_bound, label, desc, homcods)
     print("Matrix aliases loaded in", walltime() - t0)
 
     with open(opj("DATA", "TinyLie.txt")) as F:
         for line in F:
             label, desc = line.strip().split()
-            update_options(aliases, spor_chev, An, Sn, tbound, perf_chev_spor, nconj, nTtconj, sibling_bound_by_label, sibling_bound, label, desc)
+            update_options(aliases, spor_chev, An, Sn, tbound, perf_chev_spor, nconj, nTtconj, sibling_bound_by_label, sibling_bound, label, desc, homcods)
     print("Tiny lie loaded in", walltime() - t0)
     return aliases, spor_chev, An, Sn, aut, nconj, sibling_bound_by_label
 
@@ -311,7 +314,7 @@ def find_best(aliases, An, Sn, liegens, homs, homcods):
             # We use the sort key from liegens
             desc = vec[-1]
             explicit_desc = liegens[desc]
-            newitem = sortvec_from_desc(explicit_desc)
+            newitem = sortvec_from_desc(explicit_desc, homcods)
             return sort_key(newitem)
         elif typ == "PC":
             return (n,) + (0,) + vec[1:]
@@ -324,10 +327,6 @@ def find_best(aliases, An, Sn, liegens, homs, homcods):
         elif typ == "GLZq":
             return (n+1,) + (4,) + vec[1:]
         elif typ == "GLZN":
-            desc = vec[-1]
-            if desc in homcods:
-                # prioritize descriptions where we already have a map with that codomain computed
-                return (n+2,) + (5, -1) + vec[2:]
             return (n+2,) + (5,) + vec[1:]
         elif typ == "GLFq":
             return (n+2,) + (6,) + vec[1:]
@@ -425,12 +424,12 @@ def texify_sporchev(desc):
 
 def create_data():
     slookup, sibling_bound, tbound, nTtconj = load_lmfdb_data()
-    aliases, spor_chev, An, Sn, aut, nconj, sibling_bound_by_label = load_aliases(tbound, nTtconj, sibling_bound)
+    homs, homcods = load_homs()
+    aliases, spor_chev, An, Sn, aut, nconj, sibling_bound_by_label = load_aliases(tbound, nTtconj, sibling_bound, homcods)
     liegens = load_liegens()
     nTt_to_gens = load_nTt_to_gens()
     load_pcdata(aliases, slookup)
     minrep = load_minrep(aliases)
-    homs, homcods = load_homs()
     best_of_breed, best_of_show, special_names, problems = find_best(aliases, An, Sn, liegens, homs, homcods)
     smalltrans = find_smalltrans(tbound, sibling_bound_by_label)
 

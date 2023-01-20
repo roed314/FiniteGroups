@@ -40,6 +40,9 @@ intrinsic PySplit(s::MonStgElt, sep::MonStgElt : limit:=-1) -> SeqEnum[MonStgElt
 {Splits using Python semantics (different when #sep > 1, and different when sep at beginning or end)}
     if #sep eq 0 then
         error "Empty separator";
+    elif #sep eq 1 then
+        // Magma's built in Split is faster here
+        return Split(s, sep: IncludeEmpty) cat (s[#s] eq sep select [""] else []);
     end if;
     i := 1;
     j := 0;

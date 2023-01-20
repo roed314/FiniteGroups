@@ -41,6 +41,7 @@ def set_preload(label, attr, value):
 def run(label, codes, timeout):
     subprocess.run('parallel -n0 --timeout %s "magma -b label:=%s codes:=%s ComputeCodes.m >> DATA/errors/%s 2>&1" ::: 1' % (timeout, label, codes, label), shell=True)
     # Move timing and error information to the common output file and extract timeout and error information
+    sublines = []
     with open("output", "a") as Fout:
         t = opj("DATA", "timings", label)
         finished = ""
@@ -63,6 +64,8 @@ def run(label, codes, timeout):
                 for line in F:
                     # We double check that all output lines are marked with an appropriate code, in case the computation was interrupted while data was being written to disk (and thus before the Finished Code-x was written).
                     if line and line[0] in finished:
+                        if line[0] == "S":
+                            sublines.append(line)
                         _ = Fout.write(line)
             os.unlink(o) # Remove output so it's not copied multiple times
         e = opj("DATA", "errors", label)
@@ -84,7 +87,56 @@ def run(label, codes, timeout):
                 if loc is None:
                     loc = known
             os.unlink(e) # Remove errors so that they're not copied multiple times
-    return done, finished, time_used, last_time_line, loc
+    return done, finished, time_used, last_time_line, loc, sublines
+
+standard_label_re = re.compile(r"(\d+\.[a-z]+\d+)(\.[a-z]+\d+)?")
+def standard_label(label):
+    return standard_label_re.fullmatch(label)
+def aut_label(label):
+    return standard_label(label).group(1)
+def aut_graph(sdata):
+    final = defaultdict(set)
+    for sdatum in sdata:
+        alabel = aut_label(sdatum["label"])
+        final[alabel].update([aut_label(lab) for lab in sdatum[3]])
+    adata = []
+    seen = set()
+    for sdatum in sdata:
+        alabel = aut_label(sdatum[0])
+        if alabel in seen: continue
+        new_datum = list(sdatum)
+        new_datum[0] = alabel
+        new_datum[3] = final[alabel]
+        adata.append(new_datum)
+    return adata
+
+def compute_diagramx(label, sublines):
+    with open("subagg1.tmpheader") as F:
+        code, cols = F.read().strip().split("\n")
+        cols = cols.split("|")
+    with open("output", "a") as F:
+        subs = []
+        for line in sublines:
+            vals = line.strip().split("|")
+            if vals[0] != "S" + label:
+                _ = F.write(f"E{label}|Compute diagramx-label mismatch {vals[0]}")
+                continue
+            vals = vals[1:]
+            if len(vals) != len(cols):
+                _ = F.write(f"E{label}|Compute diagramx-length mismatch {len(vals)} vs {len(cols)}")
+                continue
+            lookup = dict(zip(cols, vals))
+            # Omit subgroups that aren't labeled normally (past the index bound)
+            if standard_label(lookup["label"]):
+                subs.append(lookup)
+            else:
+                pass
+            #sdatum[2] = int(sdatum[2]) # subgroup_order
+            #sdatum[3] = sdatum[3][1:-1].split(",") # contains
+            #sdatum[4] = (sdatum[4] == 't') # normal
+            #sdatum[5] = (sdatum[5] == 't') # outer_equivalence
+        out_equiv = (subs[0]["outer_equivalence"] == "t")
+        
 
 with open("DATA/manifest") as F:
     for line in F:
@@ -118,10 +170,12 @@ with open("DATA/manifest") as F:
                 "S": "sLh", # depend on Subgroups (TODO: back dependence bad)
             }
             # You can call tmpheaders(summarize=True) from cloud_collect.py to get a summary of the codes
-            codes = "blajJzcCrqQsSLhtguomw"
+            codes = "blajJzcCrqQsSLhtguomw" # Note that D = subagg3 (diagramx) is skipped since it's filled in below
             skipped = ""
             while codes:
-                done, finished, time_used, last_time_line, err = run(label, codes, timeout)
+                done, finished, time_used, last_time_line, err, sublines = run(label, codes, timeout)
+                if sublines:
+                    compute_diagramx(label, sublines) # writes to output
                 if done: break
                 for code in finished:
                     codes = codes.replace(code, "")

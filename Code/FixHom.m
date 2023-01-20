@@ -4,6 +4,9 @@
 AttachSpec("spec");
 SetColumns(0);
 homfile := "DATA/homs_old/" * label;
+if not OpenTest(homfile, "r") then
+    exit;
+end if;
 blankfile := "DATA/descriptions/" * label;
 outfile := "DATA/homs/" * label;
 codfile := "DATA/homcods/" * label;

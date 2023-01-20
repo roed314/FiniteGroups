@@ -13,9 +13,9 @@ if "T" in desc then
     end if;
 end if;
 G := StringToGroup(desc);
-//A := AutomorphismGroup(G);
+A := AutomorphismGroup(G);
 try
-   P := PermutationGroup(G);
+   P := PermutationGroup(A);
 catch e
     print "ERROR", desc, #G;
     exit;
