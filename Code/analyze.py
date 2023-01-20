@@ -99,139 +99,136 @@ def description_classification():
     # Counts are by abstract isomorphism
     # Note that totals overlap since there are groups in the intersection
     # We have *some* pc presentation for every solvable group, but they're not all optimized
-primary_columns = ["nTt", "nPermG", "PC", "pMAT", "qMAT", "ZMAT", "Lie", "PC->NMAT", "nPermG->Nmat"] # Add PLie back in, switch nPermG->NMat to NMAT
-columns = ["Total", "HaveID", "CanID", "Solvable", "OptimizedPC", "Perm", "MinPerm", "TransPerm", "GLZ", "GLp", "GLq", "GLZN"] + primary_columns
-sources = ["SmallGroup", "TransitiveGroup", "IntransitiveGroup", "LieType", "GLq", "GLZN", "CARAT", "Perf", "Chev", "Sporadic", "SmallAut", "PermAut"] # TODO: add PGLC
+    #primary_columns = ["nTt", "nPermG", "PC", "pMAT", "qMAT", "ZMAT", "Lie", "PC->NMAT", "nPermG->NMAT"] # Add PLie back in?
+    columns = ["Total", "Solvable", "Perm", "Mat", "OptimizedPC", "MinPerm"]
+    sources = ["SmallGroup", "TransitiveGroup", "LieType", "IntransitiveGroup", "CARAT", "GLq", "GLZN", "Perf", "Chev", "Sporadic", "SmallAut", "PermAut"] # TODO: add PGLC
 
-matchers = {
-    "unspec": re.compile(r"\d+[Pp][Cc][0-9,\-]+\-\-\-\->\d+,\d+MAT[0-9,]+"), # REMOVE
-    "nTt": re.compile(r"\d+T\d+"),
-    "nPermG": re.compile(r"(\d+)Perm[0-9,]+"),
-    "PC": re.compile(r"\d+[Pp][Cc][0-9,\-]*"),
-    "pMAT": re.compile(r"(\d+),(\d+)MAT[0-9,]+"),
-    "qMAT": re.compile(r"(\d+),q(\d+)MAT[0-9,]+"),
-    "ZMAT": re.compile(r"\d+,0,\d+MAT[0-9,]+"), # REMOVE
-    "nPermG->ZMAT": re.compile(r"\d+Perm[0-9,]+\-\-[0-9,]+\-\->\d+,0,\d+MAT[0-9,]+"), # FIXME
-    "Lie": re.compile(r"[A-Za-z]+\([0-9,]+\)"),
-    "PLie": re.compile(r"[A-Za-z]+\([0-9,]+\)\-\-[0-9,]+\-\->>P[A-Za-z]+\([0-9,]+\)"),
-    "PC->NMAT": re.compile(r"\d+[Pp][Cc][0-9,\-]+\-\-[0-9,]+\-\->\d+,\d+MAT[0-9,]+"),
-    "PC->Nmat": re.compile(r"\d+[Pp][Cc][0-9,\-]+\-\-[0-9,]+\-\->\d+,\d+Mat[0-9A-F,]+"), # REMOVE
-    "nPermG->NMAT": re.compile(r"\d+Perm[0-9,]+\-\-[0-9,]+\-\->\d+,\d+MAT[0-9,]+"),
-    "nPermG->Nmat": re.compile(r"\d+Perm[0-9,]+\-\-[0-9,]+\-\->\d+,\d+Mat[0-9A-F,]+"), # REMOVE
-    "Perf": re.compile(r"Perf\d+"),
-    "Chev": re.compile(r"Chev\d?[BDEFG],\d+,\d+(\-D)?"),
-    "SmallAut": re.compile(r"\d+\.\d+\-A"),
-    "PermAut": re.compile(r"\d+T\d+\-A"),
-}
-def all_small(label):
-    N = ZZ(label.split(".")[0])
-    return N <= 2000 and (N <= 500 or N.valuation(2) < 7)
-def sort_key(label):
-    N, i = label.split(".")
-    if i.isdigit():
-        return int(N), int(i)
-    return int(N), class_to_int(i)
+    matchers = {
+        "nTt": re.compile(r"\d+T\d+"),
+        "nPermG": re.compile(r"(\d+)Perm[0-9,]+"),
+        "PC": re.compile(r"\d+[Pp][Cc][0-9,\-]*"),
+        "pMAT": re.compile(r"(\d+),(\d+)MAT[0-9,]+"),
+        "qMAT": re.compile(r"(\d+),q(\d+)MAT[0-9,]+"),
+        "ZMAT": re.compile(r"\d+,0,\d+MAT[0-9,]+"),
+        "Lie": re.compile(r"[A-Za-z]+\([0-9,]+\)"),
+        "PLie": re.compile(r"[A-Za-z]+\([0-9,]+\)\-\-[0-9,]+\-\->>P[A-Za-z]+\([0-9,]+\)"),
+        "PC->NMAT": re.compile(r"\d+[Pp][Cc][0-9,\-]+\-\-[0-9,]+\-\->\d+,\d+MAT[0-9,]+"),
+        "nPermG->NMAT": re.compile(r"\d+Perm[0-9,]+\-\-[0-9,]+\-\->\d+,\d+MAT[0-9,]+"),
+        "Perf": re.compile(r"Perf\d+"),
+        "Chev": re.compile(r"Chev\d?[BDEFG],\d+,\d+(\-D)?"),
+        "SmallAut": re.compile(r"\d+\.\d+\-A"),
+        "PermAut": re.compile(r"\d+T\d+\-A"),
+    }
+    def all_small(label):
+        N = ZZ(label.split(".")[0])
+        return N <= 2000 and (N <= 500 or N.valuation(2) < 7)
+    def sort_key(label):
+        N, i = label.split(".")
+        if i.isdigit():
+            return int(N), int(i)
+        return int(N), class_to_int(i)
 
 
-by_row = defaultdict(set)
-by_column = defaultdict(set)
-with open("to_add.txt") as F:
-    all_labels = [line.strip().split(" ")[0] for line in F]
-by_column["Total"] = set(all_labels)
-by_column["HaveID"] = set(label for label in all_labels if label.split(".")[1].isdigit())
-by_column["CanID"] = set(label for label in by_column["HaveID"] if label.split(".")[0] not in ["512", "1536", "2187", "6561", "15625", "16807", "78125", "161051"])
-by_row["SmallGroup"] = set(label for label in all_labels if all_small(label)) # SmallGroup is only those orders where we load everything from the small group database
-smallsolv = list(db.gps_groups.search({"solvable":True}, "label"))
-by_column["Solvable"] = set(os.listdir("pcreps_fastest") + smallsolv)
-by_column["OptimizedPC"] = set(os.listdir("pcreps") + smallsolv)
-by_column["MinPerm"] = set(os.listdir("minreps"))
-by_column["Perm"] = set(os.listdir("minreps"))
-for fname in ["aliases.txt", "mat_aliases.txt"]:
-    with open(fname) as F:
-        for line in F:
-            label, desc = line.strip().split(" ")
-            if matchers["PC"].fullmatch(desc):
-                by_column["Solvable"].add(label)
-                if all_small(label):
-                    by_column["OptimizedPC"].add(label)
-            elif matchers["nTt"].fullmatch(desc):
-                by_column["Perm"].add(label)
-                by_column["TransPerm"].add(label) # Note that this doesn't include small groups :-(
-                by_row["TransitiveGroup"].add(label)
-            elif matchers["nPermG"].fullmatch(desc):
-                by_column["Perm"].add(label)
-                n = int(matchers["nPermG"].fullmatch(desc).group(1))
-                if n <= 15:
-                    by_row["IntransitiveGroup"].add(label)
-            elif matchers["Lie"].fullmatch(desc):
-                # Maybe add HaveLie?
-                by_row["LieType"].add(label)
-            elif matchers["pMAT"].fullmatch(desc):
-                d, N = [ZZ(c) for c in matchers["pMAT"].fullmatch(desc).groups()]
-                if N.is_prime():
-                    by_column["GLp"].add(label)
-                    if d > 2:
-                        by_row["GLq"].add(label)
+    by_row = defaultdict(set)
+    by_column = defaultdict(set)
+    with open("to_add.txt") as F:
+        all_labels = [line.strip().split(" ")[0] for line in F]
+    by_column["Total"] = set(all_labels)
+    by_row["SmallGroup"] = set(label for label in all_labels if all_small(label)) # SmallGroup is only those orders where we load everything from the small group database
+    smallsolv = list(db.gps_groups.search({"solvable":True}, "label"))
+    by_column["Solvable"] = set(os.listdir("pcreps_fastest") + os.listdir("pcreps_fast") + smallsolv)
+    by_column["OptimizedPC"] = set(os.listdir("pcreps") + smallsolv) # Note that this will need to change once the new data is uploaded
+    by_column["MinPerm"] = set(os.listdir("minreps"))
+    for fname in ["aliases.txt", "mat_aliases.txt"]:
+        with open(fname) as F:
+            for line in F:
+                label, desc = line.strip().split(" ")
+                if matchers["nTt"].fullmatch(desc):
+                    by_row["TransitiveGroup"].add(label)
+                elif matchers["nPermG"].fullmatch(desc):
+                    n = int(matchers["nPermG"].fullmatch(desc).group(1))
+                    if n <= 15:
+                        by_row["IntransitiveGroup"].add(label)
+                elif matchers["Lie"].fullmatch(desc):
+                    # Maybe add HaveLie?
+                    by_row["LieType"].add(label)
+                elif matchers["pMAT"].fullmatch(desc):
+                    d, N = [ZZ(c) for c in matchers["pMAT"].fullmatch(desc).groups()]
+                    if N.is_prime():
+                        if d > 2:
+                            by_row["GLq"].add(label)
+                        else:
+                            by_row["GLZN"].add(label)
                     else:
                         by_row["GLZN"].add(label)
+                elif matchers["ZMAT"].fullmatch(desc):
+                    by_row["CARAT"].add(label)
+                elif matchers["qMAT"].fullmatch(desc):
+                    d, q = [int(c) for c in matchers["qMAT"].fullmatch(desc).groups()]
+                    if d == 2 and q < 100 or d == 3 and q < 10 or d == 4 and q == 4:
+                        by_row["GLq"].add(label)
+                elif matchers["SmallAut"].fullmatch(desc):
+                    by_row["SmallAut"].add(label)
+                elif matchers["PermAut"].fullmatch(desc):
+                    by_row["PermAut"].add(label)
+                elif matchers["Perf"].fullmatch(desc):
+                    by_row["Perf"].add(label)
+                elif matchers["Chev"].fullmatch(desc):
+                    by_row["Chev"].add(label)
+                elif desc in ["J1", "J2", "HS", "J3", "McL", "He", "Ru", "Co3", "Co2", "Co1"]:
+                    by_row["Sporadic"].add(label)
                 else:
-                    by_column["GLZN"].add(label)
-                    by_row["GLZN"].add(label)
-            elif matchers["ZMAT"].fullmatch(desc):
-                by_column["GLZ"].add(label)
-                by_row["CARAT"].add(label)
-            elif matchers["qMAT"].fullmatch(desc):
-                by_column["GLq"].add(label)
-                d, q = [int(c) for c in matchers["qMAT"].fullmatch(desc).groups()]
-                if d == 2 and q < 100 or d == 3 and q < 10 or d == 4 and q == 4:
-                    by_row["GLq"].add(label)
-            elif matchers["SmallAut"].fullmatch(desc):
-                by_row["SmallAut"].add(label)
-            elif matchers["PermAut"].fullmatch(desc):
-                by_row["PermAut"].add(label)
-            elif matchers["Perf"].fullmatch(desc):
-                by_row["Perf"].add(label)
-            elif matchers["Chev"].fullmatch(desc):
-                by_row["Chev"].add(label)
-            elif desc in ["J1", "J2", "HS", "J3", "McL", "He", "Ru", "Co3", "Co2", "Co1"]:
-                by_row["Sporadic"].add(label)
-            else:
-                print("Unknown description", desc)
-                raise ValueError
-with open("TinyLie.txt") as F:
-    for line in F:
-        label, desc = line.strip().split(" ")
-        by_row["LieType"].add(label)
-by_row["IntransitiveGroup"] = by_row["IntransitiveGroup"].difference(by_row["TransitiveGroup"]).difference(by_row["SmallGroup"])
+                    print("Unknown description", desc)
+                    raise ValueError
+    for label in os.listdir("preload"):
+        with open(opj("preload", label)) as F:
+            lines = F.read().strip().split("\n")
+            ldata = dict(zip(lines[0], lines[1]))
+            reps = ldata["representations"]
+            if '"Perm"' in reps:
+                by_column["Perm"].add(label)
+            if '"PC"' in reps:
+                by_column["Solvable"].add(label)
+            if any(f'"{typ}"' in reps for typ in ["Lie", "GLZ", "GLZq", "GLFq", "GLFp", "GLZN"]):
+                by_column["Mat"].add(label)
+    with open("TinyLie.txt") as F:
+        for line in F:
+            label, desc = line.strip().split(" ")
+            by_row["LieType"].add(label)
+    for i in range(1, len(sources)):
+        for j in range(i):
+            by_row[sources[i]] = by_row[sources[i]].difference(by_row[sources[j]])
 
-# Now we add column data for primary description
-descs = {}
-for label in os.listdir("descriptions"):
-    with open(opj("descriptions", label)) as F:
-        desc = F.read().strip().split("\n")[0] # FIXME!
-        descs[label] = desc
-    for name in primary_columns:
-        matcher = matchers[name]
-        m = matcher.fullmatch(desc)
-        if m:
-            if name == "unspec":
-                by_column[name].add((label, desc))
-            else:
-                if name == "pMAT":
-                    p = ZZ(m.group(2))
-                    assert p.is_prime()
-                by_column[name].add(label)
-            break
-    else:
-        by_column["other"].add((label, desc))
-#for name, v in by_column.items():
-#    if name not in ["other", "unspec"]:
-#        v = sorted(v, key=sort_key)
-#        print(name, len(v), v[0])
-#    else:
-#        print(name, len(v))
+    # Now we add column data for primary description
+    # descs = {}
+    # for label in os.listdir("descriptions"):
+    #     with open(opj("descriptions", label)) as F:
+    #         desc = F.read().strip().split("\n")[0] # FIXME!
+    #         descs[label] = desc
+    #     for name in primary_columns:
+    #         matcher = matchers[name]
+    #         m = matcher.fullmatch(desc)
+    #         if m:
+    #             if name == "unspec":
+    #                 by_column[name].add((label, desc))
+    #             else:
+    #                 if name == "pMAT":
+    #                     p = ZZ(m.group(2))
+    #                     assert p.is_prime()
+    #                 by_column[name].add(label)
+    #             break
+    #     else:
+    #         by_column["other"].add((label, desc))
+    # for name in matchers:
+    #     v = by_column[name]
+    #     if v:
+    #         if name not in ["other", "unspec"]:
+    #             v = sorted(v, key=sort_key)
+    #             print(name, len(v), v[0])
+    #         else:
+    #             print(name, len(v))
 
-print("| Source | " + " | ".join(columns) + " |")
-print("| --- | " + " | ".join("---" for col in columns) + " |")
-for source in sources:
-    print(f"| {source} | " + " | ".join(f"{len(by_row[source].intersection(by_column[col]))}" for col in columns) + " |")
+    print("| Source | " + " | ".join(columns) + " |")
+    print("| --- | " + " | ".join("---" for col in columns) + " |")
+    for source in sources:
+        print(f"| {source} | " + " | ".join(f"{len(by_row[source].intersection(by_column[col]))}" for col in columns) + " |")
