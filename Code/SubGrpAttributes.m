@@ -455,7 +455,7 @@ end intrinsic;
 intrinsic aut_weyl_group(H::LMFDBSubGrp) -> Any
 {The quotient of the normalizer by the centralizer, inside the holomorph}
     G := H`Grp;
-    if not Get(G, "HaveHolomorph") then
+    if Get(H, "quotient_order") eq 1 or Get(H, "subgroup_order") eq 1 or not Get(G, "HaveHolomorph") then
         return None();
     end if;
     GG := G`MagmaGrp;

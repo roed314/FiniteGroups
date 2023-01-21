@@ -541,6 +541,7 @@ intrinsic ordercc(G::LMFDBGrp, gens::SeqEnum: dorandom:=true) -> Any
       if small then
           dctr := 1;
           for divi in divilist do
+              if not ismax[Rep(divi)] then continue; end if;
               mreps := [];
               diviL := [u : u in divi];
               for u in diviL do

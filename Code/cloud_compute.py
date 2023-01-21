@@ -9,6 +9,7 @@ import re
 import time
 import argparse
 import subprocess
+import traceback
 from collections import defaultdict
 opj = os.path.join
 ope = os.path.exists
@@ -75,7 +76,7 @@ def run(label, codes, timeout, subgroup_index_bound):
                         elif line[0] == "s":
                             # Extract the subgroup index bound for use in computing lattice x-values
                             sheader = read_tmpheader("sub")
-                            sdata = line.strip().split("|")[1:]
+                            sdata = line[1:].strip().split("|")
                             subgroup_index_bound = dict(zip(sheader, sdata))["subgroup_index_bound"]
                             if subgroup_index_bound == r"\N":
                                 subgroup_index_bound = None
@@ -137,7 +138,7 @@ def aut_graph(sdata, normal=False):
         alabel = aut_label(sdatum["short_label"], normal)
         if alabel is None or alabel in seen: continue
         adata.append({"label": alabel,
-                      sdatum["subgroup_tex"],
+                      "tex": sdatum["subgroup_tex"],
                       "order": int(sdatum["subgroup_order"]),
                       "contains": final[alabel]})
     return adata
@@ -233,11 +234,11 @@ def compute_diagramx(label, sublines, subgroup_index_bound):
         for line in sublines:
             vals = line.strip().split("|")
             if vals[0] != "S" + label:
-                _ = F.write(f"E{label}|Compute diagramx-label mismatch {vals[0]}")
+                _ = F.write(f"E{label}|Compute diagramx-label mismatch {vals[0]}\n")
                 continue
-            vals = vals[1:]
+            vals[0] = vals[0][1:]
             if len(vals) != len(cols):
-                _ = F.write(f"E{label}|Compute diagramx-length mismatch {len(vals)} vs {len(cols)}")
+                _ = F.write(f"E{label}|Compute diagramx-length mismatch {len(vals)} vs {len(cols)}\n")
                 continue
             lookup = dict(zip(cols, vals))
             # Omit subgroups that have unusual labels (they're past the index bound)
@@ -302,7 +303,12 @@ with open("DATA/manifest") as F:
             while codes:
                 done, finished, time_used, last_time_line, err, sublines, subgroup_index_bound = run(label, codes, timeout, subgroup_index_bound)
                 if sublines:
-                    compute_diagramx(label, sublines, subgroup_index_bound) # writes directly to output
+                    try:
+                        compute_diagramx(label, sublines, subgroup_index_bound) # writes directly to output
+                    except Exception as err:
+                        with open("output", "a") as Fout:
+                            errstr = traceback.format_exc().strip().replace("\n", f"\nE{label}|diagramx: ")
+                            _ = Fout.write(f"E{label}|diagramx: {errstr}\n")
                 if done: break
                 for code in finished:
                     codes = codes.replace(code, "")
@@ -315,10 +321,10 @@ with open("DATA/manifest") as F:
                 #4 Backup labeling strategy (conjugacy classes, subgroups)
                 if not err:
                     if last_time_line == "Starting SubGrpLst":
-                        set_preload("AllSubgroupsOk", "f")
+                        set_preload(label, "AllSubgroupsOk", "f")
                     elif (last_time_line.startswith("Starting SubGrpLstSplitDivisor ") or
                           last_time_line.startswith("Starting SubGrpLstDivisor ")):
-                        set_preload("SubGrpLstByDivisorTerminate", last_time_line.split("(")[1].split(")")[0])
+                        set_preload(label, "SubGrpLstByDivisorTerminate", last_time_line.split("(")[1].split(")")[0])
                     #elif last_time_line == "Starting ComputeLatticeEdges":
                     #    # Screws up labeling....
                     #    set_preload("subgroup_inclusions_known", "f")

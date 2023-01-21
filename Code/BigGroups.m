@@ -84,6 +84,7 @@ Path to finishing computations:
  c. Need to use Complements to find semidirect decompositions from NormalSubgroups
  d. Use 
 
+Why is subgroup_index_bound f?
 *Profile for HaveHolomorph, double check that the two methods give same results.
 Slow LabelConjugacyClasses: 564221981491200.i
 E46656.hz(+7)|Subgroups.m:668:23(Hnew := L`subs[j];)|Runtime error in '[]': Sequence index 987 should be in the range 1 to 822
