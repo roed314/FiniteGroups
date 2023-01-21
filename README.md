@@ -23,6 +23,134 @@ Repository for finite groups in the LMFDB
 1. Extract the tarball anywhere you like, then run `./cloud_compute.py M`, where `M` is an integer from 1 to the number of groups (you can also run multiple such commands in parallel).  This will copy all output to the `output` file, labeled with a prefix.
 1. If running computations on multiple machines, collect all the output files and concatenate them into one large output file.  Then run `cloud_collect.py` to produce upload files for postgres (this file needs a bit more work).
 
+## Sample Code
+
+To run the code in this repository, first navigate to the Code folder and type the following in Magma: 
+```
+AttachSpec("spec");
+```
+
+To create groups, we type  
+```
+G:=MakeBigGroup("description","label")
+```
+
+If an attribute for the particular group is already assigned, it can be called with a command like:
+```
+G`attribute
+```
+Otherwise, the following call will compute the attribute if it is not yet computed and then return the attribute.
+```
+Get(G,"attribute");
+```
+Attributes can be found in the LMFDBGrp.m file. 
+
+Here is an example using the group 7T7 from the  transitive group database.
+```
+G:=MakeBigGroup("7T7", "5040.w");
+n:=Get(G,"order");
+cc:=Get(G,"number_conjugacy_classes"); 
+n; cc;
+Get(G,"transitive_degree");
+S:=Get(G,"Subgroups");
+```
+This should return 96 subgroups.  
+
+And here is a group from the small groups database. 
+```
+G:=MakeBigGroup("24.10","24.10");
+H:=G`MagmaGrp;
+T:=Get(G,"ConjugacyClasses");
+```
+
+### Defining a unique string for each group
+
+We have functionality to  produce a string from which a group can be reconstructed, up to isomorphism. Note that it does not guarantee the same presentation or choice of generators.
+```
+G:=SL(2,13);
+str:=GroupToString(G);
+K:=StringToGroup(str);
+IsIsomorphic(G,K);
+```
+
+And given a stored string, we can produce the group. For example, this permutation group is the group 1536.408544622.
+```
+G := StringToGroup("18Perm3909035769,9251075123055,36697503,5813630607504594,210629534583033,965711180568,220694196784756,210629864803832,3588449545742302,390");
+```
+
+### Other sources of groups
+
+Here are some other sample groups demonstrating different  sources for groups. 
+
+An example of a non-simple perfect group:
+```
+G:=MakeBigGroup("Perf286", "2160.a");
+Get(G,"simple");
+```
+
+A PC group given by a code
+```
+G:=MakeBigGroup("549PC7347719","549.4");
+```
+
+A PC group given by CompactPresentation
+```
+G:=MakeBigGroup("3721pc2,-61,61","3721.2");
+```
+
+An arbitrary permutation group
+```
+G:=MakeBigGroup("21Perm29207796265332120292,7544853758254297717", "1680.397");
+Get(G,"Generators");
+```
+
+A matrix group over a finite prime field
+```
+G:=MakeBigGroup("2,5MAT454,49,252", "96.67");
+Get(G,"Generators");
+```
+
+A matrix group over a finite non-prime field
+```
+G:=MakeBigGroup("2,q8MAT3263,2565,73", "3528.a");
+```
+
+A matrix group over Z
+```
+G:=MakeBigGroup("4,0,3MAT15503524,994920", "576.8277");
+```
+
+A group of Lie type
+```
+G:=MakeBigGroup("SL(4,5)","29016000000.a");
+```
+
+Finally, you can pass in maps between isomorphic groups.
+```
+G:=MakeBigGroup("2401pc4,-7,7,7,7--117993,117692,5058950,2657222-->2,49MAT117993,2657222,117692,5058950","2401.15");
+```
+The elements in the case  will be saved as elements of the codomain (a matrix subgroup of GL(2,49)) but computations will be done in the domain (a pc group).  And then to see the map and the generators of the group in the codomain:
+```
+hom:=G`ElementReprHom;
+LoadElt("117993", Codomain(hom));
+LoadElt("2657222", Codomain(hom));
+LoadElt("117692", Codomain(hom));
+LoadElt("5058950", Codomain(hom));
+```
+
+### Database requirements
+
+For some of the groups,  additional  databases from Magma need to be installed.
+* Trn32IdData, which needs to go in libs/data/TrnGps/Trn32IdData
+* TrnGps32, which extracts into libs/data/TrnGps (adding files trans32.dat and trans32.ind).
+* Atlas, which extracts into libs/data/Atlas.
+* data3to8, which extracts into libs/data/data3to8.
+
+
+
+
+
+
 ## Computation ToDo
 
 * There are several groups where we need to update the description (we don't have an explicit isomorphism from the representation as a matrix group with Z/NZ coefficients to a permutation group)
