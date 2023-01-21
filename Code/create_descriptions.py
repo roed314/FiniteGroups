@@ -203,7 +203,10 @@ def load_homs():
         with open(opj("DATA", "homs", label)) as F:
             hom = F.read().strip()
             homs[label] = hom
-            cod = hom.split("-->")[1]
+            if ">>" in hom:
+                cod = hom.split("-->>")[1]
+            else:
+                cod = hom.split("-->")[1]
             homcods.add(cod)
     return homs, homcods
 
@@ -327,7 +330,8 @@ def find_best(aliases, An, Sn, liegens, homs, homcods):
         typ, vec = item
         n = vec[0]
         if typ == "Lie":
-            # We use the sort key from liegens
+            # We use the sort key from liegens; NO!  We should prefer Lie descs to a random matrix group.  Should have SL(2,11) instead of 2,11MAT1343,1453.  And AGL(1,32) to 2,q32MAT12123,680436,499599,698805,351946,617586.  What about ASL(2,4) to 5,2MAT...
+            # Prefer F_q notation to AGL(1,q), A_4^2 to POmegaPlus(4,3), S_5 to PGL(2,5)!!, C_43 to ASigmaL(1,43), C_4\wr C_2 to COPlus(2,5), {}^2B_2(2) 20.3 F_5 (Chev)
             desc = vec[-1]
             explicit_desc = liegens[desc]
             newitem = sortvec_from_desc(explicit_desc, homcods)
@@ -368,7 +372,12 @@ def find_best(aliases, An, Sn, liegens, homs, homcods):
             special_names.append({"family": family, "parameters": {"n": n}, "label": label})
         else:
             opts = sorted(B.items(), key=sort_key)
-            best = opts[0]
+            # prefer groups of Lie type to any other matrix groups
+            i = 0
+            if "Lie" in B:
+                while opts[i][0] in ["GLZ", "GLFp", "GLZq", "GLFq"]:
+                    i += 1
+            best = opts[i]
             typ = best[0]
             desc = best[1][-1]
             if typ in ["GLZN", "GLZq"]:
@@ -394,6 +403,9 @@ def find_best(aliases, An, Sn, liegens, homs, homcods):
                             first = lies.pop(i)
                             aliases[label]["Lie"] = [first] + lies
                             break
+                    if label in homs:
+                        # Covers for projective groups of Lie type
+                        desc = homs[label]
                 best_of_show[label] = (typ, desc)
     return best_of_breed, best_of_show, special_names, problems
 
@@ -414,11 +426,8 @@ def texify_lie(desc):
     cmd = desc.split("(")[0]
     nq = desc.split("(")[1].split(")")[0]
     n, q = [c.strip() for c in nq.split(",")]
-    if len(n) > 1:
-        n = "{%s}" % n
-    if len(q) > 1:
-        q = "{%s}" % q
-    return fr"\{cmd}_{n}(\mathbb{{F}}_{q})"
+    cmd = cmd.replace("Plus", "^+").replace("Minus", "^-")
+    return fr"\{cmd}({n}, {q})"
 def namify_sporchev(desc):
     if desc == "Chev2F,4,2-D": # Tits group
         return "2F(4,2)'"
@@ -487,10 +496,7 @@ def create_data():
             preload["element_repr_type"] = bos[0]
             repD = make_representations_dict(bob, aliases[label].get("Lie"), liegens, nTt_to_gens)
             preload["representations"] = str(repD).replace("'", '"').replace(" ", "")
-            if bos[0] == "Lie":
-                preload["name"] = bos[1]
-                preload["tex_name"] = texify_lie(bos[1])
-            elif label in spor_chev:
+            if label in spor_chev and label != "20.3": # We'd rather call 20.3 F_5 than ^2B_2(2)
                 desc = spor_chev[label]
                 preload["name"] = namify_sporchev(desc)
                 preload["tex_name"] = texify_sporchev(desc)
