@@ -5,7 +5,7 @@ SetColumns(0);
 s := Read("DATA/descriptions/" * label);
 if "pc" in s or "PC" in s then
     G := StringToGroup(s);
-    A := AutomorphismGroup(G);
+    A := AutomorphismGroupSolubleGroup(G);
     outs := [f : f in Generators(A) | not IsInner(f)];
     a := Random(G);
     b := Random(G);
