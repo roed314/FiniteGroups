@@ -803,11 +803,15 @@ intrinsic aut_group(G::LMFDBGrp) -> MonStgElt
     vprint User1: "ClassAction complete";
     assert #P eq Get(G, "aut_order");
     s, iso := label(P : strict:=false);
-    if assigned iso then
-        // reset aut_gens to match the labeled group
-        G`AutGenerators := [g @ iso : g in GeneratorsSequence(Domain(iso))];
-        G`aut_gens := aut_gens(G);
-    end if;
+    // It might be nice to record generators of the automorphism group matching the labeled group,
+    // but we currently don't for two reasons
+    // 1. It loses the division between inner and outer generators in the normal generator list
+    // 2. We'd have to compose with the isomorphism between aut and P, which is a bit annoying
+    //if assigned iso then
+    //    // reset aut_gens to match the labeled group
+    //    G`AutGenerators := [g @ iso : g in GeneratorsSequence(Domain(iso))];
+    //    G`aut_gens := aut_gens(G);
+    //end if;
     ReportEnd(G, "LabelAutGroup", t0);
     return s;
 end intrinsic;

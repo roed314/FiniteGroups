@@ -532,7 +532,7 @@ intrinsic DefaultAttributes(c::Cat) -> SeqEnum
     return defaults;
 end intrinsic;
 
-intrinsic SaveLMFDBObject(G::Any : attrs:=[], sep:="|") -> MonStgElt
+intrinsic SaveLMFDBObject(G::Any : attrs:=[], sep:="|", debug:=false) -> MonStgElt
 {Save an LMFDB object to a single line}
     if attrs eq [] then
         attrs := DefaultAttributes(Type(G));
@@ -543,16 +543,17 @@ intrinsic SaveLMFDBObject(G::Any : attrs:=[], sep:="|") -> MonStgElt
         // "Attr", attr;
         //vprint User1: attr;
         t := Cputime();
-        try
+        if debug then
             val := Get(G, attr);
-        catch e
-            if assigned e`Traceback then
-                print e`Traceback;
-            end if;
-            print e;
-            print "error saving", attr;
-            val := None();
-        end try;
+        else
+            try
+                val := Get(G, attr);
+            catch e
+                print e;
+                print "error saving", attr;
+                val := None();
+            end try;
+        end if;
         saved := SaveAttr(attr, val, G);
         t := Cputime(t);
         //if t gt 0.1 then
@@ -639,11 +640,11 @@ intrinsic PrintGLnData(G::LMFDBGrp: sep:="|") -> Tup
             [SaveLMFDBObject(cr: sep:=sep) : cr in creps]>;
 end intrinsic;
 
-intrinsic WriteByTmpHeader(G::Any, filename::MonStgElt, header::MonStgElt: sep:="|")
+intrinsic WriteByTmpHeader(G::Any, filename::MonStgElt, header::MonStgElt: sep:="|", debug:=false)
 {}
     code, attrs := Explode(Split(Read(header * ".tmpheader"), "\n"));
     attrs := Split(attrs, sep);
-    s := code * SaveLMFDBObject(G: attrs:=attrs, sep:=sep);
+    s := code * SaveLMFDBObject(G: attrs:=attrs, sep:=sep, debug:=debug);
     PrintFile(filename, s);
 end intrinsic;
 

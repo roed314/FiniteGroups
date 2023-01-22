@@ -20,6 +20,9 @@ if assigned debug or assigned verbose then
 end if;
 if assigned debug then
     SetDebugOnError(true); // for testing
+    debug := true;
+else
+    debug := false;
 end if;
 G := MakeBigGroup(desc, label);
 Preload(G);
@@ -48,12 +51,12 @@ for code in Eltseq(codes) do
         attr := aggregate_attr[code];
         t0 := ReportStart(G, "Code-" * code);
         for H in Get(G, attr) do
-            WriteByTmpHeader(H, outfile, header);
+            WriteByTmpHeader(H, outfile, header : debug:=debug);
         end for;
         ReportEnd(G, "Code-" * code, t0);
     else
         t0 := ReportStart(G, "Code-" * code);
-        WriteByTmpHeader(G, outfile, header);
+        WriteByTmpHeader(G, outfile, header : debug:=debug);
         ReportEnd(G, "Code-" * code, t0);
     end if;
 end for;
