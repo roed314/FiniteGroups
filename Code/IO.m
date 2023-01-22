@@ -549,6 +549,7 @@ intrinsic SaveLMFDBObject(G::Any : attrs:=[], sep:="|") -> MonStgElt
             if assigned e`Traceback then
                 print e`Traceback;
             end if;
+            print e;
             print "error saving", attr;
             val := None();
         end try;
