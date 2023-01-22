@@ -15,8 +15,12 @@ end if;
 infile := "DATA/descriptions/" * label;
 outfile := "DATA/computes/" * label;
 desc := Read(infile);
-//SetVerbose("User1", 1); // for testing
-//SetDebugOnError(true); // for testing
+if assigned debug or assigned verbose then
+    SetVerbose("User1", 1); // for testing
+end if;
+if assigned debug then
+    SetDebugOnError(true); // for testing
+end if;
 G := MakeBigGroup(desc, label);
 Preload(G);
 files := Split(Pipe("ls", ""), "\n");

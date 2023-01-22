@@ -85,10 +85,11 @@ Path to finishing computations:
  d. Use 
 
 Why is subgroup_index_bound f?
+Have label return isomorphism and use it!
 *Profile for HaveHolomorph, double check that the two methods give same results.
 Slow LabelConjugacyClasses: 564221981491200.i
 E46656.hz(+7)|Subgroups.m:668:23(Hnew := L`subs[j];)|Runtime error in '[]': Sequence index 987 should be in the range 1 to 822
-Save to preload things like LabeledConjugacyClasses
+Save to preload things like LabeledConjugacyClasses, aut_gens
 Set G`Order
 Set diagramx
 

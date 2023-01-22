@@ -260,6 +260,9 @@ intrinsic direct(H::LMFDBSubGrp) -> Any // Need to be subgroup attribute file
     return None();
   else
     comps := Get(H, "complements");
+    if Type(comps) eq NoneType then
+      return None();
+    end if;
     for K in comps do
       if IsNormal(GG, K`subgroup) then
         return true;
@@ -336,7 +339,7 @@ intrinsic quotient_action_image(H::LMFDBSubGrp) -> Any
     if Type(f) eq NoneType then
         return None();
     else
-        return label(Image(f));
+        return label(Image(f) : strict:=false);
     end if;
 end intrinsic;
 
@@ -348,7 +351,7 @@ intrinsic quotient_action_kernel(H::LMFDBSubGrp) -> Any
     if Type(f) eq NoneType then
         return None();
     else
-        return label(Kernel(f));
+        return label(Kernel(f) : strict:=false);
     end if;
 end intrinsic;
 
@@ -445,9 +448,9 @@ intrinsic weyl_group(H::LMFDBSubGrp) -> Any
     Z := Centralizer(GG, HH);
     W := BestQuotient(N, Z);
     try
-        return label(W);
+        return label(W : strict:=false);
     catch e;
-        print "weyl_group", e;
+        print "error in weyl_group", e;
         return None();
     end try;
 end intrinsic;
@@ -468,7 +471,7 @@ intrinsic aut_weyl_group(H::LMFDBSubGrp) -> Any
     H`aut_weyl_index := (#Ambient * #Z) div (#N * #GG);
     H`aut_centralizer_order := #(Z meet Stabilizer(Ambient, 1));
     W := BestQuotient(N, Z);
-    return label(W);
+    return label(W : strict:=false);
 end intrinsic;
 
 intrinsic aut_centralizer_order(H::LMFDBSubGrp) -> Any

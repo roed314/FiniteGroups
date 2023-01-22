@@ -343,13 +343,14 @@ function SplitByAuts(L, G : use_order:=true, use_hash:=true, use_gassman:=false,
                             end if;
                         end for;
                         if not found then
-                            if fill_orbits then
-                                Append(~chunk, H2);
-                                Append(~edges, {Integers()|});
-                                Include(~(edges[i]), #chunk);
-                            else
-                                error "subgroups not closed under automorphism";
-                            end if;
+                            //if fill_orbits then
+                            Append(~chunk, H2);
+                            Append(~edges, {Integers()|});
+                            Include(~(edges[i]), #chunk);
+                            //else
+                                //error "subgroups not closed under automorphism";
+                            //    x := 1/(1-1);
+                            //end if;
                         end if;
                     end for;
                     i +:= 1;

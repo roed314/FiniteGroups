@@ -305,7 +305,7 @@ with open("DATA/manifest") as F:
                 if sublines:
                     try:
                         compute_diagramx(label, sublines, subgroup_index_bound) # writes directly to output
-                    except Exception as err:
+                    except Exception:
                         with open("output", "a") as Fout:
                             errstr = traceback.format_exc().strip().replace("\n", f"\nE{label}|diagramx: ")
                             _ = Fout.write(f"E{label}|diagramx: {errstr}\n")
