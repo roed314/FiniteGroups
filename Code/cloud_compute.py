@@ -53,17 +53,17 @@ def run(label, codes, timeout, subgroup_index_bound):
         t = opj("DATA", "timings", label)
         finished = ""
         time_used = 0
-        if not ope(t):
-            print("No timing file!", label)
-            raise RuntimeError
-        with open(t) as F:
-            for line in F:
-                _ = Fout.write(f"T{label}|{line}")
-                if line.startswith("Finished Code-"):
-                    finished += line[14]
-                    time_used += float(line.strip().split()[-1])
-                last_time_line = line
-        os.unlink(t) # Remove timings so that they're not copied multiple times
+        if ope(t):
+            with open(t) as F:
+                for line in F:
+                    _ = Fout.write(f"T{label}|{line}")
+                    if line.startswith("Finished Code-"):
+                        finished += line[14]
+                        time_used += float(line.strip().split()[-1])
+                    last_time_line = line
+            os.unlink(t) # Remove timings so that they're not copied multiple times
+        else:
+            last_time_line = ""
         done = last_time_line.startswith("Finished AllFinished")
         o = opj("DATA", "computes", label)
         if ope(o):
