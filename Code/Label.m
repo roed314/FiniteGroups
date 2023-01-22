@@ -69,7 +69,7 @@ Because of Magma bugs in IsIsomorphic, when strict is false this may return None
                 return label, phi;
             end if;
         end for;
-        return None();
+        return None(), _;
     end if;
     label:= Sprintf("%o.%o", id[1], id[2]);
     return label, _;
