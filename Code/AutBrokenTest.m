@@ -15,5 +15,6 @@ if "pc" in s or "PC" in s then
             break;
         end if;
     end for;
+    Write("DATA/aut_broken_done/" * label);
 end if;
 exit;
