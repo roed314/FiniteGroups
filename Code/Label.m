@@ -58,10 +58,8 @@ Because of Magma bugs in IsIsomorphic, when strict is false this may return None
                     found, phi := IsIsomorphic(H, G);
                 catch e
                     // In other cases (such as trying to label the automorphism group), we'd rather gracefully fail with None.
-                    if assigned e`Traceback then
-                        print e`Traceback;
-                    end if;
-                    print "error in Label->IsIsomorphic";
+                    print e;
+                    print "Warning: Label->IsIsomorphic failed";
                     continue;
                 end try;
             end if;
@@ -104,7 +102,12 @@ intrinsic label_quotient(G::LMFDBGrp, N::Grp : GN:=0, hsh:=0, strict:=false) -> 
     if IsPrime(nGN) then
         return Sprintf("%o.1", nGN);
     elif GN cmpeq 0 then
-        GN := BestQuotient(GG, N);
+        try
+            GN := BestQuotient(GG, N);
+        catch e
+            print "Warning: failure to compute quotient";
+            return None();
+        end try;
     end if;
     return label(GN : hsh:=hsh, strict:=strict);
 end intrinsic;
