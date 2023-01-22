@@ -108,6 +108,7 @@ declare attributes LMFDBGrp:
   smallrep, // old style; to be removed
   aut_group,
   aut_order,
+  AutGenerators,
   aut_gens,
   MagmaAutGroup,
   outer_order,

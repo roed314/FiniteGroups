@@ -316,6 +316,7 @@ function SplitByAuts(L, G : use_order:=true, use_hash:=true, use_gassman:=false,
         use_graph := false;
     else
         Aut := Get(G, "MagmaAutGroup");
+        // We want to use Generators(Aut) here rather than Get(G, "AutGenerators") since we DON'T want the generators that were pulled back from the labeled aut group (they would work, but there might be more of them)
         outs := [f : f in Generators(Aut) | not IsInner(f)];
         use_graph := true;
     end if;
@@ -343,14 +344,13 @@ function SplitByAuts(L, G : use_order:=true, use_hash:=true, use_gassman:=false,
                             end if;
                         end for;
                         if not found then
-                            //if fill_orbits then
-                            Append(~chunk, H2);
-                            Append(~edges, {Integers()|});
-                            Include(~(edges[i]), #chunk);
-                            //else
-                                //error "subgroups not closed under automorphism";
-                            //    x := 1/(1-1);
-                            //end if;
+                            if fill_orbits then
+                                Append(~chunk, H2);
+                                Append(~edges, {Integers()|});
+                                Include(~(edges[i]), #chunk);
+                            else
+                                error "subgroups not closed under automorphism";
+                            end if;
                         end if;
                     end for;
                     i +:= 1;
@@ -2294,8 +2294,11 @@ function comp_sort_gens(H, aut)
             conjL, lookup, inv_lookup := Explode(L`from_conj);
             Gup := inv_lookup[Gi][1];
             Hup := Rep(Keys(Get(conjL`subs[Gup], "unders")) meet {j : j in inv_lookup[Hi]});
+            HH := conjL`subs[Hup]`subgroup;
             c := conjL`conjugator[[Hup, Gup]];
-            HH := (conjL`subs[Hup]`subgroup)^c;
+            if c cmpne true then // this would indicate that we're in the lattice of normal subgroups and thus don't need to conjugate
+                HH := HH^c;
+            end if;
         else
             HH := inj(L`subs[Hi]`subgroup);
             c := L`conjugator[[Hi, Gi]];

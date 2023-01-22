@@ -543,7 +543,16 @@ intrinsic SaveLMFDBObject(G::Any : attrs:=[], sep:="|") -> MonStgElt
         // "Attr", attr;
         //vprint User1: attr;
         t := Cputime();
-        saved := SaveAttr(attr, Get(G, attr), G);
+        try
+            val := Get(G, attr);
+        catch e
+            if assigned e`traceback then
+                print e`traceback;
+            end if;
+            print "error saving", attr;
+            val := None();
+        end try;
+        saved := SaveAttr(attr, val, G);
         t := Cputime(t);
         //if t gt 0.1 then
         //    vprintf User1: "%o time: %.3o\n", attr, t;

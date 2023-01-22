@@ -175,8 +175,10 @@ intrinsic CosetAction(G::Grp, Hs::SeqEnum[Grp]) -> Map, GrpPerm, Grp
     return rho, Q, K;
 end intrinsic;
 
-intrinsic GoodCoredSubgroups(G::Grp, N::Grp, max_orbits::RngIntElt : num_checks:=0, max_tries:=20) -> SeqEnum[Grp]
+intrinsic GoodCoredSubgroups(G::Grp, N::Grp, max_orbits::RngIntElt : low_checks:=3, max_checks:=200, max_tries:=20) -> SeqEnum[Grp]
 {}
+    // Note that we will keep going until degree is less than 1,000,000 even past low_checks, since otherwise CosetAction will fail (and the resulting quotient would be difficult to work with anyway).  At max_checks we give up (which will probably raise an error in MyQuotient)
+    // max_tries is passed on to RandomCoredSubgroups
     cur_check := 0;
     best_degree := Index(G, N);
     best_Hs := [N];
@@ -190,19 +192,19 @@ intrinsic GoodCoredSubgroups(G::Grp, N::Grp, max_orbits::RngIntElt : num_checks:
             best_degree := d;
             best_Hs := Hs;
         end if;
-    until cur_check ge num_checks;
+    until (d lt 1000000 and cur_check ge low_checks) or cur_check ge max_checks;
     return best_Hs;
 end intrinsic;
 
-intrinsic MyQuotient(G::Grp, N::Grp : max_orbits:=1, num_checks:=0, max_tries:=20) -> GrpPerm, Map
+intrinsic MyQuotient(G::Grp, N::Grp : max_orbits:=1, low_checks:=3, max_checks:=200, max_tries:=20) -> GrpPerm, Map
 {
 Find a permutation representation of G/N.
 max_orbits is the maximum number of orbits in the resulting permutation group (transitive=1)
 max_tries controls how hard any individual search tries to expand the cored subgroups (a successful expansion will reset to 0)
-num_checks is the number of times RandomCoredSubgroups is called to check if a smaller degree is possible (num_checks=0 just returns the first output)
+low_checks is the number of times RandomCoredSubgroups is called to check if a smaller degree is possible (low_checks=0 just returns the first output).  However, it will be called more (until max_checks is reached) if the degree is still above 1,000,000.
 Note that this can be used as a less optimal but sometimes faster version of MinimalDegreePermutationRepresentation by taking N=sub<G|>
 }
-    best_Hs := GoodCoredSubgroups(G, N, max_orbits : num_checks:=num_checks, max_tries:=max_tries);
+    best_Hs := GoodCoredSubgroups(G, N, max_orbits : low_checks:=low_checks, max_checks:=1000, max_tries:=max_tries);
     rho, Q, K := CosetAction(G, best_Hs);
     // I'm not sure where this bug came from, but I saw cases with incorrect cores so we double check.
     assert #K eq #N and #Q eq (#G div #N);
@@ -214,7 +216,7 @@ intrinsic BestQuotient(G::Grp, N::Grp) -> Grp, Map
     if Type(G) eq GrpPC or Index(G, N) lt 1000000 then
         Q, proj := quo<G | N>;
     else
-        Q, proj :=  MyQuotient(G, N : max_orbits:=4, num_checks:=3);
+        Q, proj :=  MyQuotient(G, N : max_orbits:=4, low_checks:=3);
     end if;
     return Q, proj;
 end intrinsic;

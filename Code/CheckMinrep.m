@@ -15,7 +15,7 @@ desc, deg, gens := Explode(Split(Read(infile), "|"));
 deg := StringToInteger(deg);
 G := StringToGroup(desc);
 t0 := Cputime();
-Hs := GoodCoredSubgroups(G, sub<G|>, 5 : num_checks:=10);
+Hs := GoodCoredSubgroups(G, sub<G|>, 5 : low_checks:=10);
 Hdeg := &+[Index(G, H) : H in Hs];
 if Hdeg lt deg then
     PrintFile(bugfile, Sprintf("%o|%o|%o|%o|%o", desc, Hdeg, deg, Join([Sprint(Index(G, H)) : H in Hs], ","), Join([SubgroupToString(G, H) : H in Hs], "&")));

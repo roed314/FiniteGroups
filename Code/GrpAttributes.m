@@ -776,7 +776,7 @@ intrinsic MagmaAutGroup(G::LMFDBGrp) -> Grp
     return A;
 end intrinsic;
 
-intrinsic aut_generators(G::LMFDBGrp) -> SeqEnum
+intrinsic AutGenerators(G::LMFDBGrp) -> SeqEnum
 {The chosen generators for the automorphism group.
  This can be reset to match an isomorphism with the labeled automorphism group.}
     A := Get(G, "MagmaAutGroup");
@@ -787,7 +787,7 @@ intrinsic aut_gens(G::LMFDBGrp) -> SeqEnum
 {Returns a list of lists of integers encoding elements of the group.
  The first list gives a set of generators of G, while later lists give the images of these generators under generators of the automorphism group of G}
     gens := Get(G, "Generators");
-    saved := [[SaveElt(g) : g in gens]] cat [[SaveElt(phi(g)) : g in gens] : phi in Get(G, "aut_generators")];
+    saved := [[SaveElt(g) : g in gens]] cat [[SaveElt(phi(g)) : g in gens] : phi in Get(G, "AutGenerators")];
     return saved;
 end intrinsic
 
@@ -805,7 +805,7 @@ intrinsic aut_group(G::LMFDBGrp) -> MonStgElt
     s, iso := label(P : strict:=false);
     if assigned iso then
         // reset aut_gens to match the labeled group
-        G`aut_generators := [g @ iso : g in GeneratorsSequence(Domain(iso))];
+        G`AutGenerators := [g @ iso : g in GeneratorsSequence(Domain(iso))];
         G`aut_gens := aut_gens(G);
     end if;
     ReportEnd(G, "LabelAutGroup", t0);
@@ -1795,7 +1795,7 @@ intrinsic PermutationGrp(G::LMFDBGrp) -> Any
         return PermutationGroup<d | [DecodePerm(g, d) : g in gens]>;
     else
         GG := G`MagmaGrp;
-        GG, phi := MyQuotient(GG, sub<GG|> : max_orbits:=4, num_checks:=3);
+        GG, phi := BestQuotient(GG, sub<GG|>);
         G`HomToPermutationGrp := phi;
         return GG;
     end if;
