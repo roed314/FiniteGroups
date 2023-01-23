@@ -120,6 +120,7 @@ def aut_label(label, normal):
 def aut_graph(sdata, normal=False):
     final = defaultdict(set)
     for sdatum in sdata:
+        alabel = sdatum["aut_label"]
         alabel = aut_label(sdatum["short_label"], normal)
         if alabel:
             if normal:
@@ -167,7 +168,7 @@ def layout_graph(label, graph, rank_by_order=True):
     edges = []
     ranks = defaultdict(list)
     for rec in graph:
-        lab, tex, contains = rec["label"], rec["tex"], ",".join(rec["contains"])
+        lab, tex, contains = rec["label"], rec["tex"], '","'.join(rec["contains"])
         nodes.append(f'"{lab}" [label="{tex}",shape=plaintext]')
         if contains:
             edges.append(f'"{lab}" -> {{"{contains}"}} [dir=none]')
@@ -198,10 +199,23 @@ splines=line;
     t = time.time()
     subprocess.run(["dot", "-Tplain", "-o", outfile, infile], check=True)
     xcoord = {}
+    # When there are long output lines, dot uses a backslash at the end of the line to indicate a line continuation.
+    # I can't find any analogue of Magma's SetColumns(0), so it looks like we have to deal.  Ugh.
     with open(outfile) as F:
         maxx = 0
         minx = 10000
+        lines = []
+        continuing = False
         for line in F:
+            line = line.strip()
+            if continuing:
+                lines[-1] += line
+            else:
+                lines.append(line)
+            continuing = line[-1] == "\\"
+            if continuing:
+                lines[-1] = lines[-1][:-1]
+        for line in lines:
             if line.startswith("graph"):
                 scale = float(line.split()[2])
             elif line.startswith("node"):
@@ -231,6 +245,8 @@ def compute_diagramx(label, sublines, subgroup_index_bound):
     with open("output", "a") as F:
         subs = []
         norms = []
+        accessors = []
+        out_equiv = None
         for line in sublines:
             vals = line.strip().split("|")
             if vals[0] != "S" + label:
@@ -242,18 +258,24 @@ def compute_diagramx(label, sublines, subgroup_index_bound):
                 continue
             lookup = dict(zip(cols, vals))
             # Omit subgroups that have unusual labels (they're past the index bound)
+            if out_equiv is None:
+                out_equiv = lookup["outer_equivalence"] == "t"
+            added = False
             if standard_label(lookup["short_label"]):
                 if subgroup_index_bound in [None, 0] or lookup["quotient_order"] != r"\N" and int(lookup["quotient_order"]) <= subgroup_index_bound:
                     subs.append(lookup)
+                    added = True
                 if lookup["normal"] == "t":
                     norms.append(lookup)
+                    added = True
             elif lookup["short_label"].endswith(".N"): # except that we want the normal ones
                 norms.append(lookup)
-            #sdatum[2] = int(sdatum[2]) # subgroup_order
-            #sdatum[3] = sdatum[3][1:-1].split(",") # contains
-            #sdatum[4] = (sdatum[4] == 't') # normal
-            #sdatum[5] = (sdatum[5] == 't') # outer_equivalence
-    out_equiv = (subs[0]["outer_equivalence"] == "t")
+                added = True
+            if added:
+                if out_equiv:
+                    accessors.append([lookup["short_label"]] * 4)
+                else:
+                    accessors.append(([lookup["aut_label"]] * 2 + [lookup["short_label"]] * 2) * 2)
     if out_equiv:
         graphs = [get_graph(subs), get_graph(norms)]
     else:
@@ -261,9 +283,10 @@ def compute_diagramx(label, sublines, subgroup_index_bound):
     xcoords = ([layout_graph(label, graph, rank_by_order=True) for graph in graphs] +
                [layout_graph(label, graph, rank_by_order=False) for graph in graphs])
     with open("output", "a") as F:
-        for slabel in sublines:
-            diagramx = "{" + ",".join([str(D.get(slabel, -1)) for D in xcoords]) + "}"
-            _ = F.write(f"D{label}|{label}|{slabel}|{diagramx}\n")
+        for accessor in accessors:
+            slabel = accessor[-1]
+            diagramx = "{" + ",".join([str(D.get(key, -1)) for (D, key) in zip(xcoords, accessor)]) + "}"
+            _ = F.write(f"D{label}|{slabel}|{diagramx}\n")
 
 with open("DATA/manifest") as F:
     for line in F:

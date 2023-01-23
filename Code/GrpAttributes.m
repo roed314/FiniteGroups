@@ -1799,7 +1799,8 @@ intrinsic PermutationGrp(G::LMFDBGrp) -> Any
         return PermutationGroup<d | [DecodePerm(g, d) : g in gens]>;
     else
         GG := G`MagmaGrp;
-        GG, phi := BestQuotient(GG, sub<GG|>);
+        // Use MyQuotient rather than BestQuotient to ensure that we get a permutation group out
+        GG, phi := MyQuotient(GG, sub<GG|> : max_orbits:=4);
         G`HomToPermutationGrp := phi;
         return GG;
     end if;

@@ -665,6 +665,9 @@ intrinsic IncludeNormalSubgroups(L::SubgroupLat)
             j := #L+1;
             Hnew := SubgroupLatElement(L, H`subgroup : i:=j);
             Hnew`label := H`label;
+            if assigned H`aut_label then
+                Hnew`aut_label := H`aut_label;
+            end if; // the .N is appended later
             Append(~L`subs, Hnew);
         end if;
         lookup[i] := j;
@@ -2425,6 +2428,9 @@ intrinsic LMFDBSubgroup(H::SubgroupLatElt : normal_lattice:=false) -> LMFDBSubGr
     res`short_label := H`label;
     if assigned H`aut_label then
         res`aut_label := Sprintf("%o.%o%o", H`aut_label[1], CremonaCode(H`aut_label[2]), H`aut_label[3]);
+        if H`label[#H`label - 1..#H`label] eq ".N" then
+            res`aut_label := res`aut_label * ".N";
+        end if;
     end if;
     res`special_labels := H`special_labels;
     res`count := Get(H, "subgroup_count");
