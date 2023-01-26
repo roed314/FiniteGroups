@@ -311,7 +311,7 @@ def skip_codes(codes, skipped):
     else:
         skipped += codes[0]
     for c in skipped:
-        codes = codes.replace(code, "")
+        codes = codes.replace(c, "")
     return codes, skipped
 
 with open("DATA/manifest") as F:
