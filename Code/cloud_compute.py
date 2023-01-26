@@ -288,6 +288,32 @@ def compute_diagramx(label, sublines, subgroup_index_bound):
             diagramx = "{" + ",".join([str(D.get(key, -1)) for (D, key) in zip(xcoords, accessor)]) + "}"
             _ = F.write(f"D{label}|{slabel}|{diagramx}\n")
 
+
+# We want dependencies as close as possible to each other, so that failures in between don't mean we need to recompute
+dependencies = {
+    "a": "JsSLhguo", # depend on MagmaAutGroup (might be possible to change subgroup labeling to function without automorphism group, but it would require a lot of work)
+    "j": "JzcCrqQsSLhu", # depend on MagmaConjugacyClasses
+    "J": "zCrQsSLh", # depend on ConjugacyClasses
+    "z": "sSLh", # depend on conj_centralizer_gens
+    "c": "CrqQh", # depend on MagmaCharacterTable
+    "C": "rQh", # depend on Characters
+    "r": "h", # depend on charc_center_gens/charc_kernel_gens
+    "q": "cCrQh", # depend on MagmaRationalCharacterTable (TODO: back dependence bad)
+    "Q": "Crh", # depend on Characters (TODO: back dependence bad)
+    "s": "SLh", # depend on BestSubgroupLat
+    "S": "sLh", # depend on Subgroups (TODO: back dependence bad)
+}
+# You can call tmpheaders(summarize=True) from cloud_collect.py to get a summary of the codes
+codes = "blajJzcCrqQsSLhtguomw" # Note that D = subagg3 (diagramx) is skipped since it's filled in below
+def skip_codes(codes, skipped):
+    if codes[0] in dependencies:
+        skipped += f"{codes[0]}({dependencies[codes[0]]})"
+    else:
+        skipped += codes[0]
+    for c in skipped:
+        codes = codes.replace(code, "")
+    return codes, skipped
+
 with open("DATA/manifest") as F:
     for line in F:
         todo, out, timings, script, cnt, per_job, timeout = line.strip().split()
@@ -305,22 +331,6 @@ with open("DATA/manifest") as F:
             os.makedirs(out, exist_ok=True)
             os.makedirs(timings, exist_ok=True)
             os.makedirs(opj("DATA", "errors"), exist_ok=True)
-            # We want dependencies as close as possible to each other, so that failures in between don't mean we need to recompute
-            dependencies = {
-                "a": "JsSLhguo", # depend on MagmaAutGroup (might be possible to change subgroup labeling to function without automorphism group, but it would require a lot of work)
-                "j": "JzcCrqQsSLhu", # depend on MagmaConjugacyClasses
-                "J": "zCrQsSLh", # depend on ConjugacyClasses
-                "z": "sSLh", # depend on conj_centralizer_gens
-                "c": "CrqQh", # depend on MagmaCharacterTable
-                "C": "rQh", # depend on Characters
-                "r": "h", # depend on charc_center_gens/charc_kernel_gens
-                "q": "cCrQh", # depend on MagmaRationalCharacterTable (TODO: back dependence bad)
-                "Q": "Crh", # depend on Characters (TODO: back dependence bad)
-                "s": "SLh", # depend on BestSubgroupLat
-                "S": "sLh", # depend on Subgroups (TODO: back dependence bad)
-            }
-            # You can call tmpheaders(summarize=True) from cloud_collect.py to get a summary of the codes
-            codes = "blajJzcCrqQsSLhtguomw" # Note that D = subagg3 (diagramx) is skipped since it's filled in below
             skipped = ""
             subgroup_index_bound = None
             while codes:
@@ -354,17 +364,16 @@ with open("DATA/manifest") as F:
                     #elif last_time_line == "ComputeComplements":
                     #    # Try to find a permutation rep to run on
                     elif time_used <= 0.75 * timeout:
-                        for code in codes[0] + dependencies.get(codes[0], ""):
-                            skipped += code
-                            codes = codes.replace(code, "")
+                        codes, skipped = skip_codes(codes, skipped)
                 else:
                     # Ideally, we'd have some known errors that are possible to work around here
-                    for code in codes[0] + dependencies.get(codes[0], ""):
-                        skipped += code
-                        codes = codes.replace(code, "")
+                    codes, skipped = skip_codes(codes, skipped)
             if skipped:
                 with open("output", "a") as Fout:
                     _ = Fout.write(f"T{label}|Skip-{skipped}\n")
+            else:
+                with open("output", "a") as Fout:
+                    _ = Fout.write(f"T{label}|NoSkip\n")
             break
         else:
             job -= cnt

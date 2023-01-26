@@ -674,11 +674,11 @@ intrinsic IncludeNormalSubgroups(L::SubgroupLat)
     end for;
     ReportEnd(G, "IdentifyNormalSubgroups", t1);
     if L`outer_equivalence then
-        t1 := ReportStart(G, "ComputeNormalCounts");
+        t1 := ReportStart(G, Sprintf("ComputeNormalCounts (%o)", #N));
         for i in [1..#N] do
             dummy := Get(L`subs[lookup[i]], "subgroup_count");
         end for;
-        ReportEnd(G, "ComputeNormalCounts", t1);
+        ReportEnd(G, Sprintf("ComputeNormalCounts (%o)", #N), t1);
     end if;
     for i in [1..#N] do
         j := lookup[i];

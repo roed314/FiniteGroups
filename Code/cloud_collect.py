@@ -52,7 +52,7 @@ def get_data(datafile="output"):
                     os.unlink(opj("DATA", "pcrep.todo", label))
                     with open(opj("DATA", "pcreps", label), "w") as Fout:
                         _ = Fout.write(outdata + "\n")
-            else:
+            elif line:
                 # one-letter code for which output line is appended to the beginning
                 code, label = label[0], label[1:]
                 data[code][label].append(line[1:])
