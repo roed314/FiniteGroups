@@ -203,11 +203,11 @@ def write_upload_files(data, overwrite=False):
     tmps = tmpheaders()
     finals = headers()
     final_to_tmp = {
-        "SubGrp": "SL",
+        "SubGrp": "SLD",
         "GrpConjCls": "J",
         "GrpChtrCC": "C",
         "GrpChtrQQ": "Q",
-        "Grp": "abcqjltmswngo",
+        "Grp": "blajcqshtguomw" # skip zr since they're just used internally
     }
     out = defaultdict(lambda: defaultdict(lambda: defaultdict(dict)))
     for oname, codes in final_to_tmp.items():
@@ -216,13 +216,12 @@ def write_upload_files(data, overwrite=False):
         for code in codes:
             cols = tmps[code]
             label_loc = cols.index("label")
-            missing = [gp_label for gp_label in finished if gp_label not in data[code]]
-            if missing:
-                raise ValueError("Missing %s entries for %s: %s..." % (len(missing), code, missing[0]))
+            #missing = [gp_label for gp_label in finished if gp_label not in data[code]]
+            #if missing:
+            #    raise ValueError("Missing %s entries for %s: %s..." % (len(missing), code, missing[0]))
             for gp_label, lines in data[code].items():
                 if gp_label in finished:
                     for line in lines:
-                        #### FIX SOME BUGS FROM SaveIntegerList
                         line = line.split("|")
                         assert len(line) == len(cols)
                         label = line[label_loc]
@@ -231,37 +230,21 @@ def write_upload_files(data, overwrite=False):
     # Update centers, kernels and centralizers from the corresponding columns
     for gp_label, gpD in out["Grp"].items():
         gpD = gpD[gp_label]
-        centers = gpD["charc_centers"][1:-1].split(",")
-        kernels = gpD["charc_kernels"][1:-1].split(",")
-        centralizers = gpD["conj_centralizers"][1:-1].split(",")
-        for label, D in out["GrpConjCls"][gp_label].items():
-            D["centralizer"] = centralizers[int(D["counter"])-1]
-        for label, D in out["GrpChtrCC"][gp_label].items():
-            D["center"] = centers[int(D["counter"])-1]
-            D["kernel"] = kernels[int(D["counter"])-1]
-        # Fix wreath_data, which needed more quotes
-        if gpD["wreath_data"][0] == "{" and gpD["wreath_data"][-1] == "}":
-            assert "(" not in gpD["wreath_data"] # want to know if there's a Lie group here
-            gpD["wreath_data"] = '{"' + '","'.join(gpD["wreath_data"][1:-1].split(",")) + '"}'
-        # Fix *_stats, which should have used { } rather than < >
-        gpD["irrep_stats"] = gpD["irrep_stats"].replace("<","{").replace(">","}")
-        gpD["ratrep_stats"] = gpD["ratrep_stats"].replace("<","{").replace(">","}")
-        gpD["aut_stats"] = gpD["aut_stats"].replace("<","{").replace(">","}")
-        gpD["div_stats"] = gpD["div_stats"].replace("<","{").replace(">","}")
-        gpD["cc_stats"] = gpD["cc_stats"].replace("<","{").replace(">","}")
-        # Set diagram_x, diagram_aut_x, and diagram_norm_x
-        # For testing purposes, we just set these to 0
-        for label, D in out["SubGrp"][gp_label].items():
-            D["diagram_x"] = D["diagram_aut_x"] = "0"
-            if D["normal"] == "t":
-                D["diagram_norm_x"] = "0"
-                D["diagramx"] = "{0,0,0,0}"
-            else:
-                D["diagram_norm_x"] = r"\N"
-                D["diagramx"] = "{0,0}"
+        if "charc_centers" in gpD:
+            centers = gpD["charc_centers"][1:-1].split(",")
+            for label, D in out["GrpChtrCC"][gp_label].items():
+                D["center"] = centers[int(D["counter"])-1]
+        if "charc_kernels" in gpD:
+            kernels = gpD["charc_kernels"][1:-1].split(",")
+            for label, D in out["GrpChtrCC"][gp_label].items():
+                D["kernel"] = kernels[int(D["counter"])-1]
+        if "conj_centralizers" in gpD:
+            centralizers = gpD["conj_centralizers"][1:-1].split(",")
+            for label, D in out["GrpConjCls"][gp_label].items():
+                D["centralizer"] = centralizers[int(D["counter"])-1]
     for oname, (final_cols, final_types) in finals.items():
         with open(opj("DATA", oname+".txt"), "w") as F:
             _ = F.write("|".join(final_cols) + "\n" + "|".join(final_types) + "\n\n")
             for gp_label, gpD in out[oname].items():
                 for label, D in gpD.items():
-                    _ = F.write("|".join(D[col] for col in final_cols) + "\n")
+                    _ = F.write("|".join(D.get(col, r"\N") for col in final_cols) + "\n")
