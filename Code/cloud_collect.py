@@ -225,10 +225,16 @@ def write_upload_files(data, overwrite=False):
                         line = line.split("|")
                         assert len(line) == len(cols)
                         label = line[label_loc]
-                        out[oname][gp_label][label].update(dict(zip(cols, line)))
+                        # subagg3 accidentally used short_labels rather than labels
+                        D = dict(zip(cols, line))
+                        if code == "D":
+                            label = "%s.%s" % (D["ambient"], D["label"])
+                            D["label"] = label
+                        out[oname][gp_label][label].update(D)
     # Sort them....
     # Update centers, kernels and centralizers from the corresponding columns
     for gp_label, gpD in out["Grp"].items():
+        # only new groups for now
         gpD = gpD[gp_label]
         if "charc_centers" in gpD:
             centers = gpD["charc_centers"][1:-1].split(",")
