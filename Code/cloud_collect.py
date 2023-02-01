@@ -60,7 +60,7 @@ def get_data(datafile="output"):
                 # create todo files for the next phase (for 2->3)
     return data
 
-def split_output_file(infile="output", finishfile="finished.txt", skipfile="skipped.txt", errorfile="errors.txt", timingfile="timings.txt", newcompute="newcompute.todo", overwrite=False):
+def split_output_file(infile="output", finishfile="finished.txt", skipfile="skipped.txt", errorfile="errors.txt", timingfile="timings.txt", oldcompute="DATA/compute.todo", newcompute="newcompute.todo", overwrite=False):
     if not overwrite and any(ope(fname) for fname in [finishfile, skipfile, errorfile, timingfile, newcompute]):
         raise ValueError("At least one output file exists; use overwrite or change name")
     skip = set()
@@ -103,9 +103,11 @@ def split_output_file(infile="output", finishfile="finished.txt", skipfile="skip
                                 _ = Fs.write(line)
                             else:
                                 buff[label].append(line)
-    skipL = sorted(skip, key=sort_key)
+    with open(oldcompute) as F:
+        oldC = F.read().strip().split("\n")
+    newC = [label for label in oldC if label not in noskip]
     with open(newcompute, "w") as Fc:
-        _ = Fc.write("\n".join(skipL) + "\n")
+        _ = Fc.write("\n".join(newC) + "\n")
     print(f"{len(buff)} labels still in write queue")
     return buff, errors, skip, noskip, malformed
 
@@ -252,11 +254,11 @@ def write_upload_files(data, overwrite=False):
     tmps = tmpheaders()
     finals = headers()
     final_to_tmp = {
-        "SubGrp": "SLD",
+        "SubGrp": "SLDI",
         "GrpConjCls": "J",
         "GrpChtrCC": "C",
         "GrpChtrQQ": "Q",
-        "Grp": "blajcqshtguomw" # skip zr since they're just used internally
+        "Grp": "blajcqshtguomwi" # skip zr since they're just used internally
     }
     out = defaultdict(lambda: defaultdict(lambda: defaultdict(dict)))
     for oname, codes in final_to_tmp.items():
