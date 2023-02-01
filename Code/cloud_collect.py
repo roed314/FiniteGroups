@@ -98,7 +98,7 @@ def split_output_file(infile="output", finishfile="finished.txt", skipfile="skip
                             elif label in skip:
                                 _ = Fs.write(line)
                             else:
-                                buf[label].append(line)
+                                buff[label].append(line)
     skipL = sorted(skip, key=sort_key)
     with open(newcompute, "w") as Fc:
         _ = Fc.write("\n".join(skipL) + "\n")
