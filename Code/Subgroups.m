@@ -1281,8 +1281,8 @@ intrinsic SubgroupIdentify(L::SubgroupLat, H::Grp : use_hash:=true, use_gassman:
     end if;
     poss := by_index[#G div #H];
     // Sylow subgroups
-    if #poss eq 1 and IsPrimePower(#H) and Gcd(#H, ind) eq 1 then
-        return finish(poss[1], get_conjugator);
+    if not get_conjugator and #poss eq 1 and IsPrimePower(#H) and Gcd(#H, ind) eq 1 then
+        return poss[1]`i;
     end if;
     if assigned L`from_conj and not get_conjugator then
         conjL, lookup, inv_lookup := Explode(L`from_conj);
@@ -1333,7 +1333,7 @@ intrinsic SubgroupIdentify(L::SubgroupLat, H::Grp : use_hash:=true, use_gassman:
     end if;
     function finish(ans, compconj)
         // if error_if_missing is false, might not actually be present, so we need to check IsConjugate
-        if compconj or not error_if_missing then
+        if compconj or (L`index_bound ne 0 and ind gt L`index_bound and not error_if_missing) then
             K := ans`subgroup;
             Ki := (Type(K) eq GrpPerm and K subset Ambient) select K else inj(K);
             conj, elt := IsConjugate(Ambient, Ki, Hi);
