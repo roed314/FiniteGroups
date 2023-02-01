@@ -659,7 +659,7 @@ intrinsic IsCharacteristic(G::LMFDBGrp, H::Grp) -> BoolElt
     end if;
 end intrinsic;
 
-intrinsic IncludeNormalSubgroups(L::SubgroupLat)
+intrinsic IncludeNormalSubgroups(~L::SubgroupLat)
 {Add data from the normal subgroup lattice to L}
     G := L`Grp;
     t0 := ReportStart(G, "IncludeNormalSubgroups");
@@ -1138,7 +1138,7 @@ intrinsic SubGrpLstAut(X::LMFDBGrp) -> SubgroupLat
     end if;
     if Get(X, "normal_subgroups_known") then
         // This also adds information about normal subgroups above the index bound
-        IncludeNormalSubgroups(res);
+        IncludeNormalSubgroups(~res);
     end if;
     if X`AutIndexBound ne 0 then
         if Get(X, "sylow_subgroups_known") then
@@ -2036,7 +2036,7 @@ function SubgroupLattice_edges(G, aut)
     else
         L := Get(G, "SubGrpLst");
         // This can't be put inside SubGrpLst since it would cause an infinite recursion when called from SubGrpLstAut because G`outer_equivalence is not yet set
-        IncludeNormalSubgroups(L);
+        IncludeNormalSubgroups(~L);
         Ambient := GG;
         inj := IdentityHomomorphism(GG);
     end if;
@@ -2655,7 +2655,7 @@ intrinsic BestSubgroupLat(G::LMFDBGrp) -> SubgroupLat
         else
             L := Get(G, "SubGrpLst");
             // This can't be put inside SubGrpLst since it would cause an infinite recursion when called from SubGrpLstAut because G`outer_equivalence is not yet set
-            IncludeNormalSubgroups(L);
+            IncludeNormalSubgroups(~L);
         end if;
     end if;
     return L;
