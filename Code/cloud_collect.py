@@ -60,7 +60,8 @@ def get_data(datafile="output"):
                 # create todo files for the next phase (for 2->3)
     return data
 
-def split_output_file(infile="output", finishfile="finished.txt", skipfile="skipped.txt", errorfile="errors.txt", timingfile="timings.txt", oldcompute="DATA/compute.todo", newcompute="newcompute.todo", overwrite=False):
+def split_output_file(infile="output", finishfile="finished.txt", skipfile="skipped.txt", errorfile="errors.txt", timingfile="timings.txt", oldcompute="DATA/compute.todo", newcompute="newcompute.todo", overwrite=False, splitsSiI=False):
+    # We changed several tmpheaders so that mobius_sub doesn't halt the computation; splitsSiI adapts old output to the new tmpheaders
     if not overwrite and any(ope(fname) for fname in [finishfile, skipfile, errorfile, timingfile, newcompute]):
         raise ValueError("At least one output file exists; use overwrite or change name")
     skip = set()
@@ -68,6 +69,19 @@ def split_output_file(infile="output", finishfile="finished.txt", skipfile="skip
     buff = defaultdict(list)
     errors = {}
     malformed = []
+    def adaptsSiI(line):
+        if line[0] == "s":
+            pieces = line.strip().split("|")
+            sline = "|".join(pieces[i] for i in range(len(pieces)) if i not in [3,8])
+            iline = "|".join(pieces[i] for i in [0,3,8])
+            return f"{sline}\n{iline}\n"
+        elif line[0] == "S":
+            pieces = line.strip().split("|")
+            Sline = "|".join(pieces[:29] + pieces[31:])
+            Iline = "|".join([pieces[i] for i in [0,24,29,30]])
+            return f"{Sline}\n{Iline}\n"
+        else:
+            return line
     with open(infile) as F:
         with open(finishfile, "w") as Fns:
             with open(skipfile, "w") as Fs:
@@ -95,12 +109,12 @@ def split_output_file(infile="output", finishfile="finished.txt", skipfile="skip
                                 else:
                                     continue
                                 for bline in buff[label]:
-                                    _ = FB.write(bline)
+                                    _ = FB.write(adaptsSiI(bline))
                                 del buff[label]
                             elif label in noskip:
-                                _ = Fns.write(line)
+                                _ = Fns.write(adaptsSiI(line))
                             elif label in skip:
-                                _ = Fs.write(line)
+                                _ = Fs.write(adaptsSiI(line))
                             else:
                                 buff[label].append(line)
     with open(oldcompute) as F:
