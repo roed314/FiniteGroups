@@ -60,6 +60,51 @@ def get_data(datafile="output"):
                 # create todo files for the next phase (for 2->3)
     return data
 
+def split_output_file(infile="output", finishfile="finished.txt", skipfile="skipped.txt", errorfile="errors.txt", timingfile="timings.txt", newcompute="newcompute.todo", overwrite=False):
+    if not overwrite and any(ope(fname) for fname in [finishfile, skipfile, errorfile, timingfile, newcompute]):
+        raise ValueError("At least one output file exists; use overwrite or change name")
+    skip = set()
+    noskip = set()
+    buff = defaultdict(list)
+    errors = {}
+    with open(infile) as F:
+        with open(finishfile, "w") as Fns:
+            with open(skipfile, "w") as Fs:
+                with open(errorfile, "w") as FE:
+                    with open(timingfile, "w") as FT:
+                        for i, line in enumerate(F):
+                            if i and i%10000000 == 0: print(i)
+                            label, outdata = line.split("|", 1)
+                            code, label = label[0], label[1:]
+                            if code == "E":
+                                _ = FE.write(line)
+                                if "error" in outdata and outdata not in errors:
+                                    errors[outdata] = label
+                            elif code == "T":
+                                _ = FT.write(line)
+                                if "NoSkip" in outdata:
+                                    noskip.add(label)
+                                    FB = Fns
+                                elif "Skip" in outdata:
+                                    skip.add(label)
+                                    FB = Fs
+                                else:
+                                    continue
+                                for bline in buff[label]:
+                                    _ = FB.write(bline)
+                                del buff[label]
+                            elif label in noskip:
+                                _ = Fns.write(line)
+                            elif label in skip:
+                                _ = Fs.write(line)
+                            else:
+                                buf[label].append(line)
+    skipL = sorted(skip, key=sort_key)
+    with open(newcompute, "w") as Fc:
+        _ = Fc.write("\n".join(skipL) + "\n")
+    print(f"{len(buff)} labels still in write queue")
+    return buff, errors, skip, noskip
+
 def get_timing_info(datafile="output", data=None):
     if data is None:
         data = get_data(datafile)
