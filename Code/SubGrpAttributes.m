@@ -285,6 +285,42 @@ intrinsic stem(H::LMFDBSubGrp) -> BoolElt
    end if;
 end intrinsic;
 
+intrinsic mobius_sub(H::LMFDBSubGrp) -> Any
+{The value of the mobius function within the lattice of all subgroups}
+    x := H`LatElt;
+    L := x`Lat;
+    if L`index_bound ne 0 then
+        return None();
+    elif assigned L`from_conj then
+        conjL, lookup, inv_lookup := Explode(L`from_conj);
+        y := conjL`subs[inv_lookup[x`i][1]];
+        if not assigned y`mobius_sub then
+            SetMobiusSub(conjL);
+        end if;
+        return y`mobius_sub;
+    else
+        if not assigned x`mobius_sub then
+            SetMobiusSub(L);
+        end if;
+        return x`mobius_sub;
+    end if;
+end intrinsic;
+
+intrinsic mobius_quo(H::LMFDBSubGrp) -> Any
+{The value of the mobius function within the lattice of normal subgroups}
+    if not Get(H, "normal") then return None(); end if;
+    x := H`LatElt;
+    L := x`Lat;
+    G := L`Grp;
+    if not Get(G, "normal_subgroups_known") then return None(); end if;
+    y := x`NormLatElt;
+    if not assigned y`mobius_quo then
+        N := y`Lat;
+        SetMobiusQuo(N);
+    end if;
+    return y`mobius_quo;
+end intrinsic;
+
 intrinsic QuotientActionMap(H::LMFDBSubGrp : use_solv:=true) -> Any
 {if not normal, None; if split or N abelian, Q -> Aut(N); otherwise, Q -> Out(N)}
     if Get(H, "normal") and Get(H, "subgroup_order") ne 1 and Get(H, "quotient_order") ne 1 then

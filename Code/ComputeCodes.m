@@ -9,7 +9,7 @@ if not assigned label then
 end if;
 if not assigned codes then
     // default order for computing invariants
-    codes := "blajJzcCrqQsSLhtguomw";
+    codes := "blajJzcCrqQsSLhtguoIimw";
 end if;
 
 infile := "DATA/descriptions/" * label;
@@ -40,6 +40,7 @@ aggregate_attr["C"] := "CCCharacters";
 aggregate_attr["Q"] := "QQCharacters";
 aggregate_attr["S"] := "Subgroups";
 aggregate_attr["L"] := "Subgroups";
+aggregate_attr["I"] := "Subgroups";
 
 tstart := Cputime();
 for code in Eltseq(codes) do

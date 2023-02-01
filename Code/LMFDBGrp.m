@@ -221,6 +221,7 @@ declare attributes LMFDBSubGrp:
   MagmaAmbient, // derived from Grp
   MagmaSubGrp, // input
   QuotientMap, // homomorphism from MagmaAmbient to Quotient
+  LatElt, // underlying SubgroupLatElt, used to delay computation of mobius_sub and mobius_quo
   label, // process
   short_label,
   aut_label,
