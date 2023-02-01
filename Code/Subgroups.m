@@ -1281,7 +1281,7 @@ intrinsic SubgroupIdentify(L::SubgroupLat, H::Grp : use_hash:=true, use_gassman:
     end if;
     poss := by_index[#G div #H];
     // Sylow subgroups
-    if not get_conjugator and #poss eq 1 and IsPrimePower(#H) and Gcd(#H, ind) eq 1 then
+    if not get_conjugator and #poss eq 1 and #H gt 1 and IsPrimePower(#H) and Gcd(#H, ind) eq 1 then
         return poss[1]`i;
     end if;
     if assigned L`from_conj and not get_conjugator then
