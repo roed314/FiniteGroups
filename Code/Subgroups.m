@@ -1267,26 +1267,6 @@ intrinsic SubgroupIdentify(L::SubgroupLat, H::Grp : use_hash:=true, use_gassman:
     G := L`Grp`MagmaGrp;
     ind := #G div #H;
     by_index := Get(L, "by_index");
-    function finish(ans, compconj)
-        // if error_if_missing is false, might not actually be present, so we need to check IsConjugate
-        if compconj or not error_if_missing then
-            K := ans`subgroup;
-            Ki := (Type(K) eq GrpPerm and K subset Ambient) select K else inj(K);
-            conj, elt := IsConjugate(Ambient, Ki, Hi);
-            if not compconj then
-                if conj then
-                    return ans`i;
-                else
-                    return -1;
-                end if;
-            elif conj then
-                return conj, ans`i, elt;
-            else
-                return false, 0, Identity(G);
-            end if;
-        end if;
-        return ans`i;
-    end function;
     function finish_not_found(compconj)
         if compconj then
             return false, 0, Identity(G);
@@ -1351,6 +1331,26 @@ intrinsic SubgroupIdentify(L::SubgroupLat, H::Grp : use_hash:=true, use_gassman:
         cmap := Get(L`Grp, "ClassMap");
         gtype := "gassman_vec";
     end if;
+    function finish(ans, compconj)
+        // if error_if_missing is false, might not actually be present, so we need to check IsConjugate
+        if compconj or not error_if_missing then
+            K := ans`subgroup;
+            Ki := (Type(K) eq GrpPerm and K subset Ambient) select K else inj(K);
+            conj, elt := IsConjugate(Ambient, Ki, Hi);
+            if not compconj then
+                if conj then
+                    return ans`i;
+                else
+                    return -1;
+                end if;
+            elif conj then
+                return conj, ans`i, elt;
+            else
+                return false, 0, Identity(G);
+            end if;
+        end if;
+        return ans`i;
+    end function;
     Hi := (Type(H) eq GrpPerm and H subset Ambient) select H else inj(H);
     if #poss eq 1 then
         return finish(poss[1], get_conjugator);
