@@ -1331,6 +1331,7 @@ intrinsic SubgroupIdentify(L::SubgroupLat, H::Grp : use_hash:=true, use_gassman:
         cmap := Get(L`Grp, "ClassMap");
         gtype := "gassman_vec";
     end if;
+    Hi := (Type(H) eq GrpPerm and H subset Ambient) select H else inj(H);
     function finish(ans, compconj)
         // if error_if_missing is false, might not actually be present, so we need to check IsConjugate
         if compconj or (L`index_bound ne 0 and ind gt L`index_bound and not error_if_missing) then
@@ -1351,7 +1352,6 @@ intrinsic SubgroupIdentify(L::SubgroupLat, H::Grp : use_hash:=true, use_gassman:
         end if;
         return ans`i;
     end function;
-    Hi := (Type(H) eq GrpPerm and H subset Ambient) select H else inj(H);
     if #poss eq 1 then
         return finish(poss[1], get_conjugator);
     end if;
