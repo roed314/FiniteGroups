@@ -67,6 +67,7 @@ def split_output_file(infile="output", finishfile="finished.txt", skipfile="skip
     noskip = set()
     buff = defaultdict(list)
     errors = {}
+    malformed = []
     with open(infile) as F:
         with open(finishfile, "w") as Fns:
             with open(skipfile, "w") as Fs:
@@ -74,6 +75,9 @@ def split_output_file(infile="output", finishfile="finished.txt", skipfile="skip
                     with open(timingfile, "w") as FT:
                         for i, line in enumerate(F):
                             if i and i%10000000 == 0: print(i)
+                            if "|" not in line[1:]:
+                                malformed.append(line)
+                                continue
                             label, outdata = line.split("|", 1)
                             code, label = label[0], label[1:]
                             if code == "E":
@@ -103,7 +107,7 @@ def split_output_file(infile="output", finishfile="finished.txt", skipfile="skip
     with open(newcompute, "w") as Fc:
         _ = Fc.write("\n".join(skipL) + "\n")
     print(f"{len(buff)} labels still in write queue")
-    return buff, errors, skip, noskip
+    return buff, errors, skip, noskip, malformed
 
 def get_timing_info(datafile="output", data=None):
     if data is None:
