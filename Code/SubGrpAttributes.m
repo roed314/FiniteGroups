@@ -314,11 +314,20 @@ intrinsic mobius_quo(H::LMFDBSubGrp) -> Any
     G := L`Grp;
     if not Get(G, "normal_subgroups_known") then return None(); end if;
     y := x`NormLatElt;
-    if not assigned y`mobius_quo then
-        N := y`Lat;
-        SetMobiusQuo(N);
+    N := y`Lat;
+    if assigned N`from_conj then
+        conjN, lookup, inv_lookup := Explode(N`from_conj);
+        z := conjN`subs[inv_lookup[y`i][1]];
+        if not assigned z`mobius_quo then
+            SetMobiusQuo(conjN);
+        end if;
+        return z`mobius_quo;
+    else
+        if not assigned y`mobius_quo then
+            SetMobiusQuo(N);
+        end if;
+        return y`mobius_quo;
     end if;
-    return y`mobius_quo;
 end intrinsic;
 
 intrinsic QuotientActionMap(H::LMFDBSubGrp : use_solv:=true) -> Any
@@ -327,14 +336,14 @@ intrinsic QuotientActionMap(H::LMFDBSubGrp : use_solv:=true) -> Any
         G := H`Grp;
         GG := G`MagmaGrp;
         N := H`MagmaSubGrp;
-        vprint User1: "Starting QuotientActionMap with", use_solv, Get(H, "split");
+        //vprint User1: "Starting QuotientActionMap with", use_solv, Get(H, "split");
         t := Cputime();
         if use_solv and Type(GG) eq GrpPC then
             A := AutomorphismGroupSolubleGroup(N);
         else
             A := AutomorphismGroup(N);
         end if;
-        vprint User1: "Aut complete in", Cputime() - t;
+        //vprint User1: "Aut complete in", Cputime() - t;
         t := Cputime();
         try
             if Get(H, "split") then
@@ -347,13 +356,13 @@ intrinsic QuotientActionMap(H::LMFDBSubGrp : use_solv:=true) -> Any
                     //print "abelian", H`label;
                     f := hom<Q -> A | [<q, hom<N -> N | [<n, n^(q@@Qproj)> : n in Generators(N)]>> : q in Generators(Q)]>;
                 else
-                    vprint User1: "Not split or abelian";
+                    //vprint User1: "Not split or abelian";
                     return None();
                     // Out, Oproj := OuterFPGroup(A);
                     // return hom<Q -> Out | [hom<N -> N | [n^(q@@Qproj) : n in Generators(N)]>@Oproj : q in Generators(Q)]>;
                 end if;
             end if;
-            vprint User1: "Hom complete in", Cputime() - t;
+            //vprint User1: "Hom complete in", Cputime() - t;
             return f;
         catch e;
             if use_solv then

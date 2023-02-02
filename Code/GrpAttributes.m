@@ -2063,10 +2063,9 @@ intrinsic rank(G::LMFDBGrp) -> Any
         return r;
     end if;
     if not Get(G, "subgroup_inclusions_known") then return None(); end if;
-    L := Get(G, "BestSubgroupLat");
-    if L`index_bound ne 0 then return None(); end if;
+    if Get(G, "subgroup_index_bound") ne 0 then return None(); end if;
     for r in [2..Get(G, "order")] do
-        tot := &+[(H`order)^r * H`mobius_sub * Get(H, "subgroup_count") : H in L`subs];
+        tot := &+[Get(H, "subgroup_order")^r * Get(H, "mobius_sub") * Get(H, "count") : H in Get(G, "Subgroups")];
         if tot gt 0 then
             G`EulerianTimesAut := tot;
             return r;
@@ -2080,11 +2079,11 @@ intrinsic eulerian_function(G::LMFDBGrp) -> Any
     if Get(G, "order") eq 1 then return 1; end if;
     if not Get(G, "subgroup_inclusions_known") then return None(); end if;
     r := Get(G,"rank"); // sets EulerianTimesAut unless easy_rank
+    if Type(r) eq NoneType then return None(); end if;
     if assigned G`EulerianTimesAut then
         tot := G`EulerianTimesAut;
     else
-        L := Get(G, "BestSubgroupLat");
-        tot := &+[(H`order)^r * H`mobius_sub * Get(H, "subgroup_count") : H in L`subs];
+        tot := &+[Get(H, "subgroup_order")^r * Get(H, "mobius_sub") * Get(H, "count") : H in Get(G, "Subgroups")];
     end if;
     aut := Get(G, "aut_order");
     assert tot ne 0 and IsDivisibleBy(tot, aut);

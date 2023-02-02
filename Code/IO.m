@@ -74,12 +74,19 @@ end intrinsic;
 
 // For text lists, we don't currently support nesting because it's not needed
 intrinsic LoadTextList(inp::MonStgElt) -> SeqEnum
-    {}
+{}
+    if inp eq "{}" then
+        return [];
+    end if;
+    ReplaceString(~inp, "\"", "");
     assert inp[1] eq "{" and inp[#inp] eq "}";
     return Split(Substring(inp, 2, #inp-2), ",");
 end intrinsic;
 intrinsic SaveTextList(out::SeqEnum) ->  MonStgElt
-    {}
+{}
+    if #out eq 0 then
+        return "{}";
+    end if;
     return "{\"" * Join(out, "\",\"") * "\"}";
 end intrinsic;
 
