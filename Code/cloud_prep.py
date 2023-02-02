@@ -21,7 +21,7 @@ if args.phase == 1:
     ]
 else:
     todos = [
-        ("ComputeCodes.m", "compute", 1, 1200), # Shorter timeout for quick run
+        ("ComputeCodes.m", "compute", 1, 7200), # Production run
     ]
 
 total = 0
