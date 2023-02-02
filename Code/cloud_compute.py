@@ -295,17 +295,17 @@ dependencies = {
     "j": "JzcCrqQsSLhuIi", # depend on MagmaConjugacyClasses
     "J": "zCrQsSLhIi", # depend on ConjugacyClasses
     "z": "sSLhIi", # depend on conj_centralizer_gens
-    "c": "CrqQh", # depend on MagmaCharacterTable
+    "c": "CrqQvh", # depend on MagmaCharacterTable
     "C": "rQh", # depend on Characters
     "r": "h", # depend on charc_center_gens/charc_kernel_gens
     "q": "cCrQh", # depend on MagmaRationalCharacterTable (TODO: back dependence bad)
     "Q": "Crh", # depend on Characters (TODO: back dependence bad)
-    "s": "SLhIi", # depend on BestSubgroupLat
+    "s": "SLvhIi", # depend on BestSubgroupLat
     "S": "sLhIi", # depend on Subgroups (TODO: back dependence bad)
     "I": "i", # depend on Mobius
 }
 # You can call tmpheaders(summarize=True) from cloud_collect.py to get a summary of the codes
-codes = "blajJzcCrqQsSLhtguoIimw" # Note that D = subagg3 (diagramx) is skipped since it's filled in below
+codes = "blajJzcCrqQsvSLhtguoIimw" # Note that D = subagg3 (diagramx) is skipped since it's filled in below
 def skip_codes(codes, skipped):
     if codes[0] in dependencies:
         skipped += f"{codes[0]}({dependencies[codes[0]]})"

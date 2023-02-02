@@ -90,7 +90,7 @@ Set G`Order
 Slow LabelConjugacyClasses: 564221981491200.i
 E46656.hz(+7)|Subgroups.m:668:23(Hnew := L`subs[j];)|Runtime error in '[]': Sequence index 987 should be in the range 1 to 822
 Save to preload things like LabeledConjugacyClasses, aut_gens, conj_centralizer_gens
-Fix {""} in lists of text (5-minute timeout run)
+Fix {""} and new mon.tmpheader in lists of text (5-minute timeout run)
 
 Use semidirect products to select a better name and fix latex errors (postprocess step so that we can work up from the bottom and include Lie group names if not stupid); make sure to modify other places names show up (subgroups table); make sure status variables like complex_characters_known are accurate (might have tried and failed)
 Write cloud_collect.py to collect results (combine rank and easy_rank, solvability_type and backup_solvability_type; fill in nulls)

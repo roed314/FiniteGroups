@@ -2661,6 +2661,9 @@ intrinsic LMFDBSubgroup(H::SubgroupLatElt : normal_lattice:=false) -> LMFDBSubGr
         if H`label[#H`label - 1..#H`label] eq ".N" then
             res`aut_label := res`aut_label * ".N";
         end if;
+    else
+        // normal complements, maximal subgroups and core-free subgroups below the index bound don't have an aut_label
+        res`aut_label := None();
     end if;
     res`special_labels := H`special_labels;
     res`count := Get(H, "subgroup_count");
@@ -2710,7 +2713,7 @@ intrinsic BestSubgroupLat(G::LMFDBGrp) -> SubgroupLat
 end intrinsic;
 
 intrinsic Subgroups(G::LMFDBGrp) -> SeqEnum
-    {The list of LMFDBSubGrps computed for this group}
+{The list of LMFDBSubGrps computed for this group}
     L := Get(G, "BestSubgroupLat");
     t0 := ReportStart(G, "LabelSubgroups");
     LabelSubgroups(L);
