@@ -1140,7 +1140,7 @@ intrinsic SubGrpLstAut(X::LMFDBGrp) -> SubgroupLat
         res := CollapseLatticeByAutGrp(tmp);
         if tmp`index_bound ne 0 then
             // Avoid computing complements since we can't easily identify subgroups.
-            res`complements_known := false;
+            X`complements_known := false;
         end if;
         ReportEnd(X, "SubGrpLstByDivisor", t0);
     end if;
@@ -2129,8 +2129,6 @@ function CollapseLatElement(L, subcls, i, lookup)
     x := SubgroupLatElement(L, A`subgroup : i:=i);
     x`cc_count := #subcls;
     x`subgroup_count := &+[Get(H, "subgroup_count") : H in subcls];
-    x`normalizer := lookup[Get(A, "normalizer")];
-    x`normal_closure := lookup[Get(A, "normal_closure")];
     for attr in ["normal", "characteristic", "easy_hash", "aut_gassman_vec"] do
         if assigned A``attr then
             x``attr := A``attr;
@@ -2165,18 +2163,26 @@ function CollapseLatElement(L, subcls, i, lookup)
             x`label := A`label;
         end if;
     end if;
+    N := Get(A, "normalizer");
+    x`normalizer := (Type(N) eq NoneType) select None() else lookup[N];
+    N := Get(A, "normal_closure");
+    x`normal_closure := (Type(N) eq NoneType) select None() else lookup[N];
     C := Get(A, "centralizer");
-    x`centralizer := Type(C) eq NoneType select None() else lookup[C];
+    x`centralizer := (Type(C) eq NoneType) select None() else lookup[C];
     if assigned A`gens then
         x`gens := A`gens;
     end if;
     if L`inclusions_known then
         // still using AssociativeArrays for compatibility with older code
         for ov -> b in Get(A, "overs") do
-            x`overs[lookup[ov]] := b;
+            if Type(ov) ne NoneType and ov ne -1 then
+                x`overs[lookup[ov]] := b;
+            end if;
         end for;
         for un -> b in Get(A, "unders") do
-            x`unders[lookup[un]] := b;
+            if Type(un) ne NoneType and un ne -1 then
+                x`unders[lookup[un]] := b;
+            end if;
         end for;
         if assigned A`mobius_sub then
             x`mobius_sub := A`mobius_sub;
@@ -2670,12 +2676,13 @@ intrinsic LMFDBSubgroup(H::SubgroupLatElt : normal_lattice:=false) -> LMFDBSubGr
     end if;
     if not normal_lattice then
         N := Get(H, "normalizer");
-        res`normalizer := Lat`subs[N]`label;
-        res`normal_closure := Lat`subs[Get(H, "normal_closure")]`label;
+        res`normalizer := (Type(N) eq NoneType) select None() else Lat`subs[N]`label;
+        N := Get(H, "normal_closure");
+        res`normal_closure := (Type(N) eq NoneType) select None() else Lat`subs[N]`label;
         C := Get(H, "centralizer");
         res`centralizer := (Type(C) eq NoneType) select None() else Lat`subs[C]`label;
         res`centralizer_order := (Type(C) eq NoneType) select None() else Lat`subs[C]`order;
-        res`core := Get(H, "core");
+        res`core := Get(H, "core"); // this is a subgroup rather than a SubgroupLatElt
         res`core_order := Get(H, "core_order");
     end if;
     AssignBasicAttributes(res);
