@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/env python3
 
 """
 Identifies groups of medium order (512, 1152, 1536, 1920, 2187, 6561, 15625, 16807, 78125, 161051)
@@ -48,7 +48,7 @@ def pad_pair(hsh):
         # Invalid hash format; print a warning and covert to something that doesn't exist (so will be skipped, but won't screw up the bijection between inputs and outputs)
         print(f"Invalid hash format (must have one period): {hsh}")
         return ("0", "0")
-    N, hsh = hsh.split(".")
+    N, hsh = hsh.strip().split(".")
     if len(hsh) < 19:
         hsh = "0" * (19 - len(hsh))
     return N, hsh
@@ -89,7 +89,7 @@ for N, hsh in hashes:
         i = bisect(gps, gkey)
         if i <= len(gps) and gps[i].startswith(gkey):
             # the line is of the form gkey:gapids
-            hashlookup[N, hsh] = gps[i][len(gkey)+1:].strip()
+            hashlookup[N, hsh] = f"{N}.{gps[i][len(gkey)+1:].strip()}"
 
 out = [hashlookup.get(pair, f"{pair[0]}.0") for pair in hashes]
 
