@@ -51,6 +51,6 @@ def make_identify_folder(folder=None, tmpfile=None):
             if i and i % 500 == 0:
                 print("Writing file", i)
             with open(opj(folder, str(N), fname), "w") as Fout:
-                for gkey in sorted(gkey):
+                for gkey in sorted(by_hsh[fname]):
                     opts = "|".join(str(ctr) for ctr in sorted(by_hsh[fname][gkey]))
                     _ = Fout.write(f"{gkey}:{opts}\n")
