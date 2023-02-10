@@ -35,6 +35,8 @@ def make_identify_folder(folder=None, tmpfile=None):
             for i, line in enumerate(F):
                 if i and i%1000000 == 0:
                     print("Loading line", i)
+                elif i <= 2: # header
+                    continue
                 ctr, hsh = line.strip().split("|")
                 # We 0-pad so that we don't need to convert to ints for bisecting
                 # Hashes are taken modulo 9223372036854775783 < 2^63, so we pad to 19 digits

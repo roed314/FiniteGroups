@@ -1,4 +1,22 @@
 #!/usr/bin/env python
+
+"""
+Identifies groups of medium order (512, 1152, 1536, 1920, 2187, 6561, 15625, 16807, 78125, 161051)
+by connecting to devmirror.lmfdb.xyz and using the stored hashes there.
+
+Usage:
+
+Either provide an input file with hashes to identify, one per line, each of the form N.i
+./identify.py -i INPUT_FILE.txt -o OUTPUT_FILE.txt
+
+or provide the input 
+
+or provide the input at the command line, separated by newlines
+./identify.py < echo "512.1"
+
+Output is written to the designated output file, or sent to stdout (if no output file given)
+"""
+
 import os
 import sys
 import argparse
