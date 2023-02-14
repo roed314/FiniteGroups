@@ -45,8 +45,9 @@ def read_tmpheader(name):
         code, cols = F.read().strip().split("\n")
         return cols.split("|")
 
-def run(label, codes, timeout, subgroup_index_bound):
-    subprocess.run('parallel -n0 --timeout %s "magma -b label:=%s codes:=%s ComputeCodes.m >> DATA/errors/%s 2>&1" ::: 1' % (timeout, label, codes, label), shell=True)
+def run(label, codes, timeout, memlimit, subgroup_index_bound):
+    # 1073741824B = 1GB
+    subprocess.run('prlimit --as=%s --cpu=%s "magma -b label:=%s codes:=%s ComputeCodes.m >> DATA/errors/%s 2>&1"' % (memlimit*1073741824, timeout, label, codes, label), shell=True)
     # Move timing and error information to the common output file and extract timeout and error information
     sublines = []
     with open("output", "a") as Fout:
@@ -318,6 +319,8 @@ def skip_codes(codes, skipped):
 with open("DATA/manifest") as F:
     for line in F:
         todo, out, timings, script, cnt, per_job, timeout = line.strip().split()
+        # Hard code memlimit for now
+        memlimit = 8 # 8GB
         # TODO: update how timeouts are computed
         cnt, per_job, timeout = int(cnt), int(per_job), int(timeout)
         if job < cnt:
@@ -335,7 +338,7 @@ with open("DATA/manifest") as F:
             skipped = ""
             subgroup_index_bound = None
             while codes:
-                done, finished, time_used, last_time_line, err, sublines, subgroup_index_bound = run(label, codes, timeout, subgroup_index_bound)
+                done, finished, time_used, last_time_line, err, sublines, subgroup_index_bound = run(label, codes, timeout, memlimit, subgroup_index_bound)
                 if sublines:
                     try:
                         compute_diagramx(label, sublines, subgroup_index_bound) # writes directly to output

@@ -50,7 +50,7 @@ def pad_pair(hsh):
         return ("0", "0")
     N, hsh = hsh.strip().split(".")
     if len(hsh) < 19:
-        hsh = "0" * (19 - len(hsh))
+        hsh = "0" * (19 - len(hsh)) + hsh
     return N, hsh
 hashes = [pad_pair(hsh) for hsh in hashes if hsh.strip()]
 
