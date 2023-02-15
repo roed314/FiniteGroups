@@ -58,5 +58,5 @@ for code in Eltseq(codes) do
         ReportEnd(G, "Code-" * code, t0);
     end if;
 end for;
-ReportEnd(G, "AllFinished", tstart);
+ReportEnd(G, Sprintf("AllFinished(%o)", codes), tstart);
 exit;
