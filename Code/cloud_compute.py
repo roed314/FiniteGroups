@@ -352,6 +352,9 @@ with open("DATA/manifest") as F:
                             _ = Fout.write(f"E{label}|diagramx: {errstr}\n")
                 for code in finished:
                     codes = codes.replace(code, "")
+                if not codes:
+                    # Everything finished!
+                    break
                 # In most cases, we'll just skip the code that caused a timeout, but there are some exceptions
                 # If there was no error, and the total time used by prior codes was more than 75% of the allocated time we just retry
                 # For some timeouts/errors, we can adjust the preload parameters in the hope of succeeding:
