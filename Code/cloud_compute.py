@@ -6,6 +6,7 @@
 
 import os
 import re
+import sys
 import time
 import argparse
 import subprocess
@@ -46,8 +47,12 @@ def read_tmpheader(name):
         return cols.split("|")
 
 def run(label, codes, timeout, memlimit, subgroup_index_bound):
-    # 1073741824B = 1GB
-    subprocess.run('prlimit --as=%s --cpu=%s magma -b label:=%s codes:=%s ComputeCodes.m >> DATA/errors/%s 2>&1' % (memlimit*1073741824, timeout, label, codes, label), shell=True)
+    if sys.platform == "linux":
+        # 1073741824B = 1GB
+        subprocess.run('prlimit --as=%s --cpu=%s magma -b label:=%s codes:=%s ComputeCodes.m >> DATA/errors/%s 2>&1' % (memlimit*1073741824, timeout, label, codes, label), shell=True)
+    else:
+        # For now, don't enforce a memory limit
+        subprocess.run('parallel --timeout %s "magma -b label:=%s codes:=%s ComputeCodes.m >> DATA/errors/%s 2>&1"' % (timeout, label, codes, label), shell=True)
     # Move timing and error information to the common output file and extract timeout and error information
     sublines = []
     with open("output", "a") as Fout:
@@ -65,7 +70,6 @@ def run(label, codes, timeout, memlimit, subgroup_index_bound):
             os.unlink(t) # Remove timings so that they're not copied multiple times
         else:
             last_time_line = ""
-        done = last_time_line.startswith("Finished AllFinished")
         o = opj("DATA", "computes", label)
         if ope(o):
             with open(o) as F:
@@ -104,7 +108,7 @@ def run(label, codes, timeout, memlimit, subgroup_index_bound):
                 if loc is None:
                     loc = known
             os.unlink(e) # Remove errors so that they're not copied multiple times
-    return done, finished, time_used, last_time_line, loc, sublines, subgroup_index_bound
+    return finished, time_used, last_time_line, loc, sublines, subgroup_index_bound
 
 standard_label_re = re.compile(r"(\d+\.[a-z]+\d+)(\.[a-z]+\d+)?")
 normal_label_re = re.compile(r"(\d+\.[a-z]+\d+)(\.[a-z]+\d+)?\.N")
@@ -338,7 +342,7 @@ with open("DATA/manifest") as F:
             skipped = ""
             subgroup_index_bound = None
             while codes:
-                done, finished, time_used, last_time_line, err, sublines, subgroup_index_bound = run(label, codes, timeout, memlimit, subgroup_index_bound)
+                finished, time_used, last_time_line, err, sublines, subgroup_index_bound = run(label, codes, timeout, memlimit, subgroup_index_bound)
                 if sublines:
                     try:
                         compute_diagramx(label, sublines, subgroup_index_bound) # writes directly to output
@@ -346,7 +350,6 @@ with open("DATA/manifest") as F:
                         with open("output", "a") as Fout:
                             errstr = traceback.format_exc().strip().replace("\n", f"\nE{label}|diagramx: ")
                             _ = Fout.write(f"E{label}|diagramx: {errstr}\n")
-                if done: break
                 for code in finished:
                     codes = codes.replace(code, "")
                 # In most cases, we'll just skip the code that caused a timeout, but there are some exceptions
