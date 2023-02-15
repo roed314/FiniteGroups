@@ -47,7 +47,7 @@ def read_tmpheader(name):
 
 def run(label, codes, timeout, memlimit, subgroup_index_bound):
     # 1073741824B = 1GB
-    subprocess.run('prlimit --as=%s --cpu=%s "magma -b label:=%s codes:=%s ComputeCodes.m >> DATA/errors/%s 2>&1"' % (memlimit*1073741824, timeout, label, codes, label), shell=True)
+    subprocess.run('prlimit --as=%s --cpu=%s magma -b label:=%s codes:=%s ComputeCodes.m >> DATA/errors/%s 2>&1' % (memlimit*1073741824, timeout, label, codes, label), shell=True)
     # Move timing and error information to the common output file and extract timeout and error information
     sublines = []
     with open("output", "a") as Fout:
