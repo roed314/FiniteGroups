@@ -48,8 +48,8 @@ def read_tmpheader(name):
 
 def run(label, codes, timeout, memlimit, subgroup_index_bound):
     if sys.platform == "linux":
-        # 1073741824B = 1GB
-        subprocess.run('prlimit --as=%s --cpu=%s magma -b label:=%s codes:=%s ComputeCodes.m >> DATA/errors/%s 2>&1' % (memlimit*1073741824, timeout, label, codes, label), shell=True)
+        # 1048576B = 1MB
+        subprocess.run('prlimit --as=%s --cpu=%s magma -b label:=%s codes:=%s ComputeCodes.m >> DATA/errors/%s 2>&1' % (memlimit*1048576, timeout, label, codes, label), shell=True)
     else:
         # For now, don't enforce a memory limit
         subprocess.run('parallel --timeout %s "magma -b label:=%s codes:=%s ComputeCodes.m >> DATA/errors/%s 2>&1"' % (timeout, label, codes, label), shell=True)
@@ -324,7 +324,7 @@ with open("DATA/manifest") as F:
     for line in F:
         todo, out, timings, script, cnt, per_job, timeout = line.strip().split()
         # Hard code memlimit for now
-        memlimit = 8 # 8GB
+        memlimit = 7936 # 7.75GB
         # TODO: update how timeouts are computed
         cnt, per_job, timeout = int(cnt), int(per_job), int(timeout)
         if job < cnt:
