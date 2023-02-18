@@ -83,8 +83,12 @@ intrinsic PrintRelExtElement(r::Any) -> Any
 end intrinsic;
 
 intrinsic DelSpaces(s::MonStgElt) ->MonStgElt
-  {Delete spaces from a string s}
-  return &cat([x: x in Eltseq(Sprint(s)) | (x ne " ") and (x ne "\n")]);
+{Delete spaces from a string s}
+    chars := [x: x in Eltseq(Sprint(s)) | (x ne " ") and (x ne "\n")];
+    if #chars eq 0 then
+        return "";
+    end if;
+    return &cat(chars);
 end intrinsic;
 
 intrinsic PolredabsCache(f::Any, g::Any)
@@ -124,9 +128,17 @@ intrinsic Polredabs(f::Any) -> Any
   // Avoid hardwiring gp path
   write(txt,Sprintf("polredabs(%o)",f): rewrite:=true);
   System("which sage>"*out);
-  gppath:= DelSpaces(Read(out));
-  System("rm "* out);
-  System(gppath*" -gp -f -q --default parisizemax=1G <"*txt*">"*out);
+  sagepath := DelSpaces(Read(out));
+  System("rm " * out);
+  if #sagepath gt 0 then
+      System(sagepath*" -gp -f -q --default parisizemax=1G <"*txt*">"*out);
+  else
+      // Use gp directly instead
+      System("which gp>"*out);
+      gppath := DelSpaces(Read(out));
+      System("rm " * out);
+      System(gppath*" -f -q --default parisizemax=1G <"*txt*">"*out);
+  end if;
   //try
   f:=eval DelSpaces(Read(out));
   //catch e;
