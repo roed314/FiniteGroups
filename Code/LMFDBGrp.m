@@ -155,6 +155,7 @@ declare attributes LMFDBGrp:
   subgroup_index_bound,
   AutAboveCutoff,
   AutIndexBound,
+  SubGrpLstCutoff,
   MagmaSylowSubgroups,
   MagmaMinimalNormalSubgroups,
   Zgroup,

@@ -21,7 +21,7 @@ if args.phase == 1:
     ]
 else:
     todos = [
-        ("ComputeCodes.m", "compute", 1, 7200), # Production run
+        ("ComputeCodes.m", "compute", 1, 900, 900), # Swift production run
     ]
 
 total = 0
@@ -43,7 +43,7 @@ if args.phase > 1:
         "DATA/smallhash_db",
         #"DATA/fromhash",
     ])
-for mag, todo, per_job, timeout in todos:
+for mag, todo, per_job, job_timeout, total_timeout in todos:
     D = f"DATA/{todo}.todo"
     Dout = f"DATA/{todo}s"
     Dtiming = f"DATA/timings"
@@ -56,7 +56,7 @@ for mag, todo, per_job, timeout in todos:
             for jb in FD:
                 n += 1
     total += n
-    manifest.append(f"{D} {Dout} {Dtiming} {mag} {n} {per_job} {timeout}")
+    manifest.append(f"{D} {Dout} {Dtiming} {mag} {n} {per_job} {job_timeout} {total_timeout}")
 with open("DATA/manifest", "w") as F:
     _ = F.write("\n".join(manifest))
 

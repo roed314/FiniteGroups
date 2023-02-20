@@ -50,6 +50,12 @@ intrinsic AutIndexBound(G::LMFDBGrp) -> RngIntElt
     return G`AutIndexBound;
 end intrinsic;
 
+intrinsic SubGrpLstCutoff(G::LMFDBGrp) -> FldReElt
+{}
+    // For now we just set to a constant value; it should probably be changed based on manifest
+    return 600;
+end intrinsic;
+
 intrinsic subgroup_index_bound(G::LMFDBGrp) -> RngIntElt
 {}
     return Get(G, "BestSubgroupLat")`index_bound;
@@ -1086,6 +1092,10 @@ intrinsic SubGrpLstAut(X::LMFDBGrp) -> SubgroupLat
         // We construct a lattice to pass in to CollapseLatticeByAutGrp,
         // building the subgroups one index at a time
         t0 := ReportStart(X, "SubGrpLstByDivisor");
+        // We don't know in advance how far we'll be able to get.
+        // In addition to the cutoff based on the number of resulting groups,
+        // we set a time cutoff in hopes of staying within our time limit.
+        cutoff_time := t0 + Get(X, "SubGrpLstCutoff");
         D := Reverse(Divisors(N));
         tmp := New(SubgroupLat);
         tmp`Grp := X;
@@ -1117,7 +1127,7 @@ intrinsic SubGrpLstAut(X::LMFDBGrp) -> SubgroupLat
             ReportEnd(X, Sprintf("SubGrpLstSplitDivisor (%o)", d), t1);
             ccount +:= #dsubs;
             acount +:= #bia[N div d];
-            if acount ge NUM_SUBS_CUTOFF_AUT then
+            if acount ge NUM_SUBS_CUTOFF_AUT or Cputime() gt cutoff then
                 if dbreak eq 0 then dbreak := N div d; end if;
                 for dd -> v in bi do
                     if dd ge dbreak then

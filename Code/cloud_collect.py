@@ -263,6 +263,47 @@ def headers():
             headers[name] = (cols, types)
     return headers
 
+def label_charconj(out):
+    # Updates the "out" dictionary, moving labels for character kernels and centers and for conjugacy class centralizers to the right columns
+    for gp_label, gpD in out["Grp"].items():
+        # only new groups for now
+        gpD = gpD[gp_label]
+        if "charc_centers" in gpD:
+            centers = gpD["charc_centers"][1:-1].split(",")
+            for label, D in out["GrpChtrCC"][gp_label].items():
+                D["center"] = centers[int(D["counter"])-1]
+        if "charc_kernels" in gpD:
+            kernels = gpD["charc_kernels"][1:-1].split(",")
+            for label, D in out["GrpChtrCC"][gp_label].items():
+                D["kernel"] = kernels[int(D["counter"])-1]
+        if "conj_centralizers" in gpD:
+            centralizers = gpD["conj_centralizers"][1:-1].split(",")
+            for label, D in out["GrpConjCls"][gp_label].items():
+                D["centralizer"] = centralizers[int(D["counter"])-1]
+
+def move_monsolv(infile, outfile, overwrite=False):
+    # Updates an output file from an older format (where monomial and solvability were part of Code-c) to a newer format (where they are part of Code-v)
+    if not overwrite and ope(outfile):
+        raise ValueError(f"{outfile} already exists")
+    with open(infile) as F:
+        with open(outfile, "w") as Fout:
+            for line in F:
+                if line[0] == "c" and line.count("|") == 6: # old format
+                    pieces = line.split("|")
+                    label = pieces[0][1:]
+                    _ = Fout.write("|".join(pieces[:3] + pieces[5:])) # last piece includes \n
+                    _ = Fout.write(f"v{label}|{pieces[3]}|{pieces[4]}\n")
+                else:
+                    _ = Fout.write(line)
+
+#def improve_names(out):
+#    names = {label: D[label].get("name") for (label, D) in out["Grp"].items()}
+#    tex_names = {label: D[label].get("tex_name") for (label, D) in out["Grp"].items()}
+#    for gp_label, gpD in out["SubGrp"].items():
+#        for label, D in gpD.items():
+#            if D.get("normal") == "t" and D.get("subgroup", r"\N") != r"\N" and D.get("quotient", r"\N") != r"\N":
+#                
+
 def write_upload_files(data, overwrite=False):
     finished, unfinished, errors = labels_by_type(data)
     tmps = tmpheaders()
@@ -298,21 +339,6 @@ def write_upload_files(data, overwrite=False):
                         out[oname][gp_label][label].update(D)
     # Sort them....
     # Update centers, kernels and centralizers from the corresponding columns
-    for gp_label, gpD in out["Grp"].items():
-        # only new groups for now
-        gpD = gpD[gp_label]
-        if "charc_centers" in gpD:
-            centers = gpD["charc_centers"][1:-1].split(",")
-            for label, D in out["GrpChtrCC"][gp_label].items():
-                D["center"] = centers[int(D["counter"])-1]
-        if "charc_kernels" in gpD:
-            kernels = gpD["charc_kernels"][1:-1].split(",")
-            for label, D in out["GrpChtrCC"][gp_label].items():
-                D["kernel"] = kernels[int(D["counter"])-1]
-        if "conj_centralizers" in gpD:
-            centralizers = gpD["conj_centralizers"][1:-1].split(",")
-            for label, D in out["GrpConjCls"][gp_label].items():
-                D["centralizer"] = centralizers[int(D["counter"])-1]
     for oname, (final_cols, final_types) in finals.items():
         with open(opj("DATA", oname+".txt"), "w") as F:
             _ = F.write("|".join(final_cols) + "\n" + "|".join(final_types) + "\n\n")

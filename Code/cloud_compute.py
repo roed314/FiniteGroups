@@ -322,11 +322,11 @@ def skip_codes(codes, skipped):
 
 with open("DATA/manifest") as F:
     for line in F:
-        todo, out, timings, script, cnt, per_job, timeout = line.strip().split()
+        todo, out, timings, script, cnt, per_job, job_timeout, total_timeout = line.strip().split()
         # Hard code memlimit for now
-        memlimit = 7936 # 7.75GB
+        memlimit = 7936 # in MB = 7.75GB
         # TODO: update how timeouts are computed
-        cnt, per_job, timeout = int(cnt), int(per_job), int(timeout)
+        cnt, per_job, job_timeout, total_timeout = int(cnt), int(per_job), int(job_timeout), int(total_timeout)
         if job < cnt:
             if os.path.isdir(todo):
                 L = os.listdir(todo)
@@ -335,13 +335,18 @@ with open("DATA/manifest") as F:
                 with open(todo) as Fsub:
                     L = Fsub.read().strip().split("\n")
             label = L[job]
+            # We allow for encoding the codes to do in the todo file
+            if " " in label:
+                label, codes = label.split()
             #L = L[per_job * job: per_job * (job + 1)]
             os.makedirs(out, exist_ok=True)
             os.makedirs(timings, exist_ok=True)
             os.makedirs(opj("DATA", "errors"), exist_ok=True)
             skipped = ""
             subgroup_index_bound = None
+            start_time = time.time()
             while codes:
+                timeout = min(job_timeout, total_timeout - time.time())
                 finished, time_used, last_time_line, err, sublines, subgroup_index_bound = run(label, codes, timeout, memlimit, subgroup_index_bound)
                 if sublines:
                     try:
@@ -362,18 +367,24 @@ with open("DATA/manifest") as F:
                 #2 If stuck computing a particular order, stop before that order
                 #3 When complement failing on a PC group (or more generally?), try switching to permutation representation
                 #4 Backup labeling strategy (conjugacy classes, subgroups)
-                if not err:
+                if time.time() - start_time > total_timeout:
+                    with open("output", "a") as Fout:
+                        _ = Fout.write(f"T{label}|HitTotalTimeout({time.time() - start_time})")
+                    skipped += f"[{codes}]"
+                    codes = ""
+                    break
+                elif not err:
                     if last_time_line == "Starting SubGrpLst":
                         set_preload(label, "AllSubgroupsOk", "f")
-                    elif (last_time_line.startswith("Starting SubGrpLstSplitDivisor ") or
-                          last_time_line.startswith("Starting SubGrpLstDivisor ")):
-                        set_preload(label, "SubGrpLstByDivisorTerminate", last_time_line.split("(")[1].split(")")[0])
+                    #elif (last_time_line.startswith("Starting SubGrpLstSplitDivisor ") or
+                    #      last_time_line.startswith("Starting SubGrpLstDivisor ")):
+                    #    set_preload(label, "SubGrpLstByDivisorTerminate", last_time_line.split("(")[1].split(")")[0])
                     #elif last_time_line == "Starting ComputeLatticeEdges":
                     #    # Screws up labeling....
                     #    set_preload("subgroup_inclusions_known", "f")
                     #elif last_time_line == "ComputeComplements":
                     #    # Try to find a permutation rep to run on
-                    elif time_used <= 0.75 * timeout:
+                    elif time_used <= 0.5 * timeout:
                         codes, skipped = skip_codes(codes, skipped)
                 else:
                     # Ideally, we'd have some known errors that are possible to work around here
