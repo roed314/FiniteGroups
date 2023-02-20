@@ -1127,7 +1127,7 @@ intrinsic SubGrpLstAut(X::LMFDBGrp) -> SubgroupLat
             ReportEnd(X, Sprintf("SubGrpLstSplitDivisor (%o)", d), t1);
             ccount +:= #dsubs;
             acount +:= #bia[N div d];
-            if acount ge NUM_SUBS_CUTOFF_AUT or Cputime() gt cutoff then
+            if acount ge NUM_SUBS_CUTOFF_AUT or Cputime() gt cutoff_time then
                 if dbreak eq 0 then dbreak := N div d; end if;
                 for dd -> v in bi do
                     if dd ge dbreak then
