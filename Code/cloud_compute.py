@@ -346,7 +346,7 @@ with open("DATA/manifest") as F:
             subgroup_index_bound = None
             start_time = time.time()
             while codes:
-                timeout = min(job_timeout, total_timeout - time.time())
+                timeout = min(job_timeout, total_timeout - (time.time() - start_time))
                 finished, time_used, last_time_line, err, sublines, subgroup_index_bound = run(label, codes, timeout, memlimit, subgroup_index_bound)
                 if sublines:
                     try:
