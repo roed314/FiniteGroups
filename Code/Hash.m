@@ -482,26 +482,25 @@ intrinsic IdentifyGroups(Glist::SeqEnum : hashes:=0) -> SeqEnum
                             G := PCGroup(G);
                         end if;
                         G := StandardPresentation(G);
-                    else
-                        solv := IsSolvable(G);
-                        if solv then
-                            if Category(G) ne GrpPC then
-                                G := PCGroup(G);
+                        for pair in poss do
+                            if not IsDefined(StanPres, pair) then
+                                StanPres[pair] := StandardPresentation(SmallGroup(pair[1], pair[2]));
                             end if;
-                        elif Category(G) ne GrpPerm then
-                            f, G := MinimalDegreePermutationRepresentation(G);
-                        end if;
+                            H := StanPres[pair];
+                            if IsIdenticalPresentation(G, H) then
+                                ans[i] := pair;
+                                break;
+                            end if;
+                        end for;
+                    else
+                        for pair in poss do
+                            H := SmallGroup(pair[1], pair[2]);
+                            if IsIsomorphic(G, H) then
+                                ans[i] := pair;
+                                break;
+                            end if;
+                        end for;
                     end if;
-                    for pair in poss do
-                        if not IsDefined(StanPres, pair) then
-                            StanPres[pair] := StandardPresentation(SmallGroup(pair[1], pair[2]));
-                        end if;
-                        H := StanPres[pair];
-                        if IsPrimePower(#G) and IsIdenticalPresentation(G, H) or not IsPrimePower(#G) and (solv and IsIsomorphicSolubleGroup(G, H) or not solv and IsIsomorphic(G, H)) then
-                            ans[i] := pair;
-                            break;
-                        end if;
-                    end for;
                     if not IsDefined(ans, i) then
                         print "WARNING, no id found for group of order", #G, "in position", i;
                     end if;
