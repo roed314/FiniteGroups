@@ -204,10 +204,10 @@ splines=line;
     t = time.time()
     if sys.platform == "linux":
         # 1048576B = 1MB
-        subprocess.run("prlimit --as=%s --cpu=%s dot -Tplain -o %o %o" % (memlimit*1048576, timeout, outfile, infile), shell=True, check=True)
+        subprocess.run("prlimit --as=%s --cpu=%s dot -Tplain -o %s %s" % (memlimit*1048576, timeout, outfile, infile), shell=True, check=True)
     else:
         # For now, don't enforce a memory limit when not on linux
-        subprocess.run('parallel -n0 --timeout %s "dot -Tplain -o %o %o" ::: 1' % (timeout, outfile, infile), shell=True, check=True)
+        subprocess.run('parallel -n0 --timeout %s "dot -Tplain -o %s %s" ::: 1' % (timeout, outfile, infile), shell=True, check=True)
     xcoord = {}
     # When there are long output lines, dot uses a backslash at the end of the line to indicate a line continuation.
     # I can't find any analogue of Magma's SetColumns(0), so it looks like we have to deal.  Ugh.
@@ -308,7 +308,7 @@ def compute_diagramx(label, sublines, subgroup_index_bound, end_time, memlimit):
             slabel = accessor[-1]
             diagramx = "{" + ",".join([str(D.get(key, -1)) for (D, key) in zip(xcoords, accessor)]) + "}"
             _ = F.write(f"D{label}|{slabel}|{diagramx}\n")
-        _ = F.write(f"T{label}|Finished Code-D in {time.time() - start_time:.3f}")
+        _ = F.write(f"T{label}|Finished Code-D in {time.time() - start_time:.3f}\n")
 
 
 # We want dependencies as close as possible to each other, so that failures in between don't mean we need to recompute
@@ -372,7 +372,7 @@ with open("DATA/manifest") as F:
                     except subprocess.CalledProcessError:
                         skipped += "D"
                         with open("output", "a") as Fout:
-                            _ = Fout.write(f"E{label}|Killed diagramx")
+                            _ = Fout.write(f"E{label}|Killed diagramx\n")
                     except Exception:
                         with open("output", "a") as Fout:
                             errstr = traceback.format_exc().strip().replace("\n", f"\nE{label}|diagramx: ")
