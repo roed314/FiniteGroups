@@ -467,6 +467,9 @@ intrinsic IdentifyGroups(Glist::SeqEnum : hashes:=0) -> SeqEnum
                 poss := possibilities[translate[i]];
                 if #poss eq 1 then
                     if poss[1][2] eq 0 then
+                        if Type(G) eq GrpPC then
+                            print "PC group data", SmallGroupEncoding(G), hash(G);
+                        end if;
                         print G;
                         error "Could not identify group";
                     end if;

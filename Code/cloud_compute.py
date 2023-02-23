@@ -52,7 +52,7 @@ def run(label, codes, timeout, memlimit, subgroup_index_bound):
         subprocess.run('prlimit --as=%s --cpu=%s magma -b label:=%s codes:=%s ComputeCodes.m >> DATA/errors/%s 2>&1' % (memlimit*1048576, timeout, label, codes, label), shell=True)
     else:
         # For now, don't enforce a memory limit
-        subprocess.run('parallel --timeout %s "magma -b label:=%s codes:=%s ComputeCodes.m >> DATA/errors/%s 2>&1"' % (timeout, label, codes, label), shell=True)
+        subprocess.run('parallel -n0 --timeout %s "magma -b label:=%s codes:=%s ComputeCodes.m >> DATA/errors/%s 2>&1" ::: 1' % (timeout, label, codes, label), shell=True)
     # Move timing and error information to the common output file and extract timeout and error information
     sublines = []
     with open("output", "a") as Fout:
@@ -168,7 +168,7 @@ def get_graph(sdata, normal=False):
              "order": int(sdatum["subgroup_order"]),
              "contains": final[sdatum["short_label"]]} for sdatum in sdata]
 
-def layout_graph(label, graph, rank_by_order=True):
+def layout_graph(label, graph, timeout, memlimit, rank_by_order=True):
     nodes = []
     edges = []
     ranks = defaultdict(list)
@@ -202,7 +202,12 @@ splines=line;
     with open(infile, "w") as F:
         _ = F.write(graph)
     t = time.time()
-    subprocess.run(["dot", "-Tplain", "-o", outfile, infile], check=True)
+    if sys.platform == "linux":
+        # 1048576B = 1MB
+        subprocess.run("prlimit --as=%s --cpu=%s dot -Tplain -o %o %o" % (memlimit*1048576, timeout, outfile, infile), shell=True, check=True)
+    else:
+        # For now, don't enforce a memory limit when not on linux
+        subprocess.run('parallel -n0 --timeout %s "dot -Tplain -o %o %o" ::: 1' % (timeout, outfile, infile), shell=True, check=True)
     xcoord = {}
     # When there are long output lines, dot uses a backslash at the end of the line to indicate a line continuation.
     # I can't find any analogue of Magma's SetColumns(0), so it looks like we have to deal.  Ugh.
@@ -245,7 +250,7 @@ splines=line;
     os.remove(outfile)
     return xcoord
 
-def compute_diagramx(label, sublines, subgroup_index_bound):
+def compute_diagramx(label, sublines, subgroup_index_bound, end_time, memlimit):
     cols = read_tmpheader("subagg1")
     with open("output", "a") as F:
         subs = []
@@ -285,8 +290,17 @@ def compute_diagramx(label, sublines, subgroup_index_bound):
         graphs = [get_graph(subs), get_graph(norms)]
     else:
         graphs = [aut_graph(subs), aut_graph(norms, normal=True), get_graph(subs), get_graph(norms, normal=True)]
-    xcoords = ([layout_graph(label, graph, rank_by_order=True) for graph in graphs] +
-               [layout_graph(label, graph, rank_by_order=False) for graph in graphs])
+    xcoords = []
+    for graph in graphs:
+        timeout = end_time - time.time()
+        if timeout < 0:
+            raise subprocess.CalledProcessError(1, "dot") # caught by calling code
+        xcoords.append(layout_graph(label, graph, timeout, memlimit, rank_by_order=True))
+    for graph in graphs:
+        timeout = end_time - time.time()
+        if timeout < 0:
+            raise subprocess.CalledProcessError(1, "dot") # caught by calling code
+        xcoords.append(layout_graph(label, graph, timeout, memlimit, rank_by_order=False))
     with open("output", "a") as F:
         for accessor in accessors:
             slabel = accessor[-1]
@@ -350,7 +364,12 @@ with open("DATA/manifest") as F:
                 finished, time_used, last_time_line, err, sublines, subgroup_index_bound = run(label, codes, timeout, memlimit, subgroup_index_bound)
                 if sublines:
                     try:
-                        compute_diagramx(label, sublines, subgroup_index_bound) # writes directly to output
+                        end_time = start_time + total_timeout # Don't allow the layout processes to go past the total time allowed
+                        compute_diagramx(label, sublines, subgroup_index_bound, end_time, memlimit) # writes directly to output
+                    except subprocess.CalledProcessError:
+                        skipped += "D"
+                        with open("output", "a") as Fout:
+                            _ = Fout.write(f"E{label}|Killed diagramx")
                     except Exception:
                         with open("output", "a") as Fout:
                             errstr = traceback.format_exc().strip().replace("\n", f"\nE{label}|diagramx: ")
@@ -369,7 +388,7 @@ with open("DATA/manifest") as F:
                 #4 Backup labeling strategy (conjugacy classes, subgroups)
                 if time.time() - start_time > total_timeout:
                     with open("output", "a") as Fout:
-                        _ = Fout.write(f"T{label}|HitTotalTimeout({time.time() - start_time})")
+                        _ = Fout.write(f"T{label}|HitTotalTimeout({time.time() - start_time})\n")
                     skipped += f"[{codes}]"
                     codes = ""
                     break

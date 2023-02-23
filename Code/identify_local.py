@@ -88,8 +88,10 @@ for N, hsh in hashes:
         gkey = hsh[flen:]
         i = bisect(gps, gkey)
         if i <= len(gps) and gps[i].startswith(gkey):
-            # the line is of the form gkey:gapids
-            hashlookup[N, hsh] = f"{N}.{gps[i][len(gkey)+1:].strip()}"
+            # the line is of the form gkey:gapids (separated by |)
+            gids = gps[i][len(gkey)+1:].strip().split("|")
+            gids = [f"{N}.{gid}" for gid in gids]
+            hashlookup[N, hsh] = "|".join(gids)
 
 out = [hashlookup.get(pair, f"{pair[0]}.0") for pair in hashes]
 
