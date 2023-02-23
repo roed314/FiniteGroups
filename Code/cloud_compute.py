@@ -251,8 +251,10 @@ splines=line;
     return xcoord
 
 def compute_diagramx(label, sublines, subgroup_index_bound, end_time, memlimit):
+    start_time = time.time()
     cols = read_tmpheader("subagg1")
     with open("output", "a") as F:
+        _ = F.write(f"T{label}|Starting Code-D\n")
         subs = []
         norms = []
         accessors = []
@@ -306,6 +308,7 @@ def compute_diagramx(label, sublines, subgroup_index_bound, end_time, memlimit):
             slabel = accessor[-1]
             diagramx = "{" + ",".join([str(D.get(key, -1)) for (D, key) in zip(xcoords, accessor)]) + "}"
             _ = F.write(f"D{label}|{slabel}|{diagramx}\n")
+        _ = F.write(f"T{label}|Finished Code-D in {time.time() - start_time:.3f}")
 
 
 # We want dependencies as close as possible to each other, so that failures in between don't mean we need to recompute
