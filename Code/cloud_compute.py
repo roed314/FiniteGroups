@@ -313,17 +313,17 @@ def compute_diagramx(label, sublines, subgroup_index_bound, end_time, memlimit):
 
 # We want dependencies as close as possible to each other, so that failures in between don't mean we need to recompute
 dependencies = {
-    "a": "JsSLhguoIi", # depend on MagmaAutGroup (might be possible to change subgroup labeling to function without automorphism group, but it would require a lot of work)
-    "j": "JzcCrqQsSLhuIi", # depend on MagmaConjugacyClasses
-    "J": "zCrQsSLhIi", # depend on ConjugacyClasses
-    "z": "sSLhIi", # depend on conj_centralizer_gens
+    "a": "JsSDLhguoIi", # depend on MagmaAutGroup (might be possible to change subgroup labeling to function without automorphism group, but it would require a lot of work)
+    "j": "JzcCrqQsSDLhuIi", # depend on MagmaConjugacyClasses
+    "J": "zCrQsSDLhIi", # depend on ConjugacyClasses
+    "z": "sSDLhIi", # depend on conj_centralizer_gens
     "c": "CrqQvh", # depend on MagmaCharacterTable
     "C": "rQh", # depend on Characters
     "r": "h", # depend on charc_center_gens/charc_kernel_gens
     "q": "cCrQh", # depend on MagmaRationalCharacterTable (TODO: back dependence bad)
     "Q": "Crh", # depend on Characters (TODO: back dependence bad)
-    "s": "SLvhIi", # depend on BestSubgroupLat
-    "S": "sLhIi", # depend on Subgroups (TODO: back dependence bad)
+    "s": "SDLvhIi", # depend on BestSubgroupLat
+    "S": "sDLhIi", # depend on Subgroups (TODO: back dependence bad)
     "I": "i", # depend on Mobius
 }
 # You can call tmpheaders(summarize=True) from cloud_collect.py to get a summary of the codes
