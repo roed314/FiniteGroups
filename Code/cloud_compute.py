@@ -12,6 +12,7 @@ import argparse
 import subprocess
 import traceback
 from collections import defaultdict
+from datetime import datetime, timezone
 opj = os.path.join
 ope = os.path.exists
 err_location_re = re.compile(r'In file "(.*)", line (\d+), column (\d+):')
@@ -46,6 +47,9 @@ def read_tmpheader(name):
         code, cols = F.read().strip().split("\n")
         return cols.split("|")
 
+def utcnow():
+    return datetime.now(timezone.utc).strftime("%H:%M:%S.%f")[:-4]
+
 def run(label, codes, timeout, memlimit, subgroup_index_bound):
     if sys.platform == "linux":
         # 1048576B = 1MB
@@ -62,7 +66,7 @@ def run(label, codes, timeout, memlimit, subgroup_index_bound):
         if ope(t):
             with open(t) as F:
                 for line in F:
-                    _ = Fout.write(f"T{label}|{line}")
+                    _ = Fout.write(f"T{label}({utcnow()}|{line}")
                     if line.startswith("Finished Code-"):
                         finished += line[14]
                         time_used += float(line.strip().split()[-1])
@@ -95,7 +99,7 @@ def run(label, codes, timeout, memlimit, subgroup_index_bound):
         if ope(e):
             with open(e) as F:
                 for line in F:
-                    _ = Fout.write(f"E{label}|{line}")
+                    _ = Fout.write(f"E{label}({utcnow()})|{line}")
                     m = err_location_re.search(line)
                     if m:
                         loc = m.group(0)
@@ -254,7 +258,7 @@ def compute_diagramx(label, sublines, subgroup_index_bound, end_time, memlimit):
     start_time = time.time()
     cols = read_tmpheader("subagg1")
     with open("output", "a") as F:
-        _ = F.write(f"T{label}|Starting Code-D\n")
+        _ = F.write(f"T{label}({utcnow()})|Starting Code-D\n")
         subs = []
         norms = []
         accessors = []
@@ -262,11 +266,11 @@ def compute_diagramx(label, sublines, subgroup_index_bound, end_time, memlimit):
         for line in sublines:
             vals = line.strip().split("|")
             if vals[0] != "S" + label:
-                _ = F.write(f"E{label}|Compute diagramx-label mismatch {vals[0]}\n")
+                _ = F.write(f"E{label}({utcnow()})|Compute diagramx-label mismatch {vals[0]}\n")
                 continue
             vals[0] = vals[0][1:]
             if len(vals) != len(cols):
-                _ = F.write(f"E{label}|Compute diagramx-length mismatch {len(vals)} vs {len(cols)}\n")
+                _ = F.write(f"E{label}({utcnow()})|Compute diagramx-length mismatch {len(vals)} vs {len(cols)}\n")
                 continue
             lookup = dict(zip(cols, vals))
             # Omit subgroups that have unusual labels (they're past the index bound)
@@ -293,22 +297,35 @@ def compute_diagramx(label, sublines, subgroup_index_bound, end_time, memlimit):
     else:
         graphs = [aut_graph(subs), aut_graph(norms, normal=True), get_graph(subs), get_graph(norms, normal=True)]
     xcoords = []
-    for graph in graphs:
-        timeout = end_time - time.time()
-        if timeout < 0:
-            raise subprocess.CalledProcessError(1, "dot") # caught by calling code
-        xcoords.append(layout_graph(label, graph, timeout, memlimit, rank_by_order=True))
-    for graph in graphs:
-        timeout = end_time - time.time()
-        if timeout < 0:
-            raise subprocess.CalledProcessError(1, "dot") # caught by calling code
-        xcoords.append(layout_graph(label, graph, timeout, memlimit, rank_by_order=False))
-    with open("output", "a") as F:
-        for accessor in accessors:
-            slabel = accessor[-1]
-            diagramx = "{" + ",".join([str(D.get(key, -1)) for (D, key) in zip(xcoords, accessor)]) + "}"
-            _ = F.write(f"D{label}|{slabel}|{diagramx}\n")
-        _ = F.write(f"T{label}|Finished Code-D in {time.time() - start_time:.3f}\n")
+    try:
+        for graph in graphs:
+            timeout = end_time - time.time()
+            if timeout < 0:
+                raise subprocess.CalledProcessError(1, "dot")
+            xcoords.append(layout_graph(label, graph, timeout, memlimit, rank_by_order=True))
+        for graph in graphs:
+            timeout = end_time - time.time()
+            if timeout < 0:
+                raise subprocess.CalledProcessError(1, "dot")
+            xcoords.append(layout_graph(label, graph, timeout, memlimit, rank_by_order=False))
+    except subprocess.CalledProcessError:
+        skipped += "D"
+        with open("output", "a") as Fout:
+            _ = Fout.write(f"E{label}({utcnow()})|Killed diagramx\n")
+        return "D"
+    except Exception:
+        with open("output", "a") as Fout:
+            errstr = traceback.format_exc().strip().replace("\n", f"\nE{label}|diagramx: ")
+            _ = Fout.write(f"E{label}({utcnow()})|diagramx: {errstr}\n")
+        return "D"
+    else:
+        with open("output", "a") as F:
+            for accessor in accessors:
+                slabel = accessor[-1]
+                diagramx = "{" + ",".join([str(D.get(key, -1)) for (D, key) in zip(xcoords, accessor)]) + "}"
+                _ = F.write(f"D{label}|{slabel}|{diagramx}\n")
+            _ = F.write(f"T{label}({utcnow()})|Finished Code-D in {time.time() - start_time:.3f}\n")
+        return ""
 
 
 # We want dependencies as close as possible to each other, so that failures in between don't mean we need to recompute
@@ -362,21 +379,19 @@ with open("DATA/manifest") as F:
             skipped = ""
             subgroup_index_bound = None
             start_time = time.time()
+            if codes == "D":
+                # A previous computation was interrupted while trying to compute the subgroup lattice layout
+                # We need to retrieve the stored subgroups, and subgroup_index_bound
+                sublines, subgroup_index_bound = load_sublines(label)
+                end_time = start_time + timeout
+                compute_diagramx(label, sublines, subgroup_index_bound, end_time, memlimit) # writes directly to output, handles timeouts
+                break
             while codes:
                 timeout = min(job_timeout, total_timeout - (time.time() - start_time))
                 finished, time_used, last_time_line, err, sublines, subgroup_index_bound = run(label, codes, timeout, memlimit, subgroup_index_bound)
                 if sublines:
-                    try:
-                        end_time = start_time + total_timeout # Don't allow the layout processes to go past the total time allowed
-                        compute_diagramx(label, sublines, subgroup_index_bound, end_time, memlimit) # writes directly to output
-                    except subprocess.CalledProcessError:
-                        skipped += "D"
-                        with open("output", "a") as Fout:
-                            _ = Fout.write(f"E{label}|Killed diagramx\n")
-                    except Exception:
-                        with open("output", "a") as Fout:
-                            errstr = traceback.format_exc().strip().replace("\n", f"\nE{label}|diagramx: ")
-                            _ = Fout.write(f"E{label}|diagramx: {errstr}\n")
+                    end_time = start_time + total_timeout # Don't allow the layout processes to go past the total time allowed
+                    skipped += compute_diagramx(label, sublines, subgroup_index_bound, end_time, memlimit) # writes directly to output
                 for code in finished:
                     codes = codes.replace(code, "")
                 if not codes:
@@ -391,7 +406,7 @@ with open("DATA/manifest") as F:
                 #4 Backup labeling strategy (conjugacy classes, subgroups)
                 if time.time() - start_time > total_timeout:
                     with open("output", "a") as Fout:
-                        _ = Fout.write(f"T{label}|HitTotalTimeout({time.time() - start_time})\n")
+                        _ = Fout.write(f"T{label}({utcnow()})|HitTotalTimeout({time.time() - start_time})\n")
                     skipped += f"[{codes}]"
                     codes = ""
                     break
@@ -413,10 +428,14 @@ with open("DATA/manifest") as F:
                     codes, skipped = skip_codes(codes, skipped)
             if skipped:
                 with open("output", "a") as Fout:
-                    _ = Fout.write(f"T{label}|Skip-{skipped}\n")
+                    _ = Fout.write(f"T{label}({utcnow()})|Skip-{skipped}\n")
             else:
                 with open("output", "a") as Fout:
-                    _ = Fout.write(f"T{label}|NoSkip\n")
+                    _ = Fout.write(f"T{label}({utcnow()})|NoSkip\n")
             break
         else:
             job -= cnt
+    else:
+        # job number was larger than the number of lines; write an empty file so that google cloud doesn't try to restart.
+        with open("output", "a") as Fout:
+            _ = Fout.write("")
