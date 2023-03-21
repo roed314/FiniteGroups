@@ -13,6 +13,7 @@ import subprocess
 import traceback
 from collections import defaultdict
 from datetime import datetime, timezone
+from math import ceil
 opj = os.path.join
 ope = os.path.exists
 err_location_re = re.compile(r'In file "(.*)", line (\d+), column (\d+):')
@@ -53,10 +54,10 @@ def utcnow():
 def run(label, codes, timeout, memlimit, subgroup_index_bound):
     if sys.platform == "linux":
         # 1048576B = 1MB
-        subprocess.run('prlimit --as=%s --cpu=%s magma -b label:=%s codes:=%s ComputeCodes.m >> DATA/errors/%s 2>&1' % (memlimit*1048576, timeout, label, codes, label), shell=True)
+        subprocess.run('prlimit --as=%s --cpu=%s magma -b label:=%s codes:=%s ComputeCodes.m >> DATA/errors/%s 2>&1' % (memlimit*1048576, ceil(timeout), label, codes, label), shell=True)
     else:
         # For now, don't enforce a memory limit
-        subprocess.run('parallel -n0 --timeout %s "magma -b label:=%s codes:=%s ComputeCodes.m >> DATA/errors/%s 2>&1" ::: 1' % (timeout, label, codes, label), shell=True)
+        subprocess.run('parallel -n0 --timeout %s "magma -b label:=%s codes:=%s ComputeCodes.m >> DATA/errors/%s 2>&1" ::: 1' % (ceil(timeout), label, codes, label), shell=True)
     # Move timing and error information to the common output file and extract timeout and error information
     sublines = []
     with open("output", "a") as Fout:
@@ -208,10 +209,10 @@ splines=line;
     t = time.time()
     if sys.platform == "linux":
         # 1048576B = 1MB
-        subprocess.run("prlimit --as=%s --cpu=%s dot -Tplain -o %s %s" % (memlimit*1048576, timeout, outfile, infile), shell=True, check=True)
+        subprocess.run("prlimit --as=%s --cpu=%s dot -Tplain -o %s %s" % (memlimit*1048576, ceil(timeout), outfile, infile), shell=True, check=True)
     else:
         # For now, don't enforce a memory limit when not on linux
-        subprocess.run('parallel -n0 --timeout %s "dot -Tplain -o %s %s" ::: 1' % (timeout, outfile, infile), shell=True, check=True)
+        subprocess.run('parallel -n0 --timeout %s "dot -Tplain -o %s %s" ::: 1' % (ceil(timeout), outfile, infile), shell=True, check=True)
     xcoord = {}
     # When there are long output lines, dot uses a backslash at the end of the line to indicate a line continuation.
     # I can't find any analogue of Magma's SetColumns(0), so it looks like we have to deal.  Ugh.
@@ -330,21 +331,21 @@ def compute_diagramx(label, sublines, subgroup_index_bound, end_time, memlimit):
 
 # We want dependencies as close as possible to each other, so that failures in between don't mean we need to recompute
 dependencies = {
-    "a": "JsSDLhguoIi", # depend on MagmaAutGroup (might be possible to change subgroup labeling to function without automorphism group, but it would require a lot of work)
-    "j": "JzcCrqQsSDLhuIi", # depend on MagmaConjugacyClasses
-    "J": "zCrQsSDLhIi", # depend on ConjugacyClasses
-    "z": "sSDLhIi", # depend on conj_centralizer_gens
+    "a": "JsSDLWhguoIi", # depend on MagmaAutGroup (might be possible to change subgroup labeling to function without automorphism group, but it would require a lot of work)
+    "j": "JzcCrqQsSDLWhuIi", # depend on MagmaConjugacyClasses
+    "J": "zCrQsSDLWhIi", # depend on ConjugacyClasses
+    "z": "sSDLWhIi", # depend on conj_centralizer_gens
     "c": "CrqQvh", # depend on MagmaCharacterTable
     "C": "rQh", # depend on Characters
     "r": "h", # depend on charc_center_gens/charc_kernel_gens
     "q": "cCrQh", # depend on MagmaRationalCharacterTable (TODO: back dependence bad)
     "Q": "Crh", # depend on Characters (TODO: back dependence bad)
-    "s": "SDLvhIi", # depend on BestSubgroupLat
-    "S": "sDLhIi", # depend on Subgroups (TODO: back dependence bad)
+    "s": "SDLWvhIi", # depend on BestSubgroupLat
+    "S": "sDLWhIi", # depend on Subgroups (TODO: back dependence bad)
     "I": "i", # depend on Mobius
 }
 # You can call tmpheaders(summarize=True) from cloud_collect.py to get a summary of the codes
-codes = "blajJzcCrqQsvSLhtguoIimw" # Note that D = subagg3 (diagramx) is skipped since it's filled in below
+codes = "blajJzcCrqQsvSLWhtguoIimw" # Note that D = subagg3 (diagramx) is skipped since it's filled in below
 def skip_codes(codes, skipped):
     if codes[0] in dependencies:
         skipped += f"{codes[0]}({dependencies[codes[0]]})"
@@ -358,7 +359,8 @@ with open("DATA/manifest") as F:
     for line in F:
         todo, out, timings, script, cnt, per_job, job_timeout, total_timeout = line.strip().split()
         # Hard code memlimit for now
-        memlimit = 7936 # in MB = 7.75GB
+        #memlimit = 7936 # in MB = 7.75GB
+        memlimit = 3840 # in MB = 3.75GB
         # TODO: update how timeouts are computed
         cnt, per_job, job_timeout, total_timeout = int(cnt), int(per_job), int(job_timeout), int(total_timeout)
         if job < cnt:
@@ -388,6 +390,7 @@ with open("DATA/manifest") as F:
                 break
             while codes:
                 timeout = min(job_timeout, total_timeout - (time.time() - start_time))
+                #print("Loop with timeout %s" % timeout)
                 finished, time_used, last_time_line, err, sublines, subgroup_index_bound = run(label, codes, timeout, memlimit, subgroup_index_bound)
                 if sublines:
                     end_time = start_time + total_timeout # Don't allow the layout processes to go past the total time allowed

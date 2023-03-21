@@ -296,6 +296,20 @@ def move_monsolv(infile, outfile, overwrite=False):
                 else:
                     _ = Fout.write(line)
 
+def move_weyl(infile, outfile, overwrite=False):
+    if not overwrite and ope(outfile):
+        raise ValueError(f"{outfile} already exists")
+    with open(infile) as F:
+        with open(outfile, "w") as Fout:
+            for line in F:
+                if line[0] == "L" and line.count("|") == 13: # old format
+                    pieces = line.split("|")
+                    _ = Fout.write("|".join(pieces[:4]) + "\n")
+                    Wlabel = "W" + pieces[0][1:]
+                    _ = Fout.write("|".join([Wlabel, pieces[1]] + pieces[4:])) # last piece includes \n
+                else:
+                    _ = Fout.write(line)
+
 #def improve_names(out):
 #    names = {label: D[label].get("name") for (label, D) in out["Grp"].items()}
 #    tex_names = {label: D[label].get("tex_name") for (label, D) in out["Grp"].items()}
