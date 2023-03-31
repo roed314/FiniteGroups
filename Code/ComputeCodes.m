@@ -40,6 +40,7 @@ aggregate_attr["C"] := "CCCharacters";
 aggregate_attr["Q"] := "QQCharacters";
 aggregate_attr["S"] := "Subgroups";
 aggregate_attr["L"] := "Subgroups";
+aggregate_attr["W"] := "Subgroups";
 aggregate_attr["I"] := "Subgroups";
 
 tstart := Cputime();

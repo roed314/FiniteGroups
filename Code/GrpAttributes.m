@@ -802,7 +802,7 @@ intrinsic aut_group(G::LMFDBGrp) -> MonStgElt
     m, P, Y := ClassAction(aut);
     vprint User1: "ClassAction complete";
     assert #P eq Get(G, "aut_order");
-    s, iso := label(P : strict:=false);
+    s, iso := label(P : strict:=false, giveup:=true);
     // It might be nice to record generators of the automorphism group matching the labeled group,
     // but we currently don't for two reasons
     // 1. It loses the division between inner and outer generators in the normal generator list
@@ -847,7 +847,7 @@ intrinsic outer_group(G::LMFDBGrp) -> Any
     inners := [P![Position(Y,g^-1*y*g) : y in Y] : g in Get(G, "Generators")];
     inners := sub<P | inners>;
     out := BestQuotient(P, inners);
-    s := label(out : strict:=false);
+    s := label(out : strict:=false, giveup:=true);
     ReportEnd(G, "LabelOuterGroup", t0);
     return s;
 end intrinsic;
@@ -869,13 +869,13 @@ end intrinsic;
 
 intrinsic center_label(G::LMFDBGrp) -> Any
 {Label string for Center}
-   return label_subgroup(G, Get(G, "MagmaCenter"));
+   return label_subgroup(G, Get(G, "MagmaCenter") : giveup:=true);
 end intrinsic;
 
 
 intrinsic central_quotient(G::LMFDBGrp) -> Any
 {label string for CentralQuotient}
-    return label_quotient(G, Get(G, "MagmaCenter"));
+    return label_quotient(G, Get(G, "MagmaCenter") : giveup:=true);
 end intrinsic;
 
 
@@ -888,7 +888,7 @@ end intrinsic;
 intrinsic commutator_label(G::LMFDBGrp) -> Any
 {label string for Commutator Subgroup}
     t0 := ReportStart(G, "LabelCommutator");
-    s := label_subgroup(G, Get(G, "MagmaCommutator"));
+    s := label_subgroup(G, Get(G, "MagmaCommutator") : giveup:=true);
     ReportEnd(G, "LabelCommutator", t0);
     return s;
 end intrinsic;
@@ -896,7 +896,7 @@ end intrinsic;
 
 intrinsic abelian_quotient(G::LMFDBGrp) -> Any
 {label string for quotient of Commutator Subgroup}
-    return label_quotient(G, Get(G, "MagmaCommutator"));
+    return label_quotient(G, Get(G, "MagmaCommutator") : giveup:=true);
 end intrinsic;
 
 
@@ -913,13 +913,13 @@ end intrinsic;
 
 intrinsic frattini_label(G::LMFDBGrp) -> Any
 {label string for Frattini Subgroup}
-    return label_subgroup(G, Get(G, "MagmaFrattini"));
+    return label_subgroup(G, Get(G, "MagmaFrattini") : giveup:=true);
 end intrinsic;
 
 
 intrinsic frattini_quotient(G::LMFDBGrp) -> Any
 {label string for Frattini Quotient}
-    return label_quotient(G, Get(G, "MagmaFrattini"));
+    return label_quotient(G, Get(G, "MagmaFrattini") : giveup:=true);
 end intrinsic;
 
 

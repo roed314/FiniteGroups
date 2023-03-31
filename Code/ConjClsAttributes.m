@@ -72,7 +72,7 @@ intrinsic centralizer(C::LMFDBGrpPermConjCls) -> Any
   {Label for the isomorphism class of the centralizer of an element in this conjugacy class}
   CC := Get(C, "MagmaConjCls");
   C1 := Centralizer(Parent(CC[3]), CC[3]); //For a magma class CC, CC[3] gives a representative.
-  return label(C1);
+  return label(C1 : giveup:=true);
 end intrinsic;
 
 intrinsic size(C::LMFDBGrpPermConjCls) -> RingIntElt

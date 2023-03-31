@@ -67,7 +67,7 @@ def run(label, codes, timeout, memlimit, subgroup_index_bound):
         if ope(t):
             with open(t) as F:
                 for line in F:
-                    _ = Fout.write(f"T{label}({utcnow()}|{line}")
+                    _ = Fout.write(f"T{label}({utcnow()})|{line}")
                     if line.startswith("Finished Code-"):
                         finished += line[14]
                         time_used += float(line.strip().split()[-1])
@@ -310,7 +310,6 @@ def compute_diagramx(label, sublines, subgroup_index_bound, end_time, memlimit):
                 raise subprocess.CalledProcessError(1, "dot")
             xcoords.append(layout_graph(label, graph, timeout, memlimit, rank_by_order=False))
     except subprocess.CalledProcessError:
-        skipped += "D"
         with open("output", "a") as Fout:
             _ = Fout.write(f"E{label}({utcnow()})|Killed diagramx\n")
         return "D"

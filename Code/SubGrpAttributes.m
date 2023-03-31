@@ -99,7 +99,7 @@ end intrinsic;
 
 intrinsic subgroup(H::LMFDBSubGrp) -> MonStgElt // Need to be together with all the labels
 {Determine label of subgroup}
-    return label_subgroup(H`Grp, H`MagmaSubGrp : hsh:=Get(H, "subgroup_hash"));
+    return label_subgroup(H`Grp, H`MagmaSubGrp : hsh:=Get(H, "subgroup_hash"), giveup:=true);
 end intrinsic;
 
 intrinsic subgroup_order(H::LMFDBSubGrp) -> RngIntElt // Need to be subgroup attribute file
@@ -149,7 +149,7 @@ intrinsic quotient(H::LMFDBSubGrp) -> Any // Need to be together with all the la
     if not Get(H, "normal") then
         return None();
     else
-        return label_quotient(H`Grp, H`MagmaSubGrp : GN:=Get(H, "Quotient"), hsh:=Get(H, "quotient_hash"));
+        return label_quotient(H`Grp, H`MagmaSubGrp : GN:=Get(H, "Quotient"), hsh:=Get(H, "quotient_hash"), giveup:=true);
     end if;
 end intrinsic;
 
@@ -236,7 +236,7 @@ end intrinsic;
 
 intrinsic projective_image(H::LMFDBSubGrp) -> Any // Need to be subgroup attribute file
   {returns label of the quotient by the center of the ambient group}
-  return label_quotient(H`Grp, H`MagmaSubGrp meet Center(H`MagmaAmbient));
+  return label_quotient(H`Grp, H`MagmaSubGrp meet Center(H`MagmaAmbient) : giveup:=true);
 end intrinsic;
 
 RF := recformat<subgroup, order, length>;
@@ -384,7 +384,7 @@ intrinsic quotient_action_image(H::LMFDBSubGrp) -> Any
     if Type(f) eq NoneType then
         return None();
     else
-        return label(Image(f) : strict:=false);
+        return label(Image(f) : strict:=false, giveup:=true);
     end if;
 end intrinsic;
 
@@ -396,7 +396,7 @@ intrinsic quotient_action_kernel(H::LMFDBSubGrp) -> Any
     if Type(f) eq NoneType then
         return None();
     else
-        return label(Kernel(f) : strict:=false);
+        return label(Kernel(f) : strict:=false, giveup:=true);
     end if;
 end intrinsic;
 
@@ -493,7 +493,7 @@ intrinsic weyl_group(H::LMFDBSubGrp) -> Any
     Z := Centralizer(GG, HH);
     W := BestQuotient(N, Z);
     try
-        return label(W : strict:=false);
+        return label(W : strict:=false, giveup:=true);
     catch e;
         print "error in weyl_group", e;
         return None();
@@ -516,7 +516,7 @@ intrinsic aut_weyl_group(H::LMFDBSubGrp) -> Any
     H`aut_weyl_index := (#Ambient * #Z) div (#N * #GG);
     H`aut_centralizer_order := #(Z meet Stabilizer(Ambient, 1));
     W := BestQuotient(N, Z);
-    return label(W : strict:=false);
+    return label(W : strict:=false, giveup:=true);
 end intrinsic;
 
 intrinsic aut_centralizer_order(H::LMFDBSubGrp) -> Any

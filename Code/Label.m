@@ -22,9 +22,10 @@ intrinsic PossiblyLabelable(N::RngIntElt) -> BoolElt
     return CanIdentifyGroup(N) or N in SmallhashOrders() or HaveKnownHashes(N);
 end intrinsic;
 
-intrinsic label(G::Grp : hsh:=0, strict:=true) -> Any, Map
+intrinsic label(G::Grp : hsh:=0, strict:=true, giveup:=false) -> Any, Map
 {Assigns label for small groups using IdentifyGroup, and for larger groups by using hashes.
 Because of Magma bugs in IsIsomorphic, when strict is false this may return None even when there is a known group that matches.  If strict is true, it will raise an error.
+If giveup is true, then rather than running through options with the right hash (which can be very expensive), it will just return GroupToString (surrounded by ? in order to facilitate later replacement) of the input for later labeling.
 }
     // There is a bug in Magma which sometimes gives #G = 0.
     N := #G;
@@ -45,6 +46,9 @@ Because of Magma bugs in IsIsomorphic, when strict is false this may return None
     elif not HaveKnownHashes(N) then
         return None(), _;
     else
+        if giveup then
+            return "?" * GroupToString(G) * "?", _;
+        end if;
         if hsh eq 0 then hsh := hash(G); end if;
         Hs := GroupsWithHash(N, hsh);
         for pair in Hs do
@@ -74,22 +78,22 @@ Because of Magma bugs in IsIsomorphic, when strict is false this may return None
 end intrinsic;
 
 
-intrinsic label(G::LMFDBGrp : strict:=true) -> Any
+intrinsic label(G::LMFDBGrp : strict:=true, giveup:=false) -> Any
 {Assign label to a LMFDBGrp}
     // This is usually set at object creation, so doesn't get called
-    return label(G`MagmaGrp : strict:=strict);
+    return label(G`MagmaGrp : strict:=strict, giveup:=giveup);
 end intrinsic;
 
-intrinsic label_subgroup(G::LMFDBGrp, H::Grp : hsh:=0, strict:=false) -> Any
+intrinsic label_subgroup(G::LMFDBGrp, H::Grp : hsh:=0, strict:=false, giveup:=false) -> Any
 {Given a group G and a subgroup H, returns the label of H as an abstract group}
     // We default to false on strict since this won't usually be used for checking if a group already has a label
     if #H eq G`order then
         return Get(G, "label");
     end if;
-    return label(H : hsh:=hsh, strict:=strict);
+    return label(H : hsh:=hsh, strict:=strict, giveup:=giveup);
 end intrinsic;
 
-intrinsic label_quotient(G::LMFDBGrp, N::Grp : GN:=0, hsh:=0, strict:=false) -> Any
+intrinsic label_quotient(G::LMFDBGrp, N::Grp : GN:=0, hsh:=0, strict:=false, giveup:=false) -> Any
 {Given a group G and a normal subgroup N, returns the label of G/N as an abstract group}
     // We default to false on strict since this won't usually be used for checking if a group already has a label
     if #N eq 1 then
@@ -109,7 +113,7 @@ intrinsic label_quotient(G::LMFDBGrp, N::Grp : GN:=0, hsh:=0, strict:=false) -> 
             return None();
         end try;
     end if;
-    return label(GN : hsh:=hsh, strict:=strict);
+    return label(GN : hsh:=hsh, strict:=strict, giveup:=giveup);
 end intrinsic;
 
 // TODO: make this better; currently only for small groups
