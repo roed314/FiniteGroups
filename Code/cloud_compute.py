@@ -294,7 +294,7 @@ def compute_diagramx(label, sublines, subgroup_index_bound, end_time, memlimit):
                 else:
                     accessors.append(([lookup["aut_label"]] * 2 + [lookup["short_label"]] * 2) * 2)
     if out_equiv:
-        graphs = [get_graph(subs), get_graph(norms)]
+        graphs = [get_graph(subs), get_graph(norms, normal=True)]
     else:
         graphs = [aut_graph(subs), aut_graph(norms, normal=True), get_graph(subs), get_graph(norms, normal=True)]
     xcoords = []
@@ -354,6 +354,17 @@ def skip_codes(codes, skipped):
         codes = codes.replace(c, "")
     return codes, skipped
 
+def load_sublines(label):
+    # This function is used for computing subgroup diagram layouts when a previous run died during that step.
+    with open(opj("DATA", "sublines", label)) as F:
+        sublines = list(F)
+    subgroup_index_bound, sublines = sublines[0], sublines[1:]
+    if subgroup_index_bound == r"\N":
+        subgroup_index_bound = None
+    else:
+        subgroup_index_bound = int(subgroup_index_bound)
+    return sublines, subgroup_index_bound
+
 with open("DATA/manifest") as F:
     for line in F:
         todo, out, timings, script, cnt, per_job, job_timeout, total_timeout = line.strip().split()
@@ -384,9 +395,9 @@ with open("DATA/manifest") as F:
                 # A previous computation was interrupted while trying to compute the subgroup lattice layout
                 # We need to retrieve the stored subgroups, and subgroup_index_bound
                 sublines, subgroup_index_bound = load_sublines(label)
-                end_time = start_time + timeout
-                compute_diagramx(label, sublines, subgroup_index_bound, end_time, memlimit) # writes directly to output, handles timeouts
-                break
+                end_time = start_time + total_timeout
+                skipped = compute_diagramx(label, sublines, subgroup_index_bound, end_time, memlimit) # writes directly to output, handles timeouts
+                codes = "" # Don't execute the while loop
             while codes:
                 timeout = min(job_timeout, total_timeout - (time.time() - start_time))
                 #print("Loop with timeout %s" % timeout)

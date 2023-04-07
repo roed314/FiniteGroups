@@ -278,7 +278,10 @@ intrinsic exponents_of_order(G::LMFDBGrp) -> Any
 end intrinsic;
 
 intrinsic metabelian(G::LMFDBGrp) -> BoolElt
-    {Determine if a group is metabelian}
+{Determine if a group is metabelian}
+    if not Get(G, "solvable") then
+        return false;
+    end if;
     g:=G`MagmaGrp;
     return IsAbelian(DerivedSubgroup(g));
 end intrinsic;

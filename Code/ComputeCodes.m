@@ -21,8 +21,7 @@ end if;
 if assigned debug then
     SetDebugOnError(true); // for testing
 end if;
-G := MakeBigGroup(desc, label);
-Preload(G);
+G := MakeBigGroup(desc, label : preload:=true);
 files := Split(Pipe("ls", ""), "\n");
 code_lookup := AssociativeArray();
 for fname in files do

@@ -800,7 +800,7 @@ intrinsic IncludeMaximalSubgroups(L::SubgroupLat)
     have_sylow := Get(G, "sylow_subgroups_known");
     ordbd := G`order div G`AutIndexBound;
     function is_sylow(M)
-        return IsPrimePower(#M) and Gcd(#M, G`order div #M) eq 1;
+        return IsPrimePower(M`order) and Gcd(M`order, G`order div M`order) eq 1;
     end function;
     Maxs := [M`subgroup : M in MaximalSubgroups(GG) | M`order lt ordbd and not (have_norms and IsNormal(GG, M`subgroup)) and not (have_sylow and is_sylow(M))];
     if #Maxs gt 0 then
