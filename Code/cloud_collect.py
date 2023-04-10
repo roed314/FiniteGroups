@@ -281,34 +281,42 @@ def label_charconj(out):
             for label, D in out["GrpConjCls"][gp_label].items():
                 D["centralizer"] = centralizers[int(D["counter"])-1]
 
-def move_monsolv(infile, outfile, overwrite=False):
-    # Updates an output file from an older format (where monomial and solvability were part of Code-c) to a newer format (where they are part of Code-v)
+def update_output_file(infile, outfile, overwrite=False):
+    # Update output files based on several changes to tmpheaders (moving monomial and solvability from Code-c to Code-v, rank and eulerian_function from Code-s to Code-i, etc)
     if not overwrite and ope(outfile):
         raise ValueError(f"{outfile} already exists")
     with open(infile) as F:
         with open(outfile, "w") as Fout:
             for line in F:
-                if line[0] == "c" and line.count("|") == 6: # old format
+                if line[0] == "c" and line.count("|") == 6: # old format for monomial and solvability
                     pieces = line.split("|")
                     label = pieces[0][1:]
                     _ = Fout.write("|".join(pieces[:3] + pieces[5:])) # last piece includes \n
-                    _ = Fout.write(f"v{label}|{pieces[3]}|{pieces[4]}\n")
+                    _ = Fout.write("|".join(["v" + pieces[0][1:], pieces[3], pieces[4]]) + "\n")
+                elif line[0] == "L" and line.count("|") == 13: # old format for a bunch of Weyl subgroup quantities
+                    pieces = line.split("|")
+                    _ = Fout.write("|".join(pieces[:4]) + "\n")
+                    _ = Fout.write("|".join(["W" + pieces[0][1:], pieces[1]] + pieces[4:])) # last piece includes \n
+                elif line[0] == "s" and line.count("|") == 22: # old format for rank and eulerian_function
+                    pieces = line.split("|")
+                    _ = Fout.write("|".join(pieces[:3] + pieces[4:8] + pieces[9:])) # last piece includes \n
+                    _ = Fout.write("|".join(["i" + pieces[0][1:], pieces[3], pieces[8]]) + "\n")
+                elif line[0] == "S" and line.count("|") == 55: # old format for mobius_quo and mobius_sub
+                    pieces = line.split("|")
+                    _ = Fout.write("|".join(pieces[:29] + pieces[31:])) # last piece includes \n
+                    _ = Fout.write("|".join(["I" + pieces[0][1:], pieces[24], pieces[29], pieces[30]]) + "\n")
                 else:
                     _ = Fout.write(line)
 
-def move_weyl(infile, outfile, overwrite=False):
-    if not overwrite and ope(outfile):
-        raise ValueError(f"{outfile} already exists")
-    with open(infile) as F:
-        with open(outfile, "w") as Fout:
-            for line in F:
-                if line[0] == "L" and line.count("|") == 13: # old format
-                    pieces = line.split("|")
-                    _ = Fout.write("|".join(pieces[:4]) + "\n")
-                    Wlabel = "W" + pieces[0][1:]
-                    _ = Fout.write("|".join([Wlabel, pieces[1]] + pieces[4:])) # last piece includes \n
-                else:
-                    _ = Fout.write(line)
+def update_all_outputs(outfolder, overwrite=False):
+    # Should be run inside the input folder
+    for root, dirs, files in os.walk("."):
+        os.makedirs(opj(outfolder, root[2:]), exist_ok=True)
+        if "TE" in dirs:
+            os.rename(opj(root[2:], "TE"), opj(outfolder, root[2:], "TE"))
+        for fname in files:
+            update_output_file(opj(root[2:], fname), opj(outfolder, root[2:], fname), overwrite=overwrite)
+
 
 #def improve_names(out):
 #    names = {label: D[label].get("name") for (label, D) in out["Grp"].items()}
