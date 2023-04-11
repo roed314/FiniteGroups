@@ -9,7 +9,6 @@ intrinsic MakeBigGroup(desc::MonStgElt, label::MonStgElt : preload:=false) -> LM
     end if;
     G := NewLMFDBGrp(G, label);
     G`order := StringToInteger(Split(label, ".")[1]);
-    G`MagmaGrp`Order := G`order;
     if preload then
         Preload(G);
     end if;
