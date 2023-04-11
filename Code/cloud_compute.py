@@ -193,11 +193,13 @@ def layout_graph(label, graph, timeout, memlimit, rank_by_order=True):
             ranks[order].append(f'order{order}')
     nodes = ";\n".join(nodes)
     edges = ";\n".join(edges)
+    if edges:
+        edges += ";" # deal with no edges by moving semicolon here.
     ranks = ";\n".join('{rank=same; "%s"}' % ('" "'.join(labs)) for labs in ranks.values())
     graph = f"""strict digraph "{label}" {{
 rankdir=TB;
 splines=line;
-{edges};
+{edges}
 {nodes};
 {ranks};
 }}
