@@ -764,7 +764,11 @@ intrinsic MagmaAutGroup(G::LMFDBGrp) -> Grp
         A := AutomorphismGroup(GG, gens, auts);
     else
         t0 := ReportStart(G, "MagmaAutGroup");
-        A := AutomorphismGroup(G`MagmaGrp);
+        if assigned G`UseSolvAut and G`UseSolvAut and Type(G`MagmaGrp) eq GrpPC then
+            A := AutomorphismGroupSolubleGroup(G`MagmaGrp);
+        else
+            A := AutomorphismGroup(G`MagmaGrp);
+        end if;
         ReportEnd(G, "MagmaAutGroup", t0);
         if G`order ne 1 and not CheckValidAutGroup(A, G`MagmaGrp) then
             if Type(G`MagmaGrp) eq GrpPC then

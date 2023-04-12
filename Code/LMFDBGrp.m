@@ -20,6 +20,7 @@ declare attributes LMFDBGrp:
   HolInj,
   HaveHolomorph,
   HaveAutomorphisms,
+  UseSolvAut,
   ConjugacyClasses,
   CCAutCollapse,
   GeneratorsSequence,
