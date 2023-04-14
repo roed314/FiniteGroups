@@ -117,12 +117,12 @@ def execute(cmd, ips=None, output=False, get_pid=False, nohup=True):
         if output:
             outs.append(check_output(f"ssh -q {ip} '{cmd}'", shell=True).decode("ascii"))
         elif get_pid:
-            outs.append(check_output(f"ssh -q {ip} 'nohup {cmd} 2>/dev/null >/dev/null </dev/null & echo $!'", shell=True).decode("ascii").strip())
+            outs.append(check_output(f"ssh -q {ip} 'nohup {cmd} >/dev/null 2>/dev/null </dev/null & echo $!'", shell=True).decode("ascii").strip())
         elif nohup:
             call(f"ssh -q {ip} 'nohup {cmd} 2>/dev/null >/dev/null </dev/null &'", shell=True)
         else:
             call(f"ssh -q {ip} '{cmd}'", shell=True)
-    if output:
+    if output or get_pid:
         if singleton:
             return outs[0]
         return outs
