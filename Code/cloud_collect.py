@@ -317,7 +317,7 @@ def update_all_outputs(outfolder, overwrite=False):
         for fname in files:
             update_output_file(opj(root[2:], fname), opj(outfolder, root[2:], fname), overwrite=overwrite)
 
-def extract_unlabeled_groups(folder, outfile):
+def extract_unlabeled_groups(infolder, outfolder):
     matcher = re.compile(r"\?([^\?]+)\?")
     unlabeled = defaultdict(set)
     for root, dirs, files in os.walk(folder):
@@ -326,10 +326,14 @@ def extract_unlabeled_groups(folder, outfile):
                 with open(opj(root, fname)) as F:
                     for line in F:
                         label = line[1:].split("|")[0].split("(")[0]
-                        N = int(label.split(".")[0])
                         for x in matcher.findall(line):
-                            unlabeled[N].add(x)
-    return unlabeled
+                            unlabeled[label].add(x)
+    i = 0
+    for label in sorted(unlabeled, key=sort_key):
+        for x in unlabeled[label]:
+            i += 1
+            with open(opj(outfolder, str(i)), "w") as F:
+                _ = F.write(f"{label}|{x}\n")
 
 
 #def improve_names(out):
