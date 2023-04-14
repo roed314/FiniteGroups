@@ -183,7 +183,7 @@ def get_output(prefix, tmp_ok=False, basepath="/scratch/grp"):
         server_md5s = [x.split()[0] for x in execute("md5sum output", ips, output=True)]
         local_md5s = [check_output(f"md5sum {dest}", shell=True).decode("ascii").split()[0] for dest in dests]
         if server_md5s != local_md5s:
-            raise RuntimeError("md5 mismatch")
+            raise RuntimeError("MD5 mismatch")
         print("MD5 match")
         execute("rm output", ips)
         setup_TE(dests, opj(basepath, prefix, "TE"))
@@ -204,10 +204,10 @@ def deploy(labelcodes, prefix, jobtime, totaltime, server_numbers=None, basepath
         with open(fname, "w") as F:
             for label, codes in todo:
                 _ = F.write(f"{label} {codes}\n")
-        send_file(fname, ip=ip, dest="DATA/compute.todo")
+        send_file(fname, ips=ip, dest="DATA/compute.todo")
         with open(mname, "w") as F:
             _ = F.write(f"DATA/compute.todo DATA/computes DATA/timings ComputeCodes.m {len(todo)} 1 {jobtime} {totaltime}\n")
-        send_file(mname, ip=ip, dest="DATA/manifest")
+        send_file(mname, ips=ip, dest="DATA/manifest")
         print(f"Server {i} setup complete")
     os.remove(mname)
 
