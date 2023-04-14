@@ -52,12 +52,16 @@ def utcnow():
     return datetime.now(timezone.utc).strftime("%H:%M:%S.%f")[:-4]
 
 def run(label, codes, timeout, memlimit, subgroup_index_bound):
+    if codes == "X":
+        labelname = "m" # label gets in the way of the intrinsic we'd defined
+    else:
+        labelname = "label"
     if sys.platform == "linux":
         # 1048576B = 1MB
-        subprocess.run('prlimit --as=%s --cpu=%s magma -b label:=%s codes:=%s ComputeCodes.m >> DATA/errors/%s 2>&1' % (memlimit*1048576, ceil(timeout), label, codes, label), shell=True)
+        subprocess.run('prlimit --as=%s --cpu=%s magma -b %s:=%s codes:=%s ComputeCodes.m >> DATA/errors/%s 2>&1' % (memlimit*1048576, ceil(timeout), labelname, label, codes, label), shell=True)
     else:
         # For now, don't enforce a memory limit
-        subprocess.run('parallel -n0 --timeout %s "magma -b label:=%s codes:=%s ComputeCodes.m >> DATA/errors/%s 2>&1" ::: 1' % (ceil(timeout), label, codes, label), shell=True)
+        subprocess.run('parallel -n0 --timeout %s "magma -b %s:=%s codes:=%s ComputeCodes.m >> DATA/errors/%s 2>&1" ::: 1' % (ceil(timeout), labelname, label, codes, label), shell=True)
     # Move timing and error information to the common output file and extract timeout and error information
     sublines = []
     with open("output", "a") as Fout:
