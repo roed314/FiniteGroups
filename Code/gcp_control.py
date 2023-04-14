@@ -167,7 +167,7 @@ def get_output(prefix, tmp_ok=False, basepath="/scratch/grp"):
         print(dest, "copied")
     if not tmp_ok:
         server_md5s = [x.split()[0] for x in execute("md5sum output", ips, output=True)]
-        local_md5s = [check_output(f"md5sum {dest}").decode("ascii").split()[0] for dest in dests]
+        local_md5s = [check_output(f"md5sum {dest}", shell=True).decode("ascii").split()[0] for dest in dests]
         if server_md5s != local_md5s:
             raise RuntimeError("md5 mismatch")
         print("MD5 match")
