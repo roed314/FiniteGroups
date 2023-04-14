@@ -320,7 +320,7 @@ def update_all_outputs(outfolder, overwrite=False):
 def extract_unlabeled_groups(infolder, outfolder):
     matcher = re.compile(r"\?([^\?]+)\?")
     unlabeled = defaultdict(set)
-    for root, dirs, files in os.walk(folder):
+    for root, dirs, files in os.walk(infolder):
         for fname in files:
             if fname.startswith("output") or fname.startswith("grp-"):
                 with open(opj(root, fname)) as F:
