@@ -71,7 +71,7 @@ def job_status(prefix, value=None):
                     if value is None:
                         _ = Fout.write(line)
                     else:
-                        _ = Fout.write(f"{pref} {nos} {value}\n")
+                        _ = Fout.write(f"{pref} {nos} {pids} {value}\n")
                 else:
                     _ = Fout.write(line)
             if not found:
