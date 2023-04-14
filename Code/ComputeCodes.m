@@ -26,6 +26,7 @@ if codes eq "X" then // identifying groups given in gps_to_id
     m := label;
     delete label;
     infile := "DATA/gps_to_id/" * m;
+    sources, s := Explode(Split(Read(infile), "|"));
     G := StringToGroup(s);
     lab := label(G);
     if Type(lab) eq NoneType then
