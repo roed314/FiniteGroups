@@ -771,9 +771,7 @@ intrinsic IncludeNormalSubgroups(L::SubgroupLat)
                         label[#label] := "NC" * Sprint(compnum);
                         compnum +:= 1;
                         CinL`label := Join(label, ".");
-                        if Get(G, "complements_known") then
-                            L`subs[j]`keep := true;
-                        end if;
+                        L`subs[j]`keep := true;
                     end if;
                 end if;
                 Append(~(L`subs[k]`complements), j);

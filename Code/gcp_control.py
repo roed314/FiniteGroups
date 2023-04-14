@@ -3,6 +3,7 @@
 # Never change the order of server_ips.txt, but adding to the end is fine.
 
 import os
+from collections import defaultdict
 from os.path import splitext
 ope, opj = os.path.exists, os.path.join
 from subprocess import call, check_output, CalledProcessError
@@ -147,6 +148,19 @@ def send_files(fpaths, ips=None, recompile=None):
     for fpath in fpaths:
         send_file(fpath, ips, recompile=recompile)
 
+def setup_TE(outputs, TEfolder):
+    TElines = defaultdict(list)
+    for oname in outputs:
+        with open(oname) as F:
+            for line in F:
+                if line[0] in "TE":
+                    label = line[1:].split("(",1)[0]
+                    TElines[label].append(line)
+    os.makedirs(TEfolder, exist_ok=True)
+    for label, lines in TElines.items():
+        with open(opj(TEfolder, label), "w") as F:
+            _ = F.write("".join(lines))
+
 def get_output(prefix, tmp_ok=False, basepath="/scratch/grp"):
     J = job_servers()
     if prefix not in J:
@@ -172,17 +186,7 @@ def get_output(prefix, tmp_ok=False, basepath="/scratch/grp"):
             raise RuntimeError("md5 mismatch")
         print("MD5 match")
         execute("rm output", ips)
-        TElines = defaultdict(list)
-        for oname in dests:
-            with open(oname) as F:
-                for line in F:
-                    if line[0] in "TE":
-                        label = line[1:].split("(",1)[0]
-                        TElines[label].append(line)
-        os.makedirs(opj(basepath, prefix, "TE"), exist_ok=True)
-        for label, lines in TElines.items():
-            with open(opj(basepath, prefix, "TE", label), "w") as F:
-                _ = F.write("".join(lines))
+        setup_TE(dests, opj(basepath, prefix, "TE"))
 
 def deploy(labelcodes, prefix, jobtime, totaltime, server_numbers=None, basepath="DATA"):
     ips = server_ips()
