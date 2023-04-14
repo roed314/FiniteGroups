@@ -20,7 +20,7 @@ if ope(opj("DATA", "ncores")):
 else:
     # better to use cpu_count from psutil, but that has to be pip installed
     ncores = multiprocessing.cpu_count()
-subprocess.call(f"seq {total} | parallel -j{ncores} ")
+subprocess.call(f"seq {total} | parallel -j{ncores} ", shell=True)
 
 with open("finished", "w") as F:
     _ = F.write("t\n")
