@@ -6,5 +6,9 @@ AttachSpec("spec");
 s := Read("DATA/gps_to_id/" * N);
 G := StringToGroup(s);
 lab := label(G);
-PrintFile("output", Sprintf("%o|%o", N, lab));
+if Type(lab) eq NoneType then
+    PrintFile("output", Sprintf("%o|\\N", N));
+else
+    PrintFile("output", Sprintf("%o|%o", N, lab));
+end if;
 exit;
