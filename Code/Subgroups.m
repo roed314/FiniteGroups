@@ -2118,14 +2118,29 @@ intrinsic SubGrpLst(G::LMFDBGrp) -> SubgroupLat
 {The list of all subgroups up to conjugacy}
     // For now, we start with index 1 rather than order 1
     t0 := ReportStart(G, "SubGrpLst");
-    subs := Reverse(Subgroups(G`MagmaGrp));
     res := New(SubgroupLat);
     res`Grp := G;
     res`outer_equivalence := false;
     res`inclusions_known := false;
-    res`index_bound := 0;
-    G`number_subgroup_classes := #subs;
-    G`number_subgroups := &+[H`length : H in subs];
+    terminate := Get(G, "SubGrpLstByDivisorTerminate");
+    if terminate ne 0 then
+        D := Divisors(G`order);
+        i := Index(D, terminate);
+        if i eq #D then
+            ibnd := 1;
+        else
+            ibnd := G`order div D[i+1];
+        end if;
+        subs := Reverse(Subgroups(G`MagmaGrp : IndexLimit:=ibnd));
+        res`index_bound := ibnd;
+        G`number_subgroup_classes := None();
+        G`number_subgroups := None();
+    else
+        subs := Reverse(Subgroups(G`MagmaGrp));
+        res`index_bound := 0;
+        G`number_subgroup_classes := #subs;
+        G`number_subgroups := &+[H`length : H in subs];
+    end if;
     res`subs := [SubgroupLatElement(res, subs[i]`subgroup : i:=i, subgroup_count:=subs[i]`length) : i in [1..#subs]];
     // It would be nice to call IncludeNormalSubgroups(res) here when G`outer_equivalence is false,
     // but it causes an infinite recursion.  So we call it on the return value in BestSubgroupLattice and SubGrpLat
