@@ -12,15 +12,32 @@ if not assigned codes then
     codes := "blajJzcCrqQsvSLWhtguoIimw";
 end if;
 
-infile := "DATA/descriptions/" * label;
 outfile := "DATA/computes/" * label;
-desc := Read(infile);
+
 if assigned debug or assigned verbose then
     SetVerbose("User1", 1); // for testing
 end if;
 if assigned debug then
     SetDebugOnError(true); // for testing
 end if;
+
+if codes eq "X" then // identifying groups given in gps_to_id
+    // Using label as a variable name gets in the way of the intrinsic, but we don't want to change the API, so we rename the variable
+    m := label;
+    delete label;
+    infile := "DATA/gps_to_id/" * m;
+    G := StringToGroup(s);
+    lab := label(G);
+    if Type(lab) eq NoneType then
+        PrintFile(outfile, Sprintf("X%o|\\N", m));
+    else
+        PrintFile(outfile, Sprintf("X%o|%o", m, lab));
+    end if;
+    exit;
+end if;
+
+infile := "DATA/descriptions/" * label;
+desc := Read(infile);
 G := MakeBigGroup(desc, label : preload:=true);
 files := Split(Pipe("ls", ""), "\n");
 code_lookup := AssociativeArray();
