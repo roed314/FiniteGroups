@@ -317,6 +317,22 @@ def update_all_outputs(outfolder, overwrite=False):
         for fname in files:
             update_output_file(opj(root[2:], fname), opj(outfolder, root[2:], fname), overwrite=overwrite)
 
+def extract_unlabeled_groups(folder, outfile):
+    matcher = re.compile(r"\?([^\?]+)\?")
+    unlabeled = defaultdict(set)
+    for root, dirs, files in os.walk(folder):
+        for fname in files:
+            if fname.startswith("output") or fname.startswith("grp-"):
+                with open(opj(root, fname)) as F:
+                    for line in F:
+                        if matcher.search(line):
+                            code = line[0]
+                            pieces = line.strip().split("|")
+                            for i, piece in enumerate(pieces):
+                                if "?" in piece:
+                                    unlabeled[code].add(i)
+    return unlabeled
+
 
 #def improve_names(out):
 #    names = {label: D[label].get("name") for (label, D) in out["Grp"].items()}
