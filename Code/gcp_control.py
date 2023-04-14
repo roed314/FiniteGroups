@@ -50,7 +50,7 @@ def job_status(prefix, value=None):
     with open("DATA/jobtmp", "w") as Fout:
         with open("DATA/jobs.txt") as F:
             for line in F:
-                pref, nos, status = line.strip().split()
+                pref, nos, pids, status = line.strip().split()
                 if pref == prefix:
                     found = True
                     if value is None:
