@@ -325,12 +325,10 @@ def extract_unlabeled_groups(folder, outfile):
             if fname.startswith("output") or fname.startswith("grp-"):
                 with open(opj(root, fname)) as F:
                     for line in F:
-                        if matcher.search(line):
-                            code = line[0]
-                            pieces = line.strip().split("|")
-                            for i, piece in enumerate(pieces):
-                                if "?" in piece:
-                                    unlabeled[code].add(i)
+                        label = line[1:].split("|")[0].split("(")[0]
+                        N = int(label.split(".")[0])
+                        for x in matcher.findall(line):
+                            unlabeled[N].add(x)
     return unlabeled
 
 
