@@ -407,7 +407,7 @@ intrinsic ordercc(G::LMFDBGrp, gens::SeqEnum: dorandom:=true) -> Any
     cc := Get(G, "MagmaConjugacyClasses");
     cm := Get(G, "MagmaClassMap");
     pm := Get(G, "MagmaPowerMap");
-    t0 := ReportStart(G, "ordercc");
+    t0 := Cputime();
     ncc:=#cc;
     if gens eq [] then
         gens := [Id(g)];
@@ -646,8 +646,8 @@ intrinsic ordercc(G::LMFDBGrp, gens::SeqEnum: dorandom:=true) -> Any
     end if;
   end for;
   cc:=[c[3] : c in cc];
-  return cc, finalkeys, labels;
   ReportEnd(G, "ordercc", t1);
+  return cc, finalkeys, labels;
 end intrinsic;
 
 intrinsic testCCs(G::LMFDBGrp: dorandom:=true)->Any

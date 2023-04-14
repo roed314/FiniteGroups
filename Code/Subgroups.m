@@ -695,6 +695,7 @@ intrinsic IncludeNormalSubgroups(L::SubgroupLat)
             if not do_add then continue; end if;
             j := #L + #additions + 1;
             Hnew := SubgroupLatElement(L, H`subgroup : i:=j);
+            Hnew`subgroup_count := Get(H, "subgroup_count");
             Append(~additions, Hnew);
         else
             Hnew := L`subs[j];
@@ -750,7 +751,7 @@ intrinsic IncludeNormalSubgroups(L::SubgroupLat)
         H := N`subs[i];
         k := lookup[i];
         Comps := Complements(GG, H`subgroup);
-        if Get(G, "complements_known") or aibnd eq 0 or H`order le aibnd then
+        if Get(G, "complements_known") then
             L`subs[k]`complements := [];
             if #Comps eq 0 then continue; end if;
             if L`outer_equivalence then
