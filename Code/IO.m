@@ -660,19 +660,29 @@ intrinsic Preload(G::LMFDBGrp : sep:="|")
     end if;
 end intrinsic;
 
-intrinsic ReportStart(G::LMFDBGrp, job::MonStgElt) -> FldReElt
+intrinsic ReportStart(label::MonStgElt, job::MonStgElt) -> FldReElt
 {}
     msg := "Starting " * job;
     System("mkdir -p DATA/timings/");
-    PrintFile("DATA/timings/" * G`label, msg);
+    PrintFile("DATA/timings/" * label, msg);
     vprint User1: msg;
     return Cputime();
 end intrinsic;
 
-intrinsic ReportEnd(G::LMFDBGrp, job::MonStgElt, t0::FldReElt)
+intrinsic ReportStart(G::LMFDBGrp, job::MonStgElt) -> FldReElt
+{}
+    return ReportStart(G`label, job);
+end intrinsic;
+
+intrinsic ReportEnd(label::MonStgElt, job::MonStgElt, t0::FldReElt)
 {}
     msg := Sprintf("Finished %o in %o", job, Cputime() - t0);
     System("mkdir -p DATA/timings/");
-    PrintFile("DATA/timings/" * G`label, msg);
+    PrintFile("DATA/timings/" * label, msg);
     vprint User1: msg;
+end intrinsic;
+
+intrinsic ReportEnd(G::LMFDBGrp, job::MonStgElt, t0::FldReElt)
+{}
+    return ReportEnd(G`label, job, t0);
 end intrinsic;

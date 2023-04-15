@@ -26,6 +26,7 @@ if codes eq "X" then // identifying groups given in gps_to_id
     outfile := "DATA/computes/" * m;
     infile := "DATA/gps_to_id/" * m;
     sources, s := Explode(Split(Read(infile), "|"));
+    t0 := ReportStart(m, "Code-X");
     G := StringToGroup(s);
     lab := label(G);
     if Type(lab) eq NoneType then
@@ -33,6 +34,7 @@ if codes eq "X" then // identifying groups given in gps_to_id
     else
         PrintFile(outfile, Sprintf("X%o|%o", m, lab));
     end if;
+    ReportEnd(m, "Code-X", t0);
     quit;
 end if;
 
