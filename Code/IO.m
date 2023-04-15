@@ -684,5 +684,5 @@ end intrinsic;
 
 intrinsic ReportEnd(G::LMFDBGrp, job::MonStgElt, t0::FldReElt)
 {}
-    return ReportEnd(G`label, job, t0);
+    ReportEnd(G`label, job, t0);
 end intrinsic;
