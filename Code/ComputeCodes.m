@@ -23,7 +23,7 @@ end if;
 
 if codes eq "X" then // identifying groups given in gps_to_id
     // Using label as a variable name gets in the way of the intrinsic, but we don't want to change the API, so we used m instead
-    outfile := "DATA/gps_to_id/" * m;
+    outfile := "DATA/computes/" * m;
     infile := "DATA/gps_to_id/" * m;
     sources, s := Explode(Split(Read(infile), "|"));
     G := StringToGroup(s);
