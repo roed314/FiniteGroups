@@ -169,7 +169,7 @@ intrinsic label_perm_method(G::Grp: hsh:=0) -> Any
             // or if they were all eliminated below using med_complete
             return None();
         end if;
-        ns := &join([Keys(T`med_opts) : T in Ts]) join {nt[1] : nt in T`small_opts}; // Collect degrees n that we're looking for
+        ns := &join([Keys(T`med_opts) : T in Ts]) join &join[{nt[1] : nt in T`small_opts} : T in Ts]; // Collect degrees n that we're looking for
         // Randomly choose a transitive representation of an appropriate degree
         // Note that this could hang if there are no representatios of degree among the ns, or if it's just hard to find one.
         rho, GG := TransitivePermutationRepresentation(G, ns);
