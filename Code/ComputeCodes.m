@@ -13,6 +13,13 @@ if not assigned label then
         quit;
     end if;
 end if;
+if not assigned m then
+    if codes eq "X" then
+        print "This script requires the temporary id number of a group to label";
+        quit;
+    end if;
+    m := ""; // Ugh; magma requires m to be defined even though that code path is not getting run.
+end if;
 
 if assigned debug or assigned verbose then
     SetVerbose("User1", 1); // for testing
