@@ -133,7 +133,7 @@ intrinsic WriteTransitivePermutationRepresentations(G::Grp, fname::MonStgElt : m
         if dd gt d then continue; end if;
         chsh := CycleHash(H);
         if dd lt d then best := []; end if;
-        if &or[(chsh eq pair[1] and IsConjugateSubgroup(Sd, H, pair[2])) : pair in best] then
+        if &or[(chsh eq pair[1] and IsConjugate(Sd, H, pair[2])) : pair in best] then
             continue;
         end if;
         PrintFile(fname, Sprintf("%o#%o", chsh, GroupToString(H)));
@@ -192,7 +192,7 @@ intrinsic label_perm_method(G::Grp: hsh:=0) -> Any
                     Sn := Sym(n);
                     for T in poss do
                         for HH in T`med_opts[n][chsh] do
-                            if IsConjugateSubgroup(Sn, GG, HH) then
+                            if IsConjugate(Sn, GG, HH) then
                                 return T`label;
                             end if;
                         end for;
