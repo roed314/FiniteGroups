@@ -40,6 +40,51 @@ intrinsic RandomCoredSubgroup(G::Grp, H::Grp, N::Grp, B::RngIntElt : max_tries:=
     return H0; // failure
 end intrinsic;
 
+intrinsic RandomCoredSubgroup(G::Grp, N::Grp, ds::SetEnum : max_tries:=20) -> Grp
+{Look for a subgroup of G with core N and index d in ds.  If failing, return N.  d should be smaller than [G:N]}
+    Gord := #G;
+    H := N;
+    allowed_orders := &join[{m : m in Divisors(Gord div d)} : d in ds];
+    while tries lt max_tries do
+        g := Random(G);
+        if g in H then
+            continue;
+        end if;
+        K := sub<G|H,g>;
+        if not (#K in allowed_orders) then
+            tries +:= 1;
+            continue;
+        end if;
+        if #Core(G, K) eq #N then
+            if Index(G, K) in ds then
+                return K; // success
+            end if;
+            H := K;
+            tries := 0;
+        else
+            // try to take powers of g, since otherwise it's hard to get lower order elements
+            D := Divisors(Order(g));
+            for m in D[2..#D-1] do
+                h := g^m;
+                if h in H then
+                    continue;
+                end if;
+                K := sub<G|H,h>;
+                if #Core(G, K) eq #N then
+                    if Index(G, K) in ds then
+                        return K;
+                    end if;
+                    H := K;
+                    tries := 0;
+                    break;
+                end if;
+            end for;
+        end if;
+        tries +:= 1;
+    end while;
+    return N; // failure
+end intrinsic;
+
 intrinsic RandomCoredSubgroups(G::Grp, N::Grp, cnt::RngIntElt : max_tries:=20) -> SeqEnum[Grp]
 {}
     Nord := #N;

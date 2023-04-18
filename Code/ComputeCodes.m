@@ -25,9 +25,9 @@ if codes eq "X" then // identifying groups given in gps_to_id
     // Using label as a variable name gets in the way of the intrinsic, but we don't want to change the API, so we used m instead
     outfile := "DATA/computes/" * m;
     infile := "DATA/gps_to_id/" * m;
-    sources, s := Explode(Split(Read(infile), "|"));
+    sources, desc := Explode(Split(Read(infile), "|"));
     t0 := ReportStart(m, "Code-X");
-    G := StringToGroup(s);
+    G := StringToGroup(desc);
     lab := label(G);
     if Type(lab) eq NoneType then
         PrintFile(outfile, Sprintf("X%o|\\N", m));
@@ -41,6 +41,16 @@ end if;
 outfile := "DATA/computes/" * label;
 infile := "DATA/descriptions/" * label;
 desc := Read(infile);
+
+// We don't use the infrastructure below for finding transitive permutation representations,
+// since we just want to find as many as we can in the time allotted
+if codes eq "x" then
+    G := StringToGroup(desc);
+    WriteTransitivePermutationRepresentations(G, outfile);
+    quit;
+end if;
+
+
 G := MakeBigGroup(desc, label : preload:=true);
 files := Split(Pipe("ls", ""), "\n");
 code_lookup := AssociativeArray();
