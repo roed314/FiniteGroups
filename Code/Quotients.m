@@ -45,6 +45,7 @@ intrinsic RandomCoredSubgroup(G::Grp, N::Grp, ds::SetEnum : max_tries:=20) -> Gr
     Gord := #G;
     H := N;
     allowed_orders := &join[{m : m in Divisors(Gord div d)} : d in ds];
+    tries := 1;
     while tries lt max_tries do
         g := Random(G);
         if g in H then
