@@ -349,43 +349,57 @@ def build_treps(datafolder="/scratch/grp", alias_file="DATA/aliases.txt"):
                 n, t = [int(c) for c in m.groups()]
                 taliases[label].append(desc)
                 tseen[n].add(t)
+    tgid = {}
     tneeded = defaultdict(list)
     tneeded[32] = range(2799324, 2801325)
-    for rec in db.gps_transitive.search({"order":{"$or":[512, 640, 768, 896, 1024, 1152, 1280, 1408, 1536, 1664, 1792, 1920, {"$gt": 2000}]}, "n":{"$ne": 32}}, ["n", "t"]):
+    for rec in db.gps_transitive.search({"order":{"$or":[512, 640, 768, 896, 1024, 1152, 1280, 1408, 1536, 1664, 1792, 1920, {"$gt": 2000}]}, "n":{"$ne": 32}}, ["n", "t", "label", "gapid"]):
         tneeded[rec["n"]].append(rec["t"])
-    tmissing = defaultdict(list)
+        if rec["gapid"] != 0:
+            tgid[rec["label"]] = f"{rec['n']}.{rec['gapid']}"
+    tmissing = {}
     for n in range(1, 48):
-        tmissing[n] = [t for t in sorted(tneeded[n]) if t not in tseen[n]]
+        v = []
+        for t in tneeded[n]:
+            if t not in tseen[n]:
+                label = f"{n}T{t}"
+                if label in tgid:
+                    taliases[tgid[label]].append(label)
+                else:
+                    v.append(t)
+        if v:
+            v.sort()
+            tmissing[n] = v
+    return tmissing, taliases
 
-    transitive_subs = defaultdict(list)
-    sib = defaultdict(list)
-    for root, dirs, files in os.walk(datafolder):
-        for fname in files:
-            if fname.startswith("output") or fname.startswith("grp"):
-                with open(opj(root, fname)) as F:
-                    for line in F:
-                        if line[0] == "S" and line.count("|") == 53:
-                            pieces = line[1:].split("|")
-                            N, i = pieces[0].split(".")
-                            if not i.isdigit(): # Not a small group
-                                ambient_order = int(pieces[2])
-                                core_order = int(pieces[17])
-                                index = int(pieces[40])
-                                if core_order == 1 and (index >= 48 or index == 32 and (512 <= ambient_order <= 40000000000)):
-                                    ambient = pieces[0]
-                                    generators = pieces[22]
-                                    label = pieces[24]
-                                    last = label.split(".")[-1]
-                                    if last.startswith("CF") or last[0].isdigit() or last[0].islower():
-                                        # regular label or corefree label rather than label for a normal subgroup
-                                        transitive_subs[ambient].append((index, label, generators))
-                        elif line[0] == "s" and line.count("|") == 20:
-                            pieces = line[1:].split("|")
-                            label = pieces[0]
-                            sbound = int(pieces[9])
-                            sib[label].append(sbound)
+    # transitive_subs = defaultdict(list)
+    # sib = defaultdict(list)
+    # for root, dirs, files in os.walk(datafolder):
+    #     for fname in files:
+    #         if fname.startswith("output") or fname.startswith("grp"):
+    #             with open(opj(root, fname)) as F:
+    #                 for line in F:
+    #                     if line[0] == "S" and line.count("|") == 53:
+    #                         pieces = line[1:].split("|")
+    #                         N, i = pieces[0].split(".")
+    #                         if not i.isdigit(): # Not a small group
+    #                             ambient_order = int(pieces[2])
+    #                             core_order = int(pieces[17])
+    #                             index = int(pieces[40])
+    #                             if core_order == 1 and (index >= 48 or index == 32 and (512 <= ambient_order <= 40000000000)):
+    #                                 ambient = pieces[0]
+    #                                 generators = pieces[22]
+    #                                 label = pieces[24]
+    #                                 last = label.split(".")[-1]
+    #                                 if last.startswith("CF") or last[0].isdigit() or last[0].islower():
+    #                                     # regular label or corefree label rather than label for a normal subgroup
+    #                                     transitive_subs[ambient].append((index, label, generators))
+    #                     elif line[0] == "s" and line.count("|") == 20:
+    #                         pieces = line[1:].split("|")
+    #                         label = pieces[0]
+    #                         sbound = int(pieces[9])
+    #                         sib[label].append(sbound)
 
-    return tmissing, transitive_subs, sib
+    # return tmissing, transitive_subs, sib
 
 #def improve_names(out):
 #    names = {label: D[label].get("name") for (label, D) in out["Grp"].items()}
