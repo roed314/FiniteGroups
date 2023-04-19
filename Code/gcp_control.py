@@ -18,7 +18,7 @@ def job_servers():
     if ope(jfile):
         with open(jfile) as F:
             for line in F:
-                if line:
+                if line.strip():
                     prefix, nos, pids, status = line.strip().split()
                     jobs[prefix] = [int(n) for n in nos.split(",")]
     return jobs
@@ -29,7 +29,7 @@ def job_data():
     if ope(jfile):
         with open(jfile) as F:
             for line in F:
-                if line:
+                if line.strip():
                     prefix, nos, pids, status = line.strip().split()
                     jobs[prefix] = [int(n) for n in nos.split(",")], pids.split(",")
     return jobs
