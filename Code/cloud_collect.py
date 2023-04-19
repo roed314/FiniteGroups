@@ -353,10 +353,10 @@ def build_treps(datafolder="/scratch/grp", alias_file="DATA/aliases.txt", descri
     tgid = {}
     tneeded = defaultdict(list)
     tneeded[32] = range(2799324, 2801325)
-    for rec in db.gps_transitive.search({"order":{"$or":[512, 640, 768, 896, 1024, 1152, 1280, 1408, 1536, 1664, 1792, 1920, {"$gt": 2000}]}, "n":{"$ne": 32}}, ["n", "t", "label", "gapid"]):
+    for rec in db.gps_transitive.search({"order":{"$or":[512, 640, 768, 896, 1024, 1152, 1280, 1408, 1536, 1664, 1792, 1920, {"$gt": 2000}]}, "n":{"$ne": 32}}, ["n", "t", "order", "label", "gapid"]):
         tneeded[rec["n"]].append(rec["t"])
         if rec["gapid"] != 0:
-            tgid[rec["label"]] = f"{rec['n']}.{rec['gapid']}"
+            tgid[rec["label"]] = f"{rec['order']}.{rec['gapid']}"
     tmissing = {}
     lmissing = []
     for n in range(1, 48):
