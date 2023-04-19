@@ -383,7 +383,7 @@ def build_treps(datafolder="/scratch/grp", alias_file="DATA/aliases.txt"):
                             pieces = line[1:].split("|")
                             label = pieces[0]
                             sbound = int(pieces[9])
-                            sib.append(sbound)
+                            sib[label].append(sbound)
 
     return tmissing, transitive_subs, sib
 
