@@ -335,7 +335,8 @@ def extract_unlabeled_groups(infolder, outfolder):
             with open(opj(outfolder, str(i)), "w") as F:
                 _ = F.write(f"{label}|{x}\n")
 
-def build_treps(datafolder="/scratch/grp", alias_file="DATA/aliases.txt"):
+def build_treps(datafolder="/scratch/grp", alias_file="DATA/aliases.txt", descriptions_folder="DATA/descriptions"):
+    all_labels = set(os.listdir(descriptions_folder))
     sys.path.append(os.path.expanduser("~/lmfdb"))
     from lmfdb import db
     taliases = defaultdict(list)
@@ -357,19 +358,23 @@ def build_treps(datafolder="/scratch/grp", alias_file="DATA/aliases.txt"):
         if rec["gapid"] != 0:
             tgid[rec["label"]] = f"{rec['n']}.{rec['gapid']}"
     tmissing = {}
+    lmissing = []
     for n in range(1, 48):
         v = []
         for t in tneeded[n]:
             if t not in tseen[n]:
-                label = f"{n}T{t}"
-                if label in tgid:
-                    taliases[tgid[label]].append(label)
+                tlabel = f"{n}T{t}"
+                if tlabel in tgid:
+                    label = tgid[tlabel]
+                    taliases[label].append(tlabel)
+                    if label not in all_labels:
+                        lmissing.append(label)
                 else:
                     v.append(t)
         if v:
             v.sort()
             tmissing[n] = v
-    return tmissing, taliases
+    return tmissing, lmissing, taliases
 
     # transitive_subs = defaultdict(list)
     # sib = defaultdict(list)
