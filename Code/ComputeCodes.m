@@ -49,18 +49,18 @@ outfile := "DATA/computes/" * label;
 infile := "DATA/descriptions/" * label;
 desc := Read(infile);
 
+G := MakeBigGroup(desc, label : preload:=true);
+
 // We don't use the infrastructure below for finding transitive permutation representations,
 // since we just want to find as many as we can in the time allotted
 if codes eq "x" then
-    G := StringToGroup(desc);
-    if not IsAbelian(G) then
-        WriteTransitivePermutationRepresentations(G, outfile, label);
+    if not G`abelian then
+        WriteTransitivePermutationRepresentations(G`MagmaGrp, outfile, label);
     end if;
     quit;
 end if;
 
 
-G := MakeBigGroup(desc, label : preload:=true);
 files := Split(Pipe("ls", ""), "\n");
 code_lookup := AssociativeArray();
 for fname in files do
