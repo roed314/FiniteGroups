@@ -232,16 +232,17 @@ intrinsic AssociativeArrayToMap(xs :: Assoc, codomain) -> Map
 end intrinsic;
 
 /* convert number to cremona-type number */
-intrinsic CremonaCode(num::RngIntElt) -> MonStgElt
+intrinsic CremonaCode(num::RngIntElt : upper:=false) -> MonStgElt
 {}
     q,r:=Quotrem(num,26);
-    strg:=CodeToString(r+97);  /* a = 97  z=122 */
+    shift := upper select 65 else 97;
+    strg:=CodeToString(r+shift);  /* a=97 z=122  A=65 Z=90 */
 
     x:=q;
 
     while x ne 0 do
         q,r := Quotrem(x,26);
-        strg cat:= CodeToString(r+97);
+        strg cat:= CodeToString(r+shift);
         x:=q;
     end while;
     return Reverse(strg);

@@ -341,64 +341,60 @@ intrinsic LabelSubgroups(S::SubgroupLat)
     G := S`Grp;
     autjugacy := Get(S, "outer_equivalence");
     by_ind := Get(S, "by_index_aut");
+    inc_known := Get(G, "subgroup_inclusions_known"); // if false, we use an alternate non-canonical tiebreaking method
     ibd := S`index_bound;
     if ibd eq 0 then ibd := Get(G, "order"); end if;
     for index in Sort([k : k in Keys(by_ind)]) do
         if index gt ibd then continue; end if;
         vprint User1: "Labeling subgroups of index", index;
         subs := by_ind[index];
-        nsubs := [x : x in subs | IsNormal(G`MagmaGrp, x[1]`subgroup)];
-        msubs := [x : x in subs | IsMaximal(G`MagmaGrp, x[1]`subgroup)];
         if index gt ibd and not is_sylow_order(G, Get(G, "order") div index) then
             subs := []; // We don't want to assign normal labels to subgroups beyond the index bound
-            if not Get(G, "normal_subgroups_known") then nsubs := []; end if;
-            if not Get(G, "maximal_subgroups_known") then msubs := []; end if;
         end if;
-        tasks := [<subs, "">, <nsubs, ".N">, <msubs, ".M">];
-        for task in tasks do
-            if #subs eq 1 then
-                by_acode := aaa(subs, 0);
+        if #subs eq 1 then
+            by_acode := aaa(subs, 0);
+        else
+            avecs := {@ <not Get(x[1], "normal"), Get(x[1], "aut_gassman_vec")> : x in subs @};
+            Sort(~avecs);
+            by_acode := IndexFibers(subs, func<x|Index(avecs, <not IsNormal(G`MagmaGrp, x[1]`subgroup), Get(x[1], "aut_gassman_vec")>)-1>);
+        end if;
+        for acode -> asubs in by_acode do
+            if #asubs eq 1 or not inc_known then
+                by_anum := asubs;
             else
-                avecs := {@ <not IsNormal(G`MagmaGrp, x[1]`subgroup), Get(x[1], "aut_gassman_vec")> : x in subs @};
-                Sort(~avecs);
-                by_acode := IndexFibers(subs, func<x|Index(avecs, <not IsNormal(G`MagmaGrp, x[1]`subgroup), Get(x[1], "aut_gassman_vec")>)-1>);
+                by_anum := SortGClass(asubs, true);
             end if;
-            for acode -> asubs in by_acode do
-                if #asubs eq 1 then
-                    by_anum := asubs;
+            for anum in [1..#by_anum] do
+                atie := (inc_known or #asubs eq 1) select IntegerToString(anum) else CremonaCode(anum : upper:=true);
+                if autjugacy then
+                    sub := by_anum[anum][1];
+                    sub`aut_label := [index, acode, anum];
+                    sub`full_label := [index, acode, anum];
+                    sub`label := IntegerToString(index) * "." * CremonaCode(acode) * atie;
                 else
-                    by_anum := SortGClass(asubs, true);
-                end if;
-                for anum in [1..#by_anum] do
-                    if autjugacy then
-                        sub := by_anum[anum][1];
-                        sub`aut_label := [index, acode, anum];
-                        sub`full_label := [index, acode, anum];
-                        sub`label := IntegerToString(index) * "." * CremonaCode(acode) * IntegerToString(anum);
+                    aclass := by_anum[anum];
+                    if #aclass eq 1 then
+                        by_ccode := aaa(aclass, 0);
                     else
-                        aclass := by_anum[anum];
-                        if #aclass eq 1 then
-                            by_ccode := aaa(aclass, 0);
-                        else
-                            cvecs := {@ Get(x, "gassman_vec") : x in aclass @};
-                            Sort(~cvecs);
-                            by_ccode := IndexFibers(aclass, func<x|Index(cvecs, Get(x, "gassman_vec"))-1>);
-                        end if;
-                        for ccode -> csubs in by_ccode do
-                            if #csubs eq 1 then
-                                by_cnum := csubs;
-                            else
-                                by_cnum := SortGClass(csubs, false);
-                            end if;
-                            for cnum in [1..#by_cnum] do
-                                sub := by_cnum[cnum];
-                                sub`aut_label := [index, acode, anum];
-                                sub`full_label := [index, acode, anum, ccode, cnum];
-                                sub`label := IntegerToString(index) * "." * CremonaCode(acode) * IntegerToString(anum) * "." * CremonaCode(ccode) * IntegerToString(cnum);
-                            end for;
-                        end for;
+                        cvecs := {@ Get(x, "gassman_vec") : x in aclass @};
+                        Sort(~cvecs);
+                        by_ccode := IndexFibers(aclass, func<x|Index(cvecs, Get(x, "gassman_vec"))-1>);
                     end if;
-                end for;
+                    for ccode -> csubs in by_ccode do
+                        if #csubs eq 1 or not inc_known then
+                            by_cnum := csubs;
+                        else
+                            by_cnum := SortGClass(csubs, false);
+                        end if;
+                        for cnum in [1..#by_cnum] do
+                            sub := by_cnum[cnum];
+                            sub`aut_label := [index, acode, anum];
+                            sub`full_label := [index, acode, anum, ccode, cnum];
+                            ctie := (inc_known or #csubs eq 1) select IntegerToString(cnum) else CremonaCode(cnum : upper:=true);
+                            sub`label := IntegerToString(index) * "." * CremonaCode(acode) * atie * "." * CremonaCode(ccode) * ctie;
+                        end for;
+                    end for;
+                end if;
             end for;
         end for;
     end for;

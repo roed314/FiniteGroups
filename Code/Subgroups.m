@@ -730,7 +730,9 @@ intrinsic IncludeNormalSubgroups(L::SubgroupLat)
         Hnew`characteristic := H`characteristic;
         Hnew`normalizer := 1;
         Hnew`normal_closure := j;
-        Hnew`characteristic_closure := lookup[H`characteristic_closure];
+        if assigned H`characteristic_closure then
+            Hnew`characteristic_closure := lookup[H`characteristic_closure];
+        end if;
         if not L`outer_equivalence then // other case handled above
             Hnew`subgroup_count := 1;
         end if;
@@ -789,6 +791,23 @@ intrinsic IncludeNormalSubgroups(L::SubgroupLat)
     end for;
     ReportEnd(G, "IncludeNormalSubgroups", t0);
 end intrinsic;
+
+/*
+intrinsic MarkNormalSubgroups(L::SubgroupLat)
+{When we don't compute subgroup inclusions, we don't compute the normal subgroup lattice, but still need to carry out some of the same tasks done in the IncludeNormalSubgroups intrinsic}
+    G := L`Grp;
+    t0 := ReportStart(G, "MarkNormalSubgroups");
+    // When MarkNormalSubgroups is called, no subgroups have been added below the initial index bound
+    // So we can test if the subgroup is new by just comparing to the index bound.
+    // Moreover, we want to use L`index_bound here rather than L`AutIndexBound since L may still contain
+    // subgroups above AutIndexBound (since TrimSubgroups hasn't been called yet)
+    ibnd := L`index_bound;
+    if ibnd eq 0 then
+        // already have all the subgroups
+        for H in L`subs do
+            if Get(H, "normal") then
+                
+*/
 
 intrinsic IncludeMaximalSubgroups(L::SubgroupLat)
 {Should only be called when L`index_bound != 0}
@@ -1095,7 +1114,7 @@ intrinsic SubGrpLstAut(X::LMFDBGrp) -> SubgroupLat
         // In addition to the cutoff based on the number of resulting groups,
         // we set a time cutoff in hopes of staying within our time limit.
         cutoff_time := t0 + Get(X, "SubGrpLstCutoff");
-        D := Reverse(Divisors(N));
+        D := Divisors(N);
         tmp := New(SubgroupLat);
         tmp`Grp := X;
         tmp`outer_equivalence := false; tmp`inclusions_known := false;
@@ -1103,24 +1122,33 @@ intrinsic SubGrpLstAut(X::LMFDBGrp) -> SubgroupLat
         ccount := 0; acount := 0;
         dbreak := 0;
         terminate := Get(X, "SubGrpLstByDivisorTerminate");
-        for d in D do
-            if d eq terminate then
-                if dbreak ne 0 then
-                    for dd -> v in bi do
-                        if dd ge dbreak then
-                            Remove(~bi, dd);
-                            Remove(~bia, dd);
-                        end if;
-                    end for;
+        if terminate ne 0 then
+            t1 := ReportStart(X, Sprintf("SubGrpLstIndexLimit (%o)", terminate));
+            subs := Subgroups(G : IndexLimit:=N div terminate);
+            ReportEnd(X, Sprintf("SubGrpLstIndexLimit (%o)", terminate), t1);
+            for d in D do
+                if d * terminate le N then
+                    dsubs := [H`subgroup : H in subs | H`order eq (N div d)];
+                    bi[d] := [SubgroupLatElement(tmp, dsubs[i] : i:=i+ccount) : i in [1..#dubs]];
+                    ccount +:= #dsubs;
+                    // We don't want to duplicate the truncation code below, so we don't run SplitByAuts here
                 end if;
-                break;
+            end for;
+            ccount := 0; // reset
+        end if;
+        Reverse(~D); // Subgroups takes OrderEqual, so now we want orders decreasing rather than indices increasing
+        for d in D do
+            if terminate eq 0 then
+                t1 := ReportStart(X, Sprintf("SubGrpLstDivisor (%o)", d));
+                dsubs := Subgroups(G : OrderEqual := d);
+                ReportEnd(X, Sprintf("SubGrpLstDivisor (%o)", d), t1);
+                if #dsubs eq 0 then continue; end if;
+                dsubs := [SubgroupLatElement(tmp, dsubs[i]`subgroup : i:=i+ccount) : i in [1..#dsubs]];
+                bi[N div d] := dsubs;
+            else
+                dsubs := bi[N div d];
+                if #dsubs eq 0 then continue; end if;
             end if;
-            t1 := ReportStart(X, Sprintf("SubGrpLstDivisor (%o)", d));
-            dsubs := Subgroups(G : OrderEqual := d);
-            ReportEnd(X, Sprintf("SubGrpLstDivisor (%o)", d), t1);
-            if #dsubs eq 0 then continue; end if;
-            dsubs := [SubgroupLatElement(tmp, dsubs[i]`subgroup : i:=i+ccount) : i in [1..#dsubs]];
-            bi[N div d] := dsubs;
             t1 := ReportStart(X, Sprintf("SubGrpLstSplitDivisor (%o)", d));
             bia[N div d] := SplitByAuts([dsubs], X : use_order := false);
             ReportEnd(X, Sprintf("SubGrpLstSplitDivisor (%o)", d), t1);
@@ -1137,6 +1165,12 @@ intrinsic SubGrpLstAut(X::LMFDBGrp) -> SubgroupLat
                 break;
             elif acount ge NUM_SUBS_LIMIT_AUT and dbreak eq 0 then
                 dbreak := N div d;
+                if terminate ne 0 then
+                    // we've declared in advance that we're not storing all subgroups, so this is the end
+                    Remove(~bi, dbreak);
+                    Remove(~bia, dbreak);
+                    break;
+                end if;
             end if;
         end for;
         tmp`subs := &cat[bi[d] : d in Sort([k : k in Keys(bi)])];
@@ -1168,7 +1202,12 @@ intrinsic AddAndTrimSubgroups(L::SubgroupLat, trim::BoolElt)
         X`AutAboveCutoff := #L;
     end if;
     // This also adds information about normal subgroups above the index bound
-    IncludeNormalSubgroups(L);
+    if Get(G, "subgroup_inclusions_known") then
+        IncludeNormalSubgroups(L);
+    else
+        // We don't construct the lattice of normal subgroups in this case, so we instead just mark the normal subgroups in place
+        MarkNormalSubgroups(L);
+    end if;
     if X`AutIndexBound ne 0 then
         if Get(X, "sylow_subgroups_known") then
             IncludeSylowSubgroups(L);
@@ -2124,15 +2163,8 @@ intrinsic SubGrpLst(G::LMFDBGrp) -> SubgroupLat
     res`inclusions_known := false;
     terminate := Get(G, "SubGrpLstByDivisorTerminate");
     if terminate ne 0 then
-        D := Divisors(G`order);
-        i := Index(D, terminate);
-        if i eq #D then
-            ibnd := 1;
-        else
-            ibnd := G`order div D[i+1];
-        end if;
-        subs := Reverse(Subgroups(G`MagmaGrp : IndexLimit:=ibnd));
-        res`index_bound := ibnd;
+        subs := Reverse(Subgroups(G`MagmaGrp : IndexLimit:=terminate));
+        res`index_bound := terminate;
         G`number_subgroup_classes := None();
         G`number_subgroups := None();
     else
@@ -2668,7 +2700,7 @@ intrinsic LMFDBSubgroup(H::SubgroupLatElt : normal_lattice:=false) -> LMFDBSubGr
     G := Lat`Grp;
     res := New(LMFDBSubGrp);
     res`LatElt := H;
-    if not normal_lattice then
+    if not normal_lattice and (Get(G, "subgroup_inclusions") or Lat`index_bound ne 0) then
         assert assigned Lat`NormLat;
         if H`normal then
             assert assigned H`NormLatElt;
@@ -2806,8 +2838,10 @@ intrinsic NormSubGrpLat(G::LMFDBGrp) -> SubgroupLat
     subs := Reverse(NormalSubgroups(GG));
     L`subs := [SubgroupLatElement(L, subs[i]`subgroup : i:=i, normal:=true) : i in [1..#subs]];
     ReportEnd(G, "NormSubGrpLat", t0);
-    ComputeLatticeEdges(~L, GG, IdentityHomomorphism(GG) : normal_lattice:=true);
-    SetClosures(~L);
+    if Get(G, "subgroup_inclusions_known") then
+        ComputeLatticeEdges(~L, GG, IdentityHomomorphism(GG) : normal_lattice:=true);
+        SetClosures(~L);
+    end if;
     return L;
 end intrinsic;
 
@@ -2824,8 +2858,10 @@ intrinsic NormSubGrpLatAut(G::LMFDBGrp) -> SubgroupLat
         subs := SolvAutSubs(G : normal:=true);
         L`subs := [SubgroupLatElement(L, subs[i]`subgroup : i:=i, normal:=true) : i in [1..#subs]];
         ReportEnd(G, "NormSubGrpLatAut", t0);
-        ComputeLatticeEdges(~L, Get(G, "Holomorph"), Get(G, "HolInj"));
-        SetClosures(~L);
+        if Get(G, "subgroup_inclusions_known") then
+            ComputeLatticeEdges(~L, Get(G, "Holomorph"), Get(G, "HolInj"));
+            SetClosures(~L);
+        end if;
         return L;
     else
         // This assumes more attributes are set than NormSubGrpLat currently does

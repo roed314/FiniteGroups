@@ -199,7 +199,11 @@ intrinsic minimal_normal(H::LMFDBSubGrp) -> BoolElt // Need to be subgroup attri
       if #{F : F in CompositionFactors(HH)} ne 1 then return false; end if;
     end if;
     // We fall back on iterating over the minimal normal subgroups of G.  This should occur rarely.
-    for N in Get(G, "MagmaMinimalNormalSubgroups") do
+    Norms := Get(G, "MagmaMinimalNormalSubgroups");
+    if Type(Norms) eq NoneType then
+        return None();
+    end if;
+    for N in Norms do
       if HH eq N then
         return true;
       end if;
@@ -312,7 +316,7 @@ intrinsic mobius_quo(H::LMFDBSubGrp) -> Any
     x := H`LatElt;
     L := x`Lat;
     G := L`Grp;
-    if not Get(G, "normal_subgroups_known") then return None(); end if;
+    if not (Get(G, "normal_subgroups_known") and Get(G, "subgroup_inclusions_known")) then return None(); end if;
     y := x`NormLatElt;
     N := y`Lat;
     if assigned N`from_conj then
