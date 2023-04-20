@@ -53,7 +53,9 @@ desc := Read(infile);
 // since we just want to find as many as we can in the time allotted
 if codes eq "x" then
     G := StringToGroup(desc);
-    WriteTransitivePermutationRepresentations(G, outfile, label);
+    if not IsAbelian(G) then
+        WriteTransitivePermutationRepresentations(G, outfile, label);
+    end if;
     quit;
 end if;
 

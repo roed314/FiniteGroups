@@ -128,10 +128,20 @@ intrinsic WriteTransitivePermutationRepresentations(G::Grp, fname::MonStgElt, la
     Sd := Sym(d);
     best := [];
     t0 := Cputime();
+    since_success := 0;
+    ever_successful := false;
     while true do
+        if since_success gt 100 and not ever_successful then
+            d := Min(2 * d, #G);
+            Sd := Sym(d);
+            since_success := 0;
+        end if;
         H := RandomCoredSubgroups(G, triv, 1 : max_tries:=max_tries)[1];
         dd := Index(G, H);
-        if dd gt d or #H eq 1 then continue; end if;
+        if dd gt d or #H eq 1 then
+            since_success +:= 1;
+            continue;
+        end if;
         rho, P := CosetAction(G, H);
         chsh := CycleHash(P);
         if dd lt d then
@@ -140,8 +150,10 @@ intrinsic WriteTransitivePermutationRepresentations(G::Grp, fname::MonStgElt, la
             Sd := Sym(d);
         end if;
         if &or[(chsh eq pair[1] and IsConjugate(Sd, P, pair[2])) : pair in best] then
+            since_success +:= 1;
             continue;
         end if;
+        ever_successful := true;
         PrintFile(fname, Sprintf("x%o|%o|%o|%o|%o#%o", label, dd, Cputime() - t0, Join([SaveElt(g):g in Generators(H)], ","), chsh, GroupToString(P)));
         Append(~best, <chsh, P>);
     end while;
