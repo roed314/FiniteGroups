@@ -1129,7 +1129,7 @@ intrinsic SubGrpLstAut(X::LMFDBGrp) -> SubgroupLat
             for d in D do
                 if d * terminate le N then
                     dsubs := [H`subgroup : H in subs | H`order eq (N div d)];
-                    bi[d] := [SubgroupLatElement(tmp, dsubs[i] : i:=i+ccount) : i in [1..#dubs]];
+                    bi[d] := [SubgroupLatElement(tmp, dsubs[i] : i:=i+ccount) : i in [1..#subs]];
                     ccount +:= #dsubs;
                     // We don't want to duplicate the truncation code below, so we don't run SplitByAuts here
                 end if;
