@@ -138,8 +138,8 @@ intrinsic WriteTransitivePermutationRepresentations(G::Grp, fname::MonStgElt, la
         if &or[(chsh eq pair[1] and IsConjugate(Sd, P, pair[2])) : pair in best] then
             continue;
         end if;
-        PrintFile(fname, Sprintf("x%o|%o|%o|%o#%o", label, dd, SubgroupToString(G, H), chsh, GroupToString(P)));
-        Append(~best, <chsh, H>);
+        PrintFile(fname, Sprintf("x%o|%o|%o|%o#%o", label, dd, Join([SaveElt(g):g in Generators(H)], ","), chsh, GroupToString(P)));
+        Append(~best, <chsh, P>);
     end while;
 end intrinsic;
 
