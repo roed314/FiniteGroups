@@ -159,6 +159,33 @@ intrinsic WriteTransitivePermutationRepresentations(G::Grp, fname::MonStgElt, la
     end while;
 end intrinsic;
 
+intrinsic WriteAllTransitivePermutationRepresentations(G::Grp, d::RngIntElt, fname::MonStgElt, label::MonStgElt)
+{}
+    t0 := ReportStart(label, "Code-y");
+    N := #G div d;
+    t1 := ReportStart(label, "AllSubsOrderN");
+    S := Subgroups(G : OrderEqual:=N);
+    ReportEnd(label, "AllSubsOrderN", t1);
+    t1 := ReportStart(label, "CorefreeSubsOrderN");
+    S := [H`subgroup : H in S | #Core(G, H`subgroup) eq 1];
+    ReportEnd(label, "CorefreeSubsOrderN", t1);
+    best := [];
+    Sd := Sym(d);
+    for H in S do
+        rho, P := CosetAction(G, H);
+        chsh := CycleHash(P);
+        if &or[(chsh eq pair[1] and IsConjugate(Sd, P, pair[2])) : pair in best] then
+            continue;
+        end if;
+        Append(~best, <chsh, P, H>);
+    end for;
+    for data in best do
+        chsh, P, H := Explode(data);
+        PrintFile(fname, Sprintf("Y%o|%o|%o|%o#%o", label, d, Join([SaveElt(g):g in Generators(H)], ","), chsh, GroupToString(P)));
+    end for;
+    ReportEnd(label, "Code-y", t0);
+end intrinsic;
+
 intrinsic TransitivePermutationRepresentation(G::Grp, ns::SetEnum) -> Map, GrpPerm
 {}
     triv := sub<G|>;

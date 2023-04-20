@@ -43,6 +43,8 @@ if codes eq "X" then // identifying groups given in gps_to_id
     end if;
     ReportEnd(m, "Code-X", t0);
     quit;
+elif codes eq "y" then // trying to compute all subgroups of a given index
+    label, index := Explode(Split(label, ":"));
 end if;
 
 outfile := "DATA/computes/" * label;
@@ -57,6 +59,9 @@ if codes eq "x" then
     if not G`abelian then
         WriteTransitivePermutationRepresentations(G`MagmaGrp, outfile, label);
     end if;
+    quit;
+elif codes eq "y" then
+    WriteAllTransitivePermutationRepresentations(G`MagmaGrp, StringToInteger(index), outfile, label);
     quit;
 end if;
 
