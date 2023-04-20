@@ -2316,7 +2316,7 @@ intrinsic overs(x::SubgroupLatElt) -> Assoc
     // We build a list of candidate supergroups using Gassman vectors, then compute their "unders" and check if this is contained therein.
     Lat := x`Lat;
     GG := Lat`Grp;
-    if not Get(G, "subgroup_inclusions_known") then
+    if not Get(GG, "subgroup_inclusions_known") then
         return None();
     end if;
     n := Get(GG, "order");
