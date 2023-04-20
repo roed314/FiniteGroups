@@ -116,7 +116,7 @@ intrinsic TransitiveData(label::MonStgElt) -> TData
     return T;
 end intrinsic;
 
-intrinsic WriteTransitivePermutationRepresentations(G::Grp, fname::MonStgElt : max_tries:=20)
+intrinsic WriteTransitivePermutationRepresentations(G::Grp, fname::MonStgElt, label::MonStgElt : max_tries:=20)
 {Search for transitive permutation representations of G, writing them to the file
  specified by fname, only stopping when killed.  Will only write permutation representations of degree at most the best already found, }
     triv := sub<G|>;
@@ -136,7 +136,7 @@ intrinsic WriteTransitivePermutationRepresentations(G::Grp, fname::MonStgElt : m
         if &or[(chsh eq pair[1] and IsConjugate(Sd, H, pair[2])) : pair in best] then
             continue;
         end if;
-        PrintFile(fname, Sprintf("%o#%o", chsh, GroupToString(H)));
+        PrintFile(fname, Sprintf("x%o|%o|%o#%o", label, dd, chsh, GroupToString(H)));
         Append(~best, <chsh, H>);
     end while;
 end intrinsic;

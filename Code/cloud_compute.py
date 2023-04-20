@@ -82,6 +82,7 @@ def run(label, codes, timeout, memlimit, subgroup_index_bound):
         o = opj("DATA", "computes", label)
         if ope(o):
             with open(o) as F:
+                delayed = [] # Used for WriteTransitivePermutationRepresentations where we only want to copy lines of the smallest index found
                 for line in F:
                     # We double check that all output lines are marked with an appropriate code, in case the computation was interrupted while data was being written to disk (and thus before the Finished Code-x was written).
                     if line and line[0] in finished:
@@ -97,6 +98,11 @@ def run(label, codes, timeout, memlimit, subgroup_index_bound):
                             else:
                                 subgroup_index_bound = int(subgroup_index_bound)
                         _ = Fout.write(line)
+                    elif line[0] == "x":
+                        delayed.append(line)
+                if delayed:
+                    min_index = min(int(line.split("|")[1]) for line in delayed)
+                    _ = Fout.write("".join(line for line in delayed if in(line.split("|")[1]) == min_index))
             os.unlink(o) # Remove output so it's not copied multiple times
         e = opj("DATA", "errors", label)
         loc = None

@@ -53,7 +53,7 @@ desc := Read(infile);
 // since we just want to find as many as we can in the time allotted
 if codes eq "x" then
     G := StringToGroup(desc);
-    WriteTransitivePermutationRepresentations(G, outfile);
+    WriteTransitivePermutationRepresentations(G, outfile, label);
     quit;
 end if;
 

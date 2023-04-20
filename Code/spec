@@ -1,4 +1,5 @@
-{ LMFDBGrp.m
+{
+  LMFDBGrp.m
   Basics.m
   Hash.m
   Samples.m
