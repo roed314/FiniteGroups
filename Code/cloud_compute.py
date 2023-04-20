@@ -102,7 +102,7 @@ def run(label, codes, timeout, memlimit, subgroup_index_bound):
                         delayed.append(line)
                 if delayed:
                     min_index = min(int(line.split("|")[1]) for line in delayed)
-                    _ = Fout.write("".join(line for line in delayed if in(line.split("|")[1]) == min_index))
+                    _ = Fout.write("".join(line for line in delayed if int(line.split("|")[1]) == min_index))
             os.unlink(o) # Remove output so it's not copied multiple times
         e = opj("DATA", "errors", label)
         loc = None
