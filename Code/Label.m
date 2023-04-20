@@ -131,13 +131,14 @@ intrinsic WriteTransitivePermutationRepresentations(G::Grp, fname::MonStgElt, la
         H := RandomCoredSubgroups(G, triv, 1 : max_tries:=max_tries)[1];
         dd := Index(G, H);
         if dd gt d or #H eq 1 then continue; end if;
+        d := dd;
         rho, P := CosetAction(G, H);
         chsh := CycleHash(P);
         if dd lt d then best := []; end if;
         if &or[(chsh eq pair[1] and IsConjugate(Sd, P, pair[2])) : pair in best] then
             continue;
         end if;
-        PrintFile(fname, Sprintf("x%o|%o|%o|%o#%o", label, dd, GroupToString(H), chsh, GroupToString(P)));
+        PrintFile(fname, Sprintf("x%o|%o|%o|%o#%o", label, dd, SubgroupToString(G, H), chsh, GroupToString(P)));
         Append(~best, <chsh, H>);
     end while;
 end intrinsic;
