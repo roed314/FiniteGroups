@@ -1202,12 +1202,7 @@ intrinsic AddAndTrimSubgroups(L::SubgroupLat, trim::BoolElt)
         X`AutAboveCutoff := #L;
     end if;
     // This also adds information about normal subgroups above the index bound
-    if Get(G, "subgroup_inclusions_known") then
-        IncludeNormalSubgroups(L);
-    else
-        // We don't construct the lattice of normal subgroups in this case, so we instead just mark the normal subgroups in place
-        MarkNormalSubgroups(L);
-    end if;
+    IncludeNormalSubgroups(L);
     if X`AutIndexBound ne 0 then
         if Get(X, "sylow_subgroups_known") then
             IncludeSylowSubgroups(L);
