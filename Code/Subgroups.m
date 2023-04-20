@@ -2295,6 +2295,9 @@ intrinsic unders(x::SubgroupLatElt) -> Assoc
 {}
     Lat := x`Lat;
     GG := Lat`Grp;
+    if not Get(GG, "subgroup_inclusions_known") then
+        return None();
+    end if;
     G := GG`MagmaGrp;
     H := x`subgroup;
     aut := Lat`outer_equivalence and Get(GG, "HaveHolomorph");
@@ -2313,6 +2316,9 @@ intrinsic overs(x::SubgroupLatElt) -> Assoc
     // We build a list of candidate supergroups using Gassman vectors, then compute their "unders" and check if this is contained therein.
     Lat := x`Lat;
     GG := Lat`Grp;
+    if not Get(G, "subgroup_inclusions_known") then
+        return None();
+    end if;
     n := Get(GG, "order");
     m := x`order;
     ans := AssociativeArray();
@@ -2337,6 +2343,9 @@ end intrinsic;
 intrinsic aut_overs(x::SubgroupLatElt) -> Assoc
 {One entry from each autjugacy class}
     Lat := x`Lat;
+    if not Get(Lat`Grp, "subgroup_inclusions_known") then
+        return None();
+    end if;
     overs := Get(x, "overs");
     if Lat`outer_equivalence then
         return overs;
