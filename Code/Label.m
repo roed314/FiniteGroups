@@ -127,6 +127,7 @@ intrinsic WriteTransitivePermutationRepresentations(G::Grp, fname::MonStgElt, la
     d := 1024;
     Sd := Sym(d);
     best := [];
+    t0 := Cputime();
     while true do
         H := RandomCoredSubgroups(G, triv, 1 : max_tries:=max_tries)[1];
         dd := Index(G, H);
@@ -141,7 +142,7 @@ intrinsic WriteTransitivePermutationRepresentations(G::Grp, fname::MonStgElt, la
         if &or[(chsh eq pair[1] and IsConjugate(Sd, P, pair[2])) : pair in best] then
             continue;
         end if;
-        PrintFile(fname, Sprintf("x%o|%o|%o|%o#%o", label, dd, Join([SaveElt(g):g in Generators(H)], ","), chsh, GroupToString(P)));
+        PrintFile(fname, Sprintf("x%o|%o|%o|%o|%o#%o", label, dd, Cputime() - t0, Join([SaveElt(g):g in Generators(H)], ","), chsh, GroupToString(P)));
         Append(~best, <chsh, P>);
     end while;
 end intrinsic;
