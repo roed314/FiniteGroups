@@ -294,6 +294,7 @@ intrinsic LabelNormalSubgroups(S::SubgroupLat)
     G := S`Grp;
     autjugacy := Get(S, "outer_equivalence");
     by_ind := Get(S, "by_index_aut");
+    inc_known := Get(G, "subgroup_inclusions_known"); // if false, we use an alternate non-canonical tiebreaking method
     for index in Sort([k : k in Keys(by_ind)]) do
         subs := by_ind[index];
         if #subs eq 1 then
@@ -304,17 +305,18 @@ intrinsic LabelNormalSubgroups(S::SubgroupLat)
             by_acode := IndexFibers(subs, func<x|Index(avecs, Get(x[1], "aut_gassman_vec"))-1>);
         end if;
         for acode -> asubs in by_acode do
-            if #asubs eq 1 then
+            if #asubs eq 1 or not inc_known then
                 by_anum := asubs;
             else
                 by_anum := SortGClass(asubs, true);
             end if;
             for anum in [1..#by_anum] do
+                atie := (inc_known or #asubs eq 1) select IntegerToString(anum) else CremonaCode(anum : upper:=true);
                 if autjugacy then
                     sub := by_anum[anum][1];
                     sub`aut_label := [index, acode, anum];
                     sub`full_label := [index, acode, anum];
-                    sub`label := Sprintf("%o.%o%o.N", index, CremonaCode(acode), IntegerToString(anum));
+                    sub`label := Sprintf("%o.%o%o.N", index, CremonaCode(acode), atie);
                 else
                     aclass := by_anum[anum];
                     if #aclass eq 1 then
@@ -326,7 +328,7 @@ intrinsic LabelNormalSubgroups(S::SubgroupLat)
                     end if;
                     for ccode -> csubs in by_ccode do
                         // Normal, so gassman vec is enough to determine
-                        label := Sprintf("%o.%o%o.%o.N", index, CremonaCode(acode), anum, CremonaCode(ccode));
+                        label := Sprintf("%o.%o%o.%o.N", index, CremonaCode(acode), atie, CremonaCode(ccode));
                         by_cnum := csubs;
                         by_cnum[1]`label := label;
                     end for;

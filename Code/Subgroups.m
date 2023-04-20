@@ -737,8 +737,12 @@ intrinsic IncludeNormalSubgroups(L::SubgroupLat)
             Hnew`subgroup_count := 1;
         end if;
         Hnew`cc_count := Hnew`subgroup_count;
-        Hnew`normal_overs := {lookup[k] : k in Keys(H`overs)};
-        Hnew`normal_unders := {lookup[k] : k in Keys(H`unders)};
+        if assigned H`overs then
+            Hnew`normal_overs := {lookup[k] : k in Keys(H`overs)};
+        end if;
+        if assigned H`unders then
+            Hnew`normal_unders := {lookup[k] : k in Keys(H`unders)};
+        end if;
         Hnew`special_labels := H`special_labels;
         if assigned H`easy_hash then Hnew`easy_hash := H`easy_hash; end if;
         if assigned H`gassman_vec then Hnew`gassman_vec := H`gassman_vec; end if;
