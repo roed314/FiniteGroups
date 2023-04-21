@@ -52,12 +52,16 @@ def utcnow():
     return datetime.now(timezone.utc).strftime("%H:%M:%S.%f")[:-4]
 
 def run(label, codes, timeout, memlimit, subgroup_index_bound):
+    if codes == "X":
+        labelname = "m" # label gets in the way of the intrinsic we'd defined
+    else:
+        labelname = "label"
     if sys.platform == "linux":
         # 1048576B = 1MB
-        subprocess.run('prlimit --as=%s --cpu=%s magma -b label:=%s codes:=%s ComputeCodes.m >> DATA/errors/%s 2>&1' % (memlimit*1048576, ceil(timeout), label, codes, label), shell=True)
+        subprocess.run('prlimit --as=%s --cpu=%s magma -b %s:=%s codes:=%s ComputeCodes.m >> DATA/errors/%s 2>&1' % (memlimit*1048576, ceil(timeout), labelname, label, codes, label), shell=True)
     else:
         # For now, don't enforce a memory limit
-        subprocess.run('parallel -n0 --timeout %s "magma -b label:=%s codes:=%s ComputeCodes.m >> DATA/errors/%s 2>&1" ::: 1' % (ceil(timeout), label, codes, label), shell=True)
+        subprocess.run('parallel -n0 --timeout %s "magma -b %s:=%s codes:=%s ComputeCodes.m >> DATA/errors/%s 2>&1" ::: 1' % (ceil(timeout), labelname, label, codes, label), shell=True)
     # Move timing and error information to the common output file and extract timeout and error information
     sublines = []
     with open("output", "a") as Fout:
@@ -78,6 +82,7 @@ def run(label, codes, timeout, memlimit, subgroup_index_bound):
         o = opj("DATA", "computes", label)
         if ope(o):
             with open(o) as F:
+                delayed = [] # Used for WriteTransitivePermutationRepresentations where we only want to copy lines of the smallest index found
                 for line in F:
                     # We double check that all output lines are marked with an appropriate code, in case the computation was interrupted while data was being written to disk (and thus before the Finished Code-x was written).
                     if line and line[0] in finished:
@@ -93,6 +98,11 @@ def run(label, codes, timeout, memlimit, subgroup_index_bound):
                             else:
                                 subgroup_index_bound = int(subgroup_index_bound)
                         _ = Fout.write(line)
+                    elif line[0] == "x":
+                        delayed.append(line)
+                if delayed:
+                    min_index = min(int(line.split("|")[1]) for line in delayed)
+                    _ = Fout.write("".join(line for line in delayed if int(line.split("|")[1]) == min_index))
             os.unlink(o) # Remove output so it's not copied multiple times
         e = opj("DATA", "errors", label)
         loc = None
@@ -193,11 +203,13 @@ def layout_graph(label, graph, timeout, memlimit, rank_by_order=True):
             ranks[order].append(f'order{order}')
     nodes = ";\n".join(nodes)
     edges = ";\n".join(edges)
+    if edges:
+        edges += ";" # deal with no edges by moving semicolon here.
     ranks = ";\n".join('{rank=same; "%s"}' % ('" "'.join(labs)) for labs in ranks.values())
     graph = f"""strict digraph "{label}" {{
 rankdir=TB;
 splines=line;
-{edges};
+{edges}
 {nodes};
 {ranks};
 }}
@@ -294,7 +306,7 @@ def compute_diagramx(label, sublines, subgroup_index_bound, end_time, memlimit):
                 else:
                     accessors.append(([lookup["aut_label"]] * 2 + [lookup["short_label"]] * 2) * 2)
     if out_equiv:
-        graphs = [get_graph(subs), get_graph(norms)]
+        graphs = [get_graph(subs), get_graph(norms, normal=True)]
     else:
         graphs = [aut_graph(subs), aut_graph(norms, normal=True), get_graph(subs), get_graph(norms, normal=True)]
     xcoords = []
@@ -354,6 +366,17 @@ def skip_codes(codes, skipped):
         codes = codes.replace(c, "")
     return codes, skipped
 
+def load_sublines(label):
+    # This function is used for computing subgroup diagram layouts when a previous run died during that step.
+    with open(opj("DATA", "sublines", label)) as F:
+        sublines = list(F)
+    subgroup_index_bound, sublines = sublines[0], sublines[1:]
+    if subgroup_index_bound == r"\N":
+        subgroup_index_bound = None
+    else:
+        subgroup_index_bound = int(subgroup_index_bound)
+    return sublines, subgroup_index_bound
+
 with open("DATA/manifest") as F:
     for line in F:
         todo, out, timings, script, cnt, per_job, job_timeout, total_timeout = line.strip().split()
@@ -384,9 +407,9 @@ with open("DATA/manifest") as F:
                 # A previous computation was interrupted while trying to compute the subgroup lattice layout
                 # We need to retrieve the stored subgroups, and subgroup_index_bound
                 sublines, subgroup_index_bound = load_sublines(label)
-                end_time = start_time + timeout
-                compute_diagramx(label, sublines, subgroup_index_bound, end_time, memlimit) # writes directly to output, handles timeouts
-                break
+                end_time = start_time + total_timeout
+                skipped = compute_diagramx(label, sublines, subgroup_index_bound, end_time, memlimit) # writes directly to output, handles timeouts
+                codes = "" # Don't execute the while loop
             while codes:
                 timeout = min(job_timeout, total_timeout - (time.time() - start_time))
                 #print("Loop with timeout %s" % timeout)

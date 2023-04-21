@@ -3,26 +3,69 @@
 AttachSpec("spec");
 SetColumns(0);
 
-if not assigned label then
-    print "This script requires the label of the group as input, something like magma label:=1024.a ComputeCodes.m";
-    quit;
-end if;
 if not assigned codes then
     // default order for computing invariants
     codes := "blajJzcCrqQsvSLWhtguoIimw";
 end if;
+if not assigned label then
+    if codes ne "X" then
+        print "This script requires the label of the group as input, something like magma label:=1024.a ComputeCodes.m";
+        quit;
+    end if;
+end if;
+if not assigned m then
+    if codes eq "X" then
+        print "This script requires the temporary id number of a group to label";
+        quit;
+    end if;
+    m := ""; // Ugh; magma requires m to be defined even though that code path is not getting run.
+end if;
 
-infile := "DATA/descriptions/" * label;
-outfile := "DATA/computes/" * label;
-desc := Read(infile);
 if assigned debug or assigned verbose then
     SetVerbose("User1", 1); // for testing
 end if;
 if assigned debug then
     SetDebugOnError(true); // for testing
 end if;
-G := MakeBigGroup(desc, label);
-Preload(G);
+
+if codes eq "X" then // identifying groups given in gps_to_id
+    // Using label as a variable name gets in the way of the intrinsic, but we don't want to change the API, so we used m instead
+    outfile := "DATA/computes/" * m;
+    infile := "DATA/gps_to_id/" * m;
+    sources, desc := Explode(Split(Read(infile), "|"));
+    t0 := ReportStart(m, "Code-X");
+    G := StringToGroup(desc);
+    lab := label(G);
+    if Type(lab) eq NoneType then
+        PrintFile(outfile, Sprintf("X%o|\\N", m));
+    else
+        PrintFile(outfile, Sprintf("X%o|%o", m, lab));
+    end if;
+    ReportEnd(m, "Code-X", t0);
+    quit;
+elif codes eq "y" then // trying to compute all subgroups of a given index
+    label, index := Explode(Split(label, ":"));
+end if;
+
+outfile := "DATA/computes/" * label;
+infile := "DATA/descriptions/" * label;
+desc := Read(infile);
+
+G := MakeBigGroup(desc, label : preload:=true);
+
+// We don't use the infrastructure below for finding transitive permutation representations,
+// since we just want to find as many as we can in the time allotted
+if codes eq "x" then
+    if not G`abelian then
+        WriteTransitivePermutationRepresentations(G`MagmaGrp, outfile, label);
+    end if;
+    quit;
+elif codes eq "y" then
+    WriteAllTransitivePermutationRepresentations(G`MagmaGrp, StringToInteger(index), outfile, label);
+    quit;
+end if;
+
+
 files := Split(Pipe("ls", ""), "\n");
 code_lookup := AssociativeArray();
 for fname in files do

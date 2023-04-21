@@ -77,6 +77,178 @@ If giveup is true, then rather than running through options with the right hash 
     return label, _;
 end intrinsic;
 
+declare type TData;
+declare attributes TData:
+  label,
+  small_opts,
+  med_opts,
+  med_complete;
+
+intrinsic TransitiveData(label::MonStgElt) -> TData
+{}
+    T := New(TData);
+    T`label := label;
+    T`small_opts := {};
+    T`med_opts := AssociativeArray();
+    fname := "DATA/treps/" * label;
+    ok := OpenTest(fname);
+    if ok then
+        complete, reps := Explode(Split(Read(fname), "|"));
+        T`med_complete := (complete eq "t");
+        if "T" in reps then
+            T`small_opts := {<StringToInteger(m) : m in Split(P, "T")> : P in Split(reps, ":")};
+        else
+            for P in Split(reps, ":") do
+                chsh, PP := Explode(Split(P, "#"));
+                PP := StringToGroup(P);
+                n := Degree(PP);
+                chsh := StringToInteger(chsh);
+                if not IsDefined(T`med_opts, n) then
+                    T`med_opts[n] := AssociativeArray();
+                end if;
+                if not IsDefined(T`med_opts[n], chsh) then
+                    T`med_opts[n][chsh] := [];
+                end if;
+                Append(~T`med_opts[n][chsh], PP);
+            end for;
+        end if;
+    end if;
+    return T;
+end intrinsic;
+
+intrinsic WriteTransitivePermutationRepresentations(G::Grp, fname::MonStgElt, label::MonStgElt : max_tries:=20)
+{Search for transitive permutation representations of G, writing them to the file
+ specified by fname, only stopping when killed.  Will only write permutation representations of degree at most the best already found, }
+    triv := sub<G|>;
+    // We don't allow representations with enormous degree,
+    // since they're not going to be practical for isomorphism testing
+    // and will take a lot of space to store.  We start with 1024 as a
+    // guess for what is "reasonable"
+    d := 1024;
+    Sd := Sym(d);
+    best := [];
+    t0 := Cputime();
+    since_success := 0;
+    ever_successful := false;
+    while true do
+        if since_success gt 100 and not ever_successful then
+            d := Min(2 * d, #G);
+            Sd := Sym(d);
+            since_success := 0;
+        end if;
+        H := RandomCoredSubgroups(G, triv, 1 : max_tries:=max_tries)[1];
+        dd := Index(G, H);
+        if dd gt d or #H eq 1 then
+            since_success +:= 1;
+            continue;
+        end if;
+        rho, P := CosetAction(G, H);
+        chsh := CycleHash(P);
+        if dd lt d then
+            best := [];
+            d := dd;
+            Sd := Sym(d);
+        end if;
+        if &or[(chsh eq pair[1] and IsConjugate(Sd, P, pair[2])) : pair in best] then
+            since_success +:= 1;
+            continue;
+        end if;
+        ever_successful := true;
+        PrintFile(fname, Sprintf("x%o|%o|%o|%o|%o#%o", label, dd, Cputime() - t0, Join([SaveElt(g):g in Generators(H)], ","), chsh, GroupToString(P)));
+        Append(~best, <chsh, P>);
+    end while;
+end intrinsic;
+
+intrinsic WriteAllTransitivePermutationRepresentations(G::Grp, d::RngIntElt, fname::MonStgElt, label::MonStgElt)
+{}
+    t0 := ReportStart(label, "Code-y");
+    N := #G div d;
+    t1 := ReportStart(label, "AllSubsOrderN");
+    S := Subgroups(G : OrderEqual:=N);
+    ReportEnd(label, "AllSubsOrderN", t1);
+    t1 := ReportStart(label, "CorefreeSubsOrderN");
+    S := [H`subgroup : H in S | #Core(G, H`subgroup) eq 1];
+    ReportEnd(label, "CorefreeSubsOrderN", t1);
+    best := [];
+    Sd := Sym(d);
+    for H in S do
+        rho, P := CosetAction(G, H);
+        chsh := CycleHash(P);
+        if &or[(chsh eq pair[1] and IsConjugate(Sd, P, pair[2])) : pair in best] then
+            continue;
+        end if;
+        Append(~best, <chsh, P, H>);
+    end for;
+    for data in best do
+        chsh, P, H := Explode(data);
+        PrintFile(fname, Sprintf("y%o|%o|%o|%o#%o", label, d, Join([SaveElt(g):g in Generators(H)], ","), chsh, GroupToString(P)));
+    end for;
+    ReportEnd(label, "Code-y", t0);
+end intrinsic;
+
+intrinsic TransitivePermutationRepresentation(G::Grp, ns::SetEnum) -> Map, GrpPerm
+{}
+    triv := sub<G|>;
+    while true do
+        H := RandomCoredSubgroup(G, triv, ns);
+        if Index(G, H) in ns then
+            rho, P := CosetAction(G, H);
+            return rho, P;
+        end if;
+    end while;
+end intrinsic;
+
+intrinsic label_perm_method(G::Grp: hsh:=0) -> Any
+{Attempts to find the label of a group G using stored transitive permutation representations.}
+    N := #G;
+    if hsh eq 0 then hsh := hash(G); end if;
+    Ts := [TransitiveData(pair[1]) : pair in GroupsWithHash(N, hsh)];
+    skips := [T`label : T in Ts | #T`small_opts eq 0 and #T`med_opts eq 0];
+    if #skips gt 0 then
+        print("Skipped labels:", Join(skips, ","));
+    end if;
+    Ts := [T : T in Ts | #T`small_opts gt 0 or #T`med_opts gt 0];
+    while true do
+        if #Ts eq 0 then
+            // This could happen if we didn't have available permutation representations to begin with,
+            // or if they were all eliminated below using med_complete
+            return None();
+        end if;
+        ns := &join([Keys(T`med_opts) : T in Ts]) join &join[{nt[1] : nt in T`small_opts} : T in Ts]; // Collect degrees n that we're looking for
+        // Randomly choose a transitive representation of an appropriate degree
+        // Note that this could hang if there are no representatios of degree among the ns, or if it's just hard to find one.
+        rho, GG := TransitivePermutationRepresentation(G, ns);
+        n := Degree(GG);
+        if n le 47 and (n ne 32 or N lt 512 or N gt 40000000000) then
+            t, n := TransitiveGroupIdentification(GG);
+            for T in Ts do
+                if <n, t> in T`small_opts then
+                    return T`label;
+                end if;
+            end for;
+            // We can conclude that G is not present, since the enumeration of transitive groups in this range is complete.
+            return None();
+        else
+            poss := [T : T in Ts | IsDefined(T`med_opts, n)];
+            if #poss gt 0 then
+                chsh := CycleHash(GG);
+                poss := [T : T in poss | IsDefined(T`med_opts[n], chsh)];
+                if #poss gt 0 then
+                    Sn := Sym(n);
+                    for T in poss do
+                        for HH in T`med_opts[n][chsh] do
+                            if IsConjugate(Sn, GG, HH) then
+                                return T`label;
+                            end if;
+                        end for;
+                    end for;
+                end if;
+            end if;
+            // When we know all of the transitive representations of degree n (recorded using med_complete), so we may be able to remove some options
+            Ts := [T : T in Ts | not (T`med_complete and IsDefined(T`med_opts, n))];
+        end if;
+    end while;
+end intrinsic;
 
 intrinsic label(G::LMFDBGrp : strict:=true, giveup:=false) -> Any
 {Assign label to a LMFDBGrp}

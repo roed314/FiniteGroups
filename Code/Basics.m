@@ -35,6 +35,7 @@ intrinsic AssignBasicAttributes(G::LMFDBGrp)
   attrs := GetBasicAttributesGrp();
   GG := G`MagmaGrp;
   for attr in attrs do
+    //print attr;
     mag_attr:=attr[1];
     db_attr:=attr[2];
     if not HasAttribute(G, db_attr) then

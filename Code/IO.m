@@ -11,7 +11,7 @@ IntegerListCols := ["cycle_type", "denominators", "factors_of_aut_order", "faith
 SmallintListCols := ["factors_of_order", "gens_used", "exponents_of_order", "diagramx"];
 NumericListCols := ["order_stats","cc_stats","div_stats","aut_stats","irrep_stats","ratrep_stats","field","perm_gens", "aut_gens"];
 
-BoolCols := ["Agroup", "Zgroup", "abelian", "all_subgroups_known", "complex_characters_known", "rational_characters_known", "almost_simple", "central", "central_product", "characteristic", "cyclic", "direct", "direct_product", "faithful", "indecomposible", "irreducible", "maximal", "maximal_normal", "maximal_subgroups_known", "metabelian", "metacyclic", "minimal", "minimal_normal", "monomial", "nilpotent", "normal", "normal_subgroups_known", "complements_known", "outer_equivalence", "perfect", "prime", "primitive", "quasisimple", "rational", "semidirect_product", "simple", "solvable", "split", "stem", "subgroup_inclusions_known", "supersolvable", "sylow_subgroups_known", "wreath_product", "standard_generators", "quotient_cyclic", "quotient_abelian", "quotient_solvable", "proper", "complete", "central_factor", "AllSubgroupsOk"];
+BoolCols := ["Agroup", "Zgroup", "abelian", "all_subgroups_known", "complex_characters_known", "rational_characters_known", "almost_simple", "central", "central_product", "characteristic", "cyclic", "direct", "direct_product", "faithful", "indecomposible", "irreducible", "maximal", "maximal_normal", "maximal_subgroups_known", "metabelian", "metacyclic", "minimal", "minimal_normal", "monomial", "nilpotent", "normal", "normal_subgroups_known", "complements_known", "outer_equivalence", "perfect", "prime", "primitive", "quasisimple", "rational", "semidirect_product", "simple", "solvable", "split", "stem", "subgroup_inclusions_known", "supersolvable", "sylow_subgroups_known", "wreath_product", "standard_generators", "quotient_cyclic", "quotient_abelian", "quotient_solvable", "proper", "complete", "central_factor", "AllSubgroupsOk", "UseSolvAut", "HaveHolomorph"];
 
 // creps has a gens which is not integer[]
 JsonbCols := ["quotient_fusion", "decomposition", "traces", "gens", "values", "direct_factorization", "representations"];
@@ -660,19 +660,29 @@ intrinsic Preload(G::LMFDBGrp : sep:="|")
     end if;
 end intrinsic;
 
-intrinsic ReportStart(G::LMFDBGrp, job::MonStgElt) -> FldReElt
+intrinsic ReportStart(label::MonStgElt, job::MonStgElt) -> FldReElt
 {}
     msg := "Starting " * job;
     System("mkdir -p DATA/timings/");
-    PrintFile("DATA/timings/" * G`label, msg);
+    PrintFile("DATA/timings/" * label, msg);
     vprint User1: msg;
     return Cputime();
 end intrinsic;
 
-intrinsic ReportEnd(G::LMFDBGrp, job::MonStgElt, t0::FldReElt)
+intrinsic ReportStart(G::LMFDBGrp, job::MonStgElt) -> FldReElt
+{}
+    return ReportStart(G`label, job);
+end intrinsic;
+
+intrinsic ReportEnd(label::MonStgElt, job::MonStgElt, t0::FldReElt)
 {}
     msg := Sprintf("Finished %o in %o", job, Cputime() - t0);
     System("mkdir -p DATA/timings/");
-    PrintFile("DATA/timings/" * G`label, msg);
+    PrintFile("DATA/timings/" * label, msg);
     vprint User1: msg;
+end intrinsic;
+
+intrinsic ReportEnd(G::LMFDBGrp, job::MonStgElt, t0::FldReElt)
+{}
+    ReportEnd(G`label, job, t0);
 end intrinsic;

@@ -1,5 +1,5 @@
 
-intrinsic MakeBigGroup(desc::MonStgElt, label::MonStgElt) -> LMFDBGrp
+intrinsic MakeBigGroup(desc::MonStgElt, label::MonStgElt : preload:=false) -> LMFDBGrp
     {Create an LMFDBGrp object for StringToGroup(desc)}
     f, cover := StringToGroupHom(desc);
     if cover then
@@ -8,6 +8,10 @@ intrinsic MakeBigGroup(desc::MonStgElt, label::MonStgElt) -> LMFDBGrp
         G := Domain(f);
     end if;
     G := NewLMFDBGrp(G, label);
+    G`order := StringToInteger(Split(label, ".")[1]);
+    if preload then
+        Preload(G);
+    end if;
     AssignBasicAttributes(G);
     G`ElementReprHom := f;
     G`ElementReprCovers := cover;

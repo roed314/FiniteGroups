@@ -8,7 +8,11 @@ intrinsic almost_simple(G::LMFDBGrp) -> Any
     end if;
 
     GG := G`MagmaGrp;
-    for N in Get(G, "MagmaMinimalNormalSubgroups") do
+    Norms := Get(G, "MagmaMinimalNormalSubgroups");
+    if Type(Norms) eq NoneType then
+        return None();
+    end if;
+    for N in Norms do
         if not IsAbelian(N) and IsSimple(N) and #Centralizer(GG, N) eq 1 then
             return true;
         end if;
@@ -278,7 +282,10 @@ intrinsic exponents_of_order(G::LMFDBGrp) -> Any
 end intrinsic;
 
 intrinsic metabelian(G::LMFDBGrp) -> BoolElt
-    {Determine if a group is metabelian}
+{Determine if a group is metabelian}
+    if not Get(G, "solvable") then
+        return false;
+    end if;
     g:=G`MagmaGrp;
     return IsAbelian(DerivedSubgroup(g));
 end intrinsic;
@@ -594,10 +601,14 @@ intrinsic MagmaMinimalNormalSubgroups(G::LMFDBGrp) -> SeqEnum
 {The minimal normal subgroups of G}
     if Type(G`MagmaGrp) eq GrpMat then
         // MinimalNormalSubgroups not implemented for matrix groups
-        assert Get(G, "normal_subgroups_known");
-        L := BestNormalSubgroupLat(G);
-        triv := Rep(Get(L, "by_index")[G`order])`i;
-        return [N`subgroup : N in L`subs | IsDefined(N`unders, triv)];
+        if Get(G, "normal_subgroups_known") and Get(G, "subgroup_inclusions_known") then
+            L := BestNormalSubgroupLat(G);
+            triv := Rep(Get(L, "by_index")[G`order])`i;
+            return [N`subgroup : N in L`subs | IsDefined(N`unders, triv)];
+        else
+            // Could work harder here....
+            return None();
+        end if;
     end if;
     return MinimalNormalSubgroups(G`MagmaGrp);
 end intrinsic;
@@ -761,9 +772,13 @@ intrinsic MagmaAutGroup(G::LMFDBGrp) -> Grp
         A := AutomorphismGroup(GG, gens, auts);
     else
         t0 := ReportStart(G, "MagmaAutGroup");
-        A := AutomorphismGroup(G`MagmaGrp);
+        if assigned G`UseSolvAut and G`UseSolvAut and Type(G`MagmaGrp) eq GrpPC then
+            A := AutomorphismGroupSolubleGroup(G`MagmaGrp);
+        else
+            A := AutomorphismGroup(G`MagmaGrp);
+        end if;
         ReportEnd(G, "MagmaAutGroup", t0);
-        if not CheckValidAutGroup(A, G`MagmaGrp) then
+        if G`order ne 1 and not CheckValidAutGroup(A, G`MagmaGrp) then
             if Type(G`MagmaGrp) eq GrpPC then
                 A := AutomorphismGroupSolubleGroup(G`MagmaGrp);
                 if CheckValidAutGroup(A, G`MagmaGrp) then
@@ -1786,7 +1801,11 @@ the centralizer C = C_G(N) together with N form a central product decomposition 
 central (C = G) since if a complement C' properly contained in C = G exists, then it cannot also be central since G
 is not abelian. Since C' must itself be normal (NC' = G), we will encounter C' (with centralizer smaller than G)
 somewhere else in the loop. */
-        return &or[Get(H, "central_factor") : H in Get(G, "NormalSubgroups")];
+        if Get(G, "normal_subgroups_known") then
+            return &or[Get(H, "central_factor") : H in Get(G, "NormalSubgroups")];
+        else
+            return None();
+        end if;
     end if;
 end intrinsic;
 

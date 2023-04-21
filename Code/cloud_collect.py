@@ -2,7 +2,7 @@
 
 # Move the output file to be collected into the DATA directory, named output{n}.txt, where n is the phase.
 
-import os, re, string
+import sys, os, re, string
 import argparse
 from collections import defaultdict, Counter
 
@@ -281,34 +281,197 @@ def label_charconj(out):
             for label, D in out["GrpConjCls"][gp_label].items():
                 D["centralizer"] = centralizers[int(D["counter"])-1]
 
-def move_monsolv(infile, outfile, overwrite=False):
-    # Updates an output file from an older format (where monomial and solvability were part of Code-c) to a newer format (where they are part of Code-v)
+def update_output_file(infile, outfile, overwrite=False):
+    # Update output files based on several changes to tmpheaders (moving monomial and solvability from Code-c to Code-v, rank and eulerian_function from Code-s to Code-i, etc)
     if not overwrite and ope(outfile):
         raise ValueError(f"{outfile} already exists")
     with open(infile) as F:
         with open(outfile, "w") as Fout:
             for line in F:
-                if line[0] == "c" and line.count("|") == 6: # old format
+                if line[0] == "c" and line.count("|") == 6: # old format for monomial and solvability
                     pieces = line.split("|")
                     label = pieces[0][1:]
                     _ = Fout.write("|".join(pieces[:3] + pieces[5:])) # last piece includes \n
-                    _ = Fout.write(f"v{label}|{pieces[3]}|{pieces[4]}\n")
+                    _ = Fout.write("|".join(["v" + pieces[0][1:], pieces[3], pieces[4]]) + "\n")
+                elif line[0] == "L" and line.count("|") == 13: # old format for a bunch of Weyl subgroup quantities
+                    pieces = line.split("|")
+                    _ = Fout.write("|".join(pieces[:4]) + "\n")
+                    _ = Fout.write("|".join(["W" + pieces[0][1:], pieces[1]] + pieces[4:])) # last piece includes \n
+                elif line[0] == "s" and line.count("|") == 22: # old format for rank and eulerian_function
+                    pieces = line.split("|")
+                    _ = Fout.write("|".join(pieces[:3] + pieces[4:8] + pieces[9:])) # last piece includes \n
+                    _ = Fout.write("|".join(["i" + pieces[0][1:], pieces[3], pieces[8]]) + "\n")
+                elif line[0] == "S" and line.count("|") == 55: # old format for mobius_quo and mobius_sub
+                    pieces = line.split("|")
+                    _ = Fout.write("|".join(pieces[:29] + pieces[31:])) # last piece includes \n
+                    _ = Fout.write("|".join(["I" + pieces[0][1:], pieces[24], pieces[29], pieces[30]]) + "\n")
                 else:
                     _ = Fout.write(line)
 
-def move_weyl(infile, outfile, overwrite=False):
-    if not overwrite and ope(outfile):
-        raise ValueError(f"{outfile} already exists")
-    with open(infile) as F:
-        with open(outfile, "w") as Fout:
-            for line in F:
-                if line[0] == "L" and line.count("|") == 13: # old format
-                    pieces = line.split("|")
-                    _ = Fout.write("|".join(pieces[:4]) + "\n")
-                    Wlabel = "W" + pieces[0][1:]
-                    _ = Fout.write("|".join([Wlabel, pieces[1]] + pieces[4:])) # last piece includes \n
+def update_all_outputs(outfolder, overwrite=False):
+    # Should be run inside the input folder
+    for root, dirs, files in os.walk("."):
+        os.makedirs(opj(outfolder, root[2:]), exist_ok=True)
+        if "TE" in dirs:
+            os.rename(opj(root[2:], "TE"), opj(outfolder, root[2:], "TE"))
+        for fname in files:
+            update_output_file(opj(root[2:], fname), opj(outfolder, root[2:], fname), overwrite=overwrite)
+
+def extract_unlabeled_groups(infolder, outfolder):
+    matcher = re.compile(r"\?([^\?]+)\?")
+    unlabeled = defaultdict(set)
+    for root, dirs, files in os.walk(infolder):
+        for fname in files:
+            if fname.startswith("output") or fname.startswith("grp-"):
+                with open(opj(root, fname)) as F:
+                    for line in F:
+                        label = line[1:].split("|")[0].split("(")[0]
+                        for x in matcher.findall(line):
+                            unlabeled[label].add(x)
+    i = 0
+    for label in sorted(unlabeled, key=sort_key):
+        for x in unlabeled[label]:
+            i += 1
+            with open(opj(outfolder, str(i)), "w") as F:
+                _ = F.write(f"{label}|{x}\n")
+
+def build_treps(datafolder="/scratch/grp", alias_file="DATA/aliases.txt", descriptions_folder="DATA/descriptions"):
+    all_labels = set(os.listdir(descriptions_folder))
+    sys.path.append(os.path.expanduser("~/lmfdb"))
+    from lmfdb import db
+    manual_old = {
+        "20T272": "3420.a",
+        "22T25": "2420.x",
+        "22T17": "2420.bl",
+        "22T18": "2420.b",
+        "22T21": "6050.m",
+        "22T25": "12100.o",
+        "30T808": "12180.a",
+        "33T19": "3630.b",
+        "33T20": "3630.p",
+        "33T21": "3630.p",
+        "33T25": "7260.bg",
+        "38T18": "4332.g",
+        "38T29": "12996.p",
+        "38T33": "25308.a",
+        "44T55": "2420.ba",
+        "44T56": "2420.y",
+        "44T57": "2420.p",
+        "44T58": "2420.q",
+        "44T59": "2420.x",
+        "44T61": "2420.bl",
+        "44T62": "2420.b",
+        "44T136": "12100.q",
+        "44T137": "12100.n",
+        "44T139": "12100.o",
+        "44T233": "39732.a",
+    }
+    manual_new = {
+        "26T21": "2028.q",
+        "26T22": "2028.r",
+        "26T23": "2028.s",
+        "39T34": "2028.s",
+        "26T24": "2028.t",
+        "39T35": "2028.t",
+        "39T32": "2028.u",
+        "39T33": "2028.v",
+        "22T16": "2420.bn",
+        "44T60": "2420.bn",
+        "26T27": "3042.e",
+        "39T39": "3042.e",
+        "39T40": "3042.e",
+        "39T38": "3042.f",
+        "42T334": "3276.h",
+        "42T335": "3276.h",
+        "38T16": "4332.n",
+        "38T17": "4332.o",
+        "38T19": "4332.p",
+        "26T40": "6084.i",
+        "39T46": "6084.i",
+        "26T41": "6084.j",
+        "39T45": "6084.j",
+        "39T44": "6084.k",
+        "38T20": "6498.m",
+        "38T21": "6498.n",
+        "38T22": "6498.o",
+        "22T24": "12100.bk",
+        "44T138": "12100.bk",
+        "38T25": "12996.z",
+        "38T26": "12996.ba",
+        "38T27": "12996.bb",
+        "38T28": "12996.bc",
+        "38T30": "12996.bd",
+        "46T13": "23276.a",
+        "46T14": "23276.b",
+        "46T15": "23276.c",
+        "46T16": "23276.d",
+    }
+    taliases = defaultdict(list)
+    tre = re.compile(r"(\d+)T(\d+)")
+    tseen = defaultdict(set)
+    with open(alias_file) as F:
+        for line in F:
+            label, desc = line.strip().split()
+            m = tre.fullmatch(desc)
+            if m:
+                n, t = [int(c) for c in m.groups()]
+                taliases[label].append(desc)
+                tseen[n].add(t)
+    tgid = {}
+    tneeded = defaultdict(list)
+    tneeded[32] = range(2799324, 2801325)
+    for rec in db.gps_transitive.search({"order":{"$or":[512, 640, 768, 896, 1024, 1152, 1280, 1408, 1536, 1664, 1792, 1920, {"$gt": 2000}]}, "n":{"$ne": 32}}, ["n", "t", "order", "label", "gapid"]):
+        tneeded[rec["n"]].append(rec["t"])
+        if rec["gapid"] != 0:
+            tgid[rec["label"]] = f"{rec['order']}.{rec['gapid']}"
+    tmissing = {}
+    lmissing = []
+    for n in range(1, 48):
+        v = []
+        for t in tneeded[n]:
+            if t not in tseen[n]:
+                tlabel = f"{n}T{t}"
+                if tlabel in tgid:
+                    label = tgid[tlabel]
+                    taliases[label].append(tlabel)
+                    if label not in all_labels:
+                        lmissing.append(label)
                 else:
-                    _ = Fout.write(line)
+                    v.append(t)
+        if v:
+            v.sort()
+            tmissing[n] = v
+    return tmissing, lmissing, taliases
+
+    # transitive_subs = defaultdict(list)
+    # sib = defaultdict(list)
+    # for root, dirs, files in os.walk(datafolder):
+    #     for fname in files:
+    #         if fname.startswith("output") or fname.startswith("grp"):
+    #             with open(opj(root, fname)) as F:
+    #                 for line in F:
+    #                     if line[0] == "S" and line.count("|") == 53:
+    #                         pieces = line[1:].split("|")
+    #                         N, i = pieces[0].split(".")
+    #                         if not i.isdigit(): # Not a small group
+    #                             ambient_order = int(pieces[2])
+    #                             core_order = int(pieces[17])
+    #                             index = int(pieces[40])
+    #                             if core_order == 1 and (index >= 48 or index == 32 and (512 <= ambient_order <= 40000000000)):
+    #                                 ambient = pieces[0]
+    #                                 generators = pieces[22]
+    #                                 label = pieces[24]
+    #                                 last = label.split(".")[-1]
+    #                                 if last.startswith("CF") or last[0].isdigit() or last[0].islower():
+    #                                     # regular label or corefree label rather than label for a normal subgroup
+    #                                     transitive_subs[ambient].append((index, label, generators))
+    #                     elif line[0] == "s" and line.count("|") == 20:
+    #                         pieces = line[1:].split("|")
+    #                         label = pieces[0]
+    #                         sbound = int(pieces[9])
+    #                         sib[label].append(sbound)
+
+    # return tmissing, transitive_subs, sib
 
 #def improve_names(out):
 #    names = {label: D[label].get("name") for (label, D) in out["Grp"].items()}
