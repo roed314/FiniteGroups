@@ -387,6 +387,7 @@ function SplitByAuts(L, G : use_order:=true, use_hash:=true, use_gassman:=false,
                                     Append(~chunk, H2);
                                     Append(~edges, {Integers()|});
                                     Include(~edges[i], #chunk);
+                                    Append(~gvecs, gv2);
                                     Append(~by_gvec[gv2], #chunk);
                                 else
                                     error "subgroups not closed under automorphism";
@@ -396,6 +397,7 @@ function SplitByAuts(L, G : use_order:=true, use_hash:=true, use_gassman:=false,
                             Append(~chunk, H2);
                             Append(~edges, {Integers()|});
                             Include(~edges[i], #chunk);
+                            Append(~gvecs, gv2);
                             by_gvec[gv2] := [#chunk];
                         else
                             error "subgroups not closed under automorphism";
