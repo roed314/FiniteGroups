@@ -788,15 +788,15 @@ intrinsic IncludeNormalSubgroups(L::SubgroupLat)
         if assigned H`aut_gassman_vec then Hnew`aut_gassman_vec := H`aut_gassman_vec; end if;
     end for;
     L`by_index := by_index(L);
-    t1 := ReportStart(G, "ComputeComplements");
-    for i in [1..#N] do
-        // We only add complements when L can identify all subgroups (since otherwise detecting collisions between complements of different normal subgroups is annoying)
-        // Thus we won't be adding to L`subs here, though we may be determining a label (since labeling is only done up to the index bound)
-        if not IsDefined(lookup, i) then continue; end if; // normal subgroup missing
-        H := N`subs[i];
-        k := lookup[i];
-        Comps := Complements(GG, H`subgroup);
-        if Get(G, "complements_known") then
+    if Get(G, "complements_known") then
+        t1 := ReportStart(G, "ComputeComplements");
+        for i in [1..#N] do
+            // We only add complements when L can identify all subgroups (since otherwise detecting collisions between complements of different normal subgroups is annoying)
+            // Thus we won't be adding to L`subs here, though we may be determining a label (since labeling is only done up to the index bound)
+            if not IsDefined(lookup, i) then continue; end if; // normal subgroup missing
+            H := N`subs[i];
+            k := lookup[i];
+            Comps := Complements(GG, H`subgroup);
             L`subs[k]`complements := [];
             if #Comps eq 0 then continue; end if;
             if L`outer_equivalence then
@@ -821,12 +821,11 @@ intrinsic IncludeNormalSubgroups(L::SubgroupLat)
                 end if;
                 Append(~(L`subs[k]`complements), j);
             end for;
-        else
-            // Just record whether H is split
+            // Record whether H is split
             H`split := (#Comps ne 0);
-        end if;
-    end for;
-    ReportEnd(G, "ComputeComplements", t1);
+        end for;
+        ReportEnd(G, "ComputeComplements", t1);
+    end if;
     for i in [1..#L] do
         if not assigned L`subs[i]`normal then
             L`subs[i]`normal := false;
