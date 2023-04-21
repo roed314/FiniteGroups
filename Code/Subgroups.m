@@ -327,8 +327,8 @@ function SplitByAuts(L, G : use_order:=true, use_hash:=true, use_gassman:=false,
         use_graph := false;
     else
         Aut := Get(G, "MagmaAutGroup");
-        // We want to use Generators(Aut) here rather than Get(G, "AutGenerators") since we DON'T want the generators that were pulled back from the labeled aut group (they would work, but there might be more of them)
-        outs := [f : f in Generators(Aut) | not IsInner(f)];
+        // We spend some time minimizing the number of generators here, since the runtime below is directly proportional to the number of generators
+        outs := FewGenerators(Aut : outer:=true);
         use_graph := true;
     end if;
     for chunki in [1..#L] do

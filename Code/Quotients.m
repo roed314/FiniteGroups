@@ -289,3 +289,41 @@ intrinsic Random(G::GrpAuto : word_len:=40) -> GrpAutoElt
     end for;
     return r;
 end intrinsic;
+
+intrinsic FewGenerators(A::GrpAuto : outer:=false, Try:=1) -> SeqEnum
+{}
+    G := Group(A);
+    m, P, Y := ClassAction(A);
+    if outer then
+        I := sub<P|[P![Position(Y,g^-1*y*g) : y in Y] : g in Generators(G)]>;
+        D := DerivedSubgroup(P);
+        DI := sub<P|D, I>;
+        Q, Qproj := quo<P | DI>; // maximal abelian quotient
+        if D subset I then
+            // P/I is already abelian, so we can pull back generators
+            return [(b @@ Qproj) @@ m : b in AbelianBasis(Q)];
+        end if;
+        n := #AbelianInvariants(Q);
+        ogens := [f : f in Generators(A) | not IsInner(f)];
+        n_opt := Infinity();
+        for j in [1..Try] do
+            for i in [1..Min(Degree(P), 1000)] do
+                s := [Random(P) : x in [1..n+1]];
+                s := [x : x in s | x ne P.0];
+                if sub<P|s,I> eq P then
+                    if #s eq n then
+                        return [b @@ m : b in s];
+                    end if;
+                    n_opt := #s;
+                    g_opt := s;
+                end if;
+            end for;
+        end for;
+        if n_opt lt #ogens then
+            return [b @@ m : b in g_opt];
+        end if;
+        return ogens;
+    else
+        return [b @@ m : b in FewGenerators(P : Try:=Try)];
+    end if;
+end intrinsic;
