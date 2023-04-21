@@ -71,10 +71,11 @@ intrinsic hall(H::LMFDBSubGrp) -> RngIntElt // Need to be subgroup attribute fil
 {when order of H and order of Q are prime to each other it returns the radical of the order of H, otherwise returns 0}
   GG := Get(H, "MagmaAmbient");
   HH := H`MagmaSubGrp;
-  Q := quo< GG | HH >;
+//Q := quo< GG | HH >;
   if Order(HH) eq 1 then
     return 1;
-  elif Gcd(Order(HH), Order(Q)) eq 1 then
+  elif Gcd(Order(HH),Integers()!(#GG/#HH)) eq 1 then
+//  elif Gcd(Order(HH), Order(Q)) eq 1 then
     F:= Factorization(Order(HH));
     return &*[f[1] : f in F];
   else
@@ -86,10 +87,11 @@ intrinsic sylow(H::LMFDBSubGrp) -> RngIntElt // Need to be subgroup attribute fi
 {when order of H and order of Q are prime to each other it returns the radical of the order of H, otherwise returns 0}
   GG := Get(H, "MagmaAmbient");
   HH := H`MagmaSubGrp;
-  Q := quo< GG | HH >;
+//  Q := quo< GG | HH >;
   if Order(HH) eq 1 then
     return 1;
-  elif IsPrimePower(Order(HH)) and (Gcd(Order(HH), Order(Q)) eq 1) then
+  elif IsPrimePower(Order(HH)) and (Gcd(Order(HH),Integers()!(#GG/#HH)) eq 1) then   
+//elif IsPrimePower(Order(HH)) and (Gcd(Order(HH), Order(Q)) eq 1) then
     _, k , _ :=IsPrimePower(Order(HH));
     return k;
   else 
