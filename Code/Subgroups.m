@@ -1188,6 +1188,7 @@ intrinsic SubGrpLstAut(X::LMFDBGrp) -> SubgroupLat
                 dsubs := [SubgroupLatElement(tmp, dsubs[i]`subgroup : i:=i+ccount) : i in [1..#dsubs]];
                 bi[N div d] := dsubs;
             else
+                if not IsDefined(bi, N div d) then continue; end if;
                 dsubs := bi[N div d];
                 if #dsubs eq 0 then continue; end if;
             end if;
