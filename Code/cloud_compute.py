@@ -381,8 +381,8 @@ with open("DATA/manifest") as F:
     for line in F:
         todo, out, timings, script, cnt, per_job, job_timeout, total_timeout = line.strip().split()
         # Hard code memlimit for now
-        #memlimit = 7936 # in MB = 7.75GB
-        memlimit = 3840 # in MB = 3.75GB
+        memlimit = 7936 # in MB = 7.75GB
+        #memlimit = 3840 # in MB = 3.75GB
         # TODO: update how timeouts are computed
         cnt, per_job, job_timeout, total_timeout = int(cnt), int(per_job), int(job_timeout), int(total_timeout)
         if job < cnt:
