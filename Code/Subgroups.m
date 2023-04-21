@@ -394,7 +394,7 @@ function SplitByAuts(L, G : use_order:=true, use_hash:=true, use_gassman:=false,
                                 end if;
                             end if;
                         elif fill_orbits then
-                            Append(~chunk, H2);
+                            Append(~chunk, f(H1));
                             Append(~edges, {Integers()|});
                             Include(~edges[i], #chunk);
                             Append(~gvecs, gv2);
