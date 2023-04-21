@@ -316,7 +316,7 @@ function SplitByAuts(L, G : use_order:=true, use_hash:=true, use_gassman:=false,
     end if;
     newL := [];
     GG := G`MagmaGrp;
-    Auts := 0; outs := 0; H := 0; inj := 0; // stupid Magma compiler requires these to be defined since used below
+    Auts := 0; outs := 0; H := 0; inj := 0; cm := 0; outperms := []; // stupid Magma compiler requires these to be defined since used below
     if not aut then
         H := G`MagmaGrp;
         inj := IdentityHomomorphism(H);
@@ -329,6 +329,11 @@ function SplitByAuts(L, G : use_order:=true, use_hash:=true, use_gassman:=false,
         Aut := Get(G, "MagmaAutGroup");
         // We spend some time minimizing the number of generators here, since the runtime below is directly proportional to the number of generators
         outs := FewGenerators(Aut : outer:=true);
+        cm := Get(G, "ClassMap");
+        // outperm[l] = index of f(lth conj cls)
+        // so gv1[outperm[l]] = count of the f(lth conj class) that lies in H1
+        // Want count of the lth conj class that lies in f(H1)
+        outperms := [[cm(cc[3] @@ f) : cc in CC] : f in outs];
         use_graph := true;
     end if;
     for chunki in [1..#L] do
@@ -336,32 +341,62 @@ function SplitByAuts(L, G : use_order:=true, use_hash:=true, use_gassman:=false,
         if #chunk gt 1 then
             if use_graph then
                 edges := [{Integers()|} : _ in [1..#chunk]];
+                gvecs := [SubgroupClass(get_subgroup(chunk[i]), cm) : i in [1..#chunk]];
+                by_gvec := AssociativeArray();
+                for i in [1..#chunk] do
+                    gv := gvecs[i];
+                    if IsDefined(by_gvec, gv) then
+                        Append(~by_gvec[gv], i);
+                    else
+                        by_gvec[gv] := [i];
+                    end if;
                 orig_len := #chunk;
                 i := 1;
                 while i le #chunk do
                     H1 := get_subgroup(chunk[i]);
-                    for f in outs do
-                        H2 := f(H1);
-                        // check first if fixed by f, since this is common and means no edge
-                        if IsConjugate(GG, H1, H2) then
-                            continue;
-                        end if;
-                        found := false;
-                        for j in [1..#chunk] do
-                            if i ne j and IsConjugate(GG, H2, get_subgroup(chunk[j])) then
-                                Include(~(edges[i]), j);
-                                found := true;
-                                break;
+                    gv1 := gvecs[i];
+                    for k in [1..#outs] do
+                        f := outs[k];
+                        outperm := outperms[k];
+                        gv2 := [gv1[outperm[l]] : l in [1..#gv1]]; // either this or its inverse
+                        if IsDefined(by_gvec, gv2) then
+                            poss := by_gvec[gv2];
+                            if #poss eq 1 and not fill_orbits then
+                                // only one possibility
+                                Include(~(edges[i]), poss[1]);
+                                continue;
                             end if;
-                        end for;
-                        if not found then
-                            if fill_orbits then
-                                Append(~chunk, H2);
-                                Append(~edges, {Integers()|});
-                                Include(~(edges[i]), #chunk);
-                            else
-                                error "subgroups not closed under automorphism";
+                            H2 := f(H1);
+                            assert gv2 eq SubgroupClass(H2, cm);
+                            // check first if fixed by f, since this is common and means no edge
+                            if gv1 eq gv2 and IsConjugate(GG, H1, H2) then
+                                continue;
                             end if;
+                            found := false;
+                            for j in poss do
+                                if i ne j and IsConjugate(GG, H2, get_subgroup(chunk[j])) then
+                                    Include(~(edges[i]), j);
+                                    found := true;
+                                    break;
+                                end if;
+                            end for;
+                            if not found then
+                                if fill_orbits then
+                                    Append(~chunk, H2);
+                                    Append(~edges, {Integers()|});
+                                    Include(~edges[i], #chunk);
+                                    Append(~by_gvec[gv2], #chunk);
+                                else
+                                    error "subgroups not closed under automorphism";
+                                end if;
+                            end if;
+                        elif fill_orbits then
+                            Append(~chunk, H2);
+                            Append(~edges, {Integers()|});
+                            Include(~edges[i], #chunk);
+                            by_gvec[gv2] := [#chunk];
+                        else
+                            error "subgroups not closed under automorphism";
                         end if;
                     end for;
                     i +:= 1;
