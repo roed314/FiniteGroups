@@ -181,7 +181,7 @@ intrinsic WriteAllTransitivePermutationRepresentations(G::Grp, d::RngIntElt, fna
     end for;
     for data in best do
         chsh, P, H := Explode(data);
-        PrintFile(fname, Sprintf("Y%o|%o|%o|%o#%o", label, d, Join([SaveElt(g):g in Generators(H)], ","), chsh, GroupToString(P)));
+        PrintFile(fname, Sprintf("y%o|%o|%o|%o#%o", label, d, Join([SaveElt(g):g in Generators(H)], ","), chsh, GroupToString(P)));
     end for;
     ReportEnd(label, "Code-y", t0);
 end intrinsic;

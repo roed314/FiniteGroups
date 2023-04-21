@@ -150,6 +150,28 @@ def send_files(fpaths, ips=None, recompile=None):
     for fpath in fpaths:
         send_file(fpath, ips, recompile=recompile)
 
+def get_file(fpath, ips=None, dest=None, prefix=None, basepath="/scratch/grp"):
+    if dest is None:
+        dest = fpath + "{i}"
+    if prefix is None:
+        jfile = opj("DATA", "jobs.txt")
+        if ope(jfile):
+            with open(jfile) as F:
+                for line in F:
+                    if line.strip():
+                        prefix, nos, pids, status = line.strip().split()
+        if prefix is None:
+            raise ValueError("No valid prefix in job file, so you must specify one")
+        nos = [int(n) for n in nos.split(",")]
+    if ips is None:
+        ips = server_ips()
+        ips = [ips[n] for n in nos]
+    os.makedirs(opj(basepath, prefix), exist_ok=True)
+    dests = [opj(basepath, prefix, dest.format(i=i)) for i in range(1, len(ips) + 1)]
+    for ip, dest in zip(ips, dests):
+        call(f"scp {ip}:{fpath} {dest}", shell=True)
+        print(dest, "copied")
+
 def setup_TE(outputs, TEfolder):
     TElines = defaultdict(list)
     for oname in outputs:
@@ -170,17 +192,14 @@ def get_output(prefix, tmp_ok=False, basepath="/scratch/grp"):
     ips = server_ips()
     ips = [ips[i] for i in J[prefix]]
     finished = [server_is_finished(ip) for ip in ips]
-    os.makedirs(opj(basepath, prefix), exist_ok=True)
     if all(finished):
         tmp_ok = False
-        dests = [opj(basepath, prefix, f"output{i}") for i in range(1, len(ips) + 1)]
+        dest = "output{i}"
     elif tmp_ok:
-        dests = [opj(basepath, prefix, f"tmp{i}") for i in range(1, len(ips) + 1)]
+        dest = "tmp{i}"
     else:
         raise ValueError(f"{prefix} not finished")
-    for ip, dest in zip(ips, dests):
-        call(f"scp {ip}:output {dest}", shell=True)
-        print(dest, "copied")
+    get_file("output", ips=ips, dest=dest, prefix=prefix, basepath=basepath)
     if not tmp_ok:
         server_md5s = [x.split()[0] for x in execute("md5sum output", ips, output=True)]
         local_md5s = [check_output(f"md5sum {dest}", shell=True).decode("ascii").split()[0] for dest in dests]
