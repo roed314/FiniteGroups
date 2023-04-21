@@ -21,7 +21,7 @@ if ope(opj("DATA", "ncores")):
 else:
     # better to use cpu_count from psutil, but that has to be pip installed
     ncores = multiprocessing.cpu_count()
-subprocess.call("seq %s | parallel -j%s ./cloud_compute.py {1}" % (total, ncores), shell=True)
+subprocess.call("seq %s | parallel -j%s --memfree 16G ./cloud_compute.py {1}" % (total, ncores), shell=True)
 
 with open("finished", "w") as F:
     _ = F.write("t\n")
