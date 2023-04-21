@@ -329,7 +329,9 @@ function SplitByAuts(L, G : use_order:=true, use_hash:=true, use_gassman:=false,
         Aut := Get(G, "MagmaAutGroup");
         // We spend some time minimizing the number of generators here, since the runtime below is directly proportional to the number of generators
         outs := FewGenerators(Aut : outer:=true);
-        cm := Get(G, "ClassMap");
+        // We don't need the renumbered class map for this application
+        cm := Get(G, "MagmaClassMap");
+        CC := Get(G, "MagmaConjugacyClasses");
         // outperm[l] = index of f(lth conj cls)
         // so gv1[outperm[l]] = count of the f(lth conj class) that lies in H1
         // Want count of the lth conj class that lies in f(H1)
