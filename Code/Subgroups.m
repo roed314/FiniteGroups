@@ -335,7 +335,7 @@ function SplitByAuts(L, G : use_order:=true, use_hash:=true, use_gassman:=false,
         // outperm[l] = index of f(lth conj cls)
         // so gv1[outperm[l]] = count of the f(lth conj class) that lies in H1
         // Want count of the lth conj class that lies in f(H1)
-        outperms := [[cm(cc[3] @@ f) : cc in CC] : f in outs];
+        outperms := [[cm(cc[3] @ f) : cc in CC] : f in outs];
         use_graph := true;
     end if;
     for chunki in [1..#L] do
