@@ -171,6 +171,7 @@ def get_file(fpath, ips=None, dest=None, prefix=None, basepath="/scratch/grp"):
     for ip, dest in zip(ips, dests):
         call(f"scp {ip}:{fpath} {dest}", shell=True)
         print(dest, "copied")
+    return dests
 
 def setup_TE(outputs, TEfolder):
     TElines = defaultdict(list)
@@ -199,7 +200,7 @@ def get_output(prefix, tmp_ok=False, basepath="/scratch/grp"):
         dest = "tmp{i}"
     else:
         raise ValueError(f"{prefix} not finished")
-    get_file("output", ips=ips, dest=dest, prefix=prefix, basepath=basepath)
+    dests = get_file("output", ips=ips, dest=dest, prefix=prefix, basepath=basepath)
     if not tmp_ok:
         server_md5s = [x.split()[0] for x in execute("md5sum output", ips, output=True)]
         local_md5s = [check_output(f"md5sum {dest}", shell=True).decode("ascii").split()[0] for dest in dests]
