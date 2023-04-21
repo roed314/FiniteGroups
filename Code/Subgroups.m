@@ -350,6 +350,7 @@ function SplitByAuts(L, G : use_order:=true, use_hash:=true, use_gassman:=false,
                     else
                         by_gvec[gv] := [i];
                     end if;
+                end for;
                 orig_len := #chunk;
                 i := 1;
                 while i le #chunk do
