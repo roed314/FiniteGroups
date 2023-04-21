@@ -361,9 +361,7 @@ function SplitByAuts(L, G : use_order:=true, use_hash:=true, use_gassman:=false,
                     for k in [1..#outs] do
                         f := outs[k];
                         outperm := outperms[k];
-                        gv2 := [[outperm[pair[1]], pair[2]] : pair in gv1];
-                        H2 := f(H1); // remove
-                        assert gv2 eq SubgroupClass(H2, cm); // remove
+                        gv2 := Sort([[outperm[pair[1]], pair[2]] : pair in gv1]);
                         if IsDefined(by_gvec, gv2) then
                             poss := by_gvec[gv2];
                             if #poss eq 1 and not fill_orbits then
