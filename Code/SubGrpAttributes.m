@@ -233,8 +233,14 @@ intrinsic split(H::LMFDBSubGrp) -> Any
     if not Get(H, "normal") then return None(); end if;
     if Get(H`Grp, "complements_known") then
         return #Get(H, "complements") gt 0;
-    else
-        return None();
+    else   //Schur-Zassenhaus Theorem: if (#N,#G/N)=1 then splits
+        GG := Get(H, "MagmaAmbient");
+        HH := H`MagmaSubGrp;
+        if Gcd(#HH, Integers()!(#GG/#HH)) eq 1 then //JP
+            return true;
+	else
+            return None();
+        end if;
     end if;
 end intrinsic;
 
