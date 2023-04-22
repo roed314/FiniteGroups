@@ -930,7 +930,7 @@ intrinsic IncludeSylowSubgroups(L::SubgroupLat)
                 Append(~additions, S);
             end if;
             S`keep := true;
-            S`aut_label := Sprintf("%o.a1", Nq);
+            S`aut_label := [Nq, 0, 1];
             if L`outer_equivalence then
                 S`label := Sprintf("%o.a1", Nq);
             else
