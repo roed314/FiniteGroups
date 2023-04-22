@@ -1181,9 +1181,9 @@ intrinsic SubGrpLstAut(X::LMFDBGrp) -> SubgroupLat
         Reverse(~D); // Subgroups takes OrderEqual, so now we want orders decreasing rather than indices increasing
         for d in D do
             if terminate eq 0 then
-                t1 := ReportStart(X, Sprintf("SubGrpLstDivisor (%o)", d));
+                t1 := ReportStart(X, Sprintf("SubGrpLstDivisor (%o:%o:%o)", d, ccount, acount));
                 dsubs := Subgroups(G : OrderEqual := d);
-                ReportEnd(X, Sprintf("SubGrpLstDivisor (%o)", d), t1);
+                ReportEnd(X, Sprintf("SubGrpLstDivisor (%o:%o:%o)", d, ccount, acount), t1);
                 if #dsubs eq 0 then continue; end if;
                 dsubs := [SubgroupLatElement(tmp, dsubs[i]`subgroup : i:=i+ccount) : i in [1..#dsubs]];
                 bi[N div d] := dsubs;
@@ -2749,7 +2749,7 @@ intrinsic LMFDBSubgroup(H::SubgroupLatElt : normal_lattice:=false) -> LMFDBSubGr
     res`LatElt := H;
     if not normal_lattice and (Get(G, "subgroup_inclusions_known") or Lat`index_bound ne 0) then
         assert assigned Lat`NormLat;
-        if H`normal then
+        if Get(H, "normal") then
             assert assigned H`NormLatElt;
         end if;
     end if;
