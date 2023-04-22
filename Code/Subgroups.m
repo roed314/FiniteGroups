@@ -889,6 +889,7 @@ intrinsic IncludeMaximalSubgroups(L::SubgroupLat)
             Mnew`keep := true;
             Mnew`label := M`label * ".M";
             Mnew`MaxLatElt := M;
+            if have_norms then Mnew`normal := false; end if;
             Append(~additions, Mnew);
         end for;
         // Have to reset by_index since we have new subgroups
