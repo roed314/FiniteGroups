@@ -915,9 +915,22 @@ intrinsic IncludeSylowSubgroups(L::SubgroupLat)
                 S := bi[Nq][1];
             else
                 S := SubgroupLatElement(L, SylowSubgroup(GG, p): i := #L+1);
+                // This can't get information from Lat`from_conj, so we have to fill in various quantities here
+                normalizer := Normalizer(GG, S`subgroup);
+                S`subgroup_count := N div #normalizer;
+                S`cc_count := 1;
+                S`normal := (S`subgroup_count eq 1);
+                S`characteristic := S`normal;
+                j := SubgroupIdentify(L, normalizer : error_if_missing:=false);
+                if j ne -1 then S`normalizer := j; end if;
+                j := SubgroupIdentify(L, Centralizer(GG, S`subgroup) : error_if_missing:=false);
+                if j ne -1 then S`centralizer := j; end if;
+                j := SubgroupIdentify(L, NormalClosure(GG, S`subgroup) : error_if_missing:=false);
+                if j ne -1 then S`normal_closure := j; end if;
                 Append(~additions, S);
             end if;
             S`keep := true;
+            S`aut_label := Sprintf("%o.a1", Nq);
             if L`outer_equivalence then
                 S`label := Sprintf("%o.a1", Nq);
             else
