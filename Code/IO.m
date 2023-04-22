@@ -676,7 +676,7 @@ end intrinsic;
 
 intrinsic ReportEnd(label::MonStgElt, job::MonStgElt, t0::FldReElt)
 {}
-    msg := Sprintf("Finished %o in %o", job, Cputime() - t0);
+    msg := Sprintf("Finished %o in %o (%oGB used)", job, Cputime() - t0, RealField(3)!(GetMemoryUsage() / 1073741824.0));
     System("mkdir -p DATA/timings/");
     PrintFile("DATA/timings/" * label, msg);
     vprint User1: msg;
