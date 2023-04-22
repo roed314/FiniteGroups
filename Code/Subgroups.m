@@ -883,12 +883,33 @@ intrinsic IncludeMaximalSubgroups(L::SubgroupLat)
         LabelSubgroups(Lmax);
         L`MaxLat := Lmax;
         // With labels in hand, we move the SubgroupLatElements to L
-        for j in [2..#Lmax] do
+        for j in [2..#Lmax] do // skip G itself
             M := Lmax`subs[j];
-            Mnew := SubgroupLatElement(L, M`subgroup);
+            i := #L`subs+j-1;
+            Mnew := SubgroupLatElement(L, M`subgroup : i:=i);
             Mnew`keep := true;
             Mnew`label := M`label * ".M";
             Mnew`MaxLatElt := M;
+            Mnew`subgroup_count := Get(M, "subgroup_count");
+            Mnew`cc_count := Get(M, "cc_count");
+            Mnew`normal := Get(M, "normal");
+            Mnew`characteristic := Get(M, "characteristic");
+            if Mnew`normal then
+                Mnew`normalizer := 1;
+                Mnew`normal_closure := i;
+            else
+                Mnew`normalizer := i;
+                Mnew`normal_closure := 1;
+            end if;
+            if Mnew`characteristic then
+                Mnew`characteristic_closure := i;
+            else
+                Mnew`characteristic_closure := 1;
+            end if;
+            // Centralizer is harder, since it won't usually be maximal.
+            // We're already below the index bound, so we just give up here
+            Mnew`centralizer := None();
+            Mnew`centralizer_order := #Centralizer(GG, M`subgroup);
             if have_norms then Mnew`normal := false; end if;
             Append(~additions, Mnew);
         end for;
