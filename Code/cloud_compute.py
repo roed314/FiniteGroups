@@ -74,7 +74,7 @@ def run(label, codes, timeout, memlimit, subgroup_index_bound):
                     _ = Fout.write(f"T{label}({utcnow()})|{line}")
                     if line.startswith("Finished Code-"):
                         finished += line[14]
-                        time_used += float(line.strip().split()[-1])
+                        time_used += float(line.split("(")[0].strip().split()[-1])
                     last_time_line = line
             os.unlink(t) # Remove timings so that they're not copied multiple times
         else:
