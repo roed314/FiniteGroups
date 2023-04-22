@@ -909,7 +909,6 @@ intrinsic IncludeMaximalSubgroups(L::SubgroupLat)
             // Centralizer is harder, since it won't usually be maximal.
             // We're already below the index bound, so we just give up here
             Mnew`centralizer := None();
-            Mnew`centralizer_order := #Centralizer(GG, M`subgroup);
             if have_norms then Mnew`normal := false; end if;
             Append(~additions, Mnew);
         end for;
