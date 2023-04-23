@@ -996,7 +996,7 @@ Sets H`i appropriately for all subgroups in the new list.
                 H`complements := [translate[j] : j in H`complements];
             end if;
             for attr in ["normalizer", "centralizer", "normal_closure", "characteristic_closure", "core"] do
-                if assigned H``attr then
+                if assigned H``attr and Type(H``attr) ne NoneType then
                     if IsDefined(translate, H``attr) then
                         H``attr := translate[H``attr];
                     else
@@ -1005,7 +1005,7 @@ Sets H`i appropriately for all subgroups in the new list.
                 end if;
             end for;
             for attr in ["overs", "unders"] do
-                if assigned H``attr then
+                if assigned H``attr and Type(H``attr) ne NoneType then
                     newattr := AssociativeArray();
                     for k->b in H``attr do
                         if IsDefined(translate, k) then
@@ -1016,7 +1016,7 @@ Sets H`i appropriately for all subgroups in the new list.
                 end if;
             end for;
             for attr in ["normal_overs", "normal_unders"] do
-                if assigned H``attr then
+                if assigned H``attr and Type(H``attr) ne NoneType then
                     newattr := {};
                     for k in H``attr do
                         if IsDefined(translate, k) then
