@@ -920,7 +920,7 @@ intrinsic MagmaFrattini(G::LMFDBGrp) -> Any
     GG := G`MagmaGrp;
     if Type(GG) eq GrpMat and not G`solvable then
         // Magma's built in function fails
-        return &meet[H`subgroup : H in MaximalSubgroups(GG)];
+        return Core(&meet[H`subgroup : H in MaximalSubgroups(GG)]);
     end if;
     return FrattiniSubgroup(GG);
 end intrinsic;
