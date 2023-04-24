@@ -1193,12 +1193,15 @@ intrinsic semidirect_product(G::LMFDBGrp) -> Any
         // complements are stored in the full subgroup lattice
         L := Get(G, "BestSubgroupLat");
         missing_split := false;
+        comp_known := Get(G, "complements_known");
         for H in L`subs do
             if H`order ne 1 and H`order ne G`order and Get(H, "normal") then
-                split := Get(H, "split");
-                if Type(split) eq BoolElt and split then
+                if comp_known and #H`complements gt 0 then
                     return true;
-                elif Type(split) eq NoneType then
+                elif Gcd(H`order, G`order div H`order) eq 1 then
+                    // Schur-Zassenhaus theorem
+                    return true;
+                else
                     missing_split := true;
                 end if;
             end if;
