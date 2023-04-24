@@ -163,6 +163,8 @@ def get_file(fpath, ips=None, dest=None, prefix=None, basepath="/scratch/grp"):
         if prefix is None:
             raise ValueError("No valid prefix in job file, so you must specify one")
         nos = [int(n) for n in nos.split(",")]
+    else:
+        nos = job_servers()[prefix]
     if ips is None:
         ips = server_ips()
         ips = [ips[n] for n in nos]
