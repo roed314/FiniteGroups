@@ -1189,18 +1189,24 @@ end intrinsic;
 
 intrinsic semidirect_product(G::LMFDBGrp) -> Any
 {Returns true if G is a nontrivial semidirect product; otherwise returns false.}
-    if Get(G, "normal_subgroups_known") and Get(G, "complements_known") then
+    if Get(G, "normal_subgroups_known") then
         // complements are stored in the full subgroup lattice
         L := Get(G, "BestSubgroupLat");
+        missing_split := false;
         for H in L`subs do
-            if H`order ne 1 and H`order ne G`order and Get(H, "normal") and #H`complements gt 0 then
-                return true;
+            if H`order ne 1 and H`order ne G`order and Get(H, "normal") then
+                split := Get(H, "split");
+                if Type(split) eq BoolElt and split then
+                    return true;
+                elif Type(split) eq NoneType then
+                    missing_split := true;
+                end if;
             end if;
         end for;
-        if L`index_bound eq 0 then return false; end if;
+        if L`index_bound eq 0 and not missing_split then return false; end if;
     end if;
-    if Get(G, "direct_product") then return true; end if;
-    // Perhaps we could try harder (searching through the subgroups thare are computed and calling Complements) but we don't yet since normal_subgroups_known and complements_known are true by default
+    DP := Get(G, "direct_product");
+    if Type(DP) eq BoolElt and DP then return true; end if;
     return None();
 end intrinsic;
 
