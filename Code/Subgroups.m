@@ -549,6 +549,7 @@ intrinsic FewOuterGenerators(X::LMFDBGrp) -> SeqEnum
     t0 := ReportStart(X, "FewOuterGenerators");
     outs := FewGenerators(Get(X, "MagmaAutGroup") : outer:=true);
     ReportEnd(X, "FewOuterGenerators", t0);
+    return outs;
 end intrinsic;
 
 intrinsic aut_component_data(L::SubgroupLat) -> Tuple
