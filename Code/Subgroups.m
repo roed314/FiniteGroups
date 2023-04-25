@@ -564,6 +564,7 @@ intrinsic aut_component_data(L::SubgroupLat) -> Tuple
     GG := G`MagmaGrp;
     Aut := Get(G, "MagmaAutGroup");
     outs := Get(G, "FewOuterGenerators");
+    cm := Get(G, "ClassMap");
     /*
     Each of the entries in subs is an automorphism class of subgroups, consisting of a sequence of conjugacy classes making up the automorphism class.
 
@@ -585,13 +586,34 @@ intrinsic aut_component_data(L::SubgroupLat) -> Tuple
         retract[comp[1]`i] := Identity(Aut);
         seen := {1};
         layer := {1};
+        by_gvec := AssociativeArray();
+        if #comp gt 1 then
+            for i in [2..#comp] do
+                H := comp[i];
+                if L`outer_equivalence then
+                    // We don't want to use Get(x, "gassman_vec") since that switches to aut_gassman_vec when outer_equivalence is set
+                    gv := SubgroupClass(H`subgroup, cm);
+                else
+                    gv := Get(H, "gassman_vec");
+                end if;
+                if not IsDefined(by_gvec, gv) then
+                    by_gvec[gv] := [];
+                end if;
+                Append(~by_gvec[gv], i);
+            end for;
+        end if;
         while #seen lt #comp do
             new_layer := {};
             for j in layer do
                 H := comp[j]`subgroup;
                 for f in outs do
                     K := f(H);
-                    for k in [2..#comp] do
+                    gvK := SubgroupClass(H`subgroup, cm);
+                    if not IsDefined(by_gvec, gvK) then
+                        // this can happen if K is in the class of comps[1], since we didn't add that
+                        continue;
+                    end if;
+                    for k in by_gvec[gvK] do
                         if not (k in seen) then
                             conj, c := IsConjugate(GG, K, comp[k]`subgroup);
                             if conj then
