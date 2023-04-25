@@ -342,7 +342,7 @@ def build_treps(datafolder="/scratch/grp", alias_file="DATA/aliases.txt", descri
     import itertools
     manual_old = {
         "20T272": "3420.a",
-        "22T25": "2420.x",
+        "22T15": "2420.x",
         "22T17": "2420.bl",
         "22T18": "2420.b",
         "22T21": "6050.m",
