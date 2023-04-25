@@ -446,7 +446,18 @@ def build_treps(datafolder="/scratch/grp", alias_file="DATA/aliases.txt", descri
         if v:
             v.sort()
             tmissing[n] = v
-    return tmissing, lmissing, taliases
+    labeled32 = []
+    unlabeled32 = []
+    for rec in db.gps_transitive.search({"order": {"$or":[512, 640, 768, 896, 1024, 1152, 1280, 1408, 1536, 1664, 1792, 1920]}, "n": 32}, ["t", "order", "label", "gapid"]):
+        if rec["t"] in tseen[32]:
+            continue
+        if rec["gapid"] == 0:
+            unlabeled32.append((rec["order"], rec["t"]))
+            continue
+        label = f"{rec['order']}.{rec['gapid']}"
+        if label not in all_labels:
+            labeled32.append(label)
+    return tmissing, lmissing, taliases, unlabeled32, labeled32
 
     # transitive_subs = defaultdict(list)
     # sib = defaultdict(list)
