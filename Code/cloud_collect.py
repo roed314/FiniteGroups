@@ -339,6 +339,7 @@ def build_treps(datafolder="/scratch/grp", alias_file="DATA/aliases.txt", descri
     all_labels = set(os.listdir(descriptions_folder))
     sys.path.append(os.path.expanduser("~/lmfdb"))
     from lmfdb import db
+    import itertools
     manual_old = {
         "20T272": "3420.a",
         "22T25": "2420.x",
@@ -417,6 +418,10 @@ def build_treps(datafolder="/scratch/grp", alias_file="DATA/aliases.txt", descri
                 n, t = [int(c) for c in m.groups()]
                 taliases[label].append(desc)
                 tseen[n].add(t)
+    for desc, label in itertools.chain(manual_old.items(), manual_new.items()):
+        taliases[label].append(desc)
+        n, t = [int(c) for c in tre.fullmatch(desc).groups()]
+        tseen[n].add(t)
     tgid = {}
     tneeded = defaultdict(list)
     tneeded[32] = range(2799324, 2801325)
