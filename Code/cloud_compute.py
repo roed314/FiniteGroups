@@ -51,7 +51,7 @@ def read_tmpheader(name):
 def utcnow():
     return datetime.now(timezone.utc).strftime("%H:%M:%S.%f")[:-4]
 
-def run(label, codes, timeout, memlimit, subgroup_index_bound):
+def run(label, codes, timeout, memlimit, subgroup_index_bound, subgroup_inclusions_known):
     if codes == "X":
         labelname = "m" # label gets in the way of the intrinsic we'd defined
     else:
@@ -89,10 +89,12 @@ def run(label, codes, timeout, memlimit, subgroup_index_bound):
                         if line[0] == "S":
                             sublines.append(line)
                         elif line[0] == "s":
-                            # Extract the subgroup index bound for use in computing lattice x-values
+                            # Extract the subgroup_index_bound and subgroup_inclusions_known for use in computing lattice x-values
                             sheader = read_tmpheader("sub")
                             sdata = line[1:].strip().split("|")
-                            subgroup_index_bound = dict(zip(sheader, sdata))["subgroup_index_bound"]
+                            DD = dict(zip(sheader, sdata))
+                            subgroup_index_bound = DD["subgroup_index_bound"]
+                            subgroup_inclusions_known = (DD["subgroup_inclusions_known"] == 't')
                             if subgroup_index_bound == r"\N":
                                 subgroup_index_bound = None
                             else:
@@ -123,7 +125,7 @@ def run(label, codes, timeout, memlimit, subgroup_index_bound):
                 if loc is None:
                     loc = known
             os.unlink(e) # Remove errors so that they're not copied multiple times
-    return finished, time_used, last_time_line, loc, sublines, subgroup_index_bound
+    return finished, time_used, last_time_line, loc, sublines, subgroup_index_bound, subgroup_inclusions_known
 
 standard_label_re = re.compile(r"(\d+\.[a-z]+\d+)(\.[a-z]+\d+)?")
 normal_label_re = re.compile(r"(\d+\.[a-z]+\d+)(\.[a-z]+\d+)?\.N")
@@ -402,6 +404,7 @@ with open("DATA/manifest") as F:
             os.makedirs(opj("DATA", "errors"), exist_ok=True)
             skipped = ""
             subgroup_index_bound = None
+            subgroup_inclusions_known = None
             start_time = time.time()
             if codes == "D":
                 # A previous computation was interrupted while trying to compute the subgroup lattice layout
@@ -413,8 +416,8 @@ with open("DATA/manifest") as F:
             while codes:
                 timeout = min(job_timeout, total_timeout - (time.time() - start_time))
                 #print("Loop with timeout %s" % timeout)
-                finished, time_used, last_time_line, err, sublines, subgroup_index_bound = run(label, codes, timeout, memlimit, subgroup_index_bound)
-                if sublines:
+                finished, time_used, last_time_line, err, sublines, subgroup_index_bound, subgroup_inclusions_known = run(label, codes, timeout, memlimit, subgroup_index_bound, subgroup_inclusions_known)
+                if sublines and subgroup_inclusions_known:
                     end_time = start_time + total_timeout # Don't allow the layout processes to go past the total time allowed
                     skipped += compute_diagramx(label, sublines, subgroup_index_bound, end_time, memlimit) # writes directly to output
                 for code in finished:
