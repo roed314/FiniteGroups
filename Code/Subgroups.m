@@ -326,9 +326,8 @@ function SplitByAuts(L, G : use_order:=true, use_hash:=true, use_gassman:=false,
         inj := Get(G, "HolInj");
         use_graph := false;
     else
-        Aut := Get(G, "MagmaAutGroup");
         // We spend some time minimizing the number of generators here, since the runtime below is directly proportional to the number of generators
-        outs := FewGenerators(Aut : outer:=true);
+        outs := Get(G, "FewOuterGenerators");
         // We don't need the renumbered class map for this application
         cm := Get(G, "MagmaClassMap");
         CC := Get(G, "MagmaConjugacyClasses");
@@ -545,6 +544,13 @@ intrinsic HolInj(X::LMFDBGrp) -> HomGrp
     return X`HolInj;
 end intrinsic;
 
+intrinsic FewOuterGenerators(X::LMFDBGrp) -> SeqEnum
+{A short list of generators for the outer automorphism group (ie automorphisms whose images generate the outer automorphism group)}
+    t0 := ReportStart(X, "FewOuterGenerators");
+    outs := FewGenerators(Get(X, "MagmaAutGroup") : outer:=true);
+    ReportEnd(X, "FewOuterGenerators", t0);
+end intrinsic;
+
 intrinsic aut_component_data(L::SubgroupLat) -> Tuple
 {Returns lookup, inv_lookup, retract; where lookup[i] is the index i0 of the chosen subgroup in the same component as subs[i], inv_lookup[i0] is the list of all i in the same component as i0, and retract[i] is an automorphism mapping subs[i] to subs[i0]}
     subs := Get(L, "by_index_aut");
@@ -556,7 +562,7 @@ intrinsic aut_component_data(L::SubgroupLat) -> Tuple
     G := L`Grp;
     GG := G`MagmaGrp;
     Aut := Get(G, "MagmaAutGroup");
-    outs := [f : f in Generators(Aut) | not IsInner(f)];
+    outs := Get(G, "FewOuterGenerators");
     for i in [1..#subs] do
         comp := subs[i];
         inv_lookup[i] := [H`i : H in comp];

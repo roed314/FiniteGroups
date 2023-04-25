@@ -114,6 +114,7 @@ declare attributes LMFDBGrp:
   MagmaAutGroup,
   outer_order,
   outer_group,
+  FewOuterGenerators, // a small number of automorphisms that generate the automorphism group (together with the inner automorphisms)
   factors_of_aut_order,
   complete,
   nilpotency_class,
