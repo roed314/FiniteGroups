@@ -564,6 +564,18 @@ intrinsic aut_component_data(L::SubgroupLat) -> Tuple
     GG := G`MagmaGrp;
     Aut := Get(G, "MagmaAutGroup");
     outs := Get(G, "FewOuterGenerators");
+    /*
+    Each of the entries in subs is an automorphism class of subgroups, consisting of a sequence of conjugacy classes making up the automorphism class.
+
+    lookup and inv_lookup are easy to compute from this data: they're just a record of the mapping from the list of conjugacy classes to the list of automorphism classes.
+
+    To find retract, we take automorphisms that generate the outer automorphism group,
+    and think about these as giving edges between conjugacy classes of subgroups.
+    For each automorphism class the corresponding graph will be connected
+    (the automorphism classes are precisely the connected components),
+    so we can work out from the first conjugacy class until we reach all the vertices,
+    tracking the automorphisms used as we go.
+    */
     for i in [1..#subs] do
         comp := subs[i];
         inv_lookup[i] := [H`i : H in comp];
