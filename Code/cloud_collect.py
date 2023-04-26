@@ -379,7 +379,13 @@ def extract_unfinished_file(infolder, outfile):
                             if line[0] == "s":
                                 sik[label] = sik[label] or (pieces[8] == "t")
     with open(outfile, "w") as F:
-        for label in sorted(
+        for label in sorted(finished, key=sort_key):
+            missing_codes = "".join(c for c in allcodes if c not in finished[label])
+            if label in sik and not sik[label]:
+                # Don't need D here
+                missing_codes = missing_codes.replace("D", "")
+            if missing_codes:
+                _ = F.write(f"{label} {missing_codes}\n")
 
 def build_treps(datafolder="/scratch/grp", alias_file="DATA/aliases.txt", descriptions_folder="DATA/descriptions"):
     all_labels = set(os.listdir(descriptions_folder))
