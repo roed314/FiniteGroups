@@ -459,35 +459,35 @@ def build_treps(datafolder="/scratch/grp", alias_file="DATA/aliases.txt", descri
             labeled32.append(label)
     return tmissing, lmissing, taliases, unlabeled32, labeled32
 
-    # transitive_subs = defaultdict(list)
-    # sib = defaultdict(list)
-    # for root, dirs, files in os.walk(datafolder):
-    #     for fname in files:
-    #         if fname.startswith("output") or fname.startswith("grp"):
-    #             with open(opj(root, fname)) as F:
-    #                 for line in F:
-    #                     if line[0] == "S" and line.count("|") == 53:
-    #                         pieces = line[1:].split("|")
-    #                         N, i = pieces[0].split(".")
-    #                         if not i.isdigit(): # Not a small group
-    #                             ambient_order = int(pieces[2])
-    #                             core_order = int(pieces[17])
-    #                             index = int(pieces[40])
-    #                             if core_order == 1 and (index >= 48 or index == 32 and (512 <= ambient_order <= 40000000000)):
-    #                                 ambient = pieces[0]
-    #                                 generators = pieces[22]
-    #                                 label = pieces[24]
-    #                                 last = label.split(".")[-1]
-    #                                 if last.startswith("CF") or last[0].isdigit() or last[0].islower():
-    #                                     # regular label or corefree label rather than label for a normal subgroup
-    #                                     transitive_subs[ambient].append((index, label, generators))
-    #                     elif line[0] == "s" and line.count("|") == 20:
-    #                         pieces = line[1:].split("|")
-    #                         label = pieces[0]
-    #                         sbound = int(pieces[9])
-    #                         sib[label].append(sbound)
+    transitive_subs = defaultdict(list)
+    sib = defaultdict(list)
+    for root, dirs, files in os.walk(datafolder):
+        for fname in files:
+            if fname.startswith("output") or fname.startswith("grp"):
+                with open(opj(root, fname)) as F:
+                    for line in F:
+                        if line[0] == "S" and line.count("|") == 53:
+                            pieces = line[1:].split("|")
+                            N, i = pieces[0].split(".")
+                            if not i.isdigit(): # Not a small group
+                                ambient_order = int(pieces[2])
+                                core_order = int(pieces[17])
+                                index = int(pieces[40])
+                                if core_order == 1 and (index >= 48 or index == 32 and (512 <= ambient_order <= 40000000000)):
+                                    ambient = pieces[0]
+                                    generators = pieces[22]
+                                    label = pieces[24]
+                                    last = label.split(".")[-1]
+                                    if last.startswith("CF") or last[0].isdigit() or last[0].islower():
+                                        # regular label or corefree label rather than label for a normal subgroup
+                                        transitive_subs[ambient].append((index, label, generators))
+                        elif line[0] == "s" and line.count("|") == 20:
+                            pieces = line[1:].split("|")
+                            label = pieces[0]
+                            sbound = int(pieces[9])
+                            sib[label].append(sbound)
 
-    # return tmissing, transitive_subs, sib
+    return tmissing, lmissing, taliases, unlabeled32, labeled32, transitive_subs, sib
 
 #def improve_names(out):
 #    names = {label: D[label].get("name") for (label, D) in out["Grp"].items()}
