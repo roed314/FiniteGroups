@@ -317,18 +317,26 @@ def update_all_outputs(outfolder, overwrite=False):
         for fname in files:
             update_output_file(opj(root[2:], fname), opj(outfolder, root[2:], fname), overwrite=overwrite)
 
-def extract_unlabeled_groups(infolder, outfolder):
+def extract_unlabeled_groups(infolders, outfolder, starti=0):
     matcher = re.compile(r"\?([^\?]+)\?")
     unlabeled = defaultdict(set)
-    for root, dirs, files in os.walk(infolder):
-        for fname in files:
-            if fname.startswith("output") or fname.startswith("grp-"):
-                with open(opj(root, fname)) as F:
-                    for line in F:
-                        label = line[1:].split("|")[0].split("(")[0]
-                        for x in matcher.findall(line):
-                            unlabeled[label].add(x)
-    i = 0
+    if isinstance(infolders, str):
+        infolders = [infolders]
+    for infolder in infolders:
+        for root, dirs, files in os.walk(infolder):
+            for fname in files:
+                if fname.startswith("output") or fname.startswith("grp-"):
+                    with open(opj(root, fname)) as F:
+                        for line in F:
+                            label = line[1:].split("|")[0].split("(")[0]
+                            for x in matcher.findall(line):
+                                unlabeled[x].add(label)
+    for x in unlabeled:
+        unlabeled[x] = min(unlabeled[x], key=sort_key)
+    UL = defaultdict(list):
+    for x, label in unlabeled.items():
+        UL[label].append(x)
+    i = starti
     for label in sorted(unlabeled, key=sort_key):
         for x in unlabeled[label]:
             i += 1
