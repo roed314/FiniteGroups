@@ -356,8 +356,8 @@ def extract_unlabeled_groups(infolders, outfolder, skipfile):
     for x, label in unlabeled.items():
         UL[label].append(x)
     i = starti
-    for label in sorted(unlabeled, key=sort_key):
-        for x in unlabeled[label]:
+    for label in sorted(UL, key=sort_key):
+        for x in UL[label]:
             i += 1
             if i%100000 == 0:
                 print("Writing outfolder", i)
