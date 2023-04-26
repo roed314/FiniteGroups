@@ -318,6 +318,13 @@ def update_all_outputs(outfolder, overwrite=False):
             update_output_file(opj(root[2:], fname), opj(outfolder, root[2:], fname), overwrite=overwrite)
 
 def extract_unlabeled_groups(infolders, outfolder, starti=0):
+    seen = set()
+    for i, fname in enumerate(os.listdir(outfolder)):
+        if i and (i%100000 == 0):
+            print("Reading outfolder", i)
+        with open(opj(outfolder, fname)) as F:
+            label, x  = F.read().strip().split("|")
+            seen.add(x)
     matcher = re.compile(r"\?([^\?]+)\?")
     unlabeled = defaultdict(set)
     if isinstance(infolders, str):
@@ -330,7 +337,10 @@ def extract_unlabeled_groups(infolders, outfolder, starti=0):
                         for line in F:
                             label = line[1:].split("|")[0].split("(")[0]
                             for x in matcher.findall(line):
-                                unlabeled[x].add(label)
+                                if x not in seen:
+                                    unlabeled[x].add(label)
+                                    if len(unlabeled) % 100000 == 0:
+                                        print("Reading infolder", len(unlabeled))
     for x in unlabeled:
         unlabeled[x] = min(unlabeled[x], key=sort_key)
     UL = defaultdict(list)
@@ -340,6 +350,8 @@ def extract_unlabeled_groups(infolders, outfolder, starti=0):
     for label in sorted(unlabeled, key=sort_key):
         for x in unlabeled[label]:
             i += 1
+            if i%100000 == 0:
+                print("Writing outfolder", i)
             with open(opj(outfolder, str(i)), "w") as F:
                 _ = F.write(f"{label}|{x}\n")
 
