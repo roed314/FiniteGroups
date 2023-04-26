@@ -317,9 +317,12 @@ def update_all_outputs(outfolder, overwrite=False):
         for fname in files:
             update_output_file(opj(root[2:], fname), opj(outfolder, root[2:], fname), overwrite=overwrite)
 
-def extract_unlabeled_groups(infolders, outfolder, starti=0):
+def extract_unlabeled_groups(infolders, outfolder, skipfile):
     seen = set()
-    for i, fname in enumerate(os.listdir(outfolder)):
+    os.makedirs(outfolder, exist_ok=True)
+    existing = os.listdir(outfolder)
+    starti = len(existing)
+    for i, fname in enumerate(existing):
         if i and (i%100000 == 0):
             print("Reading outfolder", i)
         with open(opj(outfolder, fname)) as F:
@@ -329,18 +332,24 @@ def extract_unlabeled_groups(infolders, outfolder, starti=0):
     unlabeled = defaultdict(set)
     if isinstance(infolders, str):
         infolders = [infolders]
-    for infolder in infolders:
-        for root, dirs, files in os.walk(infolder):
-            for fname in files:
-                if fname.startswith("output") or fname.startswith("grp-"):
-                    with open(opj(root, fname)) as F:
-                        for line in F:
-                            label = line[1:].split("|")[0].split("(")[0]
-                            for x in matcher.findall(line):
-                                if x not in seen:
-                                    unlabeled[x].add(label)
-                                    if len(unlabeled) % 100000 == 0:
-                                        print("Reading infolder", len(unlabeled))
+    with open(skipfile, "w") as Fskip:
+        for infolder in infolders:
+            for root, dirs, files in os.walk(infolder):
+                for fname in files:
+                    if fname.startswith("output") or fname.startswith("grp-"):
+                        with open(opj(root, fname)) as F:
+                            for j, line in enumerate(F):
+                                label = line[1:].split("|")[0].split("(")[0]
+                                for x in matcher.findall(line):
+                                    if len(x) > 10000 and "Perm" in x:
+                                        d = int(x[:x.index("P")])
+                                        if d > 8192:
+                                            Fskip.write(f"{root}/{fname}: line {j}, {d}Perm\n")
+                                            continue
+                                    if x not in seen:
+                                        unlabeled[x].add(label)
+                                        if len(unlabeled) % 100000 == 0:
+                                            print("Reading infolder", len(unlabeled))
     for x in unlabeled:
         unlabeled[x] = min(unlabeled[x], key=sort_key)
     UL = defaultdict(list)
@@ -354,6 +363,23 @@ def extract_unlabeled_groups(infolders, outfolder, starti=0):
                 print("Writing outfolder", i)
             with open(opj(outfolder, str(i)), "w") as F:
                 _ = F.write(f"{label}|{x}\n")
+
+def extract_unfinished_file(infolder, outfile):
+    finished = defaultdict(set)
+    allcodes = "blajJzcCrqQsvSDLWhtguoIimw"
+    sik = defaultdict(bool)
+    for root, dirs, files in os.walk(infolder):
+        for fname in files:
+            if fname.startswith("output") or fname.startswith("grp-"):
+                    with open(opj(root, fname)) as F:
+                        for line in F:
+                            pieces = line[1:].split("|")
+                            label = pieces[0].split("(")[0]
+                            finished[label].add(line[0])
+                            if line[0] == "s":
+                                sik[label] = sik[label] or (pieces[8] == "t")
+    with open(outfile, "w") as F:
+        for label in sorted(
 
 def build_treps(datafolder="/scratch/grp", alias_file="DATA/aliases.txt", descriptions_folder="DATA/descriptions"):
     all_labels = set(os.listdir(descriptions_folder))
