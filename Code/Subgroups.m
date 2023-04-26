@@ -608,7 +608,7 @@ intrinsic aut_component_data(L::SubgroupLat) -> Tuple
                 H := comp[j]`subgroup;
                 for f in outs do
                     K := f(H);
-                    gvK := SubgroupClass(H`subgroup, cm);
+                    gvK := SubgroupClass(H, cm);
                     if not IsDefined(by_gvec, gvK) then
                         // this can happen if K is in the class of comps[1], since we didn't add that
                         continue;
