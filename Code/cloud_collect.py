@@ -333,7 +333,7 @@ def extract_unlabeled_groups(infolders, outfolder, starti=0):
                                 unlabeled[x].add(label)
     for x in unlabeled:
         unlabeled[x] = min(unlabeled[x], key=sort_key)
-    UL = defaultdict(list):
+    UL = defaultdict(list)
     for x, label in unlabeled.items():
         UL[label].append(x)
     i = starti
