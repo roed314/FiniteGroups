@@ -457,7 +457,6 @@ def build_treps(datafolder="/scratch/grp", alias_file="DATA/aliases.txt", descri
         label = f"{rec['order']}.{rec['gapid']}"
         if label not in all_labels:
             labeled32.append(label)
-    return tmissing, lmissing, taliases, unlabeled32, labeled32
 
     transitive_subs = defaultdict(list)
     sib = defaultdict(list)
