@@ -511,10 +511,11 @@ def build_treps(datafolder="/scratch/grp", alias_file="DATA/aliases.txt", descri
             labeled32.append(label)
 
     transitive_subs = defaultdict(list)
-    sib = defaultdict(list)
     for root, dirs, files in os.walk(datafolder):
         for fname in files:
             if fname.startswith("output") or fname.startswith("grp"):
+                sib = {}
+                tsubs = defaultdict(list)
                 with open(opj(root, fname)) as F:
                     for line in F:
                         if line[0] == "S" and line.count("|") == 53:
@@ -535,10 +536,12 @@ def build_treps(datafolder="/scratch/grp", alias_file="DATA/aliases.txt", descri
                         elif line[0] == "s" and line.count("|") == 20:
                             pieces = line[1:].split("|")
                             label = pieces[0]
-                            sbound = int(pieces[9])
-                            sib[label].append(sbound)
+                            N, i = label.split(".")
+                            if not i.isdigit():
+                                sbound = int(pieces[9])
+                                sib[label].append(sbound)
 
-    return tmissing, lmissing, taliases, unlabeled32, labeled32, transitive_subs, sib
+    return tmissing, lmissing, taliases, unlabeled32, labeled32, transitive_subs
 
 #def improve_names(out):
 #    names = {label: D[label].get("name") for (label, D) in out["Grp"].items()}
