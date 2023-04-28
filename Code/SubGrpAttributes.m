@@ -3,6 +3,21 @@
 list of attributes to compute. DONE is either done here or in Basics.m
 see https://github.com/roed314/FiniteGroups/blob/master/ProposedSchema.md for description of attributes
 */
+
+intrinsic MagmaCentralizer(H::LMFDBSubGrp) -> Grp
+{compute magma version of centralizer}
+   GG:=H`Grp`MagmaGrp; 
+   HH:=H`MagmaSubGrp;
+   try
+     C:=Centralizer(GG,HH);
+   catch e     //dealing with a strange Magma bug in 120.5
+     SetOfCentralizers:={Centralizer(GG,h) : h in HH};
+     C:=&meet(SetOfCentralizers);
+   end try;
+   return C;
+end intrinsic; 
+
+
 intrinsic outer_equivalence(H::LMFDBSubGrp) -> BoolElt
     {}
     return Get(H`Grp, "outer_equivalence");
@@ -218,7 +233,7 @@ intrinsic central_factor(H::LMFDBSubGrp) -> BoolElt
     if Get(H, "normal") and Get(H, "subgroup_order") ne 1 and Get(H, "quotient_order") ne 1 then
         HH := H`MagmaSubGrp;
         GG := Get(H, "MagmaAmbient");
-        C := Centralizer(GG, HH);
+C := Get(H,"MagmaCentralizer");  // JP changes centralizer
         // |CH| = |C||H|/|C meet H|. We check if |CH| = |G| and return true if so.
         if #C lt #GG and #C * #HH eq #(C meet HH) * #GG then
             return true;
@@ -496,7 +511,7 @@ intrinsic weyl_group(H::LMFDBSubGrp) -> Any
     GG := Get(H, "MagmaAmbient");
     HH := H`MagmaSubGrp;
     N := Normalizer(GG, HH);
-    Z := Centralizer(GG, HH);
+Z := Get(H,"MagmaCentralizer");  // JP changed centralizer
     W := BestQuotient(N, Z);
     try
         return label(W : strict:=false, giveup:=true);

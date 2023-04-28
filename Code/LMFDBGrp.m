@@ -302,7 +302,8 @@ declare attributes LMFDBSubGrp:
   aut_stab_index,
   aut_quo_index,
   aut_centralizer_order,
-  proper;
+  proper,
+  MagmaCentralizer;  // added to deal with magma bug with 120.5
 
 intrinsic Print(H::LMFDBSubGrp)
   {Print LMFDBSubGrp}
