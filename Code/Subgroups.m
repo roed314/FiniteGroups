@@ -5,7 +5,7 @@ This file supports computation of subgroups of abstract groups.
 VS_QUOTIENT_CUTOFF := 5; // if G has a subquotient vector space of dimension larger than this, we always compute up to automorphism;
 NUM_SUBS_RATCHECK := 128; // if G has less than this many subgroups up to conjugacy, we definitely compute them up to conjugacy (and the orbits under Aut(G)
 NUM_SUBS_RATIO := 2; // if G has between NUM_SUBS_RATCHECK and NUM_SUBS_CUTOFF_CONJ subgroups up to conjugacy, we record up to conjugacy (and the orbits under Aut(G))
-NUM_SUBS_CUTOFF_CONJ := 1024; // if G has at least this many subgroups up to conjugacy, we definitely compute subgroups up to automorphism
+NUM_SUBS_CUTOFF_CONJ := 1024; // if G has at least this many subgroups up to conjugacy, we compute subgroups up to automorphism (or truncate at this point if outer_equivalence has been set to false externally)
 NUM_SUBS_CUTOFF_AUT := 4096; // if G has at least this many subgroups up to automorphism, we only compute subgroups up to automorphism, and up to an index bound
 NUM_SUBS_LIMIT_AUT := 1024; // if we compute up to an index bound, we set it so that less than this many subgroups up to automorphism are stored
 LAT_CUTOFF := 4096; // if G has less than this many subgroups up to automorphism, we compute inclusion relations for the lattices of subgroups (both up-to-automorphism and, if present, up-to-conjugacy)
@@ -608,7 +608,7 @@ intrinsic aut_component_data(L::SubgroupLat) -> Tuple
                 H := comp[j]`subgroup;
                 for f in outs do
                     K := f(H);
-                    gvK := SubgroupClass(H, cm);
+                    gvK := SubgroupClass(K, cm);
                     if not IsDefined(by_gvec, gvK) then
                         // this can happen if K is in the class of comps[1], since we didn't add that
                         continue;
@@ -679,7 +679,7 @@ intrinsic CCAutCollapse(X::LMFDBGrp) -> Map
     elif Get(X, "HaveAutomorphisms") then
         Aut := Get(X, "MagmaAutGroup");
         cm := Get(X, "ClassMap");
-        outs := [f : f in Generators(Aut) | not IsInner(f)];
+        outs := Get(X, "FewOuterGenerators");
         edges := [{Integers()|} : _ in [1..#CC]];
         for f in outs do
             for i in [1..#CC] do
@@ -740,7 +740,7 @@ intrinsic IsCharacteristic(G::LMFDBGrp, H::Grp) -> BoolElt
         inj := Get(G, "HolInj");
         return IsNormal(Ambient, inj(H));
     else
-        outs := [f : f in Generators(Get(G, "MagmaAutGroup")) | not IsInner(f)];
+        outs := Get(G, "FewOuterGenerators");
         return IsNormal(G`MagmaGrp, H) and &and[f(H) eq H : f in outs];
     end if;
 end intrinsic;
@@ -1365,6 +1365,9 @@ intrinsic IncludeSpecialSubgroups(L::SubgroupLat)
     for tup in SpecialGrps do
         i := SubgroupIdentify(L, tup[1] : use_gassman:=false, characteristic:=tup[3]);
         L`subs[i]`keep := true;
+        if tup[3] then
+            L`subs[i]`characteristic := true;
+        end if;
         Append(~L`subs[i]`special_labels, tup[2]);
     end for;
     ReportEnd(G, "IncludeSpecialSubgroups", t0);
@@ -2156,6 +2159,25 @@ end intrinsic;
 intrinsic characteristic(H::SubgroupLatElt) -> BoolElt
 {Whether this subgroup is stabilized by all automorphisms}
     L := H`Lat;
+    G := L`Grp;
+    if FindSubsWithoutAut(G) then
+        if not Get(H, "normal") then return false; end if;
+        d := G`order div H`order;
+        if L`index_bound eq 0 or d le L`index_bound then
+            norms := [N : N in Get(L, "by_index")[d] | Get(N, "normal")];
+            if #norms eq 1 then return true; end if;
+        end if;
+        // Despite calling it "FindSubsWithoutAut", we usually have access to aut_gens and thus the automorphism group
+        if assigned G`aut_gens then
+            HH := H`subgroup;
+            for f in Generators(Get(G, "MagmaAutGroup")) do
+                if f(HH) ne HH then return false; end if;
+            end for;
+            return true;
+        end if;
+        // Give up
+        return None();
+    end if;
     return Get(H, "subgroup_count") eq 1 and (L`outer_equivalence or #Get(L, "aut_orbit")[H`i] eq 1);
 end intrinsic;
 
@@ -2241,7 +2263,13 @@ intrinsic number_characteristic_subgroups(G::LMFDBGrp) -> Any
 {}
     if not Get(G, "normal_subgroups_known") then return None(); end if;
     L := BestNormalSubgroupLat(G);
-    return #[H : H in L`subs | Get(H, "characteristic")];
+    num := 0;
+    for H in L`subs do
+        characteristic := Get(H, "characteristic");
+        if Type(characteristic) eq NoneType then return None(); end if;
+        if characteristic then num +:= 1; end if;
+    end for;
+    return num;
 end intrinsic;
 
 intrinsic number_subgroup_autclasses(G::LMFDBGrp) -> Any
@@ -2266,22 +2294,62 @@ intrinsic number_subgroup_classes(G::LMFDBGrp) -> Any
     return &+[Get(H, "cc_count") : H in L`subs];
 end intrinsic;
 
+intrinsic FindSubsWithoutAut(G::LMFDBGrp) -> BoolElt
+{}
+    // We use the combination G`AllSubgroupsOk=false, G`outer_equivalence=false, G`subgroup_inclusions_known=false
+    // to specify that we want to avoid computing subgroups up to automorphism.
+    // This avoids some costly computations, making it possible to compute
+    // subgroups for larger G, but prevents labeling using our standard labeling
+    // scheme.  It also never happens naturally, since outer_equivalence(G) returns true when AllSubgroupsOk(G) is false.
+    return assigned G`outer_equivalence and assigned G`AllSubgroupsOk and assigned G`subgroup_inclusions_known and not G`outer_equivalence and not G`AllSubgroupsOk and not G`subgroup_inclusions_known;
+end intrinsic;
+
 intrinsic SubGrpLst(G::LMFDBGrp) -> SubgroupLat
 {The list of all subgroups up to conjugacy}
     // For now, we start with index 1 rather than order 1
     t0 := ReportStart(G, "SubGrpLst");
+    GG := G`MagmaGrp;
     res := New(SubgroupLat);
     res`Grp := G;
     res`outer_equivalence := false;
     res`inclusions_known := false;
     terminate := Get(G, "SubGrpLstByDivisorTerminate");
     if terminate ne 0 then
-        subs := Reverse(Subgroups(G`MagmaGrp : IndexLimit:=terminate));
+        subs := Reverse(Subgroups(GG : IndexLimit:=terminate));
         res`index_bound := terminate;
         G`number_subgroup_classes := None();
         G`number_subgroups := None();
+    elif FindSubsWithoutAut(G) then
+        // We use this for large groups where it was taking too much time to compute subgroups up to automorphism.  In this case we also want to work index-by-index since the full subgroup list is probably too long to store (and may be infeasible to compute)
+        N := G`order;
+        D := Reverse(Divisors(N));
+        ccount := 0;
+        prevd := -1;
+        res`index_bound := 0; // will usually get overwritten below
+        subs := [];
+        for d in D do
+            t1 := ReportStart(G, Sprintf("SubGrpLstConjDivisor (%o:%o)", d, ccount));
+            dsubs := Subgroups(GG: OrderEqual := d);
+            ReportEnd(G, Sprintf("SubGrpLstConjDivisor (%o:%o)", d, ccount), t1);
+            if ccount + #dsubs ge NUM_SUBS_CUTOFF_CONJ then
+                res`index_bound := N div prevd;
+                break;
+            end if;
+            subs cat:= dsubs;
+            ccount +:= #dsubs;
+            prevd := d;
+        end for;
+        if prevd eq 1 then
+            // somehow made it all the way through the loop
+            G`number_subgroup_classes := #subs;
+            G`number_subgroups := &+[H`length : H in subs];
+        else
+            G`number_subgroup_classes := None();
+            G`number_subgroups := None();
+            G`complements_known := false;
+        end if;
     else
-        subs := Reverse(Subgroups(G`MagmaGrp));
+        subs := Reverse(Subgroups(GG));
         res`index_bound := 0;
         G`number_subgroup_classes := #subs;
         G`number_subgroups := &+[H`length : H in subs];

@@ -292,6 +292,16 @@ end function;
 intrinsic LabelNormalSubgroups(S::SubgroupLat)
 {creates and assigns the short_label for each element of a lattice of normal subgroups}
     G := S`Grp;
+    if FindSubsWithoutAut(G) then
+        // short circuit the code below and use a non-canonical labeling so that we don't have to compute groups up to automorphism
+        for d->dsubs in Get(S, "by_index") do
+            for i in [1..#dsubs] do
+                sub := dsubs[i];
+                sub`label := Sprintf("%o.%o.N", d, CremonaCode(i-1 : upper:=true));
+            end for;
+        end for;
+        return;
+    end if;
     autjugacy := Get(S, "outer_equivalence");
     by_ind := Get(S, "by_index_aut");
     inc_known := Get(G, "subgroup_inclusions_known"); // if false, we use an alternate non-canonical tiebreaking method
@@ -341,6 +351,16 @@ end intrinsic;
 intrinsic LabelSubgroups(S::SubgroupLat)
 {creates and assigns the full_label and short_label for each element of a subgroup lattice}
     G := S`Grp;
+    if FindSubsWithoutAut(G) then
+        // short circuit the code below and use a non-canonical labeling so that we don't have to compute groups up to automorphism
+        for d->dsubs in Get(S, "by_index") do
+            for i in [1..#dsubs] do
+                sub := dsubs[i];
+                sub`label := Sprintf("%o.%o", d, CremonaCode(i-1 : upper:=true));
+            end for;
+        end for;
+        return;
+    end if;
     autjugacy := Get(S, "outer_equivalence");
     by_ind := Get(S, "by_index_aut");
     inc_known := Get(G, "subgroup_inclusions_known"); // if false, we use an alternate non-canonical tiebreaking method

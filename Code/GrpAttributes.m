@@ -46,7 +46,7 @@ intrinsic aut_stats(G::LMFDBGrp) -> Any
     elif Get(G, "HaveAutomorphisms") then
         Aut := Get(G, "MagmaAutGroup");
         cm := Get(G, "MagmaClassMap");
-        outs := [f : f in Generators(Aut) | not IsInner(f)];
+        outs := Get(G, "FewOuterGenerators");
         edges := [{Integers()|} : _ in [1..#CC]];
         for f in outs do
             for i in [1..#CC] do

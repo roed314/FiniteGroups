@@ -290,6 +290,27 @@ intrinsic Random(G::GrpAuto : word_len:=40) -> GrpAutoElt
     return r;
 end intrinsic;
 
+intrinsic IsInnerFixed(a :: GrpAutoElt) -> BoolElt, GrpPermElt
+{Fix a bug in Magma's IsInner}
+    A := Parent(a);
+    if not assigned A`Group then
+        error "Underlying group of automorphism group is not known";
+    end if;
+    G := A`Group;
+    C := G;
+    y := Id(G);
+    gens := [g : g in Generators(G)]; // change is here: for PC groups [G.i : i in [1..Ngens(G)]] doesn't generate
+    for g in [gens[i] : i in [1..#gens]] do
+        yes, el := IsConjugate(C, g^y, g@a);
+        if not yes then
+            return false, _;
+        end if;
+        y := y*el;
+        C := Centraliser(C, g@a);
+    end for;
+    return true, y;
+end intrinsic;
+
 intrinsic FewGenerators(A::GrpAuto : outer:=false, Try:=1) -> SeqEnum
 {}
     G := Group(A);
@@ -304,7 +325,8 @@ intrinsic FewGenerators(A::GrpAuto : outer:=false, Try:=1) -> SeqEnum
             return [(b @@ Qproj) @@ m : b in AbelianBasis(Q)];
         end if;
         n := #AbelianInvariants(Q);
-        ogens := [f : f in Generators(A) | not IsInner(f)];
+        // IsInner is unreliable
+        ogens := [f : f in Generators(A) | not IsInnerFixed(f)];
         n_opt := Infinity();
         for j in [1..Try] do
             for i in [1..Min(Degree(P), 1000)] do
