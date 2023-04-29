@@ -31,20 +31,20 @@ intrinsic GetBasicAttributesGrp() -> Any
 end intrinsic;
 
 intrinsic AssignBasicAttributes(G::LMFDBGrp)
-  {Assign basic attributes. G`MagmaGrp must already be assigned.}
-  attrs := GetBasicAttributesGrp();
-  GG := G`MagmaGrp;
-  for attr in attrs do
-	     //    print attr;
-    mag_attr:=attr[1];
-    db_attr:=attr[2];
-    if not HasAttribute(G, db_attr) then
-      eval_str := Sprintf("return %o(GG);", mag_attr);
-      G``db_attr := eval eval_str;
-    end if;
-  end for;
-  //G`IsSuperSolvable := IsSupersoluble(GG); // thanks a lot Australia! :D; only for GrpPC...
-  //return Sprintf("Basic attributes assigned to %o", G);
+{Assign basic attributes. G`MagmaGrp must already be assigned.}
+    attrs := GetBasicAttributesGrp();
+    GG := G`MagmaGrp;
+    for attr in attrs do
+        //    print attr;
+        mag_attr:=attr[1];
+        db_attr:=attr[2];
+        if not HasAttribute(G, db_attr) then
+            eval_str := Sprintf("return %o(GG);", mag_attr);
+            G``db_attr := eval eval_str;
+        end if;
+    end for;
+    //G`IsSuperSolvable := IsSupersoluble(GG); // thanks a lot Australia! :D; only for GrpPC...
+    //return Sprintf("Basic attributes assigned to %o", G);
 end intrinsic;
 
 intrinsic GetBasicAttributesSubGrp(pair::BoolElt) -> Any
@@ -71,37 +71,37 @@ intrinsic GetBasicAttributesSubGrp(pair::BoolElt) -> Any
 end intrinsic;
 
 intrinsic AssignBasicAttributes(H::LMFDBSubGrp)
-  {Assign basic attributes. H`MagmaSubGrp must already be assigned.}
-  GG := Get(H, "MagmaAmbient");
-  HH := H`MagmaSubGrp;
-  attrs := GetBasicAttributesSubGrp(true);
-  for attr in attrs do
-	     //   print attr;
-    mag_attr:=attr[1];
-    db_attr:=attr[2];
-    if not HasAttribute(H, db_attr) then
-      eval_str := Sprintf("return %o(GG, HH)", mag_attr);
-      H``db_attr := eval eval_str;
+{Assign basic attributes. H`MagmaSubGrp must already be assigned.}
+    GG := Get(H, "MagmaAmbient");
+    HH := H`MagmaSubGrp;
+    attrs := GetBasicAttributesSubGrp(true);
+    for attr in attrs do
+	//   print attr;
+        mag_attr:=attr[1];
+        db_attr:=attr[2];
+        if not HasAttribute(H, db_attr) then
+            eval_str := Sprintf("return %o(GG, HH)", mag_attr);
+            H``db_attr := eval eval_str;
+        end if;
+    end for;
+    attrs := GetBasicAttributesSubGrp(false);
+    for attr in attrs do
+        mag_attr:=attr[1];
+        db_attr:=attr[2];
+        if not HasAttribute(H, db_attr) then
+            eval_str := Sprintf("return %o(HH)", mag_attr);
+            H``db_attr := eval eval_str;
+        end if;
+    end for;
+    // Have to deal with centralizer separately because of annoying magma bug
+    db_attr:="centralizer";
+    if not HasAttribute(H,db_attr) then
+        try
+            H`centralizer := Centralizer(GG,HH);
+        catch e     //dealing with a strange Magma bug in 120.5
+            GenCentralizers:={Centralizer(GG,h) : h in Generators(HH)};
+            H`centralizer:=&meet(GenCentralizers);
+        end try;
     end if;
-  end for;
-  attrs := GetBasicAttributesSubGrp(false);
-  for attr in attrs do
-    mag_attr:=attr[1];
-    db_attr:=attr[2];
-    if not HasAttribute(H, db_attr) then
-      eval_str := Sprintf("return %o(HH)", mag_attr);
-      H``db_attr := eval eval_str;
-    end if;
-  end for;
-// Have to deal with centralizer separately because of annoying magma bug
-  db_attr:="centralizer";
-  if not HasAttribute(H,db_attr) then
-    try
-       H`centralizer:=Centralizer(GG,HH);
-    catch e     //dealing with a strange Magma bug in 120.5            
-        SetOfCentralizers:={Centralizer(GG,h) : h in HH};
-      H`centralizer:=&meet(SetOfCentralizers);
-    end try;
-  end if;
-   //return Sprintf("Basic attributes assigned to %o", H);
+    //return Sprintf("Basic attributes assigned to %o", H);
 end intrinsic;

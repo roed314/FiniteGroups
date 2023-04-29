@@ -46,7 +46,7 @@ intrinsic aut_stats(G::LMFDBGrp) -> Any
     elif Get(G, "HaveAutomorphisms") then
         Aut := Get(G, "MagmaAutGroup");
         cm := Get(G, "MagmaClassMap");
-        outs := [f : f in Generators(Aut) | not IsInner(f)];
+        outs := Get(G, "FewOuterGenerators");
         edges := [{Integers()|} : _ in [1..#CC]];
         for f in outs do
             for i in [1..#CC] do
@@ -1084,10 +1084,10 @@ intrinsic IsADirectProductHeuristic(G::Grp : steps:=50) -> Any
     until not (g in Z);
     N1 := NormalClosure(G, sub<G|g>);
     try
-       N2:=Centralizer(G,N1);
+        N2:=Centralizer(G, N1);
     catch e     //dealing with a strange Magma bug in 120.5
-        SetOfCentralizers:={Centralizer(G,h) : h in N1};
-        N2:=&meet(SetOfCentralizers);
+        GenCentralizers := {Centralizer(G,h) : h in Generators(N1)};
+        N2 := &meet(GenCentralizers);
     end try;
     // N2 := Centralizer(G,N1);
     if (#N1*#N2 eq #G) and (#(N1 meet N2) eq 1) and (#N2 ne 1) then

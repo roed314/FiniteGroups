@@ -6,7 +6,7 @@ s := Read("DATA/descriptions/" * label);
 if "pc" in s or "PC" in s then
     G := StringToGroup(s);
     A := AutomorphismGroupSolubleGroup(G);
-    outs := [f : f in Generators(A) | not IsInner(f)];
+    outs := [f : f in Generators(A) | not IsInnerFixed(f)];
     a := Random(G);
     b := Random(G);
     for f in outs do

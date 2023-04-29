@@ -6,17 +6,16 @@ see https://github.com/roed314/FiniteGroups/blob/master/ProposedSchema.md for de
 
 intrinsic MagmaCentralizer(H::LMFDBSubGrp) -> Grp
 {compute magma version of centralizer}
-   GG:=H`Grp`MagmaGrp; 
-   HH:=H`MagmaSubGrp;
-   try
-     C:=Centralizer(GG,HH);
-   catch e     //dealing with a strange Magma bug in 120.5
-     SetOfCentralizers:={Centralizer(GG,h) : h in HH};
-     C:=&meet(SetOfCentralizers);
-   end try;
-   return C;
-end intrinsic; 
-
+    GG:=H`Grp`MagmaGrp;
+    HH:=H`MagmaSubGrp;
+    try
+        C:=Centralizer(GG,HH);
+    catch e     //dealing with a strange Magma bug in 120.5
+        GenCentralizers:={Centralizer(GG,h) : h in Generators(HH)};
+        C:=&meet(GenCentralizers);
+    end try;
+    return C;
+end intrinsic;
 
 intrinsic outer_equivalence(H::LMFDBSubGrp) -> BoolElt
     {}

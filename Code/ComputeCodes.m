@@ -28,20 +28,24 @@ if assigned debug then
     SetDebugOnError(true); // for testing
 end if;
 
-if codes eq "X" then // identifying groups given in gps_to_id
+if codes in ["X", "Y"] then // identifying groups given in gps_to_id
     // Using label as a variable name gets in the way of the intrinsic, but we don't want to change the API, so we used m instead
     outfile := "DATA/computes/" * m;
     infile := "DATA/gps_to_id/" * m;
     sources, desc := Explode(Split(Read(infile), "|"));
-    t0 := ReportStart(m, "Code-X");
+    t0 := ReportStart(m, Sprintf("Code-%o", codes));
     G := StringToGroup(desc);
-    lab := label(G);
-    if Type(lab) eq NoneType then
-        PrintFile(outfile, Sprintf("X%o|\\N", m));
+    if codes eq "X" then
+        lab := label(G);
     else
-        PrintFile(outfile, Sprintf("X%o|%o", m, lab));
+        lab := label_perm_method(G);
     end if;
-    ReportEnd(m, "Code-X", t0);
+    if Type(lab) eq NoneType then
+        PrintFile(outfile, Sprintf("%o%o|\\N", codes, m));
+    else
+        PrintFile(outfile, Sprintf("%o%o|%o", codes, m, lab));
+    end if;
+    ReportEnd(m, Sprintf("Code-%o", codes), t0);
     quit;
     index := 0; // The magma compiler is annoying
 elif codes eq "y" then // trying to compute all subgroups of a given index
