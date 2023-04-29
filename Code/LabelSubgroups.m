@@ -338,8 +338,13 @@ intrinsic LabelNormalSubgroups(S::SubgroupLat)
                     end if;
                     for ccode -> csubs in by_ccode do
                         // Normal, so gassman vec is enough to determine
-                        label := Sprintf("%o.%o%o.%o.N", index, CremonaCode(acode), atie, CremonaCode(ccode));
+	                        label := Sprintf("%o.%o%o.%o.N", index, CremonaCode(acode), atie, CremonaCode(ccode));
                         by_cnum := csubs;
+                        for cnum in [1..#by_cnum] do
+                            sub := by_cnum[cnum];
+                            sub`aut_label := [index, acode, anum];
+                            sub`full_label := [index, acode, anum, ccode, cnum];
+end for;
                         by_cnum[1]`label := label;
                     end for;
                 end if;
