@@ -1083,7 +1083,13 @@ intrinsic IsADirectProductHeuristic(G::Grp : steps:=50) -> Any
       g := r^Random(Divisors(Order(r)));
     until not (g in Z);
     N1 := NormalClosure(G, sub<G|g>);
-    N2 := Centralizer(G,N1);
+    try
+       N2:=Centralizer(G,N1);
+    catch e     //dealing with a strange Magma bug in 120.5
+        SetOfCentralizers:={Centralizer(G,h) : h in N1};
+        N2:=&meet(SetOfCentralizers);
+    end try;
+    // N2 := Centralizer(G,N1);
     if (#N1*#N2 eq #G) and (#(N1 meet N2) eq 1) and (#N2 ne 1) then
       return true, N1, N2;    //! should be fixed in a new version of Magma
       //return true,eval Sprint(N1,"Magma"),eval Sprint(N2,"Magma");

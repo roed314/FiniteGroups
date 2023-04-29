@@ -35,7 +35,7 @@ intrinsic AssignBasicAttributes(G::LMFDBGrp)
   attrs := GetBasicAttributesGrp();
   GG := G`MagmaGrp;
   for attr in attrs do
-    //print attr;
+	     //    print attr;
     mag_attr:=attr[1];
     db_attr:=attr[2];
     if not HasAttribute(G, db_attr) then
@@ -54,7 +54,7 @@ intrinsic GetBasicAttributesSubGrp(pair::BoolElt) -> Any
      ["IsNormal" , "normal"],
      ["Core" , "core"],
      ["Normalizer" , "normalizer"],
-     ["Centralizer" , "centralizer"],
+     //     ["Centralizer" , "centralizer"], group 120.5 is annoying
      ["NormalClosure" , "normal_closure"],
      ["IsCentral", "central"],
      ["IsMaximal", "maximal"]
@@ -76,6 +76,7 @@ intrinsic AssignBasicAttributes(H::LMFDBSubGrp)
   HH := H`MagmaSubGrp;
   attrs := GetBasicAttributesSubGrp(true);
   for attr in attrs do
+	     //   print attr;
     mag_attr:=attr[1];
     db_attr:=attr[2];
     if not HasAttribute(H, db_attr) then
@@ -92,5 +93,15 @@ intrinsic AssignBasicAttributes(H::LMFDBSubGrp)
       H``db_attr := eval eval_str;
     end if;
   end for;
-  //return Sprintf("Basic attributes assigned to %o", H);
+// Have to deal with centralizer separately because of annoying magma bug
+  db_attr:="centralizer";
+  if not HasAttribute(H,db_attr) then
+    try
+       H`centralizer:=Centralizer(GG,HH);
+    catch e     //dealing with a strange Magma bug in 120.5            
+        SetOfCentralizers:={Centralizer(GG,h) : h in HH};
+      H`centralizer:=&meet(SetOfCentralizers);
+    end try;
+  end if;
+   //return Sprintf("Basic attributes assigned to %o", H);
 end intrinsic;
