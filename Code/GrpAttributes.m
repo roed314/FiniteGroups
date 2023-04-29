@@ -1084,10 +1084,10 @@ intrinsic IsADirectProductHeuristic(G::Grp : steps:=50) -> Any
     until not (g in Z);
     N1 := NormalClosure(G, sub<G|g>);
     try
-       N2:=Centralizer(G,N1);
+        N2:=Centralizer(G, N1);
     catch e     //dealing with a strange Magma bug in 120.5
-        SetOfCentralizers:={Centralizer(G,h) : h in N1};
-        N2:=&meet(SetOfCentralizers);
+        GenCentralizers := {Centralizer(G,h) : h in Generators(N1)};
+        N2 := &meet(GenCentralizers);
     end try;
     // N2 := Centralizer(G,N1);
     if (#N1*#N2 eq #G) and (#(N1 meet N2) eq 1) and (#N2 ne 1) then

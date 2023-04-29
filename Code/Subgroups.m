@@ -2691,13 +2691,13 @@ end intrinsic;
 
 intrinsic centralizer(H::SubgroupLatElt) -> Any
 {}
-   try
+    try
         i := SubgroupIdentify(H`Lat, Centralizer(H`Lat`Grp`MagmaGrp, H`subgroup) : error_if_missing:=false);
-   catch e    //dealing with a strange Magma bug in 120.5
-        SetOfCentralizers:={Centralizer(H`Lat`Grp`MagmaGrp,h) : h in H`subgroup};
-        Cent:=&meet(SetOfCentralizers);
-        i:=SubgroupIdentify(H`Lat,Cent : error_if_missing:=false);
-   end try;
+    catch e    //dealing with a strange Magma bug in 120.5
+        GenCentralizers:={Centralizer(H`Lat`Grp`MagmaGrp, h) : h in Generators(H`subgroup)};
+        Cent:=&meet(GenCentralizers);
+        i:=SubgroupIdentify(H`Lat, Cent : error_if_missing:=false);
+    end try;
 
     return (i eq -1 select None() else i);
 end intrinsic;
