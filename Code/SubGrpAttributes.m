@@ -471,7 +471,7 @@ end intrinsic;
 
 intrinsic quotient_tex(H::LMFDBSubGrp) -> Any
 {Returns Magma's name for the quotient.}
-    if H`order eq 1 then
+    if Get(H, "subgroup_order") eq 1 then
         return Get(H`Grp, "tex_name");
     end if;
     if Get(H, "normal") then
