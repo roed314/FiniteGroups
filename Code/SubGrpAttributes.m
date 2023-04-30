@@ -456,7 +456,7 @@ end intrinsic;
 
 intrinsic subgroup_tex(H::LMFDBSubGrp) -> Any
 {Returns Magma's name for the subgroup.}
-    if H`order eq H`Grp`order then
+    if Get(H, "quotient_order") eq 1 then
         return Get(H`Grp, "tex_name");
     end if;
     g:=H`MagmaSubGrp;
