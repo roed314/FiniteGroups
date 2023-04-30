@@ -455,27 +455,31 @@ intrinsic diagram_aut_x(H::LMFDBSubGrp) -> RngIntElt
 end intrinsic;
 
 intrinsic subgroup_tex(H::LMFDBSubGrp) -> Any
-  {Returns Magma's name for the subgroup.}
-  g:=H`MagmaSubGrp;
-  gn:= GroupName(g: TeX:=true);
-  return ReplaceString(gn, "\\", "\\\\");
+{Returns Magma's name for the subgroup.}
+    if H`order eq H`Grp`order then
+        return Get(H`Grp, "tex_name");
+    end if;
+    g:=H`MagmaSubGrp;
+    gn:= GroupName(g: TeX:=true);
+    return ReplaceString(gn, "\\", "\\\\");
 end intrinsic;
 
 intrinsic ambient_tex(H::LMFDBSubGrp) -> Any
-  {Returns Magma's name for the ambient group.}
-  g := Get(H, "MagmaAmbient");
-  gn:= GroupName(g: TeX:=true);
-  return ReplaceString(gn, "\\", "\\\\");
+{Returns Magma's name for the ambient group.}
+    return Get(H`Grp, "tex_name");
 end intrinsic;
 
 intrinsic quotient_tex(H::LMFDBSubGrp) -> Any
-  {Returns Magma's name for the quotient.}
-  if Get(H, "normal") then
-    gn:= GroupName(Get(H, "Quotient"): TeX:=true);
-    return ReplaceString(gn, "\\", "\\\\");
-  else
-    return None();
-  end if;
+{Returns Magma's name for the quotient.}
+    if H`order eq 1 then
+        return Get(H`Grp, "tex_name");
+    end if;
+    if Get(H, "normal") then
+        gn:= GroupName(Get(H, "Quotient"): TeX:=true);
+        return ReplaceString(gn, "\\", "\\\\");
+    else
+        return None();
+    end if;
 end intrinsic;
 
 intrinsic quotient_cyclic(H::LMFDBSubGrp) -> Any
