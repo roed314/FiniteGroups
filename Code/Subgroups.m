@@ -126,6 +126,7 @@ declare attributes SubgroupLatElt:
         standard_generators,
         gassman_vec, // for identification
         aut_gassman_vec, // for identification
+        orig_gassman_vec, // used when we don't want to do any labeling
         easy_hash, // for identification
         keep, // to indicate that this subgroup shouldn't be trimmed
         normalizer,
@@ -1341,14 +1342,12 @@ intrinsic IncludeSpecialSubgroups(L::SubgroupLat)
     t0 := ReportStart(G, "IncludeSpecialSubgroups");
     GG := G`MagmaGrp;
     /* special groups labeled */
-    print "A";
     Z := Get(G, "MagmaCenter");
     D := Get(G, "MagmaCommutator");
     F := Get(G, "MagmaFitting");
     Ph := Get(G, "MagmaFrattini");
     R := Get(G, "MagmaRadical");
     So := Socle(G);  /* run special routine in case matrix group */
-    print "B";
 
     // Add series
     Un := Reverse(UpperCentralSeries(GG));
@@ -1364,11 +1363,10 @@ intrinsic IncludeSpecialSubgroups(L::SubgroupLat)
             Append(~SpecialGrps, <H, tup[2]*Sprint(i-1), tup[3]>);
         end for;
     end for;
-    print "C";
 
     noaut := FindSubsWithoutAut(G);
     for tup in SpecialGrps do
-        i := SubgroupIdentify(L, tup[1] : use_gassman:=false, characteristic:=tup[3], error_if_missing:=not noaut);
+        i := SubgroupIdentify(L, tup[1] : characteristic:=tup[3], error_if_missing:=not noaut);
         if i ne -1 then
             L`subs[i]`keep := true;
             if tup[3] then
@@ -1415,6 +1413,10 @@ end intrinsic;
 intrinsic aut_gassman_vec(x::SubgroupLatElt) -> SeqEnum
 {}
     return SubgroupClass(x`subgroup, AutClassMap(x`Lat`Grp));
+end intrinsic;
+intrinsic orig_gassman_vec(x::SubgroupLatElt) -> SeqEnum
+{A version that just uses magma's ordering of conjugacy classes}
+    return SubgroupClass(x`subgroup, Get(x`Lat`Grp, "MagmaClassMap"));
 end intrinsic;
 intrinsic easy_hash(x::SubgroupLatElt) -> RngIntElt
 {}
@@ -1521,7 +1523,10 @@ intrinsic SubgroupIdentify(L::SubgroupLat, H::Grp : use_hash:=true, use_gassman:
     else
         Ambient := G;
         inj := IdentityHomomorphism(G);
-        if use_gassman then
+        if FindSubsWithoutAut(L`Grp) then
+            cmap := Get(L`Grp, "MagmaClassMap");
+            gtype := "orig_gassman_vec";
+        elif use_gassman then
             cmap := Get(L`Grp, "ClassMap");
             gtype := "gassman_vec";
         end if;
