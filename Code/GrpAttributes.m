@@ -1130,7 +1130,7 @@ intrinsic direct_factorization(G::LMFDBGrp) -> Any
 {}
   GG := G`MagmaGrp;
   if Get(G, "simple") then return []; end if;
-  if not Get(G, "normal_subgroups_known") then return None(); end if;
+  if not Get(G, "normal_subgroups_known") or FindSubsWithoutAut(G) then return None(); end if;
   if Get(G, "outer_equivalence") then
     Ns := []; // compute the full set of normal subgroups inside DirectFactorization
   else
