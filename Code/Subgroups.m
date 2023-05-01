@@ -1366,7 +1366,7 @@ intrinsic IncludeSpecialSubgroups(L::SubgroupLat)
 
     noaut := FindSubsWithoutAut(G);
     for tup in SpecialGrps do
-        i := SubgroupIdentify(L, tup[1] : characteristic:=tup[3], error_if_missing:=not noaut);
+        i := SubgroupIdentify(L, tup[1] : use_gassman:false, characteristic:=tup[3], error_if_missing:=not noaut);
         if i ne -1 then
             L`subs[i]`keep := true;
             if tup[3] then
