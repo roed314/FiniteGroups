@@ -1341,12 +1341,14 @@ intrinsic IncludeSpecialSubgroups(L::SubgroupLat)
     t0 := ReportStart(G, "IncludeSpecialSubgroups");
     GG := G`MagmaGrp;
     /* special groups labeled */
+    print "A";
     Z := Get(G, "MagmaCenter");
     D := Get(G, "MagmaCommutator");
     F := Get(G, "MagmaFitting");
     Ph := Get(G, "MagmaFrattini");
     R := Get(G, "MagmaRadical");
     So := Socle(G);  /* run special routine in case matrix group */
+    print "B";
 
     // Add series
     Un := Reverse(UpperCentralSeries(GG));
@@ -1362,6 +1364,7 @@ intrinsic IncludeSpecialSubgroups(L::SubgroupLat)
             Append(~SpecialGrps, <H, tup[2]*Sprint(i-1), tup[3]>);
         end for;
     end for;
+    print "C";
 
     noaut := FindSubsWithoutAut(G);
     for tup in SpecialGrps do
@@ -1507,16 +1510,21 @@ intrinsic SubgroupIdentify(L::SubgroupLat, H::Grp : use_hash:=true, use_gassman:
             return finish_not_found(get_conjugator);
         end if;
     end if;
+    cmap := 0; gtype := ""; // Magma compiler requires these to be defined; they will be overwritten right below if they're going to be used
     if L`outer_equivalence then
         Ambient := Get(L`Grp, "Holomorph");
         inj := Get(L`Grp, "HolInj");
-        cmap := AutClassMap(L`Grp);
-        gtype := "aut_gassman_vec";
+        if use_gassman then
+            cmap := AutClassMap(L`Grp);
+            gtype := "aut_gassman_vec";
+        end if;
     else
         Ambient := G;
         inj := IdentityHomomorphism(G);
-        cmap := Get(L`Grp, "ClassMap");
-        gtype := "gassman_vec";
+        if use_gassman then
+            cmap := Get(L`Grp, "ClassMap");
+            gtype := "gassman_vec";
+        end if;
     end if;
     Hi := (Type(H) eq GrpPerm and H subset Ambient) select H else inj(H);
     function finish(ans, compconj)
