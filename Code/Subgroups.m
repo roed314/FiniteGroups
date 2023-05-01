@@ -762,74 +762,97 @@ intrinsic IncludeNormalSubgroups(L::SubgroupLat)
     aibnd := (assigned G`AutIndexBound) select G`AutIndexBound else L`index_bound;
     aobnd := (aibnd eq 0) select 1 else (G`order div aibnd);
     GG := G`MagmaGrp;
+    do_add := Get(G, "normal_subgroups_known");
     dummy := Get(G, "NormalSubgroups"); // triggers labeling for N
     N := BestNormalSubgroupLat(G);
     L`NormLat := N;
-    IncludeSpecialSubgroups(N); // Add labels to the special normal subgroups
-    lookup := AssociativeArray();
-    t1 := ReportStart(G, "IdentifyNormalSubgroups");
     additions := [];
-    do_add := Get(G, "normal_subgroups_known");
-    for i in [1..#N] do
-        H := N`subs[i];
-        j := SubgroupIdentify(L, H`subgroup : error_if_missing:=(H`order ge obnd));
-        if j eq -1 then // not found
-            if not do_add then continue; end if;
-            j := #L + #additions + 1;
-            Hnew := SubgroupLatElement(L, H`subgroup : i:=j);
-            Hnew`subgroup_count := Get(H, "subgroup_count");
-            Append(~additions, Hnew);
-        else
-            Hnew := L`subs[j];
-            Hnew`keep := true;
-        end if;
-        if Hnew`order lt aobnd then
-            Hnew`label := H`label;
-            if assigned H`aut_label then
-                Hnew`aut_label := H`aut_label;
-            end if; // the .N is appended later
-        end if;
-        Hnew`NormLatElt := H;
-        lookup[i] := j;
-    end for;
-    if #additions gt 0 then
-        ChangeSubs(L, [], additions);
-    end if;
-    ReportEnd(G, "IdentifyNormalSubgroups", t1);
-    if L`outer_equivalence then
-        t1 := ReportStart(G, Sprintf("ComputeNormalCounts (%o)", #N));
+    if Get(G, "subgroup_inclusions_known") then
+        // The main reason to compute the lattice of normal subgroups separately and then match them up is to transfer the inclusions to normal_contains and normal_contained_in.
+        // This isn't relevant if subgroup inclusions aren't computed, so we don't need to match lattice elements in this case
+        IncludeSpecialSubgroups(N); // Add labels to the special normal subgroups
+        lookup := AssociativeArray();
+        t1 := ReportStart(G, "IdentifyNormalSubgroups");
         for i in [1..#N] do
-            dummy := Get(L`subs[lookup[i]], "subgroup_count");
+            H := N`subs[i];
+            j := SubgroupIdentify(L, H`subgroup : error_if_missing:=(H`order ge obnd));
+            if j eq -1 then // not found
+                if not do_add then continue; end if;
+                j := #L + #additions + 1;
+                Hnew := SubgroupLatElement(L, H`subgroup : i:=j);
+                Hnew`subgroup_count := Get(H, "subgroup_count");
+                Append(~additions, Hnew);
+            else
+                Hnew := L`subs[j];
+                Hnew`keep := true;
+            end if;
+            if Hnew`order lt aobnd then
+                Hnew`label := H`label;
+                if assigned H`aut_label then
+                    Hnew`aut_label := H`aut_label;
+                end if; // the .N is appended later
+            end if;
+            Hnew`NormLatElt := H;
+            lookup[i] := j;
         end for;
-        ReportEnd(G, Sprintf("ComputeNormalCounts (%o)", #N), t1);
+        if #additions gt 0 then
+            ChangeSubs(L, [], additions);
+        end if;
+        ReportEnd(G, "IdentifyNormalSubgroups", t1);
+        if L`outer_equivalence then
+            t1 := ReportStart(G, Sprintf("ComputeNormalCounts (%o)", #N));
+            for i in [1..#N] do
+                dummy := Get(L`subs[lookup[i]], "subgroup_count");
+            end for;
+            ReportEnd(G, Sprintf("ComputeNormalCounts (%o)", #N), t1);
+        end if;
+        for i in [1..#N] do
+            if not IsDefined(lookup, i) then continue; end if; // not adding subgroups below index bound
+            j := lookup[i];
+            H := N`subs[i];
+            Hnew := L`subs[j];
+            Hnew`normal := true;
+            Hnew`characteristic := H`characteristic;
+            Hnew`normalizer := 1;
+            Hnew`normal_closure := j;
+            if assigned H`characteristic_closure then
+                Hnew`characteristic_closure := lookup[H`characteristic_closure];
+            end if;
+            if not L`outer_equivalence then // other case handled above
+                Hnew`subgroup_count := 1;
+            end if;
+            Hnew`cc_count := Hnew`subgroup_count;
+            if assigned H`overs then
+                Hnew`normal_overs := {lookup[k] : k in Keys(H`overs)};
+            end if;
+            if assigned H`unders then
+                Hnew`normal_unders := {lookup[k] : k in Keys(H`unders)};
+            end if;
+            Hnew`special_labels := H`special_labels;
+            if assigned H`easy_hash then Hnew`easy_hash := H`easy_hash; end if;
+            if assigned H`gassman_vec then Hnew`gassman_vec := H`gassman_vec; end if;
+            if assigned H`aut_gassman_vec then Hnew`aut_gassman_vec := H`aut_gassman_vec; end if;
+        end for;
+    else // subgroup inclusions are not known, so we add subgroups below the index bound and assign relevant quantities above
+        if ibnd ne 0 then
+            IncludeSpecialSubgroups(N : index_bound:=-ibnd);
+            IncludeSpecialSubgroups(L : index_bound:=ibnd);
+        else
+            IncludeSpecialSubgroups(L);
+        end if;
+        for i in [1..#N] do
+            H := N`subs[i];
+            if H`order lt obnd then
+                j := #L + #additions + 1;
+                Hnew := SubgroupLatElement(L, H`subgroup : i:=j);
+                Hnew`NormLatElt := H;
+                Append(~additions, Hnew);
+            end if;
+        end for;
+        if #additions gt 0 then
+            ChangeSubs(L, [], additions);
+        end if;
     end if;
-    for i in [1..#N] do
-        if not IsDefined(lookup, i) then continue; end if; // not adding subgroups below index bound
-        j := lookup[i];
-        H := N`subs[i];
-        Hnew := L`subs[j];
-        Hnew`normal := true;
-        Hnew`characteristic := H`characteristic;
-        Hnew`normalizer := 1;
-        Hnew`normal_closure := j;
-        if assigned H`characteristic_closure then
-            Hnew`characteristic_closure := lookup[H`characteristic_closure];
-        end if;
-        if not L`outer_equivalence then // other case handled above
-            Hnew`subgroup_count := 1;
-        end if;
-        Hnew`cc_count := Hnew`subgroup_count;
-        if assigned H`overs then
-            Hnew`normal_overs := {lookup[k] : k in Keys(H`overs)};
-        end if;
-        if assigned H`unders then
-            Hnew`normal_unders := {lookup[k] : k in Keys(H`unders)};
-        end if;
-        Hnew`special_labels := H`special_labels;
-        if assigned H`easy_hash then Hnew`easy_hash := H`easy_hash; end if;
-        if assigned H`gassman_vec then Hnew`gassman_vec := H`gassman_vec; end if;
-        if assigned H`aut_gassman_vec then Hnew`aut_gassman_vec := H`aut_gassman_vec; end if;
-    end for;
     L`by_index := by_index(L);
     if Get(G, "complements_known") then
         t1 := ReportStart(G, "ComputeComplements");
@@ -1336,10 +1359,11 @@ intrinsic AddAndTrimSubgroups(L::SubgroupLat, trim::BoolElt)
     end if;
 end intrinsic;
 
-intrinsic IncludeSpecialSubgroups(L::SubgroupLat)
-{Adds to special_labels for the lattice L of normal subgroups}
+intrinsic IncludeSpecialSubgroups(L::SubgroupLat : index_bound:=0)
+{Adds to special_labels for the lattice L of normal subgroups.  If index_bound > 0, only add subgroups with index smaller than the bound; if index_bound < 0, only add subgroups with index larger than the bound}
     G := L`Grp;
     t0 := ReportStart(G, "IncludeSpecialSubgroups");
+    Gord := G`order;
     GG := G`MagmaGrp;
     /* special groups labeled */
     Z := Get(G, "MagmaCenter");
@@ -1366,6 +1390,7 @@ intrinsic IncludeSpecialSubgroups(L::SubgroupLat)
 
     noaut := FindSubsWithoutAut(G);
     for tup in SpecialGrps do
+        if (index_bound gt 0 and Gord le index_bound * #tup[1] or index_bound lt 0 and Gord gt -index_bound * #tup[1]) then continue; end if;
         i := SubgroupIdentify(L, tup[1] : use_gassman:=false, characteristic:=tup[3], error_if_missing:=not noaut);
         if i ne -1 then
             L`subs[i]`keep := true;
@@ -2313,12 +2338,12 @@ end intrinsic;
 
 intrinsic FindSubsWithoutAut(G::LMFDBGrp) -> BoolElt
 {}
-    // We use the combination G`AllSubgroupsOk=false, G`outer_equivalence=false, G`subgroup_inclusions_known=false
+    // We use the combination G`AllSubgroupsOk=false, G`outer_equivalence=false, G`subgroup_inclusions_known=false, complements_known=false
     // to specify that we want to avoid computing subgroups up to automorphism.
     // This avoids some costly computations, making it possible to compute
     // subgroups for larger G, but prevents labeling using our standard labeling
     // scheme.  It also never happens naturally, since outer_equivalence(G) returns true when AllSubgroupsOk(G) is false.
-    return assigned G`outer_equivalence and assigned G`AllSubgroupsOk and assigned G`subgroup_inclusions_known and not G`outer_equivalence and not G`AllSubgroupsOk and not G`subgroup_inclusions_known;
+    return assigned G`outer_equivalence and assigned G`AllSubgroupsOk and assigned G`subgroup_inclusions_known and assigned G`complements_known and not G`outer_equivalence and not G`AllSubgroupsOk and not G`subgroup_inclusions_known and not G`complements_known;
 end intrinsic;
 
 intrinsic SubGrpLst(G::LMFDBGrp) -> SubgroupLat
@@ -3063,7 +3088,7 @@ intrinsic NormSubGrpLat(G::LMFDBGrp) -> SubgroupLat
         ordcnt[H`order] +:= 1;
     end for;
     G`normal_counts := [ordcnt[d] : d in D];
-    if nsubs ge NUM_NORMALS_NOAUT_LIMIT  and FindSubsWithoutAut(G) then
+    if nsubs ge NUM_NORMALS_NOAUT_LIMIT and FindSubsWithoutAut(G) then
         // In this case we trim the normal subgroups, starting from the middle.
         // we reorder divisors based on order that we're cutting them:
         // first the sqrt, then above, below, above, below, etc (going outward).
