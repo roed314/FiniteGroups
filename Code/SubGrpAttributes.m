@@ -352,8 +352,8 @@ end intrinsic;
 
 intrinsic QuotientActionMap(H::LMFDBSubGrp : use_solv:=true) -> Any
 {if not normal, None; if split or N abelian, Q -> Aut(N); otherwise, Q -> Out(N)}
-    if Get(H, "normal") and Get(H, "subgroup_order") ne 1 and Get(H, "quotient_order") ne 1 then
-        G := H`Grp;
+    G := H`Grp;
+    if Get(H, "normal") and Get(H, "subgroup_order") ne 1 and Get(H, "quotient_order") ne 1 and not FindSubsWithoutAut(G) then
         GG := G`MagmaGrp;
         N := H`MagmaSubGrp;
         //vprint User1: "Starting QuotientActionMap with", use_solv, Get(H, "split");
@@ -527,7 +527,7 @@ end intrinsic;
 intrinsic aut_weyl_group(H::LMFDBSubGrp) -> Any
 {The quotient of the normalizer by the centralizer, inside the holomorph}
     G := H`Grp;
-    if Get(H, "quotient_order") eq 1 or Get(H, "subgroup_order") eq 1 or not Get(G, "HaveHolomorph") then
+    if Get(H, "quotient_order") eq 1 or Get(H, "subgroup_order") eq 1 or not Get(G, "HaveHolomorph") or FindSubsWithoutAut(G) then
         return None();
     end if;
     GG := G`MagmaGrp;

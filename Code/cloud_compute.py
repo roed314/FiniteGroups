@@ -359,6 +359,7 @@ dependencies = {
 }
 # You can call tmpheaders(summarize=True) from cloud_collect.py to get a summary of the codes
 codes = "blajJzcCrqQsvSLWhtguoIimw" # Note that D = subagg3 (diagramx) is skipped since it's filled in below
+# By default we skip XxYy (used in labeling subgroups that were postponed until later) and n (which is used only to save some information about which normal subgroups were saved
 def skip_codes(codes, skipped):
     if codes[0] in dependencies:
         skipped += f"{codes[0]}({dependencies[codes[0]]})"

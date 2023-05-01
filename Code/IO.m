@@ -3,11 +3,11 @@ TextCols := ["abelian_quotient", "acted", "actor", "ambient", "aut_group", "brav
 IntegerCols := ["alias_spot", "arith_equiv", "aut_counter", "auts", "cdim", "commutator_count", "counter", "counter_by_index", "cyc_order_mat", "cyc_order_traces", "cyclotomic_n", "degree", "diagram_x", "diagram_aut_x", "diagram_norm_x", "dim", "elementary", "exponent", "extension_counter", "hyperelementary", "indicator", "multiplicity", "n", "number_characteristic_subgroups", "number_conjugacy_classes", "number_autjugacy_classes", "number_divisions", "number_normal_subgroups", "number_subgroup_classes", "number_subgroup_autclasses", "number_subgroups", "parity", "priority", "q", "qdim", "quotients_complenetess", "rep", "schur_index", "sibling_completeness", "size", "smallrep", "t", "transitive_degree", "irrC_degree", "irrQ_degree", "linC_degree", "linQ_degree", "linFp_degree", "linFq_degree", "permutation_degree"];
 SmallintCols := ["elt_rep_type", "composition_length", "derived_length", "ngens", "nilpotency_class", "pgroup", "sylow", "easy_rank", "rank", "pc_rank", "subgroup_index_bound", "solvability_type", "backup_solvability_type"];
 BigintCols := ["mobius_sub", "mobius_quo", "hash", "subgroup_hash", "quotient_hash"];
-NumericCols := ["hall", "eulerian_function", "order", "aut_order", "outer_order", "ambient_order", "subgroup_order", "quotient_order", "quotient_action_kernel_order", "aut_centralizer_order", "aut_weyl_index", "aut_stab_index", "aut_quo_index", "count", "conjugacy_class_count", "pc_code", "core_order", "centralizer_order", "SubGrpLstByDivisorTerminate"];
+NumericCols := ["hall", "eulerian_function", "order", "aut_order", "outer_order", "ambient_order", "subgroup_order", "quotient_order", "quotient_action_kernel_order", "aut_centralizer_order", "aut_weyl_index", "aut_stab_index", "aut_quo_index", "count", "conjugacy_class_count", "pc_code", "core_order", "centralizer_order", "SubGrpLstByDivisorTerminate", "normal_order_bound", "normal_index_bound"];
 
 TextListCols := ["composition_factors", "special_labels", "wreath_data"];
 
-IntegerListCols := ["cycle_type", "denominators", "factors_of_aut_order", "faithful_reps", "powers", "primary_abelian_invariants", "schur_multiplier", "smith_abelian_invariants", "subgroup_fusion", "nt","qvalues", "trace_field"];
+IntegerListCols := ["cycle_type", "denominators", "factors_of_aut_order", "faithful_reps", "powers", "primary_abelian_invariants", "schur_multiplier", "smith_abelian_invariants", "subgroup_fusion", "nt","qvalues", "trace_field", "normal_counts"];
 SmallintListCols := ["factors_of_order", "gens_used", "exponents_of_order", "diagramx"];
 NumericListCols := ["order_stats","cc_stats","div_stats","aut_stats","irrep_stats","ratrep_stats","field","perm_gens", "aut_gens"];
 

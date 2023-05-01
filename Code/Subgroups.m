@@ -8,6 +8,7 @@ NUM_SUBS_RATIO := 2; // if G has between NUM_SUBS_RATCHECK and NUM_SUBS_CUTOFF_C
 NUM_SUBS_CUTOFF_CONJ := 1024; // if G has at least this many subgroups up to conjugacy, we compute subgroups up to automorphism (or truncate at this point if outer_equivalence has been set to false externally)
 NUM_SUBS_CUTOFF_AUT := 4096; // if G has at least this many subgroups up to automorphism, we only compute subgroups up to automorphism, and up to an index bound
 NUM_SUBS_LIMIT_AUT := 1024; // if we compute up to an index bound, we set it so that less than this many subgroups up to automorphism are stored
+NUM_NORMALS_NOAUT_LIMIT := 4096; // when only computing subgroups up to conjugacy, we trim the list of normal subgroups to keep it from getting out of hand; this is the limit
 LAT_CUTOFF := 4096; // if G has less than this many subgroups up to automorphism, we compute inclusion relations for the lattices of subgroups (both up-to-automorphism and, if present, up-to-conjugacy)
 
 intrinsic AllSubgroupsOk(G::LMFDBGrp) -> BoolElt
@@ -1362,13 +1363,16 @@ intrinsic IncludeSpecialSubgroups(L::SubgroupLat)
         end for;
     end for;
 
+    noaut := FindSubsWithoutAut(G);
     for tup in SpecialGrps do
-        i := SubgroupIdentify(L, tup[1] : use_gassman:=false, characteristic:=tup[3]);
-        L`subs[i]`keep := true;
-        if tup[3] then
-            L`subs[i]`characteristic := true;
+        i := SubgroupIdentify(L, tup[1] : use_gassman:=false, characteristic:=tup[3], error_if_missing:=not noaut);
+        if i ne -1 then
+            L`subs[i]`keep := true;
+            if tup[3] then
+                L`subs[i]`characteristic := true;
+            end if;
+            Append(~L`subs[i]`special_labels, tup[2]);
         end if;
-        Append(~L`subs[i]`special_labels, tup[2]);
     end for;
     ReportEnd(G, "IncludeSpecialSubgroups", t0);
 end intrinsic;
@@ -3033,6 +3037,43 @@ intrinsic NormSubGrpLat(G::LMFDBGrp) -> SubgroupLat
     L`index_bound := 0;
     t0 := ReportStart(G, "NormSubGrpLat");
     subs := Reverse(NormalSubgroups(GG));
+    nsubs := #subs;
+    G`number_normal_subgroups := nsubs;
+    G`normal_order_bound := 0; // overwritten below in some cases
+    G`normal_index_bound := 0; // overwritten below in some cases
+    D := Divisors(G`order);
+    ordcnt := AssociativeArray();
+    for d in D do
+        ordcnt[d] := 0;
+    end for;
+    for H in subs do
+        ordcnt[H`order] +:= 1;
+    end for;
+    G`normal_counts := [ordcnt[d] : d in D];
+    if nsubs ge NUM_NORMALS_NOAUT_LIMIT  and FindSubsWithoutAut(G) then
+        // In this case we trim the normal subgroups, starting from the middle.
+        // we reorder divisors based on order that we're cutting them:
+        // first the sqrt, then above, below, above, below, etc (going outward).
+        doublemid := #D + 1;
+        cur := (#D + 2) div 2; // either the square root (if a square) or the divisor just above it otherwise
+        while nsubs ge NUM_NORMALS_NOAUT_LIMIT do
+            nsubs -:= ordcnt[D[cur]];
+            if 2*cur eq doublemid then
+                lowtop := D[cur];
+                highbot := D[cur];
+                cur +:= 1;
+            elif 2*cur gt doublemid then
+                highbot := D[cur];
+                cur := doublemid - cur;
+            else
+                lowtop := D[cur];
+                cur := doublemid - cur + 1;
+            end if;
+        end while;
+        G`normal_order_bound := D[Index(D, lowtop) - 1];
+        G`normal_index_bound := G`order div D[Index(D, highbot) + 1];
+        subs := [H : H in subs | H`order lt lowtop or H`order gt highbot];
+    end if;
     L`subs := [SubgroupLatElement(L, subs[i]`subgroup : i:=i, normal:=true) : i in [1..#subs]];
     ReportEnd(G, "NormSubGrpLat", t0);
     if Get(G, "subgroup_inclusions_known") then
