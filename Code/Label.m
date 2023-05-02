@@ -29,6 +29,9 @@ If giveup is true, then rather than running through options with the right hash 
 }
     // There is a bug in Magma which sometimes gives #G = 0.
     N := #G;
+    if Type(hsh) eq NoneType then
+        hsh := 0;
+    end if;
     if N eq 0 then
         error Sprintf("Hit bug in Magma giving a group of order 0!");
     elif N eq 1 then
