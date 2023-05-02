@@ -494,7 +494,7 @@ intrinsic quotient_abelian(H::LMFDBSubGrp) -> Any
 {Whether the quotient exists and is abelian}
     if Get(H, "normal") then
         C := Get(H`Grp, "MagmaCommutator");
-        return C subset H`subgroup;
+        return C subset H`MagmaSubGrp;
     else
         return None();
     end if;
