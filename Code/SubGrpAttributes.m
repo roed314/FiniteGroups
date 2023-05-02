@@ -106,7 +106,10 @@ end intrinsic;
 
 intrinsic subgroup(H::LMFDBSubGrp) -> MonStgElt // Need to be together with all the labels
 {Determine label of subgroup}
-    return label_subgroup(H`Grp, H`MagmaSubGrp : hsh:=Get(H, "subgroup_hash"), giveup:=true);
+    hsh := Get(H, "subgroup_hash");
+    if Type(hsh) eq NoneType then hsh := 0; end if;
+    // This happens when FindSubsWithoutAut is true
+    return label_subgroup(H`Grp, H`MagmaSubGrp : hsh:=hsh, giveup:=true);
 end intrinsic;
 
 intrinsic subgroup_order(H::LMFDBSubGrp) -> RngIntElt // Need to be subgroup attribute file
@@ -160,11 +163,8 @@ intrinsic quotient(H::LMFDBSubGrp) -> Any // Need to be together with all the la
         return None();
     else
         hsh := Get(H, "quotient_hash");
-        if Type(hsh) eq NoneType then
-            // This happens when FindSubsWithoutAut is true
-            // We compute the hash now; failing in the L code isn't as bad as failing in S
-            hsh := 0;
-        end if;
+        if Type(hsh) eq NoneType then hsh := 0; end if;
+        // This happens when FindSubsWithoutAut is true
         return label_quotient(H`Grp, H`MagmaSubGrp : GN:=Get(H, "Quotient"), hsh:=hsh, giveup:=true);
     end if;
 end intrinsic;

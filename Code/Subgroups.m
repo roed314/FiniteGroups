@@ -2316,6 +2316,7 @@ end intrinsic;
 
 intrinsic number_subgroup_autclasses(G::LMFDBGrp) -> Any
 {}
+    if FindSubsWithoutAut(G) then return None(); end if;
     L := Get(G, "BestSubgroupLat");
     if L`index_bound ne 0 then return None(); end if;
     if L`outer_equivalence then return #L; end if;
@@ -2356,12 +2357,8 @@ intrinsic SubGrpLst(G::LMFDBGrp) -> SubgroupLat
     res`outer_equivalence := false;
     res`inclusions_known := false;
     terminate := Get(G, "SubGrpLstByDivisorTerminate");
-    if terminate ne 0 then
-        subs := Reverse(Subgroups(GG : IndexLimit:=terminate));
-        res`index_bound := terminate;
-        G`number_subgroup_classes := None();
-        G`number_subgroups := None();
-    elif FindSubsWithoutAut(G) then
+    // Doing subs := Reverse(Subgroups(GG : IndexLimit:=terminate)); is both slower (surprisingly) and leads to errors like "Too many complements!:5^16"
+    if FindSubsWithoutAut(G) then
         // We use this for large groups where it was taking too much time to compute subgroups up to automorphism.  In this case we also want to work index-by-index since the full subgroup list is probably too long to store (and may be infeasible to compute)
         N := G`order;
         D := Reverse(Divisors(N));
@@ -2379,10 +2376,14 @@ intrinsic SubGrpLst(G::LMFDBGrp) -> SubgroupLat
             end if;
             subs cat:= dsubs;
             ccount +:= #dsubs;
+            if d eq terminate then
+                res`index_bound := N div d;
+                break;
+            end if;
             prevd := d;
         end for;
         if prevd eq 1 then
-            // somehow made it all the way through the loop
+            // made it all the way through the loop
             G`number_subgroup_classes := #subs;
             G`number_subgroups := &+[H`length : H in subs];
         else
@@ -3076,6 +3077,16 @@ intrinsic SetMobiusSub(L::SubgroupLat)
     //print "mobius_sub", x`mobius_sub;
     end for;
     ReportEnd(G, "MobiusSub", t0);
+end intrinsic;
+
+intrinsic normal_order_bound(G::LMFDBGrp) -> RngIntElt
+{If n, normal subgroups of order at most n are stored; if 0 no limit; if null NormSubGrpLat didn't get run appropriately.}
+    return None();
+end intrinsic;
+
+intrinsic normal_index_bound(G::LMFDBGrp) -> RngIntElt
+{If n, normal subgroups of index at most n are stored; if 0 no limit; if null NormSubGrpLat didn't get run appropriately.}
+    return None();
 end intrinsic;
 
 intrinsic NormSubGrpLat(G::LMFDBGrp) -> SubgroupLat
