@@ -113,6 +113,10 @@ try
     ReportEnd(G, Sprintf("AllFinished(%o)", codes), tstart);
 catch e
     print e;
-    print e`Traceback;
+    try
+        print e`Traceback;
+    catch ee
+        print "No traceback";
+    end try;
 end try;
 exit;
