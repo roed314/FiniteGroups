@@ -2732,12 +2732,20 @@ end intrinsic;
 
 intrinsic normalizer(H::SubgroupLatElt) -> RngIntElt
 {}
+    if FindSubsWithoutAut(H`Lat`Grp) then
+        // This was slow for large groups
+        return None();
+    end if;
     i := SubgroupIdentify(H`Lat, Normalizer(H`Lat`Grp`MagmaGrp, H`subgroup) : error_if_missing:=false);
     return (i eq -1 select None() else i);
 end intrinsic;
 
 intrinsic centralizer(H::SubgroupLatElt) -> Any
 {}
+    if FindSubsWithoutAut(H`Lat`Grp) then
+        // This was slow for large groups
+        return None();
+    end if;
     try
         i := SubgroupIdentify(H`Lat, Centralizer(H`Lat`Grp`MagmaGrp, H`subgroup) : error_if_missing:=false);
     catch e    //dealing with a strange Magma bug in 120.5

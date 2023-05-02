@@ -122,7 +122,7 @@ intrinsic subgroup_hash(H::LMFDBSubGrp) -> Any
     return hash(H`MagmaSubGrp);
 end intrinsic;
 
-intrinsic ambient(H::LMFDBSubGrp) -> MonStgElt // Need to be together with all the labels
+intrinsic ambient(H::LMFDBSubGrp) -> Any // Need to be together with all the labels
 {Determine label of the ambient group}
     return Get(H`Grp, "label");
 end intrinsic;
