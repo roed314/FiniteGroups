@@ -94,20 +94,25 @@ aggregate_attr["W"] := "Subgroups";
 aggregate_attr["I"] := "Subgroups";
 
 tstart := Cputime();
-for code in Eltseq(codes) do
-    header := code_lookup[code];
-    if IsDefined(aggregate_attr, code) then
-        attr := aggregate_attr[code];
-        t0 := ReportStart(G, "Code-" * code);
-        for H in Get(G, attr) do
-            WriteByTmpHeader(H, outfile, header);
-        end for;
-        ReportEnd(G, "Code-" * code, t0);
-    else
-        t0 := ReportStart(G, "Code-" * code);
-        WriteByTmpHeader(G, outfile, header);
-        ReportEnd(G, "Code-" * code, t0);
-    end if;
-end for;
-ReportEnd(G, Sprintf("AllFinished(%o)", codes), tstart);
+try
+    for code in Eltseq(codes) do
+        header := code_lookup[code];
+        if IsDefined(aggregate_attr, code) then
+            attr := aggregate_attr[code];
+            t0 := ReportStart(G, "Code-" * code);
+            for H in Get(G, attr) do
+                WriteByTmpHeader(H, outfile, header);
+            end for;
+            ReportEnd(G, "Code-" * code, t0);
+        else
+            t0 := ReportStart(G, "Code-" * code);
+            WriteByTmpHeader(G, outfile, header);
+            ReportEnd(G, "Code-" * code, t0);
+        end if;
+    end for;
+    ReportEnd(G, Sprintf("AllFinished(%o)", codes), tstart);
+catch e
+    print e;
+    print e`Traceback;
+end try;
 exit;
