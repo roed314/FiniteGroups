@@ -1129,7 +1129,11 @@ end intrinsic;
 intrinsic direct_factorization(G::LMFDBGrp) -> Any
 {}
   GG := G`MagmaGrp;
-  if Get(G, "simple") then return []; end if;
+  if Get(G, "simple") or (G`cyclic and IsPrimePower(G`order)) then
+      return [];
+  elif G`abelian then
+      return CollectDirectFactors([CyclicGroup(m) : m in PrimaryAbelianInvariants(G`MagmaGrp)]);
+  end if;
   if not Get(G, "normal_subgroups_known") or FindSubsWithoutAut(G) then return None(); end if;
   if Get(G, "outer_equivalence") then
     Ns := []; // compute the full set of normal subgroups inside DirectFactorization
