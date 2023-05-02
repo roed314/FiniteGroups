@@ -54,19 +54,15 @@ end intrinsic;
 
 
 intrinsic maximal_normal(H::LMFDBSubGrp) -> BoolElt // Need to be subgroup attribute file
-  {Determine if a subgroup is maximal normal subgroup}
-  GG := Get(H, "MagmaAmbient");
-  HH := H`MagmaSubGrp;
-  if not IsNormal(GG, HH) then
-    return false;
-  else
+{Determine if a subgroup is maximal normal subgroup}
+    GG := Get(H, "MagmaAmbient");
+    HH := H`MagmaSubGrp;
+    if not Get(H, "normal") then return false; end if;
+    n := Get(H, "quotient_order");
+    if IsPrime(n) then return true; end if;
+    if not IsSimpleOrder(n) then return false; end if;
     Q := quo< GG | HH >;
-    if IsSimple(Q) then
-      return true;
-    else
-      return false;
-    end if;
-  end if;
+    return IsSimple(Q);
 end intrinsic;
 
 intrinsic characteristic(H::LMFDBSubGrp) -> BoolElt
@@ -96,18 +92,16 @@ intrinsic hall(H::LMFDBSubGrp) -> RngIntElt // Need to be subgroup attribute fil
 end intrinsic;
 
 intrinsic sylow(H::LMFDBSubGrp) -> RngIntElt // Need to be subgroup attribute file
-{when order of H and order of Q are prime to each other it returns the radical of the order of H, otherwise returns 0}
-  GG := Get(H, "MagmaAmbient");
-  HH := H`MagmaSubGrp;
-  Q := quo< GG | HH >;
-  if Order(HH) eq 1 then
-    return 1;
-  elif IsPrimePower(Order(HH)) and (Gcd(Order(HH), Order(Q)) eq 1) then
-    _, k , _ :=IsPrimePower(Order(HH));
-    return k;
-  else
+{when H is a Sylow subgroup of order p^k it returns the prime p, otherwise returns 0}
+    Hord := Get(H, "subgroup_order");
+    Qord := Get(H, "quotient_order");
+    if Hord eq 1 then
+        return 1;
+    elif Gcd(Hord, Qord) eq 1 then
+        b, p, _ := IsPrimePower(Hord);
+        if b then return p; end if;
+    end if;
     return 0;
-  end if;
 end intrinsic;
 
 intrinsic subgroup(H::LMFDBSubGrp) -> MonStgElt // Need to be together with all the labels
@@ -122,6 +116,9 @@ end intrinsic;
 
 intrinsic subgroup_hash(H::LMFDBSubGrp) -> Any
 {the hash of the subgroup}
+    if FindSubsWithoutAut(H`Grp) then
+        return None();
+    end if;
     return hash(H`MagmaSubGrp);
 end intrinsic;
 
@@ -175,7 +172,9 @@ end intrinsic;
 
 intrinsic quotient_hash(H::LMFDBSubGrp) -> Any
 {the hash of the quotient; None if not normal}
-    if Get(H, "normal") then
+    if FindSubsWithoutAut(H`Grp) then
+        return None();
+    elif Get(H, "normal") then
         return hash(Get(H, "Quotient"));
     else
         return None();
@@ -492,12 +491,13 @@ intrinsic quotient_cyclic(H::LMFDBSubGrp) -> Any
 end intrinsic;
 
 intrinsic quotient_abelian(H::LMFDBSubGrp) -> Any
-  {Whether the quotient exists and is abelian}
-  if Get(H, "normal") then
-    return IsAbelian(Get(H, "Quotient"));
-  else
-    return None();
-  end if;
+{Whether the quotient exists and is abelian}
+    if Get(H, "normal") then
+        C := Get(H`Grp, "MagmaCommutator");
+        return C subset H`subgroup;
+    else
+        return None();
+    end if;
 end intrinsic;
 
 intrinsic quotient_solvable(H::LMFDBSubGrp) -> Any

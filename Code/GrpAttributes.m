@@ -1663,7 +1663,7 @@ end intrinsic;
 
 intrinsic conj_centralizer_gens(G::LMFDBGrp) -> SeqEnum
 {}
-    if Get(G, "complex_characters_known") or Get(G, "rational_characters_known") then
+    if not FindSubsWithoutAut(G) and (Get(G, "complex_characters_known") or Get(G, "rational_characters_known")) then
         return [[g : g in Generators(Get(cc, "centralizer"))] : cc in Get(G, "ConjugacyClasses")];
     else
         return [];
@@ -1816,7 +1816,7 @@ the centralizer C = C_G(N) together with N form a central product decomposition 
 central (C = G) since if a complement C' properly contained in C = G exists, then it cannot also be central since G
 is not abelian. Since C' must itself be normal (NC' = G), we will encounter C' (with centralizer smaller than G)
 somewhere else in the loop. */
-        if Get(G, "normal_subgroups_known") then
+        if Get(G, "normal_subgroups_known") and not FindSubsWithoutAut(G) then
             return &or[Get(H, "central_factor") : H in Get(G, "NormalSubgroups")];
         else
             return None();

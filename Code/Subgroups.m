@@ -2722,7 +2722,12 @@ end intrinsic;
 intrinsic normal_closure(H::SubgroupLatElt) -> RngIntElt
 {}
     // There's a faster version of this available when we have the subgroup inclusion diagram: just trace up through the subgroups containing this one with breadth-first search until a normal one is found.
-    return SubgroupIdentify(H`Lat, NormalClosure(H`Lat`Grp`MagmaGrp, H`subgroup));
+    if FindSubsWithoutAut(H`Lat`Grp) then
+        // This was slow for large groups
+        return None();
+    else
+        return SubgroupIdentify(H`Lat, NormalClosure(H`Lat`Grp`MagmaGrp, H`subgroup));
+    end if;
 end intrinsic;
 
 intrinsic normalizer(H::SubgroupLatElt) -> RngIntElt
@@ -3198,6 +3203,9 @@ intrinsic LookupSubgroupLabel(G::LMFDBGrp, HH::Any) -> Any
         return HH;
     elif Type(HH) eq SubgroupLatElt then
         return HH`label;
+    elif FindSubsWithoutAut(G) then
+        // Unfortunately, some SubgroupIdentify calls are slow and we don't want to derail everything
+        return "\\N";
     else
         L := Get(G, "BestSubgroupLat");
         S := Get(G, "Subgroups"); // triggers labeling
