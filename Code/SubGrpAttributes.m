@@ -159,7 +159,13 @@ intrinsic quotient(H::LMFDBSubGrp) -> Any // Need to be together with all the la
     if not Get(H, "normal") then
         return None();
     else
-        return label_quotient(H`Grp, H`MagmaSubGrp : GN:=Get(H, "Quotient"), hsh:=Get(H, "quotient_hash"), giveup:=true);
+        hsh := Get(H, "quotient_hash");
+        if Type(hsh) eq NoneType then
+            // This happens when FindSubsWithoutAut is true
+            // We compute the hash now; failing in the L code isn't as bad as failing in S
+            hsh := 0;
+        end if;
+        return label_quotient(H`Grp, H`MagmaSubGrp : GN:=Get(H, "Quotient"), hsh:=hsh, giveup:=true);
     end if;
 end intrinsic;
 
@@ -482,12 +488,16 @@ intrinsic quotient_tex(H::LMFDBSubGrp) -> Any
 end intrinsic;
 
 intrinsic quotient_cyclic(H::LMFDBSubGrp) -> Any
-  {Whether the quotient exists and is cyclic}
-  if Get(H, "normal") then
-    return IsCyclic(Get(H, "Quotient"));
-  else
-    return None();
-  end if;
+{Whether the quotient exists and is cyclic}
+    if Get(H, "normal") then
+        C := Get(H`Grp, "MagmaCommutator");
+        if not C subset H`MagmaSubGrp then
+            return false;
+        end if;
+        return IsCyclic(Get(H, "Quotient"));
+    else
+        return None();
+    end if;
 end intrinsic;
 
 intrinsic quotient_abelian(H::LMFDBSubGrp) -> Any
@@ -502,11 +512,15 @@ end intrinsic;
 
 intrinsic quotient_solvable(H::LMFDBSubGrp) -> Any
   {Whether the quotient exists and is solvable}
-  if Get(H, "normal") then
-    return IsSolvable(Get(H, "Quotient"));
-  else
-    return None();
-  end if;
+    if Get(H, "normal") then
+        F := Factorization(Get(H, "quotient_order"));
+        if #F lt 3 or &and[x[2] eq 1 : x in F] then
+            return true;
+        end if;
+        return IsSolvable(Get(H, "Quotient"));
+    else
+        return None();
+    end if;
 end intrinsic;
 
 intrinsic weyl_group(H::LMFDBSubGrp) -> Any
