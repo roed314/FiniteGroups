@@ -3079,13 +3079,18 @@ intrinsic SetMobiusSub(L::SubgroupLat)
     ReportEnd(G, "MobiusSub", t0);
 end intrinsic;
 
-intrinsic normal_order_bound(G::LMFDBGrp) -> RngIntElt
+intrinsic normal_order_bound(G::LMFDBGrp) -> Any
 {If n, normal subgroups of order at most n are stored; if 0 no limit; if null NormSubGrpLat didn't get run appropriately.}
     return None();
 end intrinsic;
 
-intrinsic normal_index_bound(G::LMFDBGrp) -> RngIntElt
+intrinsic normal_index_bound(G::LMFDBGrp) -> Any
 {If n, normal subgroups of index at most n are stored; if 0 no limit; if null NormSubGrpLat didn't get run appropriately.}
+    return None();
+end intrinsic;
+
+intrinsic normal_counts(G::LMFDBGrp) -> Any
+{}
     return None();
 end intrinsic;
 
