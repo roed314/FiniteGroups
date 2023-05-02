@@ -47,7 +47,7 @@ If giveup is true, then rather than running through options with the right hash 
         return None(), _;
     else
         if giveup then
-            return "?" * GroupToString(G) * "?", _;
+            return "?" * GroupToString(G : use_id:=false) * "?", _;
         end if;
         if hsh eq 0 then hsh := hash(G); end if;
         Hs := GroupsWithHash(N, hsh);
