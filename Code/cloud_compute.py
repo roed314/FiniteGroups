@@ -353,8 +353,8 @@ dependencies = {
     "r": "h", # depend on charc_center_gens/charc_kernel_gens
     "q": "cCrQh", # depend on MagmaRationalCharacterTable (TODO: back dependence bad)
     "Q": "Crh", # depend on Characters (TODO: back dependence bad)
-    "s": "SDLWvhIi", # depend on BestSubgroupLat
-    "S": "sDLWhIi", # depend on Subgroups (TODO: back dependence bad)
+    "s": "SDLWvhIin", # depend on BestSubgroupLat
+    "S": "sDLWhIin", # depend on Subgroups (TODO: back dependence bad)
     "I": "i", # depend on Mobius
 }
 # You can call tmpheaders(summarize=True) from cloud_collect.py to get a summary of the codes
