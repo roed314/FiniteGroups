@@ -550,6 +550,7 @@ def update_todo_and_preload(datafolder="/scratch/grp/noaut1/raw", oldtodo="DATA/
     skips = defaultdict(list)
     terminate = {}
     shortdivs = set()
+    noauth = set()
     maxmem = defaultdict(float)
     started_normal = set()
     normal_time = {}
@@ -563,6 +564,7 @@ def update_todo_and_preload(datafolder="/scratch/grp/noaut1/raw", oldtodo="DATA/
     ]
     for fname in os.listdir(datafolder):
         divs = []
+        empty_div_expected = False
         with open(opj(datafolder, fname)) as F:
             for line in F:
                 if line[0] in "TE":
@@ -597,9 +599,15 @@ def update_todo_and_preload(datafolder="/scratch/grp/noaut1/raw", oldtodo="DATA/
                         elif text not in known_errors:
                             # Fixed thes bugs after the 15 minute run
                             errored.add(label)
+                    elif line[0] == "E" and text == "Magma is not authorised for use on this machine.":
+                        N = int(fname.replace("grp-", "").replace(".txt", "").split("v")[0])
+                        noauth.add(N)
+                        empty_div_expected = True
                 else:
                     have[line[0]].add(label)
         # Either last order shown took us over the limit, so we can actually skip it next time, or the last order timed out, so we want to skip it.  The only case where we want to go all the way down is if we actually finished.
+        if empty_div_expected:
+            continue
         if len(divs) < 2:
             # Something's weird
             shortdivs.add(label)
@@ -608,6 +616,7 @@ def update_todo_and_preload(datafolder="/scratch/grp/noaut1/raw", oldtodo="DATA/
             terminate[label] = 1
         else:
             terminate[label] = divs[-2]
+    noauth = sorted(noauth)
     print("Checking NoSkip consistency")
     for label in noskips:
         if not all(label in have[c] for c in "sSnL"):
@@ -640,7 +649,7 @@ def update_todo_and_preload(datafolder="/scratch/grp/noaut1/raw", oldtodo="DATA/
                     L1 = "|".join(L1)
                     L2 = "|".join(L2)
                     _ = Fp.write(f"{L1}\n{L2}\n")
-    return have, noskips, skips, maxmem, subtime, normal_time, started_normal, errors, errored, terminate, shortdivs
+    return have, noskips, skips, maxmem, subtime, normal_time, started_normal, errors, errored, terminate, shortdivs, noauth
 
 #def improve_names(out):
 #    names = {label: D[label].get("name") for (label, D) in out["Grp"].items()}
