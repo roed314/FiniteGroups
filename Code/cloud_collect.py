@@ -543,6 +543,85 @@ def build_treps(datafolder="/scratch/grp", alias_file="DATA/aliases.txt", descri
 
     return tmissing, lmissing, taliases, unlabeled32, labeled32, transitive_subs
 
+def update_todo_and_preload(datafolder="/scratch/grp/noaut1/raw", oldtodo="DATA/compute_noaut1.todo", newtodo="DATA/compute_noaut2.todo", old_preload_folder="/home/roed/cloud_groups_debug/DATA/preload", new_preload_folder="/home/roed/cloud_groups_debug/DATA/preload2"):
+    have = defaultdict(set)
+    subtime = defaultdict(float)
+    noskips = set()
+    skips = {}
+    terminate = {}
+    shortdivs = set()
+    maxmem = defaultdict(float)
+    started_normal = set()
+    normal_time = {}
+    errors = defaultdict(list)
+    errored = set()
+    for fname in os.listdir(datafolder):
+        divs = []
+        with open(opj(datafolder, fname)) as F:
+            for line in F:
+                if line[0] in "TE":
+                    label, text = line[1:].strip().split("|", 1)
+                    if "GB used" in text:
+                        mem = float(text.split("GB used")[0].rsplit("(",1)[1])
+                        maxmem[label] = max(maxmem[label], mem)
+                    if "SubGrpLstConjDivisor" in text:
+                        label = label.split("(")[0]
+                        if text.startswith("Starting"):
+                            divs.append(int(text.split("(")[1].split(":")[0]))
+                        else:
+                            tinc = float(text.split(" in ")[1].split()[0])
+                            subtime[label] += tinc
+                    elif text == "NoSkip":
+                        # Yay!
+                        noskips.add(label)
+                    elif text.startswith("Skip-"):
+                        codes = text[5:]
+                        skips[codes].append(label)
+                    elif text == "Starting IncludeNormalSubgroups":
+                        started_normal.add(label)
+                    elif text.startswith("Finished IncludeNormalSubgroups"):
+                        normal_time[label] = float(text.split(" in ")[1].split()[0])
+                    elif line[0] == "E" and "error" in text:
+                        errors[text].append(label)
+                        errored.add(label)
+                else:
+                    have[line[0]].add(label)
+        # Either last order shown took us over the limit, so we can actually skip it next time, or the last order timed out, so we want to skip it.  The only case where we want to go all the way down is if we actually finished.
+        if len(divs) < 2:
+            # Something's weird
+            shortdivs.add(label)
+        elif divs[-1] == 1:
+            # Made it all the way to the end!
+            terminate[label] = 1
+        else:
+            terminate[label] = divs[-2]
+    for label in noskips:
+        if not all(label in have[c] for c in "sSnL"):
+            print("Inconsistent NoSkip", label)
+            break
+    preloads = {}
+    print("Loading preloads")
+    for label in os.listdir(old_preload_folder):
+        with open(opj(old_preload_folder, label)) as F:
+            heads, vals = F.read().strip().split("\n")
+            heads = heads.split("|")
+            vals = vals.split("|")
+            preloads[label] = dict(zip(heads, vals))
+    print("Loading old todo")
+    with open(oldtodo) as F:
+        with open(newtodo, "w") as Fout:
+            for line in F:
+                label, codes = line.strip().split()
+                if label in noskips or label in errored:
+                    continue
+                _ = Fout.write(line)
+                with open(opj(new_preload_folder, label)) as Fp:
+                    L1, L2 = zip(*preloads[label].items())
+                    L1 = "|".join(L1)
+                    L2 = "|".join(L2)
+                    _ = Fp.write(f"{L1}\n{L2}\n")
+    return have, noskips, skips, maxmem, subtime, normal_time, started_normal, errors, errored, terminate, shortdivs
+
 #def improve_names(out):
 #    names = {label: D[label].get("name") for (label, D) in out["Grp"].items()}
 #    tex_names = {label: D[label].get("tex_name") for (label, D) in out["Grp"].items()}
