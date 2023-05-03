@@ -547,7 +547,7 @@ def update_todo_and_preload(datafolder="/scratch/grp/noaut1/raw", oldtodo="DATA/
     have = defaultdict(set)
     subtime = defaultdict(float)
     noskips = set()
-    skips = {}
+    skips = defaultdict(list)
     terminate = {}
     shortdivs = set()
     maxmem = defaultdict(float)
