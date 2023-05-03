@@ -615,7 +615,7 @@ def update_todo_and_preload(datafolder="/scratch/grp/noaut1/raw", oldtodo="DATA/
                 if label in noskips or label in errored:
                     continue
                 _ = Fout.write(line)
-                with open(opj(new_preload_folder, label)) as Fp:
+                with open(opj(new_preload_folder, label), "w") as Fp:
                     L1, L2 = zip(*preloads[label].items())
                     L1 = "|".join(L1)
                     L2 = "|".join(L2)
