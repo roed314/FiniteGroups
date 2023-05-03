@@ -561,6 +561,7 @@ def update_todo_and_preload(datafolder="/scratch/grp/noaut1/raw", oldtodo="DATA/
             for line in F:
                 if line[0] in "TE":
                     label, text = line[1:].strip().split("|", 1)
+                    label = label.split("(")[0]
                     if "GB used" in text:
                         mem = float(text.split("GB used")[0].rsplit("(",1)[1])
                         maxmem[label] = max(maxmem[label], mem)
