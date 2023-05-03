@@ -1061,7 +1061,7 @@ Sets H`i appropriately for all subgroups in the new list.
             if assigned H`complements then
                 H`complements := [translate[j] : j in H`complements];
             end if;
-            for attr in ["normalizer", "centralizer", "normal_closure", "characteristic_closure", "core"] do
+            for attr in ["normalizer", "centralizer", "normal_closure", "characteristic_closure"] do
                 if assigned H``attr and Type(H``attr) ne NoneType then
                     if IsDefined(translate, H``attr) then
                         H``attr := translate[H``attr];
