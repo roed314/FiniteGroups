@@ -103,11 +103,11 @@ try
             for H in Get(G, attr) do
                 WriteByTmpHeader(H, outfile, header);
             end for;
-            ReportEnd(G, "Code-" * code, t0, logfile:=true);
+            ReportEnd(G, "Code-" * code, t0 : logfile:=true);
         else
             t0 := ReportStart(G, "Code-" * code);
             WriteByTmpHeader(G, outfile, header);
-            ReportEnd(G, "Code-" * code, t0, logfile:=true);
+            ReportEnd(G, "Code-" * code, t0 : logfile:=true);
         end if;
     end for;
     ReportEnd(G, Sprintf("AllFinished(%o)", codes), tstart);
