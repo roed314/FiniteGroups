@@ -61,7 +61,7 @@ intrinsic maximal_normal(H::LMFDBSubGrp) -> BoolElt // Need to be subgroup attri
     n := Get(H, "quotient_order");
     if IsPrime(n) then return true; end if;
     if not IsSimpleOrder(n) then return false; end if;
-    Q := quo< GG | HH >;
+    Q := BestQuotient(GG, HH);
     return IsSimple(Q);
 end intrinsic;
 

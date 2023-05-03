@@ -543,7 +543,7 @@ def build_treps(datafolder="/scratch/grp", alias_file="DATA/aliases.txt", descri
 
     return tmissing, lmissing, taliases, unlabeled32, labeled32, transitive_subs
 
-def update_todo_and_preload(datafolder="/scratch/grp/noaut1/raw", oldtodo="DATA/compute_noaut1.todo", newtodo="DATA/compute_noaut2.todo", old_preload_folder="/home/roed/cloud_groups_debug/DATA/preload", new_preload_folder="/home/roed/cloud_groups_debug/DATA/preload2"):
+def update_todo_and_preload(datafolder="/scratch/grp/noaut1/raw", oldtodo="DATA/compute_noaut1.todo", newtodo="DATA/compute_noaut2.todo", old_preload_folder="/home/roed/cloud_groups_debug/DATA/preload", new_preload_folder="/home/roed/cloud_groups_debug/DATA/preload2", TEdir="/scratch/grp/noaut1/TE"):
     have = defaultdict(set)
     subtime = defaultdict(float)
     noskips = set()
@@ -554,7 +554,13 @@ def update_todo_and_preload(datafolder="/scratch/grp/noaut1/raw", oldtodo="DATA/
     started_normal = set()
     normal_time = {}
     errors = defaultdict(list)
+    memerrored = set()
     errored = set()
+    TElines = defaultdict(list)
+    known_errors = [
+        'Runtime error in quo< ... >: Index of subgroup is too large',
+        "Runtime error: Variable 'lowtop' has not been initialized",
+    ]
     for fname in os.listdir(datafolder):
         divs = []
         with open(opj(datafolder, fname)) as F:
@@ -562,6 +568,7 @@ def update_todo_and_preload(datafolder="/scratch/grp/noaut1/raw", oldtodo="DATA/
                 if line[0] in "TE":
                     label, text = line[1:].strip().split("|", 1)
                     label = label.split("(")[0]
+                    TElines[label].append(line)
                     if "GB used" in text:
                         mem = float(text.split("GB used")[0].rsplit("(",1)[1])
                         maxmem[label] = max(maxmem[label], mem)
@@ -584,7 +591,12 @@ def update_todo_and_preload(datafolder="/scratch/grp/noaut1/raw", oldtodo="DATA/
                         normal_time[label] = float(text.split(" in ")[1].split()[0])
                     elif line[0] == "E" and "error" in text:
                         errors[text].append(label)
-                        errored.add(label)
+                        # Often want to continue for memory errors, since these can be addressed by setting terminate
+                        if text == 'System error: Out of memory.':
+                            memerrored.add(label)
+                        elif text not in known_errors:
+                            # Fixed thes bugs after the 15 minute run
+                            errored.add(label)
                 else:
                     have[line[0]].add(label)
         # Either last order shown took us over the limit, so we can actually skip it next time, or the last order timed out, so we want to skip it.  The only case where we want to go all the way down is if we actually finished.
@@ -596,10 +608,17 @@ def update_todo_and_preload(datafolder="/scratch/grp/noaut1/raw", oldtodo="DATA/
             terminate[label] = 1
         else:
             terminate[label] = divs[-2]
+    print("Checking NoSkip consistency")
     for label in noskips:
         if not all(label in have[c] for c in "sSnL"):
             print("Inconsistent NoSkip", label)
             break
+    print("Making TE")
+    if not ope(TEdir):
+        os.makedirs(TEdir)
+        for label, lines in TElines.items():
+            with open(opj(TEdir, label), "w") as F:
+                _ = F.write("".join(lines))
     preloads = {}
     print("Loading preloads")
     for label in os.listdir(old_preload_folder):
@@ -613,7 +632,7 @@ def update_todo_and_preload(datafolder="/scratch/grp/noaut1/raw", oldtodo="DATA/
         with open(newtodo, "w") as Fout:
             for line in F:
                 label, codes = line.strip().split()
-                if label in noskips or label in errored:
+                if label in noskips or label in errored or label in memerrored and label in started_normal and label not in normal_time:
                     continue
                 _ = Fout.write(line)
                 with open(opj(new_preload_folder, label), "w") as Fp:

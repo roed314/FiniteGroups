@@ -3123,11 +3123,12 @@ intrinsic NormSubGrpLat(G::LMFDBGrp) -> SubgroupLat
         // first the sqrt, then above, below, above, below, etc (going outward).
         doublemid := #D + 1;
         cur := (#D + 2) div 2; // either the square root (if a square) or the divisor just above it otherwise
+        lowtop := D[cur];
+        highbot := D[cur];
         while nsubs ge NUM_NORMALS_NOAUT_LIMIT do
             nsubs -:= ordcnt[D[cur]];
             if 2*cur eq doublemid then
-                lowtop := D[cur];
-                highbot := D[cur];
+                // Start point for squares; lowtop and highbot already set above
                 cur +:= 1;
             elif 2*cur gt doublemid then
                 highbot := D[cur];
