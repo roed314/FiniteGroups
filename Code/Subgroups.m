@@ -897,7 +897,7 @@ intrinsic IncludeNormalSubgroups(L::SubgroupLat)
             L`subs[i]`normal := false;
         end if;
     end for;
-    ReportEnd(G, "IncludeNormalSubgroups", t0);
+    ReportEnd(G, "IncludeNormalSubgroups", t0 : logfile:=true);
 end intrinsic;
 
 /*
@@ -1400,7 +1400,7 @@ intrinsic IncludeSpecialSubgroups(L::SubgroupLat : index_bound:=0)
             Append(~L`subs[i]`special_labels, tup[2]);
         end if;
     end for;
-    ReportEnd(G, "IncludeSpecialSubgroups", t0);
+    ReportEnd(G, "IncludeSpecialSubgroups", t0 : logfile:=true);
 end intrinsic;
 
 intrinsic SubgroupLatElement(L::SubgroupLat, H::Grp : i:=false, normalizer:=false, centralizer:=false, normal:=0, normal_closure:=false, gens:=false, subgroup_count:=false, standard:=false, recurse:=0) -> SubgroupLatElt
@@ -2369,7 +2369,7 @@ intrinsic SubGrpLst(G::LMFDBGrp) -> SubgroupLat
         for d in D do
             t1 := ReportStart(G, Sprintf("SubGrpLstConjDivisor (%o:%o)", d, ccount));
             dsubs := Subgroups(GG: OrderEqual := d);
-            ReportEnd(G, Sprintf("SubGrpLstConjDivisor (%o:%o)", d, ccount), t1);
+            ReportEnd(G, Sprintf("SubGrpLstConjDivisor (%o:%o)", d, ccount), t1 : logfile:=true);
             if ccount + #dsubs ge NUM_SUBS_CUTOFF_CONJ then
                 res`index_bound := N div prevd;
                 break;

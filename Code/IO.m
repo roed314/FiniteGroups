@@ -660,29 +660,48 @@ intrinsic Preload(G::LMFDBGrp : sep:="|")
     end if;
 end intrinsic;
 
-intrinsic ReportStart(label::MonStgElt, job::MonStgElt) -> FldReElt
+intrinsic AppendToLogfile(label::MonStgElt, msg::MonStgElt)
+{}
+    hfile := "/etc/hostname";
+    if OpenTest(hfile, "r") then
+        hostname := Split(Read("/etc/hostname"))[1];
+        fp := Open("DATA/timings/tmp_" * label, "w");
+        Puts(fp, msg);
+        Flush(fp);
+        System(Sprintf("cat DATA/timings/tmp_%o >>/%o.log", label, hostname));
+        delete fp;
+    end if;
+end intrinsic;
+
+intrinsic ReportStart(label::MonStgElt, job::MonStgElt : logfile:=false) -> FldReElt
 {}
     msg := "Starting " * job;
     System("mkdir -p DATA/timings/");
     PrintFile("DATA/timings/" * label, msg);
     vprint User1: msg;
+    if logfile then
+        AppendToLogfile(label, msg);
+    end if;
     return Cputime();
 end intrinsic;
 
-intrinsic ReportStart(G::LMFDBGrp, job::MonStgElt) -> FldReElt
+intrinsic ReportStart(G::LMFDBGrp, job::MonStgElt : logfile:=false) -> FldReElt
 {}
-    return ReportStart(G`label, job);
+    return ReportStart(G`label, job : logfile:=logfile);
 end intrinsic;
 
-intrinsic ReportEnd(label::MonStgElt, job::MonStgElt, t0::FldReElt)
+intrinsic ReportEnd(label::MonStgElt, job::MonStgElt, t0::FldReElt : logfile:=false)
 {}
     msg := Sprintf("Finished %o in %o (%oGB used)", job, Cputime() - t0, RealField(3)!(GetMemoryUsage() / 1073741824.0));
     System("mkdir -p DATA/timings/");
     PrintFile("DATA/timings/" * label, msg);
     vprint User1: msg;
+    if logfile then
+        AppendToLogfile(label, msg);
+    end if;
 end intrinsic;
 
-intrinsic ReportEnd(G::LMFDBGrp, job::MonStgElt, t0::FldReElt)
+intrinsic ReportEnd(G::LMFDBGrp, job::MonStgElt, t0::FldReElt : logfile:=false)
 {}
-    ReportEnd(G`label, job, t0);
+    ReportEnd(G`label, job, t0 : logfile:=logfile);
 end intrinsic;
