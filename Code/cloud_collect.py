@@ -637,10 +637,13 @@ def update_todo_and_preload(datafolder="/scratch/grp/noaut1/raw", oldtodo="DATA/
             vals = vals.split("|")
             preloads[label] = dict(zip(heads, vals))
     print("Loading old todo")
+    unseen = set()
     with open(oldtodo) as F:
         with open(newtodo, "w") as Fout:
             for line in F:
                 label, codes = line.strip().split()
+                if label not in TElines:
+                    unseen.add(label)
                 if label in noskips or label in errored or label in memerrored and label in started_normal and label not in normal_time:
                     continue
                 _ = Fout.write(line)
@@ -649,7 +652,7 @@ def update_todo_and_preload(datafolder="/scratch/grp/noaut1/raw", oldtodo="DATA/
                     L1 = "|".join(L1)
                     L2 = "|".join(L2)
                     _ = Fp.write(f"{L1}\n{L2}\n")
-    return have, noskips, skips, maxmem, subtime, normal_time, started_normal, errors, errored, terminate, shortdivs, noauth
+    return have, noskips, skips, maxmem, subtime, normal_time, started_normal, errors, errored, terminate, shortdivs, noauth, unseen
 
 #def improve_names(out):
 #    names = {label: D[label].get("name") for (label, D) in out["Grp"].items()}
