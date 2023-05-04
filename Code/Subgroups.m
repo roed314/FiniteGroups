@@ -940,6 +940,7 @@ intrinsic MarkMaximalSubgroups(L::SubgroupLat)
     else
         ordbd := G`order div aib;
     end if;
+    t0 := ReportStart(G, "MarkMaximalSubgroups");
     for H in Get(G, "MagmaMaximalSubgroups") do
         if have_max and H`order lt ordbd and not (have_norms and IsNormal(GG, H`subgroup)) and not (have_sylow and is_sylow(H, G)) then
             // This subgroup was added in IncludeMaximalSubgroups below, and maximal was set there.
@@ -956,6 +957,7 @@ intrinsic MarkMaximalSubgroups(L::SubgroupLat)
             H`maximal := false;
         end if;
     end for;
+    ReportEnd(G, "MarkMaximalSubgroups", t0);
 end intrinsic;
 
 intrinsic IncludeMaximalSubgroups(L::SubgroupLat)

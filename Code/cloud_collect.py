@@ -647,6 +647,8 @@ def update_todo_and_preload(datafolder="/scratch/grp/noaut1/raw", oldtodo="DATA/
                 if label in noskips or label in errored or label in memerrored and label in started_normal and label not in normal_time:
                     continue
                 _ = Fout.write(line)
+                if label in terminate:
+                    preloads["SubGrpLstByDivisorTerminate"] = str(terminate[label])
                 with open(opj(new_preload_folder, label), "w") as Fp:
                     L1, L2 = zip(*preloads[label].items())
                     L1 = "|".join(L1)
