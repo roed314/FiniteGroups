@@ -665,11 +665,13 @@ intrinsic AppendToLogfile(label::MonStgElt, msg::MonStgElt)
     hfile := "/etc/hostname";
     if OpenTest(hfile, "r") then
         hostname := Split(Read("/etc/hostname"))[1];
-        fp := Open("DATA/timings/tmp_" * label, "w");
-        Puts(fp, msg);
-        Flush(fp);
-        System(Sprintf("cat DATA/timings/tmp_%o >>/%o.log", label, hostname));
-        delete fp;
+        if hostname[1..4] eq "grp-" and hostname ne "grp-setup" then
+            fp := Open("DATA/timings/tmp_" * label, "w");
+            Puts(fp, msg);
+            Flush(fp);
+            System(Sprintf("cat DATA/timings/tmp_%o >>/%o.log", label, hostname));
+            delete fp;
+        end if;
     end if;
 end intrinsic;
 
