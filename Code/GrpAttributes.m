@@ -2103,8 +2103,12 @@ intrinsic rank(G::LMFDBGrp) -> Any
     end if;
     if not Get(G, "subgroup_inclusions_known") then return None(); end if;
     if Get(G, "subgroup_index_bound") ne 0 then return None(); end if;
+    Subs := Get(G, "Subgroups");
+    if &or[Type(Get(H, "mobius_sub")) eq NoneType : H in Subs] then
+        return None();
+    end if;
     for r in [2..Get(G, "order")] do
-        tot := &+[Get(H, "subgroup_order")^r * Get(H, "mobius_sub") * Get(H, "count") : H in Get(G, "Subgroups")];
+        tot := &+[Get(H, "subgroup_order")^r * Get(H, "mobius_sub") * Get(H, "count") : H in Subs];
         if tot gt 0 then
             G`EulerianTimesAut := tot;
             return r;
