@@ -3060,10 +3060,10 @@ intrinsic BestSubgroupLat(G::LMFDBGrp) -> SubgroupLat
             IncludeNormalSubgroups(L);
             if L`index_bound ne 0 then
                 // We also need to include sylow and maximal subgroups
-                if Get(X, "sylow_subgroups_known") then
+                if Get(G, "sylow_subgroups_known") then
                     IncludeSylowSubgroups(L);
                 end if;
-                if Get(X, "maximal_subgroups_known") then
+                if Get(G, "maximal_subgroups_known") then
                     IncludeMaximalSubgroups(L);
                 end if;
             end if;
