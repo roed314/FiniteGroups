@@ -963,14 +963,17 @@ intrinsic MarkMaximalSubgroups(L::SubgroupLat)
         have_sylow := Get(G, "sylow_subgroups_known");
         aib := Get(G, "AutIndexBound");
         if aib eq 0 then
-            ordbd := 1;
-        else
-            ordbd := G`order div aib;
+            aib := G`order;
         end if;
         Maxs := Get(G, "MagmaMaximalSubgroups");
         for H in Maxs do
+            index := G`order div H`order;
+            if index le THRESHOLD then
+                // Set above
+                continue;
+            end if;
             Hnorm := IsNormal(GG, H`subgroup);
-            if have_max and H`order lt ordbd and not (have_norms and Hnorm) and not (have_sylow and is_sylow(H, G)) then
+            if have_max and index gt aib and not (have_norms and Hnorm) and not (have_sylow and is_sylow(H, G)) then
                 // This subgroup was added in IncludeMaximalSubgroups below, and maximal was set there.
                 continue;
             end if;
