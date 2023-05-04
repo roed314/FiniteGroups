@@ -3034,7 +3034,7 @@ intrinsic LMFDBSubgroup(H::SubgroupLatElt : normal_lattice:=false) -> LMFDBSubGr
     G := Lat`Grp;
     res := New(LMFDBSubGrp);
     res`LatElt := H;
-    if not normal_lattice and and assigned Lat`from_conj and (Get(G, "subgroup_inclusions_known") or Lat`index_bound ne 0) then
+    if not normal_lattice and assigned Lat`from_conj and (Get(G, "subgroup_inclusions_known") or Lat`index_bound ne 0) then
         assert assigned Lat`NormLat;
         if Get(H, "normal") then
             assert assigned H`NormLatElt;
