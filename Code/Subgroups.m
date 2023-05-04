@@ -930,27 +930,60 @@ end function;
 intrinsic MarkMaximalSubgroups(L::SubgroupLat)
 {For large groups, IsMaximal can get very slow and eventually fail with an error message about a coset table being too large.  Instead, in this function we just mark Maximal subgroups as such}
     G := L`Grp;
-    GG := G`MagmaGrp;
-    have_max := Get(G, "maximal_subgroups_known");
-    have_norms := Get(G, "normal_subgroups_known");
-    have_sylow := Get(G, "sylow_subgroups_known");
-    aib := Get(G, "AutIndexBound");
-    if aib eq 0 then
-        ordbd := 1;
-    else
-        ordbd := G`order div aib;
-    end if;
     t0 := ReportStart(G, "MarkMaximalSubgroups");
-    for H in Get(G, "MagmaMaximalSubgroups") do
-        if have_max and H`order lt ordbd and not (have_norms and IsNormal(GG, H`subgroup)) and not (have_sylow and is_sylow(H, G)) then
-            // This subgroup was added in IncludeMaximalSubgroups below, and maximal was set there.
-            continue;
-        end if;
-        i := SubgroupIdentify(L, H`subgroup : error_if_missing:=false);
-        if i ne -1 then
-            L`subs[i]`maximal := true;
+    GG := G`MagmaGrp;
+    // IsMaximal is fast when the index is small, while subgroup identification is harder there (easy hash is hard, as is the current approach for Gassman classes)
+    // So we start by marking all the subgroups of small index using IsMaximal
+    bi := Get(L, "by_index");
+    solv := G`solvable;
+    THRESHOLD := 1000000;
+    for d->subs in bi do
+        if d eq 1 then
+            subs[1]`maximal := false;
+        elif IsPrime(d) then
+            for j in [1..#subs] do
+                subs[j]`maximal := true;
+            end for;
+        elif solv and not IsPrimePower(d) then
+            for j in [1..#subs] do
+                subs[j]`maximal := false;
+            end for;
+        elif d le THRESHOLD then
+            // Actually have to do some work
+            for j in [1..#subs] do
+                subs[j]`maximal := IsMaximal(GG, subs[j]`subgroup);
+            end for;
         end if;
     end for;
+    minp := Min(PrimeDivisors(G`order));
+    if G`order ge THRESHOLD * minp then
+        have_max := Get(G, "maximal_subgroups_known");
+        have_norms := Get(G, "normal_subgroups_known");
+        have_sylow := Get(G, "sylow_subgroups_known");
+        aib := Get(G, "AutIndexBound");
+        if aib eq 0 then
+            ordbd := 1;
+        else
+            ordbd := G`order div aib;
+        end if;
+        Maxs := Get(G, "MagmaMaximalSubgroups");
+        for H in Maxs do
+            Hnorm := IsNormal(GG, H`subgroup);
+            if have_max and H`order lt ordbd and not (have_norms and Hnorm) and not (have_sylow and is_sylow(H, G)) then
+                // This subgroup was added in IncludeMaximalSubgroups below, and maximal was set there.
+                continue;
+            end if;
+            if Hnorm then
+                // A normal subgroup is maximal if and only if it has prime index, so it was already marked as maximal above
+                continue;
+            end if;
+            // We should reach here very rarely (non-normal Sylow subgroups, or maximal subgroups with THRESHOLD < index <= L`index_bound
+            i := SubgroupIdentify(L, H`subgroup : error_if_missing:=false);
+            if i ne -1 then
+                L`subs[i]`maximal := true;
+            end if;
+        end for;
+    end if;
     for i in [1..#L] do
         H := L`subs[i];
         if not assigned H`maximal then
