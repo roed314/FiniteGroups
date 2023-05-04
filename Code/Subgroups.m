@@ -3060,6 +3060,9 @@ intrinsic BestSubgroupLat(G::LMFDBGrp) -> SubgroupLat
             IncludeNormalSubgroups(L);
             if L`index_bound ne 0 then
                 // We also need to include sylow and maximal subgroups
+                // The code for doing so was originally written just for SubGrpLstAut, since the assumption was SubGrpLst would include everything
+                // We work around this by setting AutIndexBound to just index_bound in this case, which can only occur when FindSubsWithoutAut is true
+                L`AutIndexBound := L`index_bound;
                 if Get(G, "sylow_subgroups_known") then
                     IncludeSylowSubgroups(L);
                 end if;
