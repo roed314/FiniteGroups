@@ -76,7 +76,7 @@ intrinsic maximal_normal(H::LMFDBSubGrp) -> BoolElt // Need to be subgroup attri
     n := Get(H, "quotient_order");
     if IsPrime(n) then return true; end if;
     if not IsSimpleOrder(n) then return false; end if;
-    Q := BestQuotient(GG, HH);
+    Q := Get(H, "Quotient");
     return IsSimple(Q);
 end intrinsic;
 
@@ -479,6 +479,10 @@ intrinsic subgroup_tex(H::LMFDBSubGrp) -> Any
     if Get(H, "quotient_order") eq 1 then
         return Get(H`Grp, "tex_name");
     end if;
+    if FindSubsWithoutAut(H`Grp) then
+        // Try to find this in another run
+        return None();
+    end if;
     g:=H`MagmaSubGrp;
     gn:= GroupName(g: TeX:=true);
     return ReplaceString(gn, "\\", "\\\\");
@@ -493,6 +497,10 @@ intrinsic quotient_tex(H::LMFDBSubGrp) -> Any
 {Returns Magma's name for the quotient.}
     if Get(H, "subgroup_order") eq 1 then
         return Get(H`Grp, "tex_name");
+    end if;
+    if FindSubsWithoutAut(H`Grp) then
+        // Try to find this in another run
+        return None();
     end if;
     if Get(H, "normal") then
         gn:= GroupName(Get(H, "Quotient"): TeX:=true);
