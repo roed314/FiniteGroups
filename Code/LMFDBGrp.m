@@ -163,6 +163,7 @@ declare attributes LMFDBGrp:
   SubGrpLstCutoff,
   MagmaSylowSubgroups,
   MagmaMinimalNormalSubgroups,
+  MagmaMaximalSubgroups,
   Zgroup,
   Agroup,
   charc_center_gens,

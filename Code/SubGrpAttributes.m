@@ -32,13 +32,28 @@ intrinsic generators(H::LMFDBSubGrp) -> SeqEnum
     return [GG!h : h in Generators(H`MagmaSubGrp)];
 end intrinsic;
 
-/* moved to Basic */
-/* intrinsic maximal(H::LMFDBSubGrp) -> BoolElt */// Need to be subgroup attribute file
-/*  {Determine if a subgroup is maximal}
-  GG := Get(H, "MagmaAmbient");
-  HH := H`MagmaSubGrp;
-  return IsMaximal(GG, HH);
-  end intrinsic; */
+intrinsic maximal(H::LMFDBSubGrp) -> BoolElt
+{Determine if a subgroup is maximal}
+    G := H`Grp;
+    GG := G`MagmaGrp;
+    HH := H`MagmaSubGrp;
+    if G`solvable then
+        n := Get(H, "quotient_order");
+        if n eq 1 then return false; end if;
+        if Get(G, "pgroup") gt 1 then
+            return IsPrime(n);
+        elif not IsPrimePower(n) then // maximal subgroups of solvable groups have prime power index
+            return false;
+        end if;
+    end if;
+    try
+        return IsMaximal(GG, HH);
+    catch e
+        // can have a problem if the index of H in G is very large
+        MarkMaximalSubgroups(H`LatElt`Lat);
+        return H`LatElt`maximal;
+    end try;
+end intrinsic;
 
 
 intrinsic minimal(H::LMFDBSubGrp) -> BoolElt // Need to be subgroup attribute file

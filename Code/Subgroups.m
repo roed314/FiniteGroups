@@ -133,6 +133,7 @@ declare attributes SubgroupLatElt:
         centralizer,
         normal,
         characteristic,
+        maximal,
         core,
         core_order,
         complements,
@@ -917,6 +918,46 @@ intrinsic MarkNormalSubgroups(L::SubgroupLat)
                 
 */
 
+intrinsic MagmaMaximalSubgroups(G::LMFDBGrp) -> SeqEnum
+{}
+    return MaximalSubgroups(G`MagmaGrp);
+end intrinsic;
+
+function is_sylow(M)
+    return IsPrimePower(M`order) and Gcd(M`order, G`order div M`order) eq 1;
+end function;
+
+intrinsic MarkMaximalSubgroups(L::SubgroupLat)
+{This function is only used in fallback case when IsMaximal raises an error for a subgroup}
+    G := L`Grp;
+    GG := G`MagmaGrp;
+    have_max := Get(G, "maximal_subgroups_known");
+    have_norms := Get(G, "normal_subgroups_known");
+    have_sylow := Get(G, "sylow_subgroups_known");
+    aib := Get(G, "AutIndexBound");
+    if aib eq 0 then
+        ordbd := 1;
+    else
+        ordbd := G`order div aib;
+    end if;
+    for H in Get(G, "MagmaMaximalSubgroups") do
+        if have_max and H`order lt ordbd and not (have_norms and IsNormal(GG, H`subgroup)) and not (have_sylow and is_sylow(H)) then
+            // This subgroup was added in IncludeMaximalSubgroups below, and maximal was set there.
+            continue;
+        end if;
+        i := SubgroupIdentify(H`subgroup : error_if_missing:=false);
+        if i ne -1 then
+            L`subs[i]`maximal := true;
+        end if;
+    end for;
+    for i in [1..#L] do
+        H := L`subs[i];
+        if not assigned H`maximal then
+            H`maximal := false;
+        end if;
+    end for;
+end intrinsic;
+
 intrinsic IncludeMaximalSubgroups(L::SubgroupLat)
 {Should only be called when L`index_bound != 0}
     G := L`Grp;
@@ -925,10 +966,7 @@ intrinsic IncludeMaximalSubgroups(L::SubgroupLat)
     have_norms := Get(G, "normal_subgroups_known");
     have_sylow := Get(G, "sylow_subgroups_known");
     ordbd := G`order div G`AutIndexBound;
-    function is_sylow(M)
-        return IsPrimePower(M`order) and Gcd(M`order, G`order div M`order) eq 1;
-    end function;
-    Maxs := [M`subgroup : M in MaximalSubgroups(GG) | M`order lt ordbd and not (have_norms and IsNormal(GG, M`subgroup)) and not (have_sylow and is_sylow(M))];
+    Maxs := [M`subgroup : M in Get(G, "MagmaMaximalSubgroups") | M`order lt ordbd and not (have_norms and IsNormal(GG, M`subgroup)) and not (have_sylow and is_sylow(M))];
     if #Maxs gt 0 then
         additions := [];
         // We form a tmp SubgroupLat in order to use the LabelSubgroups function
@@ -956,6 +994,7 @@ intrinsic IncludeMaximalSubgroups(L::SubgroupLat)
             Mnew`keep := true;
             Mnew`label := M`label * ".M";
             Mnew`MaxLatElt := M;
+            Mnew`maximal := true;
             Mnew`subgroup_count := Get(M, "subgroup_count");
             Mnew`cc_count := Get(M, "cc_count");
             Mnew`normal := Get(M, "normal");
