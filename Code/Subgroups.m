@@ -946,7 +946,7 @@ intrinsic MarkMaximalSubgroups(L::SubgroupLat)
             // This subgroup was added in IncludeMaximalSubgroups below, and maximal was set there.
             continue;
         end if;
-        i := SubgroupIdentify(H`subgroup : error_if_missing:=false);
+        i := SubgroupIdentify(L, H`subgroup : error_if_missing:=false);
         if i ne -1 then
             L`subs[i]`maximal := true;
         end if;
