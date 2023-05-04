@@ -3060,11 +3060,13 @@ intrinsic BestSubgroupLat(G::LMFDBGrp) -> SubgroupLat
             L := Get(G, "SubGrpLst");
             // This can't be put inside SubGrpLst since it would cause an infinite recursion when called from SubGrpLstAut because G`outer_equivalence is not yet set
             IncludeNormalSubgroups(L);
+            if not assigned G`AutIndexBound then
+                G`AutIndexBound := L`index_bound;
+            end if;
             if L`index_bound ne 0 then
                 // We also need to include sylow and maximal subgroups
                 // The code for doing so was originally written just for SubGrpLstAut, since the assumption was SubGrpLst would include everything
                 // We work around this by setting AutIndexBound to just index_bound in this case, which can only occur when FindSubsWithoutAut is true
-                G`AutIndexBound := L`index_bound;
                 if Get(G, "sylow_subgroups_known") then
                     IncludeSylowSubgroups(L);
                 end if;

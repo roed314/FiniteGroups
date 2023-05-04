@@ -94,7 +94,7 @@ aggregate_attr["W"] := "Subgroups";
 aggregate_attr["I"] := "Subgroups";
 
 tstart := Cputime();
-try
+function run_codes()
     for code in Eltseq(codes) do
         header := code_lookup[code];
         if IsDefined(aggregate_attr, code) then
@@ -111,12 +111,19 @@ try
         end if;
     end for;
     ReportEnd(G, Sprintf("AllFinished(%o)", codes), tstart);
-catch e
-    print e;
+end function;
+if assigned debug then
+    run_codes();
+else
     try
-        print e`Traceback;
-    catch ee
-        print "No traceback";
+        run_codes();
+    catch e
+        print e;
+        try
+            print e`Traceback;
+        catch ee
+            print "No traceback";
+        end try;
     end try;
-end try;
+end if;
 exit;
