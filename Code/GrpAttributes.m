@@ -1227,6 +1227,7 @@ intrinsic direct_product(G::LMFDBGrp) -> Any
 {Returns true if G is a nontrivial direct product; otherwise returns false.}
     fact := Get(G, "direct_factorization");
     if Type(fact) eq NoneType then
+        if FindSubsWithoutAut(G) then return None(); end if;
         // Try to do just one decomposition
         // This can succeed where direct_factorization failed if we were unable to label
         // one of the terms

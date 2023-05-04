@@ -100,7 +100,10 @@ function run_codes()
         if IsDefined(aggregate_attr, code) then
             attr := aggregate_attr[code];
             t0 := ReportStart(G, "Code-" * code);
-            for H in Get(G, attr) do
+            Agg := Get(G, attr);
+            for i in [1..#Agg] do
+                H := Agg[i];
+                vprint User1: Sprintf("%o-%o %o/%o", attr, code, i, #Agg);
                 WriteByTmpHeader(H, outfile, header);
             end for;
             ReportEnd(G, "Code-" * code, t0 : logfile:=true);

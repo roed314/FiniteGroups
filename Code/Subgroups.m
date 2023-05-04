@@ -3040,6 +3040,9 @@ intrinsic LMFDBSubgroup(H::SubgroupLatElt : normal_lattice:=false) -> LMFDBSubGr
         res`centralizer_order := (Type(C) eq NoneType) select None() else Lat`subs[C]`order;
         res`core := Get(H, "core"); // this is a subgroup rather than a SubgroupLatElt
         res`core_order := Get(H, "core_order");
+        if assigned H`maximal then
+            res`maximal := H`maximal;
+        end if;
     end if;
     AssignBasicAttributes(res);
     return res;
