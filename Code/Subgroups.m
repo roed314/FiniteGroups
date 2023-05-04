@@ -928,7 +928,7 @@ function is_sylow(M, G)
 end function;
 
 intrinsic MarkMaximalSubgroups(L::SubgroupLat)
-{This function is only used in fallback case when IsMaximal raises an error for a subgroup}
+{For large groups, IsMaximal can get very slow and eventually fail with an error message about a coset table being too large.  Instead, in this function we just mark Maximal subgroups as such}
     G := L`Grp;
     GG := G`MagmaGrp;
     have_max := Get(G, "maximal_subgroups_known");
@@ -1398,6 +1398,7 @@ intrinsic AddAndTrimSubgroups(L::SubgroupLat, trim::BoolElt)
     if trim and #L`subs ge NUM_SUBS_CUTOFF_AUT then
         TrimSubgroups(L);
     end if;
+    MarkMaximalSubgroups(L);
 end intrinsic;
 
 intrinsic IncludeSpecialSubgroups(L::SubgroupLat : index_bound:=0)
@@ -3057,6 +3058,17 @@ intrinsic BestSubgroupLat(G::LMFDBGrp) -> SubgroupLat
             L := Get(G, "SubGrpLst");
             // This can't be put inside SubGrpLst since it would cause an infinite recursion when called from SubGrpLstAut because G`outer_equivalence is not yet set
             IncludeNormalSubgroups(L);
+            if L`index_bound ne 0 then
+                // We also need to include sylow and maximal subgroups
+                if Get(X, "sylow_subgroups_known") then
+                    IncludeSylowSubgroups(L);
+                end if;
+                if Get(X, "maximal_subgroups_known") then
+                    IncludeMaximalSubgroups(L);
+                end if;
+            end if;
+            // This needs to run after IncludeNormalSubgroups (IsMaximal can be very slow for large groups, so iterating over the maximal subgroups and finding them in the list is faster)
+            MarkMaximalSubgroups(L);
         end if;
     end if;
     return L;
