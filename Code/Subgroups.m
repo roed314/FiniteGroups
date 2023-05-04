@@ -1029,6 +1029,7 @@ intrinsic IncludeSylowSubgroups(L::SubgroupLat)
 {Should only be called when L`Grp`AutIndexBound != 0}
     // Easier since labeling is trivial (unique conjugacy class of Sylows)
     G := L`Grp;
+    t0 := ReportStart(G, "IncludeSylowSubgroups");
     GG := G`MagmaGrp;
     N := G`order;
     ordbd := G`order div L`Grp`AutIndexBound;
@@ -1068,6 +1069,7 @@ intrinsic IncludeSylowSubgroups(L::SubgroupLat)
     if #additions gt 0 then
         ChangeSubs(L, [], additions);
     end if;
+    ReportEnd(G, "IncludeSylowSubgroups", t0);
 end intrinsic;
 
 intrinsic core(H::SubgroupLatElt) -> Grp
