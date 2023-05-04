@@ -937,7 +937,8 @@ intrinsic MarkMaximalSubgroups(L::SubgroupLat)
     bi := Get(L, "by_index");
     solv := G`solvable;
     THRESHOLD := 1000000;
-    for d->subs in bi do
+    for d in Keys(bi) do
+        subs := bi[d];
         if d eq 1 then
             subs[1]`maximal := false;
         elif IsPrime(d) then
