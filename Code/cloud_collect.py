@@ -357,29 +357,22 @@ def extract_unlabeled_groups(infolders, outfolder, skipfile, todofile, curfolder
                                         unlabeled[x].add((label, inum))
                                         if len(unlabeled) % 1000000 == 0:
                                             print("Reading infolder", len(unlabeled))
-                    if len(unlabeled) > 2000:
-                        break
-                if len(unlabeled) > 2000:
-                    break
-            if len(unlabeled) > 2000:
-                break
     print("Done reading infolder")
     for x, labels in unlabeled.items():
         minlabel = min(labels, key=lambda y: sort_key(y[0]))
         inums = set(y[1] for y in labels)
-        unlabeled[x] = (minlabel, inums)
+        unlabeled[x] = (minlabel[0], inums)
     print("Done changing unlabeled")
     UL = defaultdict(list)
     for x, (label, inums) in unlabeled.items():
         UL[label].append((x, inums))
     del unlabeled
     print("Done creating UL")
-    ULlist = []
     i = starti*1000
     try:
         with open(todofile, "w") as Ftodo:
             Fout = None
-            for label in sorted(UL, key=lambda x: sort_key(x[0])):
+            for label in sorted(UL, key=sort_key):
                 for x, inums in UL[label]:
                     if i % 1000 == 0:
                         if Fout is not None:
@@ -390,8 +383,6 @@ def extract_unlabeled_groups(infolders, outfolder, skipfile, todofile, curfolder
                     _ = Fout.write(f"{label}|{x}\n")
                     _ = Ftodo.write(f"{i} {codes[max(inums)]}\n")
                     i += 1
-                    if i == 3000:
-                        return
     finally:
         Fout.close()
         os.sync() # We wrote a lot of stuff
