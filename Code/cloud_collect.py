@@ -325,11 +325,14 @@ def extract_unlabeled_groups(infolders, outfolder, skipfile, curfolder=None):
     existing = os.listdir(curfolder)
     starti = len(existing)
     for i, fname in enumerate(existing):
-        if i and (i%1000000 == 0):
+        if i and (i%10000 == 0):
             print("Reading curfolder", i)
         with open(opj(curfolder, fname)) as F:
-            label, x  = F.read().strip().split("|")
-            seen.add(x)
+            for line in F:
+                line = line.strip()
+                if line:
+                    label, x  = line.split("|")
+                    seen.add(x)
     matcher = re.compile(r"\?([^\?]+)\?")
     unlabeled = defaultdict(set)
     if isinstance(infolders, str):
@@ -357,14 +360,22 @@ def extract_unlabeled_groups(infolders, outfolder, skipfile, curfolder=None):
     UL = defaultdict(list)
     for x, label in unlabeled.items():
         UL[label].append(x)
-    i = starti
-    for label in sorted(UL, key=sort_key):
-        for x in UL[label]:
-            i += 1
-            if i%1000000 == 0:
-                print("Writing outfolder", i)
-            with open(opj(outfolder, str(i)), "w") as F:
-                _ = F.write(f"{label}|{x}\n")
+    i = starti*1000
+    try:
+        Fout = None
+        for label in sorted(UL, key=sort_key):
+            for x in UL[label]:
+                if i % 1000 == 0:
+                    if Fout is not None:
+                        Fout.close()
+                    Fout = open(opj(outfolder, str(starti)), "w")
+                if i%1000000 == 0:
+                    print("Writing outfolder", i)
+                _ = Fout.write(f"{label}|{x}\n")
+                i += 1
+    finally:
+        Fout.close()
+    print(f"First: {starti*1000}\nLast: {i-1}")
 
 def extract_unfinished_file(infolder, outfile):
     finished = defaultdict(set)
