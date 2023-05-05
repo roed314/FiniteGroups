@@ -42,12 +42,12 @@ if codes[1] in ["X", "Y"] then // identifying groups given in gps_to_id
     if "H" in codes then
         t0 := ReportStart(m, "Code-H");
         hsh := hash(G);
-        PrintFile(outfile, Sprintf("H%o|%o", m, hsh));
+        PrintFile(outfile, Sprintf("H%o|%o.%o", m, #G, hsh));
         ReportEnd(m, "Code-H", t0);
     end if;
     if "T" in codes then
         t0 := ReportStart(m, "Code-T");
-        name := GroupName(G : prodeasylimit:=2);
+        name := GroupName(G : prodeasylimit:=2, wreathlimit:=2);
         PrintFile(outfile, Sprintf("H%o|%o", m, name));
         ReportEnd(m, "Code-T", t0);
     end if;

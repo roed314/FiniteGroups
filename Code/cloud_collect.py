@@ -325,6 +325,8 @@ def extract_unlabeled_groups(infolders, outfolder, skipfile, todofile, curfolder
     existing = os.listdir(curfolder)
     starti = len(existing)
     for i, fname in enumerate(existing):
+        if i == 1000:
+            break
         if i and (i%10000 == 0):
             print("Reading curfolder", i)
         with open(opj(curfolder, fname)) as F:
@@ -337,7 +339,7 @@ def extract_unlabeled_groups(infolders, outfolder, skipfile, todofile, curfolder
     unlabeled = defaultdict(set)
     if isinstance(infolders, str):
         infolders = [infolders]
-    with open(skipfile, "a") as Fskip:
+    with open(skipfile, "w") as Fskip:
         for inum, infolder in enumerate(infolders):
             for root, dirs, files in os.walk(infolder):
                 for fname in files:
@@ -356,17 +358,19 @@ def extract_unlabeled_groups(infolders, outfolder, skipfile, todofile, curfolder
                                         if len(unlabeled) % 1000000 == 0:
                                             print("Reading infolder", len(unlabeled))
     for x, labels in unlabeled.items():
-        minlabel = min(labels, key=lambda x: sort_key(x[0]))
-        inums = set(x[1] for x in labels)
+        minlabel = min(labels, key=lambda y: sort_key(y[0]))
+        inums = set(y[1] for y in labels)
         unlabeled[x] = (minlabel, inums)
     UL = defaultdict(list)
     for x, (label, inums) in unlabeled.items():
         UL[label].append((x, inums))
+    del unlabeled
+    ULlist = []
     i = starti*1000
     try:
         with open(todofile, "w") as Ftodo:
             Fout = None
-            for label in sorted(UL, key=sort_key):
+            for label in sorted(UL, key=lambda x: sort_key(x[0])):
                 for x, inums in UL[label]:
                     if i % 1000 == 0:
                         if Fout is not None:
@@ -377,6 +381,8 @@ def extract_unlabeled_groups(infolders, outfolder, skipfile, todofile, curfolder
                     _ = Fout.write(f"{label}|{x}\n")
                     _ = Ftodo.write(f"{i} {codes[max(inums)]}\n")
                     i += 1
+                    if i == 3000:
+                        return
     finally:
         Fout.close()
         os.sync() # We wrote a lot of stuff
