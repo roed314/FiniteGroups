@@ -325,8 +325,6 @@ def extract_unlabeled_groups(infolders, outfolder, skipfile, todofile, curfolder
     existing = os.listdir(curfolder)
     starti = len(existing)
     for i, fname in enumerate(existing):
-        if i == 1000:
-            break
         if i and (i%10000 == 0):
             print("Reading curfolder", i)
         with open(opj(curfolder, fname)) as F:
