@@ -357,14 +357,23 @@ def extract_unlabeled_groups(infolders, outfolder, skipfile, todofile, curfolder
                                         unlabeled[x].add((label, inum))
                                         if len(unlabeled) % 1000000 == 0:
                                             print("Reading infolder", len(unlabeled))
+                    if len(unlabeled) > 2000:
+                        break
+                if len(unlabeled) > 2000:
+                    break
+            if len(unlabeled) > 2000:
+                break
+    print("Done reading infolder")
     for x, labels in unlabeled.items():
         minlabel = min(labels, key=lambda y: sort_key(y[0]))
         inums = set(y[1] for y in labels)
         unlabeled[x] = (minlabel, inums)
+    print("Done changing unlabeled")
     UL = defaultdict(list)
     for x, (label, inums) in unlabeled.items():
         UL[label].append((x, inums))
     del unlabeled
+    print("Done creating UL")
     ULlist = []
     i = starti*1000
     try:
