@@ -317,7 +317,7 @@ def update_all_outputs(outfolder, overwrite=False):
         for fname in files:
             update_output_file(opj(root[2:], fname), opj(outfolder, root[2:], fname), overwrite=overwrite)
 
-def extract_unlabeled_groups(infolders, outfolder, skipfile, todofile, curfolders=None, codes={0:"XH", 1:"XTH"}):
+def extract_unlabeled_groups(infolders, outfolder, skipfile, todofile, curfolder=None, codes={0:"XH", 1:"XTH"}):
     seen = set()
     os.makedirs(outfolder, exist_ok=True)
     if curfolder is None:
