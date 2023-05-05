@@ -327,7 +327,7 @@ def extract_unlabeled_groups(infolders, outfolder, skipfile, curfolder=None):
     for i, fname in enumerate(existing):
         if i and (i%1000000 == 0):
             print("Reading curfolder", i)
-        with open(opj(outfolder, fname)) as F:
+        with open(opj(curfolder, fname)) as F:
             label, x  = F.read().strip().split("|")
             seen.add(x)
     matcher = re.compile(r"\?([^\?]+)\?")
