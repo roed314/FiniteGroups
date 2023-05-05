@@ -567,8 +567,8 @@ def update_todo_and_preload(datafolder="/scratch/grp/noaut1/raw", oldtodo="DATA/
         empty_div_expected = False
         with open(opj(datafolder, fname)) as F:
             for line in F:
+                label, text = line[1:].strip().split("|", 1)
                 if line[0] in "TE":
-                    label, text = line[1:].strip().split("|", 1)
                     label = label.split("(")[0]
                     TElines[label].append(line)
                     if "GB used" in text:
