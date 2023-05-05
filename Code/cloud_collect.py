@@ -317,7 +317,7 @@ def update_all_outputs(outfolder, overwrite=False):
         for fname in files:
             update_output_file(opj(root[2:], fname), opj(outfolder, root[2:], fname), overwrite=overwrite)
 
-def extract_unlabeled_groups(infolders, outfolder, skipfile, curfolder=None):
+def extract_unlabeled_groups(infolders, outfolder, skipfile, todofile, curfolders=None, codes={0:"XH", 1:"XTH"}):
     seen = set()
     os.makedirs(outfolder, exist_ok=True)
     if curfolder is None:
@@ -338,7 +338,7 @@ def extract_unlabeled_groups(infolders, outfolder, skipfile, curfolder=None):
     if isinstance(infolders, str):
         infolders = [infolders]
     with open(skipfile, "a") as Fskip:
-        for infolder in infolders:
+        for inum, infolder in enumerate(infolders):
             for root, dirs, files in os.walk(infolder):
                 for fname in files:
                     if fname.startswith("output") or fname.startswith("grp-"):
@@ -352,29 +352,34 @@ def extract_unlabeled_groups(infolders, outfolder, skipfile, curfolder=None):
                                             Fskip.write(f"{root}/{fname}: line {j}, {d}Perm\n")
                                             continue
                                     if x not in seen:
-                                        unlabeled[x].add(label)
+                                        unlabeled[x].add((label, inum))
                                         if len(unlabeled) % 1000000 == 0:
                                             print("Reading infolder", len(unlabeled))
-    for x in unlabeled:
-        unlabeled[x] = min(unlabeled[x], key=sort_key)
+    for x, labels in unlabeled.items():
+        minlabel = min(labels, key=lambda x: sort_key(x[0]))
+        inums = set(x[1] for x in labels)
+        unlabeled[x] = (minlabel, inums)
     UL = defaultdict(list)
-    for x, label in unlabeled.items():
-        UL[label].append(x)
+    for x, (label, inums) in unlabeled.items():
+        UL[label].append((x, inums))
     i = starti*1000
     try:
-        Fout = None
-        for label in sorted(UL, key=sort_key):
-            for x in UL[label]:
-                if i % 1000 == 0:
-                    if Fout is not None:
-                        Fout.close()
-                    Fout = open(opj(outfolder, str(starti)), "w")
-                if i%1000000 == 0:
-                    print("Writing outfolder", i)
-                _ = Fout.write(f"{label}|{x}\n")
-                i += 1
+        with open(todofile, "w") as Ftodo:
+            Fout = None
+            for label in sorted(UL, key=sort_key):
+                for x, inums in UL[label]:
+                    if i % 1000 == 0:
+                        if Fout is not None:
+                            Fout.close()
+                        Fout = open(opj(outfolder, str(i//1000)), "w")
+                    if i%1000000 == 0:
+                        print("Writing outfolder", i)
+                    _ = Fout.write(f"{label}|{x}\n")
+                    _ = Ftodo.write(f"{i} {codes[max(inums)]}\n")
+                    i += 1
     finally:
         Fout.close()
+        os.sync() # We wrote a lot of stuff
     print(f"First: {starti*1000}\nLast: {i-1}")
 
 def extract_unfinished_file(infolder, outfile):

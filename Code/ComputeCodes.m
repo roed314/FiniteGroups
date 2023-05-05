@@ -31,8 +31,12 @@ end if;
 if codes[1] in ["X", "Y"] then // identifying groups given in gps_to_id
     // Using label as a variable name gets in the way of the intrinsic, but we don't want to change the API, so we used m instead
     outfile := "DATA/computes/" * m;
-    infile := "DATA/gps_to_id/" * m;
-    sources, desc := Explode(Split(Read(infile), "|"));
+    mnum := StringToInteger(m)
+    mdiv := mnum div 1000;
+    infile := Sprintf("DATA/gps_to_id/%o", mdiv);
+    lines := Split(Read(infile), "\n");
+    line = lines[(mnum mod 1000) + 1];
+    sources, desc := Explode(Split(line, "|"));
     G := StringToGroup(desc);
     hsh := 0;
     if "H" in codes then
