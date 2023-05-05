@@ -565,6 +565,9 @@ def update_todo_and_preload(datafolder="/scratch/grp/noaut1/raw", oldtodo="DATA/
     for fname in os.listdir(datafolder):
         divs = []
         empty_div_expected = False
+        if fname.endswith(".log"):
+            # ignore for now
+            continue
         with open(opj(datafolder, fname)) as F:
             for line in F:
                 label, text = line[1:].strip().split("|", 1)
