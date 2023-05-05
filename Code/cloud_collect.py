@@ -317,14 +317,16 @@ def update_all_outputs(outfolder, overwrite=False):
         for fname in files:
             update_output_file(opj(root[2:], fname), opj(outfolder, root[2:], fname), overwrite=overwrite)
 
-def extract_unlabeled_groups(infolders, outfolder, skipfile):
+def extract_unlabeled_groups(infolders, outfolder, skipfile, curfolder=None):
     seen = set()
     os.makedirs(outfolder, exist_ok=True)
-    existing = os.listdir(outfolder)
+    if curfolder is None:
+        curfolder = outfolder
+    existing = os.listdir(curfolder)
     starti = len(existing)
     for i, fname in enumerate(existing):
-        if i and (i%100000 == 0):
-            print("Reading outfolder", i)
+        if i and (i%1000000 == 0):
+            print("Reading curfolder", i)
         with open(opj(outfolder, fname)) as F:
             label, x  = F.read().strip().split("|")
             seen.add(x)
@@ -332,7 +334,7 @@ def extract_unlabeled_groups(infolders, outfolder, skipfile):
     unlabeled = defaultdict(set)
     if isinstance(infolders, str):
         infolders = [infolders]
-    with open(skipfile, "w") as Fskip:
+    with open(skipfile, "a") as Fskip:
         for infolder in infolders:
             for root, dirs, files in os.walk(infolder):
                 for fname in files:
@@ -348,7 +350,7 @@ def extract_unlabeled_groups(infolders, outfolder, skipfile):
                                             continue
                                     if x not in seen:
                                         unlabeled[x].add(label)
-                                        if len(unlabeled) % 100000 == 0:
+                                        if len(unlabeled) % 1000000 == 0:
                                             print("Reading infolder", len(unlabeled))
     for x in unlabeled:
         unlabeled[x] = min(unlabeled[x], key=sort_key)
@@ -359,7 +361,7 @@ def extract_unlabeled_groups(infolders, outfolder, skipfile):
     for label in sorted(UL, key=sort_key):
         for x in UL[label]:
             i += 1
-            if i%100000 == 0:
+            if i%1000000 == 0:
                 print("Writing outfolder", i)
             with open(opj(outfolder, str(i)), "w") as F:
                 _ = F.write(f"{label}|{x}\n")

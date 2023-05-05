@@ -1755,7 +1755,7 @@ end intrinsic;
 intrinsic name(G::LMFDBGrp) -> Any
   {Returns Magma's name for the group.}
   t0 := ReportStart(G, "GroupName");
-  gn := GroupName(G`MagmaGrp);
+  gn := GroupName(G`MagmaGrp: prodeasylimit:=2);
   ReportEnd(G, "GroupName", t0);
   return gn;
 end intrinsic;
@@ -1763,7 +1763,7 @@ end intrinsic;
 intrinsic tex_name(G::LMFDBGrp) -> Any
   {Returns Magma's name for the group.}
   t0 := ReportStart(G, "TexName");
-  gn := GroupName(G`MagmaGrp: TeX:=true);
+  gn := GroupName(G`MagmaGrp: TeX:=true, prodeasylimit:=2);
   ReportEnd(G, "TexName", t0);
   return ReplaceString(gn, "\\", "\\\\");
 end intrinsic;
@@ -1892,7 +1892,7 @@ intrinsic wreath_product(G::LMFDBGrp) -> Any
         n, d := TransitiveGroupIdentification(BC);
         T := Sprintf("%oT%o", d, n);
         if phi cmpeq 0 then
-            G`wreath_data := [GroupName(A: TeX:=true), GroupName(B: TeX:=true), T];
+            G`wreath_data := [GroupName(A: TeX:=true, prodeasylimit:=2), GroupName(B: TeX:=true, prodeasylimit:=2), T];
         else
             L := Get(G, "BestSubgroupLat");
             if L`index_bound eq 0 or (Index(GG, A) le L`index_bound and Index(GG, C) le L`index_bound) then
@@ -1902,7 +1902,7 @@ intrinsic wreath_product(G::LMFDBGrp) -> Any
                 C := L`subs[SubgroupIdentify(L, C @@ phi)];
                 G`wreath_data := [A`label, B`label, C`label, T];
             else
-                G`wreath_data := [GroupName(A: TeX:=true), GroupName(B: TeX:=true), T];
+                G`wreath_data := [GroupName(A: TeX:=true, prodeasylimit:=2), GroupName(B: TeX:=true, prodeasylimit:=2), T];
             end if;
         end if;
     end if;

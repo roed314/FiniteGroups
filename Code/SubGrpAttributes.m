@@ -484,7 +484,7 @@ intrinsic subgroup_tex(H::LMFDBSubGrp) -> Any
         return None();
     end if;
     g:=H`MagmaSubGrp;
-    gn:= GroupName(g: TeX:=true);
+    gn:= GroupName(g: TeX:=true, prodeasylimit:=2);
     return ReplaceString(gn, "\\", "\\\\");
 end intrinsic;
 
@@ -503,7 +503,7 @@ intrinsic quotient_tex(H::LMFDBSubGrp) -> Any
         return None();
     end if;
     if Get(H, "normal") then
-        gn:= GroupName(Get(H, "Quotient"): TeX:=true);
+        gn:= GroupName(Get(H, "Quotient"): TeX:=true, prodeasylimit:=2);
         return ReplaceString(gn, "\\", "\\\\");
     else
         return None();

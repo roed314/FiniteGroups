@@ -42,7 +42,8 @@ If giveup is true, then rather than running through options with the right hash 
             id := IdentifyGroup(G);
         end if;
     elif N in SmallhashOrders() then
-        id := IdentifyGroups([G])[1];
+        if hsh eq 0 then hsh := hash(G); end if;
+        id := IdentifyGroups([G] : hashes:=[hsh])[1];
     elif not HaveKnownHashes(N) then
         return None(), _;
     else

@@ -8,13 +8,13 @@ if not assigned codes then
     codes := "blajJzcCrqQsvSLWhtguoIimw";
 end if;
 if not assigned label then
-    if codes ne "X" then
+    if not ("X" in codes or "Y" in codes) then
         print "This script requires the label of the group as input, something like magma label:=1024.a ComputeCodes.m";
         quit;
     end if;
 end if;
 if not assigned m then
-    if codes eq "X" then
+    if "X" in codes or "Y" in codes then
         print "This script requires the temporary id number of a group to label";
         quit;
     end if;
@@ -28,24 +28,37 @@ if assigned debug then
     SetDebugOnError(true); // for testing
 end if;
 
-if codes in ["X", "Y"] then // identifying groups given in gps_to_id
+if codes[1] in ["X", "Y"] then // identifying groups given in gps_to_id
     // Using label as a variable name gets in the way of the intrinsic, but we don't want to change the API, so we used m instead
     outfile := "DATA/computes/" * m;
     infile := "DATA/gps_to_id/" * m;
     sources, desc := Explode(Split(Read(infile), "|"));
-    t0 := ReportStart(m, Sprintf("Code-%o", codes));
     G := StringToGroup(desc);
-    if codes eq "X" then
-        lab := label(G);
+    hsh := 0;
+    if "H" in codes then
+        t0 := ReportStart(m, "Code-H");
+        hsh := hash(G);
+        PrintFile(outfile, Sprintf("H%o|%o", m, hsh));
+        ReportEnd(m, "Code-H", t0);
+    end if;
+    if "T" in codes then
+        t0 := ReportStart(m, "Code-T");
+        name := GroupName(G : prodeasylimit:=2);
+        PrintFile(outfile, Sprintf("H%o|%o", m, name));
+        ReportEnd(m, "Code-T", t0);
+    end if;
+    t0 := ReportStart(m, Sprintf("Code-%o", codes[1]));
+    if codes[1] eq "X" then
+        lab := label(G : hsh:=hsh);
     else
         lab := label_perm_method(G);
     end if;
     if Type(lab) eq NoneType then
-        PrintFile(outfile, Sprintf("%o%o|\\N", codes, m));
+        PrintFile(outfile, Sprintf("%o%o|\\N", codes[1], m));
     else
-        PrintFile(outfile, Sprintf("%o%o|%o", codes, m, lab));
+        PrintFile(outfile, Sprintf("%o%o|%o", codes[1], m, lab));
     end if;
-    ReportEnd(m, Sprintf("Code-%o", codes), t0);
+    ReportEnd(m, Sprintf("Code-%o", codes[1]), t0);
     quit;
     index := 0; // The magma compiler is annoying
 elif codes eq "y" then // trying to compute all subgroups of a given index
