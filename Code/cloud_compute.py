@@ -52,7 +52,7 @@ def utcnow():
     return datetime.now(timezone.utc).strftime("%H:%M:%S.%f")[:-4]
 
 def run(label, codes, timeout, memlimit, subgroup_index_bound, subgroup_inclusions_known):
-    if codes == "X":
+    if codes[0] in "XY":
         labelname = "m" # label gets in the way of the intrinsic we'd defined
     else:
         labelname = "label"
