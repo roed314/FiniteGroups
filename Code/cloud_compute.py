@@ -410,6 +410,9 @@ with open("DATA/manifest") as F:
             # We allow for encoding the codes to do in the todo file
             if " " in label:
                 label, codes = label.split()
+                # hack
+                if codes == "XTH":
+                    codes = "XUH"
             #L = L[per_job * job: per_job * (job + 1)]
             os.makedirs(out, exist_ok=True)
             os.makedirs(timings, exist_ok=True)
