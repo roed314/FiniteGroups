@@ -46,9 +46,9 @@ if codes[1] in ["X", "Y"] then // identifying groups given in gps_to_id
         ReportEnd(m, "Code-H", t0);
     end if;
     if "T" in codes then
-        t0 := ReportStart(m, "Code-T");
+        t0 := ReportStart(m, "Code-T"); // Ugh, screwed up and double used T.  Don't want to fix right now.
         name := GroupName(G : prodeasylimit:=2, wreathlimit:=2);
-        PrintFile(outfile, Sprintf("H%o|%o", m, name));
+        PrintFile(outfile, Sprintf("U%o|%o", m, name));
         ReportEnd(m, "Code-T", t0);
     end if;
     t0 := ReportStart(m, Sprintf("Code-%o", codes[1]));
