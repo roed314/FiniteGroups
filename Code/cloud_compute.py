@@ -58,7 +58,7 @@ def run(label, codes, timeout, memlimit, subgroup_index_bound, subgroup_inclusio
         labelname = "label"
     if sys.platform == "linux":
         # 1048576B = 1MB
-        subprocess.run('parallel -n0 --timeout %s --memfree 256MB "ulimit -v 1000000; magma -b %s:=%s codes:=%s ComputeCodes.m >> DATA/errors/%s 2>&1" ::: 1' % (ceil(timeout), labelname, label, codes, label), shell=True)
+        subprocess.run('parallel -n0 --timeout %s --memfree 256MB "ulimit -v 2000000; magma -b %s:=%s codes:=%s ComputeCodes.m >> DATA/errors/%s 2>&1" ::: 1' % (ceil(timeout), labelname, label, codes, label), shell=True)
         # subprocess.run('prlimit --as=%s --cpu=%s magma -b %s:=%s codes:=%s ComputeCodes.m >> DATA/errors/%s 2>&1' % (memlimit*1048576, ceil(timeout), labelname, label, codes, label), shell=True)
         #subprocess.run('parallel -n0 --timeout %s --memfree 256MB "magma -b %s:=%s codes:=%s ComputeCodes.m >> DATA/errors/%s 2>&1" ::: 1' % (ceil(timeout), labelname, label, codes, label), shell=True)
     else:
@@ -391,13 +391,22 @@ with open("DATA/manifest") as F:
         # TODO: update how timeouts are computed
         cnt, per_job, job_timeout, total_timeout = int(cnt), int(per_job), int(job_timeout), int(total_timeout)
         if job < cnt:
-            if os.path.isdir(todo):
+            if os.path.exists("compute_todos"):
+                # ignore the todo from the manifest...
+                with open(f"compute_todos/{job % 1000}") as Fsub:
+                    jk = job // 1000
+                    for kk, line in enumerate(Fsub):
+                        if kk == jk:
+                            label = line.strip()
+                            break
+            elif os.path.isdir(todo):
                 L = os.listdir(todo)
                 L.sort()
+                label = L[job]
             else:
                 with open(todo) as Fsub:
                     L = Fsub.read().strip().split("\n")
-            label = L[job]
+                label = L[job]
             # We allow for encoding the codes to do in the todo file
             if " " in label:
                 label, codes = label.split()
