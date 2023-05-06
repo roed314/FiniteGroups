@@ -37,32 +37,41 @@ if codes[1] in ["X", "Y"] then // identifying groups given in gps_to_id
     lines := Split(Read(infile), "\n");
     line := lines[(mnum mod 1000) + 1];
     sources, desc := Explode(Split(line, "|"));
-    G := StringToGroup(desc);
-    hsh := 0;
-    if "H" in codes then
-        t0 := ReportStart(m, "Code-H");
-        hsh := hash(G);
-        PrintFile(outfile, Sprintf("H%o|%o.%o", m, #G, hsh));
-        ReportEnd(m, "Code-H", t0);
-    end if;
-    if "U" in codes then
-        t0 := ReportStart(m, "Code-U");
-        name := GroupName(G : prodeasylimit:=2, wreathlimit:=2);
-        PrintFile(outfile, Sprintf("U%o|%o", m, name));
-        ReportEnd(m, "Code-U", t0);
-    end if;
-    t0 := ReportStart(m, Sprintf("Code-%o", codes[1]));
-    if codes[1] eq "X" then
-        lab := label(G : hsh:=hsh);
-    else
-        lab := label_perm_method(G);
-    end if;
-    if Type(lab) eq NoneType then
-        PrintFile(outfile, Sprintf("%o%o|\\N", codes[1], m));
-    else
-        PrintFile(outfile, Sprintf("%o%o|%o", codes[1], m, lab));
-    end if;
-    ReportEnd(m, Sprintf("Code-%o", codes[1]), t0);
+    try
+        G := StringToGroup(desc);
+        hsh := 0;
+        if "H" in codes then
+            t0 := ReportStart(m, "Code-H");
+            hsh := hash(G);
+            PrintFile(outfile, Sprintf("H%o|%o.%o", m, #G, hsh));
+            ReportEnd(m, "Code-H", t0);
+        end if;
+        if "U" in codes then
+            t0 := ReportStart(m, "Code-U");
+            name := GroupName(G : prodeasylimit:=2, wreathlimit:=2);
+            PrintFile(outfile, Sprintf("U%o|%o", m, name));
+            ReportEnd(m, "Code-U", t0);
+        end if;
+        t0 := ReportStart(m, Sprintf("Code-%o", codes[1]));
+        if codes[1] eq "X" then
+            lab := label(G : hsh:=hsh);
+        else
+            lab := label_perm_method(G);
+        end if;
+        if Type(lab) eq NoneType then
+            PrintFile(outfile, Sprintf("%o%o|\\N", codes[1], m));
+        else
+            PrintFile(outfile, Sprintf("%o%o|%o", codes[1], m, lab));
+        end if;
+        ReportEnd(m, Sprintf("Code-%o", codes[1]), t0);
+    catch e ;
+        print e;
+        try
+            print e`Traceback;
+        catch ee
+            print "No traceback";
+        end try;
+    end try;
     quit;
     index := 0; // The magma compiler is annoying
 elif codes eq "y" then // trying to compute all subgroups of a given index
