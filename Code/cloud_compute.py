@@ -391,9 +391,9 @@ with open("DATA/manifest") as F:
         # TODO: update how timeouts are computed
         cnt, per_job, job_timeout, total_timeout = int(cnt), int(per_job), int(job_timeout), int(total_timeout)
         if job < cnt:
-            if os.path.exists("compute_todos"):
+            if os.path.exists("DATA/compute_todos"):
                 # ignore the todo from the manifest...
-                with open(f"compute_todos/{job % 1000}") as Fsub:
+                with open(f"DATA/compute_todos/{job % 1000}") as Fsub:
                     jk = job // 1000
                     for kk, line in enumerate(Fsub):
                         if kk == jk:
