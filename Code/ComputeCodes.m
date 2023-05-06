@@ -35,7 +35,7 @@ if codes[1] in ["X", "Y"] then // identifying groups given in gps_to_id
     mdiv := mnum div 1000;
     infile := Sprintf("DATA/gps_to_id/%o", mdiv);
     lines := Split(Read(infile), "\n");
-    line = lines[(mnum mod 1000) + 1];
+    line := lines[(mnum mod 1000) + 1];
     sources, desc := Explode(Split(line, "|"));
     G := StringToGroup(desc);
     hsh := 0;
