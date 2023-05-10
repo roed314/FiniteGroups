@@ -326,7 +326,14 @@ intrinsic FewGenerators(A::GrpAuto : outer:=false, Try:=1) -> SeqEnum
         end if;
         n := #AbelianInvariants(Q);
         // IsInner is unreliable
-        ogens := [f : f in Generators(A) | not IsInnerFixed(f)];
+
+       //JP added for gp 960.11357
+       gensL:=[g : g in Generators(A)];
+       Lis:=[2,3,4,10];
+       ogens:=[gensL[i] : i in Lis];
+       // JP added for gp 960.11357
+
+       //  ogens := [f : f in Generators(A) | not IsInnerFixed(f)];
         n_opt := Infinity();
         for j in [1..Try] do
             for i in [1..Min(Degree(P), 1000)] do
