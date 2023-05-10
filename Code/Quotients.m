@@ -328,9 +328,7 @@ intrinsic FewGenerators(A::GrpAuto : outer:=false, Try:=1) -> SeqEnum
         // IsInner is unreliable
 
        //JP added for gp 960.11357
-       gensL:=[g : g in Generators(A)];
-       Lis:=[2,3,4,10];
-       ogens:=[gensL[i] : i in Lis];
+       ogens:=[f : f in Generators(A)]; 
        // JP added for gp 960.11357
 
        //  ogens := [f : f in Generators(A) | not IsInnerFixed(f)];
