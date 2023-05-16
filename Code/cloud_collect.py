@@ -747,7 +747,7 @@ def collate_sources(sources, lines, tmps):
         elif code in "SLWDI":
             pass # dealt with in code-s
         else:
-            Ss = defaultdict(list):
+            Ss = defaultdict(list)
             for src in src_list:
                 for line in lines[code][src]:
                     SD = todict(code, line)
