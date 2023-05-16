@@ -786,7 +786,7 @@ def write_upload_files(datafolder, overwrite=False):
         sources = defaultdict(set)
         lines = defaultdict(lambda: defaultdict(list))
         for source in os.listdir(opj(datafolder, label)):
-            with open(opj(datafolder, label, sources)) as F:
+            with open(opj(datafolder, label, source)) as F:
                 for line in F:
                     code = line[0]
                     sources[code].add(source)
