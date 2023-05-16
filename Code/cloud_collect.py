@@ -710,6 +710,7 @@ def collate_sources(sources, lines, tmps):
         return merged
     out = {}
     for code, src_list in sources.items():
+        src_list = list(src_list)
         if len(src_list) == 1:
             out[code] = [todict(code, line) for line in lines[code][src_list[0]]]
         elif code == "s":
