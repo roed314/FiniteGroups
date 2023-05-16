@@ -2,7 +2,7 @@
 
 # Move the output file to be collected into the DATA directory, named output{n}.txt, where n is the phase.
 
-import sys, os, re, string
+import sys, os, re, string, time
 import argparse
 from collections import defaultdict, Counter
 
@@ -689,44 +689,211 @@ def update_todo_and_preload(datafolder="/scratch/grp/noaut1/raw", oldtodo="DATA/
 #            if D.get("normal") == "t" and D.get("subgroup", r"\N") != r"\N" and D.get("quotient", r"\N") != r"\N":
 #                
 
-def write_upload_files(data, overwrite=False):
-    finished, unfinished, errors = labels_by_type(data)
+errors = []
+def collate_sources(sources, lines, tmps):
+    def todict(code, line):
+        return dict(zip(tmps[code], line.split("|")))
+    def merge(code, Ds, arbitrary=[], known_conflict=[]):
+        merged = defaultdict(lambda: r"\N")
+        for col in tmps[code]:
+            for D in Ds:
+                if D[col] != r"\N":
+                    if col in merged:
+                        # merged[col]=\N means actively added due to known_conflict
+                        if merged[col] != D[col] and col not in arbitrary:
+                            if col in known_conflict:
+                                merged[col] = r"\N"
+                                break
+                            errors.append((code, Ds, col))
+                    else:
+                        merged[col] = D[col]
+        return merged
+    out = {}
+    for code, src_list in sources.items():
+        if len(src_list) == 1:
+            out[code] = [todict(code, line) for line in lines[code][src_list[0]]]
+        elif code == "s":
+            assert all(len(lines[code][src]) == 1 for src in src_list)
+            Dsorig = Ds = [(src, todict(code, lines[code][src][0])) for src in src_list]
+            for col, desired in [("subgroup_inclusions_known", "t"), ("all_subgroups_known", "t"), ("complements_known", "t"), ("outer_equivalence", "f")]:
+                if any([D[col] == desired for (src, D) in Ds]):
+                    Ds = [(src, D) for (src, D) in Ds if D[col] == desired]
+                    if len(Ds) == 1:
+                        break
+            if len(Ds) > 1:
+                m = max(int(D["subgroup_index_bound"]) for (src, D) in Ds)
+                Ds = [(src, D) for (src, D) in Ds if int(D["subgroup_index_bound"]) == m]
+                if len(Ds) > 1:
+                    # Shouldn't matter; we check that all of the labels for subgroups match and then merge data
+                    for subcode in "SLWDI":
+                        Ss = defaultdict(list)
+                        for src, D in Ds:
+                            for sub in lines[subcode][src]:
+                                SD = todict(subcode, sub)
+                                Ss[SD["label"]].append(SD)
+                        assert all(len(v) == len(Ds) for v in Ss.values())
+                        for slabel, SDs in Ss.items():
+                            Ss[slabel] = merge(subcode, SDs, arbitrary=["generators", "diagramx"])
+                        out[subcode] = Ss.values()
+                    out["s"] = merge("s", [D for (src, D) in Ds])
+            if len(Ds) == 1:
+                # We still want to merge to get access to intrinsically defined columns
+                exts = ["subgroup_inclusions_known", "all_subgroups_known", "complements_known", "outer_equivalence", "subgroup_index_bound"]
+                out["s"] = merge("s", [D for (src, D) in Dsorig], arbitrary=exts)
+                for col in exts:
+                    outs["s"][col] = Ds[0][1][col]
+                for subcode in "SLWDI":
+                    out[subcode] = lines[subcode][Ds[0][0]]
+        elif code in "SLWDI":
+            pass # dealt with in code-s
+        else:
+            Ss = defaultdict(list):
+            for src in src_list:
+                for line in lines[code][src]:
+                    SD = todict(code, line)
+                    Ss[SD["label"]].append(SD)
+            assert all(len(v) == len(src_list) for v in Ss.values())
+            for slabel, SDs in Ss.items():
+                Ss[slabel] = merge(code, SDs)
+            out[code] = Ss.values()
+    return out
+
+def write_upload_files(datafolder, overwrite=False):
+    # datafolder should have a subfolder for each group, with files inside each containing data lines
     tmps = tmpheaders()
     finals = headers()
     final_to_tmp = {
-        "SubGrp": "SLDI",
+        "SubGrp": "SLWDI",
         "GrpConjCls": "J",
         "GrpChtrCC": "C",
         "GrpChtrQQ": "Q",
-        "Grp": "blajcqshtguomwi" # skip zr since they're just used internally
+        "Grp": "blajcqshtguomwinv" # skip zr since they're just used internally
     }
-    out = defaultdict(lambda: defaultdict(lambda: defaultdict(dict)))
-    for oname, codes in final_to_tmp.items():
-        if not overwrite and ope(oname+".txt"):
-            raise ValueError("File %s.txt already exists" % oname)
-        for code in codes:
-            cols = tmps[code]
-            label_loc = cols.index("label")
-            #missing = [gp_label for gp_label in finished if gp_label not in data[code]]
-            #if missing:
-            #    raise ValueError("Missing %s entries for %s: %s..." % (len(missing), code, missing[0]))
-            for gp_label, lines in data[code].items():
-                if gp_label in finished:
-                    for line in lines:
-                        line = line.split("|")
-                        assert len(line) == len(cols)
-                        label = line[label_loc]
-                        # subagg3 accidentally used short_labels rather than labels
-                        D = dict(zip(cols, line))
-                        if code == "D":
-                            label = "%s.%s" % (D["ambient"], D["label"])
-                            D["label"] = label
-                        out[oname][gp_label][label].update(D)
-    # Sort them....
-    # Update centers, kernels and centralizers from the corresponding columns
-    for oname, (final_cols, final_types) in finals.items():
-        with open(opj("DATA", oname+".txt"), "w") as F:
-            _ = F.write("|".join(final_cols) + "\n" + "|".join(final_types) + "\n\n")
-            for gp_label, gpD in out[oname].items():
-                for label, D in gpD.items():
-                    _ = F.write("|".join(D.get(col, r"\N") for col in final_cols) + "\n")
+    out = {}
+    for label in os.listdir(datafolder):
+        # There may be multiple sources of data from different runs; in many cases this data will be compatible and we just need to prevent duplication, but sometimes one is better than another (subgroup inclusions known or not, better bounds, etc)
+        # Here are the different conflicts that are anticipated:
+        # code-t (tex_name): Magma's GroupName isn't deterministic, and we can just pick one.
+        # code-z (conj_centralizer_gens): depends on choice of reps for conjugacy classes and generators; also only used internally.
+        # code-r (charc_center_gens, charc_kernel_gens): depends on choice of generators for subgroups; also only used internally.
+        # code-h (charc_centers, charc_kernels): this is more worrisome, and occurred for 3072.hm 3072.ih 6144.xa 6144.yn 57600.dh 87480.h 115200.h 115200.bo 118098.gh.
+        # code-u (aut_stats, number_autjugacy_classes): also worrisome, and occured for 7500.u 8000.bu 10368.bu 10368.cu 20000.u 20736.ju 31104.hu 40000.eu 80000.cu 160000.bu 160000.uo 160000.us 200000.u 320000.mv 320000.uo 320000.xb 320000.bau 320000.bem 640000.ku 640000.uc 5000000.u
+        # code-l (labels for certain characteristic subgroups): this is okay (nulls in one line match non-null in another)
+        # code-a (first-pass aut group info): just different generators for automorphism group, so pick shorter one?
+        # code-s (first-pass subgroup info): Columns come in two flavors: those computing something intrinsic about the group (number_normal_subgroups, etc) and those describing which subgroups were kepts and which quantities were computed about them.  There are several conflicts in intrinsic columns (direct_product, semidirect_product, number_characteristic_subgroups), and we choose a total order for the possible extrinsic settings
+        # Tricky: all_subgroups_known vs subgroup_inclusions known
+        # Proposed: subgroup_inclusions_known then all_subgroups_known then complements_known then outer_equivalence
+        sources = defaultdict(set)
+        lines = defaultdict(lambda: defaultdict(list))
+        for source in os.listdir(opj(datafolder, label)):
+            with open(opj(datafolder, label, sources)) as F:
+                for line in F:
+                    code = line[0]
+                    sources[code].add(source)
+                    lines[code][source].append(line[1:].strip())
+        out[label] = collate_sources(sources, lines, tmps)
+    return out
+
+    # out = defaultdict(lambda: defaultdict(lambda: defaultdict(dict)))
+    # for oname, codes in final_to_tmp.items():
+    #     if not overwrite and ope(oname+".txt"):
+    #         raise ValueError("File %s.txt already exists" % oname)
+    #     for code in codes:
+    #         cols = tmps[code]
+    #         label_loc = cols.index("label")
+    #         #missing = [gp_label for gp_label in finished if gp_label not in data[code]]
+    #         #if missing:
+    #         #    raise ValueError("Missing %s entries for %s: %s..." % (len(missing), code, missing[0]))
+    #         for gp_label, lines in data[code].items():
+    #             if gp_label in finished:
+    #                 for line in lines:
+    #                     line = line.split("|")
+    #                     assert len(line) == len(cols)
+    #                     label = line[label_loc]
+    #                     # subagg3 accidentally used short_labels rather than labels
+    #                     D = dict(zip(cols, line))
+    #                     if code == "D":
+    #                         label = "%s.%s" % (D["ambient"], D["label"])
+    #                         D["label"] = label
+    #                     out[oname][gp_label][label].update(D)
+    # # Sort them....
+    # # Update centers, kernels and centralizers from the corresponding columns
+    # for oname, (final_cols, final_types) in finals.items():
+    #     with open(opj("DATA", oname+".txt"), "w") as F:
+    #         _ = F.write("|".join(final_cols) + "\n" + "|".join(final_types) + "\n\n")
+    #         for gp_label, gpD in out[oname].items():
+    #             for label, D in gpD.items():
+    #                 _ = F.write("|".join(D.get(col, r"\N") for col in final_cols) + "\n")
+
+def make_collation():
+    def get_hshing():
+        D = defaultdict(list)
+        for folder in ["gps_to_id", "gps_to_id1"]:
+            for fname in os.listdir(folder):
+                with open(opj(folder, fname) )as F:
+                    for i, line in enumerate(F):
+                        if line.strip():
+                            source, desc = line.strip().split("|")
+                            hsh = hash(desc)
+                            code = 1000*int(fname) + i
+                            D[hsh].append(code)
+        return D
+    def get_labels():
+        D = {}
+        for i in range(1,7):
+            for dirpath, dirnames, fnames in os.walk(f"label{i}"):
+                if dirpath == "TE": continue
+                for fname in fnames:
+                    if fname.startswith("labelout") or fname.startswith("grp-") and fname.endswith(".txt"):
+                        with open(opj(dirpath, fname)) as F:
+                            for line in F:
+                                if line[0] == "X":
+                                    gid, label = line[1:].strip().split("|")
+                                    gid = int(gid)
+                                    if gid in D:
+                                        assert label == D[gid]
+                                    else:
+                                        D[gid] = label
+        return D
+    t0 = time.time()
+    code_lookup = get_hshing()
+    print(f"code_lookup constructed in {time.time()-t0}s")
+    t0 = time.time()
+    label_lookup = get_labels()
+    print(f"label_lookup constructed in {time.time()-t0}s")
+    labelRE = re.compile(r"\?([^\?]+)\?")
+    t0 = time.time()
+    for folder in os.listdir():
+        print(f"Starting {folder} at time {time.time()-t0}")
+        foldD = defaultdict(list)
+        def process_file(path):
+            with open(path) as F:
+                for line in F:
+                    code = line[0]
+                    if code not in "TE":
+                        label, data = line[1:].split("|",1)
+                        label = label.split("(")[0]
+                        data = labelRE.split(data)
+                        for j in range(1,len(data),2):
+                            hsh = hash(data[j])
+                            for code in code_lookup[hsh]:
+                                if code in label_lookup:
+                                    data[j] = label_lookup[code]
+                                    break
+                            else:
+                                data[j] = r"\N"
+                        data = "".join(data)
+                        foldD[label].append(f"{code}{label}|{data}")
+        if any(folder.startswith(h) for h in ["15", "60", "fixsmall", "highmem", "lowmem", "noaut", "sopt", "tex", "Xrun"]):
+            for sub in os.listdir(folder):
+                if sub == "raw":
+                    for fname in os.listdir(opj(folder, "raw")):
+                        if fname.startswith("grp-") and fname.endswith(".txt"):
+                            process_file(opj(folder, "raw", fname))
+                elif sub.startswith("output"):
+                    process_file(opj(folder, sub))
+            for label, lines in foldD.items():
+                os.makedirs(opj("collated", label), exist_ok=True)
+                with open(opj("collated", label, folder), "a") as F:
+                    _ = F.write("".join(lines))
+

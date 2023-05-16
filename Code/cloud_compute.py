@@ -58,7 +58,7 @@ def run(label, codes, timeout, memlimit, subgroup_index_bound, subgroup_inclusio
         labelname = "label"
     if sys.platform == "linux":
         # 1048576B = 1MB
-        subprocess.run('parallel -n0 --timeout %s --memfree 256MB "ulimit -v 2000000; magma -b %s:=%s codes:=%s ComputeCodes.m >> DATA/errors/%s 2>&1" ::: 1' % (ceil(timeout), labelname, label, codes, label), shell=True)
+        subprocess.run('parallel -n0 --timeout %s --memfree 256MB "ulimit -v 1000000; magma -b %s:=%s codes:=%s ComputeCodes.m >> DATA/errors/%s 2>&1" ::: 1' % (ceil(timeout), labelname, label, codes, label), shell=True)
         # subprocess.run('prlimit --as=%s --cpu=%s magma -b %s:=%s codes:=%s ComputeCodes.m >> DATA/errors/%s 2>&1' % (memlimit*1048576, ceil(timeout), labelname, label, codes, label), shell=True)
         #subprocess.run('parallel -n0 --timeout %s --memfree 256MB "magma -b %s:=%s codes:=%s ComputeCodes.m >> DATA/errors/%s 2>&1" ::: 1' % (ceil(timeout), labelname, label, codes, label), shell=True)
     else:

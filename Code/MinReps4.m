@@ -10,7 +10,7 @@ if done then
     print "Already complete";
     exit;
 end if;
-desc := Read(infile);
+desc := Split(Read(infile), "\n")[1];
 //print desc;
 G0 := StringToGroup(desc);
 G := G0;
