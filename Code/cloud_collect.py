@@ -826,44 +826,46 @@ def write_upload_files(datafolder, overwrite=False):
     #             for label, D in gpD.items():
     #                 _ = F.write("|".join(D.get(col, r"\N") for col in final_cols) + "\n")
 
-def make_collation():
-    def get_hshing():
-        D = defaultdict(list)
-        for folder in ["gps_to_id", "gps_to_id1"]:
-            for fname in os.listdir(folder):
-                with open(opj(folder, fname) )as F:
-                    for i, line in enumerate(F):
-                        if line.strip():
-                            source, desc = line.strip().split("|")
-                            hsh = hash(desc)
-                            code = 1000*int(fname) + i
-                            D[hsh].append(code)
-        return D
-    def get_labels():
-        D = {}
-        for i in range(1,7):
-            for dirpath, dirnames, fnames in os.walk(f"label{i}"):
-                if dirpath == "TE": continue
-                for fname in fnames:
-                    if fname.startswith("labelout") or fname.startswith("grp-") and fname.endswith(".txt"):
-                        with open(opj(dirpath, fname)) as F:
-                            for line in F:
-                                if line[0] == "X":
-                                    gid, label = line[1:].strip().split("|")
-                                    gid = int(gid)
-                                    if gid in D:
-                                        assert label == D[gid]
-                                    else:
-                                        D[gid] = label
-        return D
+def get_hshing():
+    D = defaultdict(list)
+    for folder in ["gps_to_id", "gps_to_id1"]:
+        for fname in os.listdir(folder):
+            with open(opj(folder, fname) )as F:
+                for i, line in enumerate(F):
+                    if line.strip():
+                        source, desc = line.strip().split("|")
+                        hsh = hash(desc)
+                        code = 1000*int(fname) + i
+                        D[hsh].append(code)
+    return D
+def get_labels():
+    D = {}
+    for i in range(1,7):
+        for dirpath, dirnames, fnames in os.walk(f"label{i}"):
+            if dirpath == "TE": continue
+            for fname in fnames:
+                if fname.startswith("labelout") or fname.startswith("grp-") and fname.endswith(".txt"):
+                    with open(opj(dirpath, fname)) as F:
+                        for line in F:
+                            if line[0] == "X":
+                                gid, label = line[1:].strip().split("|")
+                                gid = int(gid)
+                                if gid in D:
+                                    assert label == D[gid]
+                                else:
+                                    D[gid] = label
+    return D
+def make_collation(code_lookup=None, label_lookup=None):
     t0 = time.time()
-    code_lookup = get_hshing()
-    print(f"code_lookup constructed in {time.time()-t0}s")
-    t0 = time.time()
-    label_lookup = get_labels()
-    print(f"label_lookup constructed in {time.time()-t0}s")
+    if code_lookup is None:
+        code_lookup = get_hshing()
+        print(f"code_lookup constructed in {time.time()-t0}s")
+        t0 = time.time()
+    if label_lookup is None:
+        label_lookup = get_labels()
+        print(f"label_lookup constructed in {time.time()-t0}s")
+        t0 = time.time()
     labelRE = re.compile(r"\?([^\?]+)\?")
-    t0 = time.time()
     for folder in os.listdir():
         print(f"Starting {folder} at time {time.time()-t0}")
         foldD = defaultdict(list)
@@ -877,9 +879,9 @@ def make_collation():
                         data = labelRE.split(data)
                         for j in range(1,len(data),2):
                             hsh = hash(data[j])
-                            for code in code_lookup[hsh]:
-                                if code in label_lookup:
-                                    data[j] = label_lookup[code]
+                            for hsh_ctr in code_lookup[hsh]:
+                                if hsh_ctr in label_lookup:
+                                    data[j] = label_lookup[hsh_ctr]
                                     break
                             else:
                                 data[j] = r"\N"
@@ -897,4 +899,4 @@ def make_collation():
                 os.makedirs(opj("collated", label), exist_ok=True)
                 with open(opj("collated", label, folder), "a") as F:
                     _ = F.write("".join(lines))
-
+    return code_lookup, label_lookup
