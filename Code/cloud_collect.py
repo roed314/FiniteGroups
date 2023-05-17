@@ -742,7 +742,7 @@ def collate_sources(sources, lines, tmps):
                 exts = ["subgroup_inclusions_known", "all_subgroups_known", "complements_known", "outer_equivalence", "subgroup_index_bound"]
                 out["s"] = merge("s", [D for (src, D) in Dsorig], arbitrary=exts)
                 for col in exts:
-                    outs["s"][col] = Ds[0][1][col]
+                    out["s"][col] = Ds[0][1][col]
                 for subcode in "SLWDI":
                     out[subcode] = lines[subcode][Ds[0][0]]
         elif code in "SLWDI":
