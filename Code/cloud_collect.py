@@ -887,7 +887,7 @@ def make_collation(code_lookup=None, label_lookup=None):
                                 data[j] = r"\N"
                         data = "".join(data)
                         foldD[label].append(f"{code}{label}|{data}")
-        if any(folder.startswith(h) for h in ["15", "60", "fixsmall", "highmem", "lowmem", "noaut", "sopt", "tex", "Xrun"]):
+        if any(folder.startswith(h) for h in ["15", "60", "fixsmall", "highmem", "lowmem", "noaut", "sopt", "tex", "Xrun", "last"]):
             for sub in os.listdir(folder):
                 if sub == "raw":
                     for fname in os.listdir(opj(folder, "raw")):
