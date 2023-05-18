@@ -737,6 +737,8 @@ def collate_sources(sources, lines, tmps):
                                 Ss[SD["label"]].append(SD)
                         if not all(len(v) == len(Ds) for v in Ss.values()):
                             print("len(Ds)", len(Ds))
+                            print([todict(subcode, y)["label"] for y in lines[subcode][Ds[0][0]]])
+                            print([todict(subcode, y)["label"] for y in lines[subcode][Ds[1][0]]])
                             print([[y["label"] for y in v] for v in Ss.values() if len(v) != len(Ds)])
                         assert all(len(v) == len(Ds) for v in Ss.values())
                         for slabel, SDs in Ss.items():
