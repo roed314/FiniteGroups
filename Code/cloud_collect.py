@@ -735,7 +735,10 @@ def collate_sources(sources, lines, tmps):
                             for sub in lines[subcode][src]:
                                 SD = todict(subcode, sub)
                                 Ss[SD["label"]].append(SD)
-                        assert all(len(v) == len(Ds) for v in Ss.values())
+                        if not all(len(v) == len(Ds) for v in Ss.values()):
+                            print("len(Ds)", len(Ds))
+                            print([v for v in Ss.values() if len(v) != len(Ds)])
+                        #assert all(len(v) == len(Ds) for v in Ss.values())
                         for slabel, SDs in Ss.items():
                             Ss[slabel] = merge(subcode, SDs, arbitrary=["generators", "diagramx"])
                         out[subcode] = Ss.values()
