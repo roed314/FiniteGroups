@@ -725,6 +725,9 @@ def collate_sources(sources, lines, tmps):
                 m = max(int(D["subgroup_index_bound"]) for (src, D) in Ds)
                 Ds = [(src, D) for (src, D) in Ds if int(D["subgroup_index_bound"]) == m]
                 if len(Ds) > 1:
+                    # There were code changes between noaut1 and noaut2, including Sylows and normals.  So prefer larger list of subgroups
+                    M = max(len(lines["S"][src]) for (src, D) in Ds)
+                    Ds = [(src, D) for (src, D) in Ds if len(lines["S"][src]) == M]
                     # Shouldn't matter; we check that all of the labels for subgroups match and then merge data
                     for subcode in "SLWDI":
                         Ss = defaultdict(list)
