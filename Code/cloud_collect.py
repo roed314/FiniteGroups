@@ -739,7 +739,7 @@ def collate_sources(sources, lines, tmps):
                     for src, D in Ds:
                         for line in lines["S"][src]:
                             label = todict("S", line)["label"]
-                            if any(label[-1].isupper() and not any(label.endswith(post) for post in [".N", ".M", ".CF"])):
+                            if label[-1].isupper() and not any(label.endswith(post) for post in [".N", ".M", ".CF"]):
                                 noncanonical.add(src)
                                 noncan.add(src)
                                 break
