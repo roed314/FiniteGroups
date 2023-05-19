@@ -690,6 +690,7 @@ def update_todo_and_preload(datafolder="/scratch/grp/noaut1/raw", oldtodo="DATA/
 #                
 
 errors = []
+noncanonical = set()
 def collate_sources(sources, lines, tmps):
     def todict(code, line):
         return dict(zip(tmps[code], line.split("|")))
@@ -716,6 +717,8 @@ def collate_sources(sources, lines, tmps):
         elif code == "s":
             assert all(len(lines[code][src]) == 1 for src in src_list)
             Dsorig = Ds = [(src, todict(code, lines[code][src][0])) for src in src_list]
+            # First we omit sources that didn't give any subgroups
+            Ds = [(src, D) for (src, D) in Ds if len(lines["S"][src]) > 0]
             for col, desired in [("subgroup_inclusions_known", "t"), ("all_subgroups_known", "t"), ("complements_known", "t"), ("outer_equivalence", "f")]:
                 if any([D[col] == desired for (src, D) in Ds]):
                     Ds = [(src, D) for (src, D) in Ds if D[col] == desired]
@@ -731,23 +734,38 @@ def collate_sources(sources, lines, tmps):
                         Ds = [(src, D) for (src, D) in Ds if len(lines[subcode][src]) == M]
                         if len(Ds) == 1:
                             break
-                    # Now all of the lengths should match, and the labels should match as well, so we can combine data.
-                    for subcode in "SLWDI":
-                        Ss = defaultdict(list)
-                        for src, D in Ds:
-                            for sub in lines[subcode][src]:
-                                SD = todict(subcode, sub)
-                                Ss[SD["label"]].append(SD)
-                        if not all(len(v) == len(Ds) for v in Ss.values()):
-                            print("len(Ds)", len(Ds))
-                            print([todict(subcode, y)["label"] for y in lines[subcode][Ds[0][0]]])
-                            print([todict(subcode, y)["label"] for y in lines[subcode][Ds[1][0]]])
-                            print([[y["label"] for y in v] for v in Ss.values() if len(v) != len(Ds)])
-                        assert all(len(v) == len(Ds) for v in Ss.values())
-                        for slabel, SDs in Ss.items():
-                            Ss[slabel] = merge(subcode, SDs, arbitrary=["generators", "diagramx"])
-                        out[subcode] = Ss.values()
-                    out["s"] = merge("s", [D for (src, D) in Ds])
+                    # In the noaut1/noaut2 runs, the labels aren't canonical, so we can't match them and need to pick
+                    noncan = set()
+                    for src, D in Ds:
+                        for line in lines["S"][src]:
+                            label = todict("S", line)["label"]
+                            if any(label[-1].isupper() and not any(label.endswith(post) for post in [".N", ".M", ".CF"])):
+                                noncanonical.add(src)
+                                noncan.add(src)
+                                break
+                    if len(noncan) == len(Ds):
+                        # Just pick one
+                        Ds = Ds[0]
+                    else:
+                        Ds = [(src, D) for (src, D) in Ds if src not in noncan]
+                        # Otherwise the labels should match as well, so we can combine data.
+                        if len(Ds) > 1:
+                            for subcode in "SLWDI":
+                                Ss = defaultdict(list)
+                                for src, D in Ds:
+                                    for sub in lines[subcode][src]:
+                                        SD = todict(subcode, sub)
+                                        Ss[SD["label"]].append(SD)
+                                if not all(len(v) == len(Ds) for v in Ss.values()):
+                                    print("len(Ds)", len(Ds))
+                                    print([todict(subcode, y)["label"] for y in lines[subcode][Ds[0][0]]])
+                                    print([todict(subcode, y)["label"] for y in lines[subcode][Ds[1][0]]])
+                                    print([[y["label"] for y in v] for v in Ss.values() if len(v) != len(Ds)])
+                                assert all(len(v) == len(Ds) for v in Ss.values())
+                                for slabel, SDs in Ss.items():
+                                    Ss[slabel] = merge(subcode, SDs, arbitrary=["generators", "diagramx"])
+                                out[subcode] = Ss.values()
+                            out["s"] = merge("s", [D for (src, D) in Ds])
             if len(Ds) == 1:
                 # We still want to merge to get access to intrinsically defined columns
                 exts = ["subgroup_inclusions_known", "all_subgroups_known", "complements_known", "outer_equivalence", "subgroup_index_bound"]
