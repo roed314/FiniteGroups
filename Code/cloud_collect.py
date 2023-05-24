@@ -776,6 +776,9 @@ def collate_sources(sources, lines, tmps):
                     out[subcode] = lines[subcode][Ds[0][0]]
         elif code in "SLWDI":
             pass # dealt with in code-s
+        elif code == "a":
+            # There are some cases where multiple lines are output from the same source
+            out[code] = merge(code, [todict(code, line) for src in src_list for line in lines[code][src]], arbitrary=["aut_gens"])
         else:
             Ss = defaultdict(list)
             for src in src_list:
