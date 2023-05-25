@@ -291,7 +291,7 @@ intrinsic LoadEltList(inp::MonStgElt, G::LMFDBGrp) -> SeqEnum
         // Need to strip interior whitespace to handle empty list [  ] appropriately
         while inp[i+1] eq " " do i +:= 1; end while;
         while inp[k-1] eq " " do k -:= 1; end while;
-        return [LoadEltList(x) : x in splitagg(inp[i+1..k-1], ",")];
+        return [LoadEltList(x, G) : x in splitagg(inp[i+1..k-1], ",")];
     else
         return LoadElt(inp, G);
     end if;

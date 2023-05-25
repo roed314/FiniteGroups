@@ -689,7 +689,8 @@ def update_todo_and_preload(datafolder="/scratch/grp/noaut1/raw", oldtodo="DATA/
 #            if D.get("normal") == "t" and D.get("subgroup", r"\N") != r"\N" and D.get("quotient", r"\N") != r"\N":
 #                
 
-errors = []
+merge_errors = []
+labelset_mismatch = []
 noncanonical = set()
 def collate_sources(sources, lines, tmps):
     def todict(code, line):
@@ -705,7 +706,7 @@ def collate_sources(sources, lines, tmps):
                             if col in known_conflict:
                                 merged[col] = r"\N"
                                 break
-                            errors.append((code, Ds, col))
+                            merge_errors.append((code, Ds, col))
                     else:
                         merged[col] = D[col]
         return merged
@@ -713,6 +714,7 @@ def collate_sources(sources, lines, tmps):
     for code, src_list in sources.items():
         src_list = list(src_list)
         if len(src_list) == 1:
+            # len(src_list) = 1 may not be enough.
             out[code] = [todict(code, line) for line in lines[code][src_list[0]]]
         elif code == "s":
             assert all(len(lines[code][src]) == 1 for src in src_list)
@@ -757,14 +759,24 @@ def collate_sources(sources, lines, tmps):
                                         SD = todict(subcode, sub)
                                         Ss[SD["label"]].append(SD)
                                 if not all(len(v) == len(Ds) for v in Ss.values()):
-                                    print("len(Ds)", len(Ds))
-                                    print([todict(subcode, y)["label"] for y in lines[subcode][Ds[0][0]]])
-                                    print([todict(subcode, y)["label"] for y in lines[subcode][Ds[1][0]]])
-                                    print([[y["label"] for y in v] for v in Ss.values() if len(v) != len(Ds)])
-                                assert all(len(v) == len(Ds) for v in Ss.values())
-                                for slabel, SDs in Ss.items():
-                                    Ss[slabel] = merge(subcode, SDs, arbitrary=["generators", "diagramx"])
-                                out[subcode] = Ss.values()
+                                    bad_labels = set(lab for lab, SDs in SS.items() if len(SDs) != len(Ds))
+                                    labels_by_src = defaultdict(list)
+                                    for src, D in Ds:
+                                        for sub in lines[subcode][src]:
+                                            SD = todict(subcode, sub)
+                                            if SD["label"] in bad_labels:
+                                                ambient = SD["ambient"]
+                                                labels_by_src[src].append(SD["label"])
+                                    labelset_mismatch.append((ambient, subcode, labels_by_src)
+                                    #print("len(Ds)", len(Ds))
+                                    #print([todict(subcode, y)["label"] for y in lines[subcode][Ds[0][0]]])
+                                    #print([todict(subcode, y)["label"] for y in lines[subcode][Ds[1][0]]])
+                                    #print([[y["label"] for y in v] for v in Ss.values() if len(v) != len(Ds)])
+                                #assert all(len(v) == len(Ds) for v in Ss.values())
+                                else:
+                                    for slabel, SDs in Ss.items():
+                                        Ss[slabel] = merge(subcode, SDs, arbitrary=["generators", "diagramx"])
+                                    out[subcode] = Ss.values()
                             out["s"] = merge("s", [D for (src, D) in Ds])
             if len(Ds) == 1:
                 # We still want to merge to get access to intrinsically defined columns
