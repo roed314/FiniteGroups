@@ -804,9 +804,9 @@ def collate_sources(sources, lines, tmps):
                 bad_labels = set(lab for lab, SDs in Ss.items() if len(SDs) != len(src_list))
                 labels_by_src = defaultdict(list)
                 ambient = None
-                for src, D in Ds:
-                    for sub in lines[subcode][src]:
-                        SD = todict(subcode, sub)
+                for src in src_list:
+                    for sub in lines[code][src]:
+                        SD = todict(code, sub)
                         thislabel = SD["label"]
                         if ambient is None:
                             ambient = thislabel
@@ -815,8 +815,8 @@ def collate_sources(sources, lines, tmps):
                             while ambient[:i] != thislabel[:i]:
                                 i -= 1
                             ambient = ambient[:i]
-                        if SD["label"] in bad_labels:
-                            labels_by_src[src].append(SD["label"])
+                        if thislabel in bad_labels:
+                            labels_by_src[src].append(thislabel)
                 othercode_mismatch.append((ambient, code, labels_by_src))
             #assert all(len(v) == len(src_list) for v in Ss.values())
             else:
