@@ -691,6 +691,7 @@ def update_todo_and_preload(datafolder="/scratch/grp/noaut1/raw", oldtodo="DATA/
 
 merge_errors = []
 labelset_mismatch = []
+othercode_mismatch = []
 noncanonical = set()
 def collate_sources(sources, lines, tmps):
     def todict(code, line):
@@ -799,10 +800,29 @@ def collate_sources(sources, lines, tmps):
                 for line in lines[code][src]:
                     SD = todict(code, line)
                     Ss[SD["label"]].append(SD)
-            assert all(len(v) == len(src_list) for v in Ss.values())
-            for slabel, SDs in Ss.items():
-                Ss[slabel] = merge(code, SDs)
-            out[code] = Ss.values()
+            if any(len(v) != len(src_list) for v in Ss.values()):
+                bad_labels = set(lab for lab, SDs in Ss.items() if len(SDs) != len(src_list))
+                labels_by_src = defaultdict(list)
+                ambient = None
+                for src, D in Ds:
+                    for sub in lines[subcode][src]:
+                        SD = todict(subcode, sub)
+                        thislabel = SD["label"]
+                        if ambient is None:
+                            ambient = thislabel
+                        else:
+                            i = min(len(ambient), len(thislabel))
+                            while ambient[:i] != thislabel[:i]:
+                                i -= 1
+                            ambient = ambient[:i]
+                        if SD["label"] in bad_labels:
+                            labels_by_src[src].append(SD["label"])
+                othercode_mismatch.append((ambient, code, labels_by_src))
+            #assert all(len(v) == len(src_list) for v in Ss.values())
+            else:
+                for slabel, SDs in Ss.items():
+                    Ss[slabel] = merge(code, SDs)
+                out[code] = Ss.values()
     return out
 
 def write_upload_files(datafolder, overwrite=False):
