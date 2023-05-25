@@ -767,7 +767,7 @@ def collate_sources(sources, lines, tmps):
                                             if SD["label"] in bad_labels:
                                                 ambient = SD["ambient"]
                                                 labels_by_src[src].append(SD["label"])
-                                    labelset_mismatch.append((ambient, subcode, labels_by_src)
+                                    labelset_mismatch.append((ambient, subcode, labels_by_src))
                                     #print("len(Ds)", len(Ds))
                                     #print([todict(subcode, y)["label"] for y in lines[subcode][Ds[0][0]]])
                                     #print([todict(subcode, y)["label"] for y in lines[subcode][Ds[1][0]]])
