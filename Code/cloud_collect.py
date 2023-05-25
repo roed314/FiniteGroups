@@ -759,7 +759,7 @@ def collate_sources(sources, lines, tmps):
                                         SD = todict(subcode, sub)
                                         Ss[SD["label"]].append(SD)
                                 if not all(len(v) == len(Ds) for v in Ss.values()):
-                                    bad_labels = set(lab for lab, SDs in SS.items() if len(SDs) != len(Ds))
+                                    bad_labels = set(lab for lab, SDs in Ss.items() if len(SDs) != len(Ds))
                                     labels_by_src = defaultdict(list)
                                     for src, D in Ds:
                                         for sub in lines[subcode][src]:
