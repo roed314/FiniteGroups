@@ -716,7 +716,8 @@ def collate_sources(sources, lines, tmps):
         src_list = list(src_list)
         if len(src_list) == 1:
             # len(src_list) = 1 may not be enough.
-            out[code] = [todict(code, line) for line in lines[code][src_list[0]]]
+            #out[code] = [todict(code, line) for line in lines[code][src_list[0]]]
+            pass
         elif code == "s":
             assert all(len(lines[code][src]) == 1 for src in src_list)
             Dsorig = Ds = [(src, todict(code, lines[code][src][0])) for src in src_list]
@@ -777,23 +778,27 @@ def collate_sources(sources, lines, tmps):
                                 else:
                                     for slabel, SDs in Ss.items():
                                         Ss[slabel] = merge(subcode, SDs, arbitrary=["generators", "diagramx"])
-                                    out[subcode] = Ss.values()
-                            out["s"] = merge("s", [D for (src, D) in Ds])
+                                    #out[subcode] = Ss.values()
+                            tmp = merge("s", [D for (src, D) in Ds])
+                            #out["s"] = merge("s", [D for (src, D) in Ds])
             if len(Ds) == 1:
                 # We still want to merge to get access to intrinsically defined columns
                 exts = ["subgroup_inclusions_known", "all_subgroups_known", "complements_known", "outer_equivalence", "subgroup_index_bound"]
-                out["s"] = merge("s", [D for (src, D) in Dsorig], arbitrary=exts)
-                for col in exts:
-                    out["s"][col] = Ds[0][1][col]
-                for subcode in "SLWDI":
-                    out[subcode] = lines[subcode][Ds[0][0]]
+                tmp = merge("s", [D for (src, D) in Dsorig], arbitrary=exts)
+                #out["s"] = merge("s", [D for (src, D) in Dsorig], arbitrary=exts)
+                #for col in exts:
+                #    out["s"][col] = Ds[0][1][col]
+                #for subcode in "SLWDI":
+                #    out[subcode] = lines[subcode][Ds[0][0]]
         elif code in "SLWDI":
             pass # dealt with in code-s
         elif code == "a":
             # There are some cases where multiple lines are output from the same source
-            out[code] = merge(code, [todict(code, line) for src in src_list for line in lines[code][src]], arbitrary=["aut_gens"])
+            tmp = merge(code, [todict(code, line) for src in src_list for line in lines[code][src]], arbitrary=["aut_gens"])
+            #out[code] = merge(code, [todict(code, line) for src in src_list for line in lines[code][src]], arbitrary=["aut_gens"])
         elif code == "i":
-            out[code] = merge(code, [todict(code, line) for src in src_list for line in lines[code][src]])
+            tmp = merge(code, [todict(code, line) for src in src_list for line in lines[code][src]])
+            #out[code] = merge(code, [todict(code, line) for src in src_list for line in lines[code][src]])
         else:
             Ss = defaultdict(list)
             for src in src_list:
@@ -822,7 +827,7 @@ def collate_sources(sources, lines, tmps):
             else:
                 for slabel, SDs in Ss.items():
                     Ss[slabel] = merge(code, SDs)
-                out[code] = Ss.values()
+                #out[code] = Ss.values()
     return out
 
 def write_upload_files(datafolder, overwrite=False):
