@@ -756,11 +756,11 @@ def collate_sources(sources, lines, tmps, ambient_label):
                         if len(Ds) > 1:
                             # The following groups had inconsistencies in labeling their subgroups; for now we pick one result
                             if ambient_label in ['4332.n', '4332.o']:
-                                Ds = {'fixsmall8': Ds['fixsmall8']}
+                                Ds = [pair for pair in Ds if pair[0] == 'fixsmall8']
                             elif ambient_label in ['6144.xa', '6144.yn', '6144.zc', '115200.bo', '230400.bg']:
-                                Ds = {'lowmem_termS2': Ds['lowmem_termS2']}
+                                Ds = [pair for pair in Ds if pair[0] =='lowmem_termS2']
                             elif ambient_label in ['640000.ik', '13436928.te']:
-                                Ds = {'sopt3': Ds['sopt3']}
+                                Ds = [pair for pair in Ds if pair[0] == 'sopt3']
 
                             for subcode in "SLWDI":
                                 Ss = defaultdict(list)
