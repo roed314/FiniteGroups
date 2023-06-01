@@ -693,7 +693,7 @@ merge_errors = []
 labelset_mismatch = []
 othercode_mismatch = []
 noncanonical = set()
-def collate_sources(sources, lines, tmps):
+def collate_sources(sources, lines, tmps, ambient_label):
     def todict(code, line):
         return dict(zip(tmps[code], line.split("|")))
     def merge(code, Ds, arbitrary=[], known_conflict=[]):
@@ -716,7 +716,7 @@ def collate_sources(sources, lines, tmps):
         src_list = list(src_list)
         if len(src_list) == 1:
             # len(src_list) = 1 may not be enough.
-            #out[code] = [todict(code, line) for line in lines[code][src_list[0]]]
+            out[code] = [todict(code, line) for line in lines[code][src_list[0]]]
             pass
         elif code == "s":
             assert all(len(lines[code][src]) == 1 for src in src_list)
@@ -754,6 +754,14 @@ def collate_sources(sources, lines, tmps):
                         Ds = [(src, D) for (src, D) in Ds if src not in noncan]
                         # Otherwise the labels should match as well, so we can combine data.
                         if len(Ds) > 1:
+                            # The following groups had inconsistencies in labeling their subgroups; for now we pick one result
+                            if ambient_label in ['4332.n', '4332.o']:
+                                Ds = {'fixsmall8': Ds['fixsmall8']}
+                            elif ambient_label in ['6144.xa', '6144.yn', '6144.zc', '115200.bo', '230400.bg']:
+                                Ds = {'lowmem_termS2': Ds['lowmem_termS2']}
+                            elif ambient_label in ['640000.ik', '13436928.te']:
+                                Ds = {'sopt3': Ds['sopt3']}
+
                             for subcode in "SLWDI":
                                 Ss = defaultdict(list)
                                 for src, D in Ds:
@@ -778,31 +786,31 @@ def collate_sources(sources, lines, tmps):
                                 else:
                                     for slabel, SDs in Ss.items():
                                         Ss[slabel] = merge(subcode, SDs, arbitrary=["generators", "diagramx"])
-                                    #out[subcode] = Ss.values()
+                                    out[subcode] = Ss.values()
                             tmp = merge("s", [D for (src, D) in Ds])
-                            #out["s"] = merge("s", [D for (src, D) in Ds])
+                            out["s"] = merge("s", [D for (src, D) in Ds])
             if len(Ds) == 1:
                 # We still want to merge to get access to intrinsically defined columns
                 exts = ["subgroup_inclusions_known", "all_subgroups_known", "complements_known", "outer_equivalence", "subgroup_index_bound"]
                 tmp = merge("s", [D for (src, D) in Dsorig], arbitrary=exts)
-                #out["s"] = merge("s", [D for (src, D) in Dsorig], arbitrary=exts)
-                #for col in exts:
-                #    out["s"][col] = Ds[0][1][col]
-                #for subcode in "SLWDI":
-                #    out[subcode] = lines[subcode][Ds[0][0]]
+                out["s"] = merge("s", [D for (src, D) in Dsorig], arbitrary=exts)
+                for col in exts:
+                    out["s"][col] = Ds[0][1][col]
+                for subcode in "SLWDI":
+                    out[subcode] = lines[subcode][Ds[0][0]]
         elif code in "SLWDI":
             pass # dealt with in code-s
         elif code == "a":
             # There are some cases where multiple lines are output from the same source
             tmp = merge(code, [todict(code, line) for src in src_list for line in lines[code][src]], arbitrary=["aut_gens"])
-            #out[code] = merge(code, [todict(code, line) for src in src_list for line in lines[code][src]], arbitrary=["aut_gens"])
+            out[code] = merge(code, [todict(code, line) for src in src_list for line in lines[code][src]], arbitrary=["aut_gens"])
         elif code == "i":
             tmp = merge(code, [todict(code, line) for src in src_list for line in lines[code][src]])
-            #out[code] = merge(code, [todict(code, line) for src in src_list for line in lines[code][src]])
+            out[code] = merge(code, [todict(code, line) for src in src_list for line in lines[code][src]])
         else:
             Ss = defaultdict(list)
             for src in src_list:
-                for line in lines[code][src]:
+                for line in set(lines[code][src]):
                     SD = todict(code, line)
                     Ss[SD["label"]].append(SD)
             if any(len(v) != len(src_list) for v in Ss.values()):
@@ -827,7 +835,7 @@ def collate_sources(sources, lines, tmps):
             else:
                 for slabel, SDs in Ss.items():
                     Ss[slabel] = merge(code, SDs)
-                #out[code] = Ss.values()
+                out[code] = Ss.values()
     return out
 
 def write_upload_files(datafolder, overwrite=False):
@@ -863,7 +871,8 @@ def write_upload_files(datafolder, overwrite=False):
                     code = line[0]
                     sources[code].add(source)
                     lines[code][source].append(line[1:].strip())
-        out[label] = collate_sources(sources, lines, tmps)
+        _ = collate_sources(sources, lines, tmps, label)
+        #out[label] = collate_sources(sources, lines, tmps, label)
     return out
 
     # out = defaultdict(lambda: defaultdict(lambda: defaultdict(dict)))
