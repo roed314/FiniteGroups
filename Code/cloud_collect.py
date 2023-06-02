@@ -871,7 +871,7 @@ def collate_sources(sources, lines, tmps, ambient_label):
             else:
                 for slabel, SDs in Ss.items():
                     Ss[slabel] = merge(code, SDs)
-                out[code] = Ss.values()
+                out[code] = list(Ss.values())
     return out
 
 def write_upload_files(datafolder, overwrite=False):
