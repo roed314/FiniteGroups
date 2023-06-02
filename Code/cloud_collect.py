@@ -814,9 +814,9 @@ def collate_sources(sources, lines, tmps, ambient_label):
             if len(Ds) == 1: # Since we set Ds = [Ds[0]] above, this will always be true
                 # We still want to merge to get access to intrinsically defined columns
                 exts = ["subgroup_inclusions_known", "all_subgroups_known", "complements_known", "outer_equivalence", "subgroup_index_bound"]
-                out["s"] = merge("s", [D for (src, D) in Dsorig], arbitrary=exts)
+                out["s"] = [merge("s", [D for (src, D) in Dsorig], arbitrary=exts)]
                 for col in exts:
-                    out["s"][col] = Ds[0][1][col]
+                    out["s"][0][col] = Ds[0][1][col]
                 for subcode in "SLWDIh":
                     out[subcode] = lines[subcode][Ds[0][0]]
         elif code == "J":
