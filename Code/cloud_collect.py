@@ -713,6 +713,9 @@ def collate_sources(sources, lines, tmps, ambient_label):
         return merged
     out = {}
     for code, src_list in sources.items():
+        # Don't include z or r, since they're only used internally
+        if code in "zr":
+            continue
         src_list = list(src_list)
         if len(src_list) == 1:
             # len(src_list) = 1 may not be enough.
@@ -733,80 +736,83 @@ def collate_sources(sources, lines, tmps, ambient_label):
                 Ds = [(src, D) for (src, D) in Ds if int(D["subgroup_index_bound"]) == m]
                 if len(Ds) > 1:
                     # There were code changes between noaut1 and noaut2, including Sylows and normals.  Also, in some cases there are multiple runs and one got further than the other.  So prefer larger list of subgroups
-                    for subcode in "SLWDI":
+                    for subcode in "SLWDIh":
                         M = max(len(lines[subcode][src]) for (src, D) in Ds)
                         Ds = [(src, D) for (src, D) in Ds if len(lines[subcode][src]) == M]
                         if len(Ds) == 1:
                             break
                     # In the noaut1/noaut2 runs, the labels aren't canonical, so we can't match them and need to pick
-                    noncan = set()
-                    for src, D in Ds:
-                        for line in lines["S"][src]:
-                            label = todict("S", line)["label"]
-                            if label[-1].isupper() and not any(label.endswith(post) for post in [".N", ".M", ".CF"]):
-                                noncanonical.add(src)
-                                noncan.add(src)
-                                break
-                    if len(noncan) == len(Ds):
-                        # Just pick one
-                        Ds = Ds[0]
-                    else:
-                        Ds = [(src, D) for (src, D) in Ds if src not in noncan]
-                        # Otherwise the labels should match as well, so we can combine data.
-                        if len(Ds) > 1:
-                            # The following groups had inconsistencies in labeling their subgroups; for now we pick one result
-                            if ambient_label in ['4332.n', '4332.o']:
-                                Ds = [pair for pair in Ds if pair[0] == 'fixsmall8']
-                            elif ambient_label in ['6144.xa', '6144.yn', '6144.zc', '115200.bo', '230400.bg']:
-                                Ds = [pair for pair in Ds if pair[0] =='lowmem_termS2']
-                            elif ambient_label in ['640000.ik', '13436928.te']:
-                                Ds = [pair for pair in Ds if pair[0] == 'sopt3']
+                    # Moreover, there seems to be an issue in general that even our "canonical" labels are not determinstic.  For now, we just pick one source.
+                    Ds = [Ds[0]]
+                    # noncan = set()
+                    # for src, D in Ds:
+                    #     for line in lines["S"][src]:
+                    #         label = todict("S", line)["label"]
+                    #         if label[-1].isupper() and not any(label.endswith(post) for post in [".N", ".M", ".CF"]):
+                    #             noncanonical.add(src)
+                    #             noncan.add(src)
+                    #             break
+                    # if len(noncan) == len(Ds):
+                    #     # Just pick one
+                    #     Ds = [Ds[0]]
+                    # else:
+                    #     Ds = [(src, D) for (src, D) in Ds if src not in noncan]
+                    #     # Otherwise the labels should match as well, so we can combine data.
+                    #     if len(Ds) > 1:
+                    #         # The following groups had inconsistencies in labeling their subgroups; for now we pick one result
+                    #         if ambient_label in ['4332.n', '4332.o']:
+                    #             Ds = [pair for pair in Ds if pair[0] == 'fixsmall8']
+                    #         elif ambient_label in ['6144.xa', '6144.yn', '6144.zc', '115200.bo', '230400.bg']:
+                    #             Ds = [pair for pair in Ds if pair[0] =='lowmem_termS2']
+                    #         elif ambient_label in ['640000.ik', '13436928.te']:
+                    #             Ds = [pair for pair in Ds if pair[0] == 'sopt3']
 
-                            for subcode in "SLWDI":
-                                Ss = defaultdict(list)
-                                for src, D in Ds:
-                                    for sub in lines[subcode][src]:
-                                        SD = todict(subcode, sub)
-                                        Ss[SD["label"]].append(SD)
-                                if not all(len(v) == len(Ds) for v in Ss.values()):
-                                    bad_labels = set(lab for lab, SDs in Ss.items() if len(SDs) != len(Ds))
-                                    labels_by_src = defaultdict(list)
-                                    for src, D in Ds:
-                                        for sub in lines[subcode][src]:
-                                            SD = todict(subcode, sub)
-                                            if SD["label"] in bad_labels:
-                                                ambient = SD["ambient"]
-                                                labels_by_src[src].append(SD["label"])
-                                    labelset_mismatch.append((ambient, subcode, labels_by_src))
-                                    #print("len(Ds)", len(Ds))
-                                    #print([todict(subcode, y)["label"] for y in lines[subcode][Ds[0][0]]])
-                                    #print([todict(subcode, y)["label"] for y in lines[subcode][Ds[1][0]]])
-                                    #print([[y["label"] for y in v] for v in Ss.values() if len(v) != len(Ds)])
-                                #assert all(len(v) == len(Ds) for v in Ss.values())
-                                else:
-                                    for slabel, SDs in Ss.items():
-                                        Ss[slabel] = merge(subcode, SDs, arbitrary=["generators", "diagramx"])
-                                    out[subcode] = Ss.values()
-                            tmp = merge("s", [D for (src, D) in Ds])
-                            out["s"] = merge("s", [D for (src, D) in Ds])
-            if len(Ds) == 1:
+                    #         for subcode in "SLWDIh":
+                    #             Ss = defaultdict(list)
+                    #             for src, D in Ds:
+                    #                 for sub in lines[subcode][src]:
+                    #                     SD = todict(subcode, sub)
+                    #                     Ss[SD["label"]].append(SD)
+                    #             if not all(len(v) == len(Ds) for v in Ss.values()):
+                    #                 bad_labels = set(lab for lab, SDs in Ss.items() if len(SDs) != len(Ds))
+                    #                 labels_by_src = defaultdict(list)
+                    #                 for src, D in Ds:
+                    #                     for sub in lines[subcode][src]:
+                    #                         SD = todict(subcode, sub)
+                    #                         if SD["label"] in bad_labels:
+                    #                             ambient = SD["ambient"]
+                    #                             labels_by_src[src].append(SD["label"])
+                    #                 labelset_mismatch.append((ambient, subcode, labels_by_src))
+                    #                 #print("len(Ds)", len(Ds))
+                    #                 #print([todict(subcode, y)["label"] for y in lines[subcode][Ds[0][0]]])
+                    #                 #print([todict(subcode, y)["label"] for y in lines[subcode][Ds[1][0]]])
+                    #                 #print([[y["label"] for y in v] for v in Ss.values() if len(v) != len(Ds)])
+                    #             #assert all(len(v) == len(Ds) for v in Ss.values())
+                    #             else:
+                    #                 for slabel, SDs in Ss.items():
+                    #                     Ss[slabel] = merge(subcode, SDs, arbitrary=["generators", "diagramx", "subgroup_tex", "quotient_tex", "ambient_tex"])
+                    #                 out[subcode] = Ss.values()
+                    #         tmp = merge("s", [D for (src, D) in Ds])
+                    #         out["s"] = merge("s", [D for (src, D) in Ds])
+            if len(Ds) == 1: # Since we set Ds = [Ds[0]] above, this will always be true
                 # We still want to merge to get access to intrinsically defined columns
                 exts = ["subgroup_inclusions_known", "all_subgroups_known", "complements_known", "outer_equivalence", "subgroup_index_bound"]
                 tmp = merge("s", [D for (src, D) in Dsorig], arbitrary=exts)
                 out["s"] = merge("s", [D for (src, D) in Dsorig], arbitrary=exts)
                 for col in exts:
                     out["s"][col] = Ds[0][1][col]
-                for subcode in "SLWDI":
+                for subcode in "SLWDIh":
                     out[subcode] = lines[subcode][Ds[0][0]]
-        elif code in "SLWDI":
+        elif code in "SLWDIh":
             pass # dealt with in code-s
         elif code == "a":
             # There are some cases where multiple lines are output from the same source
-            tmp = merge(code, [todict(code, line) for src in src_list for line in lines[code][src]], arbitrary=["aut_gens"])
             out[code] = merge(code, [todict(code, line) for src in src_list for line in lines[code][src]], arbitrary=["aut_gens"])
         elif code == "i":
-            tmp = merge(code, [todict(code, line) for src in src_list for line in lines[code][src]])
             out[code] = merge(code, [todict(code, line) for src in src_list for line in lines[code][src]])
+        elif code == "t":
+            # tex_name isn't deterministic, so we just take the first output
+            out[code] = todict(code, lines[code][src_list[0]][0])
         else:
             Ss = defaultdict(list)
             for src in src_list:
