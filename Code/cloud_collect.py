@@ -839,10 +839,10 @@ def collate_sources(sources, lines, tmps, ambient_label):
             out[code] = merge(code, [todict(code, line) for src in src_list for line in lines[code][src]])
         elif code == "t":
             # tex_name isn't deterministic, so we just take the first output
-            out[code] = todict(code, lines[code][src_list[0]][0])
+            out[code] = [todict(code, lines[code][src_list[0]][0])]
         elif code == "w" and ambient_label == "1536.408544622":
             # There were two runs, with different values of index bound, so in one the subgroups were identified and in the other they weren't.
-            out[code] = {"label": "1536.408544622", "wreath_data":'{"192.j1","512.a1","1536.a1","3T1"}', "wreath_product": "t"}
+            out[code] = [{"label": "1536.408544622", "wreath_data":'{"192.j1","512.a1","1536.a1","3T1"}', "wreath_product": "t"}]
         else:
             Ss = defaultdict(list)
             for src in src_list:
