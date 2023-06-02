@@ -818,7 +818,7 @@ def collate_sources(sources, lines, tmps, ambient_label):
                 for col in exts:
                     out["s"][0][col] = Ds[0][1][col]
                 for subcode in "SLWDIh":
-                    out[subcode] = lines[subcode][Ds[0][0]]
+                    out[subcode] = [todict(subcode, line) for line in lines[subcode][Ds[0][0]]]
         elif code == "J":
             # First we omit sources that didn't give any conjugacy class reps
             srcs = [src for src in src_list if len(lines["J"][src]) > 0]
@@ -829,14 +829,14 @@ def collate_sources(sources, lines, tmps, ambient_label):
                 # Now just pick arbitrarily: just need consistency
                 srcs = [srcs[0]]
             for subcode in "JCQ":
-                out[subcode] = lines[subcode][srcs[0]]
+                out[subcode] = [todict(subcode, line) for line in lines[subcode][srcs[0]]]
         elif code in "SLWDIhCQ":
             pass # dealt with in code-s or code-J above
         elif code == "a":
             # There are some cases where multiple lines are output from the same source
-            out[code] = merge(code, [todict(code, line) for src in src_list for line in lines[code][src]], arbitrary=["aut_gens"])
+            out[code] = [merge(code, [todict(code, line) for src in src_list for line in lines[code][src]], arbitrary=["aut_gens"])]
         elif code == "i":
-            out[code] = merge(code, [todict(code, line) for src in src_list for line in lines[code][src]])
+            out[code] = [merge(code, [todict(code, line) for src in src_list for line in lines[code][src]])]
         elif code == "t":
             # tex_name isn't deterministic, so we just take the first output
             out[code] = [todict(code, lines[code][src_list[0]][0])]
