@@ -925,7 +925,7 @@ def write_upload_files(datafolder, overwrite=False):
                 for col, aggcol in [("charc_centers", "center"), ("charc_kernels", "kernel")]:
                     if out["h"][0].get(col, r"\N") != r"\N":
                         colval = out["h"][0][col]
-                        colval = colva.[1:-1].split(",")
+                        colval = colval[1:-1].split(",")
                         if len(colval) != len(out.get("C", [])):
                             aggid_mismatch[col].append((label, len(out.get("C", [])), colval))
                         else:
