@@ -690,9 +690,13 @@ def update_todo_and_preload(datafolder="/scratch/grp/noaut1/raw", oldtodo="DATA/
 #                
 
 merge_errors = []
+subquo_nodivide = []
 labelset_mismatch = []
 othercode_mismatch = []
+aggid_mismatch = defaultdict(list)
 noncanonical = set()
+extra_cols = set()
+multiG = []
 def collate_sources(sources, lines, tmps, ambient_label):
     def todict(code, line):
         return dict(zip(tmps[code], line.split("|")))
@@ -701,9 +705,23 @@ def collate_sources(sources, lines, tmps, ambient_label):
         for col in tmps[code]:
             for D in Ds:
                 if D[col] != r"\N":
+                    if col in ["central_quotient", "center_label", "frattini_quotient", "frattini_label", "abelian_quotient", "commutator_label"]:
+                        # Something weird is happening here, but at least we can rule out labels where the order doesn't divide the ambient order
+                        ambientN = ZZ(ambient_label.split(".")[0])
+                        thisN = ZZ(D[col].split(".")[0])
+                        if not thisN.divides(ambientN):
+                            subquo_nodivide.append((ambient_label, D[col]))
+                            continue
                     if col in merged:
                         # merged[col]=\N means actively added due to known_conflict
                         if merged[col] != D[col] and col not in arbitrary:
+                            if col in ["primary_abelian_invariants", "smith_abelian_invariants"]:
+                                # Some incorrect info was manually entered for large GL(2,p)s.  We pick the right one
+                                if D[col] == "{2}":
+                                    continue
+                                else:
+                                    merged[col] = D[col]
+                                    continue
                             if col in known_conflict:
                                 merged[col] = r"\N"
                                 break
@@ -792,19 +810,28 @@ def collate_sources(sources, lines, tmps, ambient_label):
                     #                 for slabel, SDs in Ss.items():
                     #                     Ss[slabel] = merge(subcode, SDs, arbitrary=["generators", "diagramx", "subgroup_tex", "quotient_tex", "ambient_tex"])
                     #                 out[subcode] = Ss.values()
-                    #         tmp = merge("s", [D for (src, D) in Ds])
                     #         out["s"] = merge("s", [D for (src, D) in Ds])
             if len(Ds) == 1: # Since we set Ds = [Ds[0]] above, this will always be true
                 # We still want to merge to get access to intrinsically defined columns
                 exts = ["subgroup_inclusions_known", "all_subgroups_known", "complements_known", "outer_equivalence", "subgroup_index_bound"]
-                tmp = merge("s", [D for (src, D) in Dsorig], arbitrary=exts)
                 out["s"] = merge("s", [D for (src, D) in Dsorig], arbitrary=exts)
                 for col in exts:
                     out["s"][col] = Ds[0][1][col]
                 for subcode in "SLWDIh":
                     out[subcode] = lines[subcode][Ds[0][0]]
-        elif code in "SLWDIh":
-            pass # dealt with in code-s
+        elif code == "J":
+            # First we omit sources that didn't give any conjugacy class reps
+            srcs = [src for src in src_list if len(lines["J"][src]) > 0]
+            if len(srcs) > 1:
+                for subcode in "CQ":
+                    if any(len(lines[subcode][src]) > 0 for src in srcs):
+                        srcs = [src for src in srcs if len(lines[subcode][src]) > 0]
+                # Now just pick arbitrarily: just need consistency
+                srcs = [srcs[0]]
+            for subcode in "JCQ":
+                out[subcode] = lines[subcode][srcs[0]]
+        elif code in "SLWDIhCQ":
+            pass # dealt with in code-s or code-J above
         elif code == "a":
             # There are some cases where multiple lines are output from the same source
             out[code] = merge(code, [todict(code, line) for src in src_list for line in lines[code][src]], arbitrary=["aut_gens"])
@@ -813,6 +840,9 @@ def collate_sources(sources, lines, tmps, ambient_label):
         elif code == "t":
             # tex_name isn't deterministic, so we just take the first output
             out[code] = todict(code, lines[code][src_list[0]][0])
+        elif code == "w" and ambient_label == "1536.408544622":
+            # There were two runs, with different values of index bound, so in one the subgroups were identified and in the other they weren't.
+            out[code] = {"label": "1536.408544622", "wreath_data":'{"192.j1","512.a1","1536.a1","3T1"}', "wreath_product": "t"}
         else:
             Ss = defaultdict(list)
             for src in src_list:
@@ -855,31 +885,84 @@ def write_upload_files(datafolder, overwrite=False):
         "GrpChtrQQ": "Q",
         "Grp": "blajcqshtguomwinv" # skip zr since they're just used internally
     }
-    out = {}
-    for label in os.listdir(datafolder):
-        # There may be multiple sources of data from different runs; in many cases this data will be compatible and we just need to prevent duplication, but sometimes one is better than another (subgroup inclusions known or not, better bounds, etc)
-        # Here are the different conflicts that are anticipated:
-        # code-t (tex_name): Magma's GroupName isn't deterministic, and we can just pick one.
-        # code-z (conj_centralizer_gens): depends on choice of reps for conjugacy classes and generators; also only used internally.
-        # code-r (charc_center_gens, charc_kernel_gens): depends on choice of generators for subgroups; also only used internally.
-        # code-h (charc_centers, charc_kernels): this is more worrisome, and occurred for 3072.hm 3072.ih 6144.xa 6144.yn 57600.dh 87480.h 115200.h 115200.bo 118098.gh.
-        # code-u (aut_stats, number_autjugacy_classes): also worrisome, and occured for 7500.u 8000.bu 10368.bu 10368.cu 20000.u 20736.ju 31104.hu 40000.eu 80000.cu 160000.bu 160000.uo 160000.us 200000.u 320000.mv 320000.uo 320000.xb 320000.bau 320000.bem 640000.ku 640000.uc 5000000.u
-        # code-l (labels for certain characteristic subgroups): this is okay (nulls in one line match non-null in another)
-        # code-a (first-pass aut group info): just different generators for automorphism group, so pick shorter one?
-        # code-s (first-pass subgroup info): Columns come in two flavors: those computing something intrinsic about the group (number_normal_subgroups, etc) and those describing which subgroups were kepts and which quantities were computed about them.  There are several conflicts in intrinsic columns (direct_product, semidirect_product, number_characteristic_subgroups), and we choose a total order for the possible extrinsic settings
-        # Tricky: all_subgroups_known vs subgroup_inclusions known
-        # Proposed: subgroup_inclusions_known then all_subgroups_known then complements_known then outer_equivalence
-        sources = defaultdict(set)
-        lines = defaultdict(lambda: defaultdict(list))
-        for source in os.listdir(opj(datafolder, label)):
-            with open(opj(datafolder, label, source)) as F:
-                for line in F:
-                    code = line[0]
-                    sources[code].add(source)
-                    lines[code][source].append(line[1:].strip())
-        _ = collate_sources(sources, lines, tmps, label)
-        #out[label] = collate_sources(sources, lines, tmps, label)
-    return out
+    if not overwrite and any(ope(f"{final}.txt") for final in final_to_tmp):
+        raise ValueError("An output file already exists; you can use overwrite to proceed anyway")
+    writers = {final: open(f"{final}.txt", "w") for final in final_to_tmp}
+    try:
+        for oname, (final_cols, final_types) in finals.items():
+            _ = writers[oname].write("|".join(final_cols) + "\n" + "|".join(final_types) + "\n\n")
+        for label in os.listdir(datafolder):
+            # There may be multiple sources of data from different runs; in many cases this data will be compatible and we just need to prevent duplication, but sometimes one is better than another (subgroup inclusions known or not, better bounds, etc)
+            # Here are the different conflicts that are anticipated:
+            # code-t (tex_name): Magma's GroupName isn't deterministic, and we can just pick one.
+            # code-z (conj_centralizer_gens): depends on choice of reps for conjugacy classes and generators; also only used internally.
+            # code-r (charc_center_gens, charc_kernel_gens): depends on choice of generators for subgroups; also only used internally.
+            # code-h (charc_centers, charc_kernels): this is more worrisome, and occurred for 3072.hm 3072.ih 6144.xa 6144.yn 57600.dh 87480.h 115200.h 115200.bo 118098.gh.
+            # code-u (aut_stats, number_autjugacy_classes): also worrisome, and occured for 7500.u 8000.bu 10368.bu 10368.cu 20000.u 20736.ju 31104.hu 40000.eu 80000.cu 160000.bu 160000.uo 160000.us 200000.u 320000.mv 320000.uo 320000.xb 320000.bau 320000.bem 640000.ku 640000.uc 5000000.u
+            # code-l (labels for certain characteristic subgroups): this is okay (nulls in one line match non-null in another)
+            # code-a (first-pass aut group info): just different generators for automorphism group, so pick shorter one?
+            # code-s (first-pass subgroup info): Columns come in two flavors: those computing something intrinsic about the group (number_normal_subgroups, etc) and those describing which subgroups were kepts and which quantities were computed about them.  There are several conflicts in intrinsic columns (direct_product, semidirect_product, number_characteristic_subgroups), and we choose a total order for the possible extrinsic settings
+            # Tricky: all_subgroups_known vs subgroup_inclusions known
+            # Proposed: subgroup_inclusions_known then all_subgroups_known then complements_known then outer_equivalence
+            sources = defaultdict(set)
+            lines = defaultdict(lambda: defaultdict(list))
+            for source in os.listdir(opj(datafolder, label)):
+                with open(opj(datafolder, label, source)) as F:
+                    for line in F:
+                        code = line[0]
+                        sources[code].add(source)
+                        lines[code][source].append(line[1:].strip())
+            out = collate_sources(sources, lines, tmps, label)
+            if len(out.get("s", [])) > 0 and out["s"][0].get("conj_centralizers", r"\N") != r"\N":
+                conj_centralizers = out["s"][0]["conj_centralizers"]
+                conj_centralizers = conj_centralizers[1:-1].split(",")
+                if len(conj_centralizers) != len(out.get("J", [])):
+                    aggid_mismatch["conj_centralizers"].append((label, len(out.get("J", [])), conj_centralizers))
+                else:
+                    for cc, cent in zip(out["J"], conj_centralizers):
+                        cc["centralizer"] = cent
+            if len(out.get("h", [])) > 0:
+                for col, aggcol in [("charc_centers", "center"), ("charc_kernels", "kernel")]:
+                    if out["h"][0].get(col, r"\N") != r"\N":
+                        colval = out["h"][0][col]
+                        colval = colva.[1:-1].split(",")
+                        if len(colval) != len(out.get("C", [])):
+                            aggid_mismatch[col].append((label, len(out.get("C", [])), colval))
+                        else:
+                            for char, sub in zip(out["C"], colval):
+                                char[aggcol] = sub
+            for oname, codes in final_to_tmp.items():
+                final_cols = finals[oname][0]
+                if len(codes) == 1:
+                    # GrpConjCls, GrpChtrCC or GrpChtrQQ
+                    for row in out[codes[0]]:
+                        for col in set(row).difference(set(final_cols)):
+                            extra_cols.add(col)
+                        _ = writers[oname].write("|".join(row.get(col, r"\N") for col in final_cols) + "\n")
+                elif oname == "Grp":
+                    odata = {}
+                    for code in codes:
+                        if code in out:
+                            if len(out[code]) != 1:
+                                multiG.append((label, code, len(out[code])))
+                            if len(out[code]) > 0:
+                                odata.update(out[code][0])
+                    for col in set(odata).difference(set(final_cols)):
+                        extra_cols.add(col)
+                    _ = writers[oname].write("|".join(odata.get(col, r"\N") for col in final_cols) + "\n")
+                else: # SubGrp
+                    odata = defaultdict(dict)
+                    for code in codes:
+                        if code in out:
+                            for row in out[code]:
+                                for col in set(row).difference(set(final_cols)):
+                                    extra_cols.add(col)
+                                odata[row["label"]].update(row)
+                    for row in odata.values():
+                        _ = writers[oname].write("|".join(row.get(col, r"\N") for col in final_cols) + "\n")
+    finally:
+        for final in final_to_tmp:
+            writers[final].close()
 
     # out = defaultdict(lambda: defaultdict(lambda: defaultdict(dict)))
     # for oname, codes in final_to_tmp.items():
