@@ -935,7 +935,7 @@ def write_upload_files(datafolder, overwrite=False):
                 final_cols = finals[oname][0]
                 if len(codes) == 1:
                     # GrpConjCls, GrpChtrCC or GrpChtrQQ
-                    for row in out[codes[0]]:
+                    for row in out.get(codes[0], []):
                         for col in set(row).difference(set(final_cols)):
                             extra_cols.add(col)
                         _ = writers[oname].write("|".join(row.get(col, r"\N") for col in final_cols) + "\n")
