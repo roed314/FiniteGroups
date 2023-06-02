@@ -877,7 +877,6 @@ def collate_sources(sources, lines, tmps, ambient_label):
 def write_upload_files(datafolder, overwrite=False):
     # datafolder should have a subfolder for each group, with files inside each containing data lines
     tmps = tmpheaders()
-    finals = headers()
     final_to_tmp = {
         "SubGrp": "SLWDI",
         "GrpConjCls": "J",
@@ -885,6 +884,7 @@ def write_upload_files(datafolder, overwrite=False):
         "GrpChtrQQ": "Q",
         "Grp": "blajcqshtguomwinv" # skip zr since they're just used internally
     }
+    finals = {oname: odata for (oname, odata) in headers().items() if oname in final_to_tmp}
     if not overwrite and any(ope(f"{final}.txt") for final in final_to_tmp):
         raise ValueError("An output file already exists; you can use overwrite to proceed anyway")
     writers = {final: open(f"{final}.txt", "w") for final in final_to_tmp}
