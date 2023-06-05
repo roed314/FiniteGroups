@@ -697,6 +697,7 @@ aggid_mismatch = defaultdict(list)
 noncanonical = set()
 extra_cols = set() # expected: {'backup_solvability_type', 'charc_centers', 'charc_kernels', 'conj_centralizers', 'easy_rank', 'gens_used'}
 multiG = []
+multiL = []
 def collate_sources(sources, lines, tmps, ambient_label):
     def todict(code, line):
         return dict(zip(tmps[code], line.split("|")))
@@ -736,7 +737,9 @@ def collate_sources(sources, lines, tmps, ambient_label):
             continue
         src_list = list(src_list)
         if code == "s":
-            assert all(len(lines[code][src]) == 1 for src in src_list)
+            if any(len(lines[code][src]) != 1 for src in src_list):
+                multiL.append((ambient_label, [(src, len(lines[code][src])) for src in src_list]))
+                continue
             Dsorig = Ds = [(src, todict(code, lines[code][src][0])) for src in src_list]
             # First we omit sources that didn't give any subgroups
             Ds = [(src, D) for (src, D) in Ds if len(lines["S"][src]) > 0]
