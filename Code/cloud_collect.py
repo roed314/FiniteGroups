@@ -695,7 +695,7 @@ labelset_mismatch = []
 othercode_mismatch = []
 aggid_mismatch = defaultdict(list)
 noncanonical = set()
-extra_cols = set()
+extra_cols = set() # expected: {'backup_solvability_type', 'charc_centers', 'charc_kernels', 'conj_centralizers', 'easy_rank', 'gens_used'}
 multiG = []
 def collate_sources(sources, lines, tmps, ambient_label):
     def todict(code, line):
@@ -735,11 +735,7 @@ def collate_sources(sources, lines, tmps, ambient_label):
         if code in "zr":
             continue
         src_list = list(src_list)
-        if len(src_list) == 1:
-            # len(src_list) = 1 may not be enough.
-            out[code] = [todict(code, line) for line in lines[code][src_list[0]]]
-            pass
-        elif code == "s":
+        if code == "s":
             assert all(len(lines[code][src]) == 1 for src in src_list)
             Dsorig = Ds = [(src, todict(code, lines[code][src][0])) for src in src_list]
             # First we omit sources that didn't give any subgroups
@@ -874,7 +870,7 @@ def collate_sources(sources, lines, tmps, ambient_label):
                 out[code] = list(Ss.values())
     return out
 
-def write_upload_files(datafolder, overwrite=False):
+def write_upload_files(datafolder, outfolder="/scratch/grp/upload/", overwrite=False):
     # datafolder should have a subfolder for each group, with files inside each containing data lines
     tmps = tmpheaders()
     final_to_tmp = {
@@ -887,11 +883,11 @@ def write_upload_files(datafolder, overwrite=False):
     finals = {oname: odata for (oname, odata) in headers().items() if oname in final_to_tmp}
     if not overwrite and any(ope(f"{final}.txt") for final in final_to_tmp):
         raise ValueError("An output file already exists; you can use overwrite to proceed anyway")
-    writers = {final: open(f"{final}.txt", "w") for final in final_to_tmp}
+    writers = {final: open(opj(outfolder, f"{final}.txt"), "w") for final in final_to_tmp}
     try:
         for oname, (final_cols, final_types) in finals.items():
             _ = writers[oname].write("|".join(final_cols) + "\n" + "|".join(final_types) + "\n\n")
-        for label in os.listdir(datafolder):
+        for label in sorted(os.listdir(datafolder), key=sort_key):
             # There may be multiple sources of data from different runs; in many cases this data will be compatible and we just need to prevent duplication, but sometimes one is better than another (subgroup inclusions known or not, better bounds, etc)
             # Here are the different conflicts that are anticipated:
             # code-t (tex_name): Magma's GroupName isn't deterministic, and we can just pick one.
@@ -947,6 +943,10 @@ def write_upload_files(datafolder, overwrite=False):
                                 multiG.append((label, code, len(out[code])))
                             if len(out[code]) > 0:
                                 odata.update(out[code][0])
+                    if odata.get("rank", r"\N") == r"\N" and odata.get("easy_rank", r"\N") != r"\N":
+                        odata["rank"] = odata["easy_rank"]
+                    if odata.get("solvability_type", r"\N") == r"\N" and odata.get("backup_solvability_type", r"\N") != r"\N":
+                        odata["solvability_type"] = odata["backup_solvability_type"]
                     for col in set(odata).difference(set(final_cols)):
                         extra_cols.add(col)
                     _ = writers[oname].write("|".join(odata.get(col, r"\N") for col in final_cols) + "\n")
