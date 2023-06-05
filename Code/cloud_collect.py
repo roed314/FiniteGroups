@@ -903,8 +903,12 @@ def write_upload_files(datafolder, outfolder="/scratch/grp/upload/", overwrite=F
             sources = defaultdict(set)
             lines = defaultdict(lambda: defaultdict(list))
             for source in os.listdir(opj(datafolder, label)):
+                seen = set()
                 with open(opj(datafolder, label, source)) as F:
                     for line in F:
+                        if line in seen:
+                            continue
+                        seen.add(line)
                         code = line[0]
                         sources[code].add(source)
                         lines[code][source].append(line[1:].strip())
