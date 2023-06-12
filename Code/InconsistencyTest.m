@@ -12,7 +12,7 @@ reps := Join([Sprint(SaveElt(Get(C, "representative"))) : C in Get(G, "Conjugacy
 for H in S do
     if H`label eq "1701.307.9.k1" then
         h := Get(H, "subgroup");
-        if eq "189.5" then
+        if h eq "189.5" then
             PrintFile("DATA/1701.307.9.k1.5", reps);
         else
             PrintFile("DATA/1701.307.9.k1.3", reps);
