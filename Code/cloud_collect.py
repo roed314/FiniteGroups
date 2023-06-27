@@ -1438,8 +1438,8 @@ def get_all_names():
         orig_names[label] = rec["name"]
         for X in rec["representations"].get("Lie", []):
             options[label].append(Lie(X))
-        if rec["wreathdata"]:
-            wreath_data[label] = rec["wreathdata"]
+        if rec["wreath_data"]:
+            wreath_data[label] = rec["wreath_data"]
         if rec["abelian"]:
             assert rec["name"] == r"*".join(f"C{m}" for m in rec["smith_abelian_invariants"])
             finalized.add(label)
