@@ -1,10 +1,9 @@
-#!/usr/bin/env python3
-
 # Move the output file to be collected into the DATA directory, named output{n}.txt, where n is the phase.
 
-import sys, os, re, string, time
+import sys, os, re, string, time, itertools
 import argparse
 from collections import defaultdict, Counter
+from sage.all import factorial, ZZ, prod, lazy_attribute
 
 opj = os.path.join
 ope = os.path.exists
@@ -413,7 +412,6 @@ def build_treps(datafolder="/scratch/grp", alias_file="DATA/aliases.txt", descri
     all_labels = set(os.listdir(descriptions_folder))
     sys.path.append(os.path.expanduser("~/lmfdb"))
     from lmfdb import db
-    import itertools
     manual_old = {
         "20T272": "3420.a",
         "22T15": "2420.x",
@@ -681,14 +679,6 @@ def update_todo_and_preload(datafolder="/scratch/grp/noaut1/raw", oldtodo="DATA/
                     _ = Fp.write(f"{L1}\n{L2}\n")
     return have, noskips, skips, maxmem, subtime, normal_time, started_normal, errors, errored, terminate, shortdivs, noauth, unseen
 
-#def improve_names(out):
-#    names = {label: D[label].get("name") for (label, D) in out["Grp"].items()}
-#    tex_names = {label: D[label].get("tex_name") for (label, D) in out["Grp"].items()}
-#    for gp_label, gpD in out["SubGrp"].items():
-#        for label, D in gpD.items():
-#            if D.get("normal") == "t" and D.get("subgroup", r"\N") != r"\N" and D.get("quotient", r"\N") != r"\N":
-#                
-
 merge_errors = []
 subquo_nodivide = []
 labelset_mismatch = []
@@ -950,7 +940,7 @@ def write_upload_files(datafolder, outfolder="/scratch/grp/upload/", overwrite=F
                                 multiG.append((label, code, len(out[code])))
                             if len(out[code]) > 0:
                                 odata.update(out[code][0])
-                    if odata.get("rank", r"\N") == r"\N" and odata.get("easy_rank", r"\N") != r"\N":
+                    if odata.get("rank", r"\N") == r"\N" and odata.get("easy_rank", r"-1") != r"-1":
                         odata["rank"] = odata["easy_rank"]
                     if odata.get("solvability_type", r"\N") == r"\N" and odata.get("backup_solvability_type", r"\N") != r"\N":
                         odata["solvability_type"] = odata["backup_solvability_type"]
@@ -1076,3 +1066,493 @@ def make_collation(code_lookup=None, label_lookup=None):
                 with open(opj("collated", label, folder), "a") as F:
                     _ = F.write("".join(lines))
     return code_lookup, label_lookup
+
+# The latex names produced by GroupName are not deterministic, and can also be improved with access to a larger number of subgroups (and to the representations dictionary)
+# Our approach is to select a single latex name for each group up to isomorphism, and then propogate that to the various places it appears in gps_groups and gps_subgroups.  To do so, we use the subgroup table to recursively produce many possible names, and then use a comparison function to pick the "best" one.
+# We also use this opportunity to clean up problems with GroupName's output, such as using {\rm wr} rather than \wr
+
+# To improve the comparison of latex names, we parse them into a structured form using regular expressions
+
+# Atomic latex names
+# Building up more complicated expressions
+powerre = fr"({atomicre})(\^\{{?\d+\}}?)?"
+latexre = fr"(?:(\()?{powerre}(\))?)(?:([:.]|\\times )(\()?{powerre}(\))?)*"
+
+nonatomic = fr"{powerre}(?:([:.]|\\times ){powerre})*"
+parened = fr"(\(){nonatomic}(\))"
+latexre = fr"(?:{nonatomic}|{parened})(?:([:.]|\\times )(?:{nonatomic}|{parened}))*"
+
+wreath_sub = re.compile(r"\{\\rm wr([^\}]+)\}")
+tokenD = dict([
+    ("chev1", r"(?:\{\}\^(?P<chev1twist>\d))?(?P<chev1family>[A-G])_(?P<chev1d>\d)\((?P<chev1q>\d+)\)"), # chevalley groups in first notation; has to come before basic so that F_4(2) takes priority over F_4, etc.
+    ("basic", r"(?P<basicfamily>[ACDFMQS])_\{?(?P<basicN>\d+)\}?"), # alternating, cyclic, dihedral, Frobenius, Mathieu, generalized quaternion, symmetric
+    ("dihedral", r"(?:\{\\rm )?(?P<dihedralfamily>[OS]?D)\}?_\{?(?P<dihedralN>\d+)\}?"), # semidihedral, other-dihedral
+    ("heisenberg", r"(?:\{\\rm )?He\}?_\{?(?P<heisenbergN>\d+)\}?"), # Heisenberg
+    ("lie", r"(?:(?:\{\\rm )?(?P<liefamily>[AP]?[GS]L|[CP]?SU|P?SO?)\}?(?P<lieplus>\+?))\((?P<lied>\d+),(?P<lieq>\d+|Z/4)\)"), # matrix groups
+    ("chev2", r"(?P<chev2twist>\d)?(?P<chev2family>[A-G])\((?P<chev2d>\d+),(?P<chev2q>\d+)\)'?"), # chevalley groups in second notation
+    ("sporadic", r"operatorname\{(?P<sporadicfamily>Ru|McL|He|J|Co|HS)\}(?:_(?P<sporadicN>\d))?"),
+    ("oparen", r"\("),
+    ("cparen", r"\)"),
+    ("exp", r"\^\{?(?P<expN>\d+)\}?"),
+    ("prod", r"[:.]|\\times |\\wr "),
+    ("mismatch", "."),
+])
+tok_regex = re.compile("|".join(f"(?P<{typ}>{val})" for (typ, val) in tokenD.items()))
+def tokenize(name):
+    # Fix some issues with existing data
+    name, _ = wreath_sub.subn(r"\\wr \1", name)
+    name = name.replace("operatorname", r"\operatorname")
+    tokens = []
+    for m in tok_regex.finditer(name):
+        kind = m.lastgroup
+        assert kind != "mismatch"
+        tex = m.group()
+        groups = {k[len(kind):] : val for (k,val) in m.groupdict().items() if k.startswith(kind) and k != kind}
+        tokens.append((kind, tex, groups))
+    assert name == "".join(tex for (kind, tex, groups) in tokens)
+    return tokens
+
+def fix_latex(tokens):
+    # A few issues were fixed at the beginning of tokenize, but others we fix here
+    # There are cases where GroupName produces "^a^b", which isn't valid latex.  We combine them into "^ab"
+    i = 0
+    while i < len(tokens) - 1:
+        if tokens[i][0] == "exp" and tokens[i+1][0] == "exp":
+            N = str(int(tokens[i][2]["N"]) * int(tokens[i+1][2]["N"]))
+            tex = f"^{{{N}}}" if len(N) > 1 else f"^{N}"
+            tokens[i:i+2] = [("exp", tex, {"N":N})]
+        else:
+            i += 1
+
+    # We change {\rm X} and operatorname{X} into \X (which will then be added to the macros)
+    for i, (kind, tex, groups) in enumerate(tokens):
+        if kind.startswith("chev"):
+            # For Chevalley groups, we prefer classical notation like PSL(2, q) when available, and otherwise notation like {}^3D(4, 2).
+            kind = "chev"
+            if groups["twist"]:
+                tex = f'{{}}^{groups["twist"]}{groups["family"]}({groups["d"]},{groups["q"]})'
+            else:
+                tex = f'{groups["family"]}({groups["d"]},{groups["q"]})'
+        elif kind == "heisenberg":
+            N = groups["N"]
+            if len(N) > 1:
+                N = "{%s}" % N
+            tex = fr'\He_{N}'
+        elif kind == "dihedral":
+            tex = fr'\{groups["family"]}_{{{groups["N"]}}}'
+        elif kind == "lie":
+            family = groups["family"]
+            if groups["plus"]:
+                family += "Plus"
+            groups["family"] = family
+            groups["q"] = q = groups["q"].replace("Z", r"\mathbb{Z}")
+            tex = fr'\{family}({groups["d"]},{q})'
+        elif kind == "sporadic":
+            tex = groups["family"]
+            if tex != "J":
+                tex = fr"\{tex}"
+            if groups["N"]:
+                tex += f'_{groups["N"]}'
+        tokens[i] = (kind, tex, groups)
+
+class Expr:
+    def __repr__(self):
+        return self.latex
+
+class Paren(Expr):
+    minpriority = 9 # never affects minpriority for products, since this is larger than the largest
+    def __init__(self, inner):
+        self.inner = inner
+    @lazy_attribute
+    def value(self):
+        return self.inner.value + 10
+    def latex(self):
+        return f"({self.inner.latex})"
+    def plain(self):
+        return f"({self.inner.plain})"
+    @lazy_attribute
+    def order(self):
+        return self.inner.order
+    @lazy_attribute
+    def degree(self):
+        return self.inner.degree
+    @lazy_attribute
+    def abelian(self):
+        return self.inner.abelian
+
+class Exp(Expr):
+    minpriority = 4 # never affects minpriority for products, since this is larger than the largest
+    def __init__(self, base, n):
+        self.base = base
+        assert isinstance(n, str) and n
+        self.n = int(n)
+    def value(self):
+        return self.base.value + 2
+    def latex(self):
+        if len(self.n) == 1:
+            return f"{self.base.latex}^{self.n}"
+        else:
+            return f"{self.base.latex}^{{{self.n}}}"
+    def plain(self):
+        return f"{self.base.plain}^{self.n}"
+    @lazy_attribute
+    def order(self):
+        order = self.base.order
+        if order:
+            return order**self.n
+    @lazy_attribute
+    def degree(self):
+        if self.base.abelian: # in the non-abelian case, it's not clear what transitive rep to use
+            return self.order
+    @lazy_attribute
+    def abelian(self):
+        return self.base.abelian
+
+opvalues = {
+    r"\wr ": 20,
+    r"\times ": 0,
+    r":": 40,
+    r".": 50,
+}
+oppriority = {
+    r"\wr ": 3,
+    r"\times ": 0,
+    r":": 2,
+    r".": 1
+}
+op_tex_to_plain = {
+    r"\wr ": "wr",
+    r"\times ": "*",
+    ":": ":",
+    ".": ".",
+}
+def interleave(A, B):
+    # Given two lists, alternate terms between them
+    for x in itertools.chain(*itertools.zip_longest(A, B)):
+        if x is not None:
+            yield x
+
+def Prod(Expr):
+    def __init__(self, terms, ops):
+        self.terms = terms
+        self.ops = ops
+    @lazy_attribute
+    def minpriority(self):
+        return min(oppriority[op] for op in self.ops)
+    @lazy_attribute
+    def value(self):
+        extra = 0
+        for a, b in zip(self.terms[:-1], self.terms[1:]):
+            if b.order is not None and (a.order is None or a.order > b.order):
+                # consider this to be out of order, with a bigger than b
+                extra += 2
+            elif a.order == b.order and a.value > b.value:
+                extra += 1
+        return sum(a.value() for a in self.terms) + sum(opvalues[op] for op in self.ops) + extra
+    @lazy_attribute
+    def latex(self):
+        return "".join(x.latex if isinstance(x, Expr) else x for x in interleave(self.terms, self.ops))
+    @lazy_attribute
+    def plain(self):
+        return "".join(x.plain if isinstance(x, Expr) else op_tex_to_plain[x] for x in interleave(self.terms, self.ops))
+    @lazy_attribute
+    def order(self):
+        # This is easy, aside from wreath products
+        orders = [x.order for x in self.terms]
+        if all(order is not None for order in orders):
+            wreath_positions = [i for i in range(len(self.ops)) if self.ops[i] == r"\wr "]
+            num_collapsed = 0
+            for i, op in enumerate(self.ops):
+                if op == r"\wr ":
+                    # The length of orders is decreasing as we update them
+                    j = i - num_collapsed
+                    lo, ro, d = orders[j], orders[j+1], self.terms[i+1].degree
+                    if d is None:
+                        return None
+                    orders[j:j+2] = [lo^d * ro]
+                    num_collapsed += 1
+            return prod(orders)
+    @lazy_attribute
+    def abelian(self):
+        return all(op == r"\times " for op in self.ops) and all(x.abelian for x in self.terms)
+    @lazy_attribute
+    def degree(self):
+        if self.abelian: # only case where it's clear what to do
+            return self.order
+
+lies = ["GL", "SL", "Sp", "SO", "SOPlus", "SOMinus", "SU", "GO", "GOPlus", "GOMinus", "GU", "CSp", "CSO", "CSOPlus", "CSOMinus", "CSU", "CO", "COPlus", "COMinus", "CU", "Omega", "OmegaPlus", "OmegaMinus", "Spin", "SpinPlus", "SpinMinus", "PSL", "PGL", "PSp", "PSO", "PSOPlus", "PSOMinus", "PSU", "PGO", "PGOPlus", "PGOMinus", "PGU", "POmega", "POmegaPlus", "POmegaMinus", "PGammaL", "PSigmaL", "PSigmaSp", "PGammaU", "AGL", "ASL", "ASp", "AGammaL", "ASigmaL", "ASigmaSp"]
+def Lie(Expr):
+    minpriority = 10
+    def __init__(self, groups):
+        self.family = groups["family"]
+        self.d = groups["d"]
+        self.q = groups["q"] # note that this could be a string like Z/4
+    @lazy_attribute
+    def value(self):
+        return 100 + lies.index(self.family) # This might have ties, which we break by d, then q.
+    @lazy_attribute
+    def latex(self):
+        # We require that appropriate macros for each family are defined
+        return fr"\{self.family}({self.d},{self.q})"
+    @lazy_attribute
+    def plain(self):
+        pfam = self.family.replace("Plus", "+").replace("Minus", "-")
+        q = self.q.replace(r"\mathbb{Z}", "Z")
+        return f"{pfam}({self.d},{q})"
+    @lazy_attribute
+    def order(self):
+        # This function is used to break ties in choosing L*R vs R*L.  For now, we just give up and don't implement tons of formulas
+        return None
+    @lazy_attribute
+    def abelian(self):
+        return False # This might be wrong in some small cases, but we won't be using this as the name in those cases anyway
+    @lazy_attribute
+    def degree(self):
+        return None # only used for RHS of wreath products, and we're probably not going to have a wreath product that big.
+
+basics = "SAQDFCM"
+def Atom(Expr): # Excludes Lie groups
+    minpriority = 10
+    def __init__(self, kind, tex, groups):
+        self.kind = kind
+        self.tex = tex
+        self.family = groups.get("family")
+        self.N = ZZ(groups.get("N"))
+        self.d = ZZ(groups.get("d"))
+        self.q = ZZ(groups.get("q"))
+        self.groups = groups
+    @lazy_attribute
+    def value(self):
+        if self.kind == "chev":
+            return 150
+        elif self.kind in ["dihedral", "heisenberg"]:
+            return 110
+        elif self.kind == "sporadic":
+            return 100
+        elif self.kind == "basic":
+            return 100 + basics.index(self.family)
+        else:
+            raise RuntimeError
+    @lazy_attribute
+    def latex(self):
+        return self.tex
+    @lazy_attribute
+    def plain(self):
+        plain = self.tex
+        for old, new in [("{}^", ""), ("\\", ""), ("_", ""), ("Plus", "+"), ("Minus","-"), ("{", ""), ("}", "")]:
+            plain = plain.replace(old, new)
+        return plain
+    @lazy_attribute
+    def order(self):
+        if self.kind == "dihedral": # SD_N and OD_N
+            return self.N
+        elif self.kind == "heisenberg":
+            return self.N**3
+        elif self.kind == "basic":
+            if self.family == "C":
+                return self.N
+            elif self.family == "S":
+                return factorial(self.N)
+            elif self.family == "A":
+                return factorial(self.N) // 2
+            elif self.family == "D":
+                return 2 * self.N
+            elif self.family == "F":
+                return self.N * (self.N - 1)
+            elif self.family == "Q":
+                return self.N
+            elif self.family == "M":
+                orders = {24: 244823040, 23: 10200960, 22: 443520, 21: 20160, 20: 960, 12: 95040, 11: 7920, 10: 720, 9: 72, 8: 8}
+                return orders[self.N]
+        # We don't compute orders for chevalley groups or (non-Mathieu) sporadic groups
+    @lazy_attribute
+    def abelian(self):
+        return self.kind == "basic" and self.family == "C"
+    @lazy_attribute
+    def degree(self):
+        if self.kind == "dihedral": # SD_N and OD_N; we give the smallest degree faithful transitive rep
+            return self.N // 2
+        elif self.kind == "heisenberg":
+            return self.N**2
+        elif self.kind == "basic":
+            # This is where N comes from in the notation
+            return self.N
+
+def parse_tokens(tokens):
+    # tokens should have already gone through fix_latex
+    plevel = 0
+    terms = []
+    ops = []
+    last = None
+    atoms = ["basic", "dihedral", "chev", "heisenberg", "lie", "sporadic"]
+    for kind, tex, groups in tokens:
+        if kind == "oparen":
+            assert last in [None, "prod", "oparen"]
+            if plevel == 0:
+                subtokens = []
+            else:
+                subtokens.append((kind, tex, groups))
+            plevel += 1
+        elif kind == "cparen":
+            assert last in atoms + ["cparen", "exp"]
+            plevel -= 1
+            if plevel == 0:
+                terms.append(Paren(parse(subtokens)))
+            else:
+                subtokens.append((kind, tex, groups))
+        elif plevel > 0:
+            subtokens.append((kind, tex, groups))
+        elif kind == "exp":
+            assert last in atoms + ["cparen"]
+            terms[-1] == Exp(terms[-1], groups["N"])
+        elif kind == "prod":
+            assert last in atoms + ["cparen"]
+            ops.append(tex)
+        elif kind == "lie":
+            assert last in [None, "prod", "oparen"]
+            terms.append(Lie(groups))
+        else: # non-Lie atom
+            assert last in [None, "prod", "oparen"]
+            terms.append(Atom(kind, tex, groups))
+        last = kind
+    assert plevel == 0
+    assert len(terms) == len(ops) + 1
+    if len(terms) == 1:
+        return terms[0]
+    return Prod(terms, ops)
+
+def parse(tex_name):
+    tokens = tokenize(tex_name)
+    fix_latex(tokens)
+    return parse_tokens(tokens)
+
+def get_all_names():
+    sys.path.append(os.path.expanduser("~/lmfdb"))
+    from lmfdb import db
+    # First we get the names recorded in gps_groups_test, as well as other data that will be useful for constructing additional names
+    tex_names = {}
+    orig_tex_names = {}
+    orig_names = {}
+    options = defaultdict(list)
+    by_order = defaultdict(list)
+    wreath_data = {}
+    direct_data = {}
+    cyclic = set()
+    finalized = set()
+    for rec in db.gps_groups_test.search({}, ["label", "tex_name", "name", "representations", "order", "cyclic", "abelian", "smith_abelian_invariants", "direct_factorization", "wreath_data"]):
+        label = rec["label"]
+        by_order[rec["order"]].append(label)
+        orig_tex_names[label] = rec["tex_name"]
+        tex_names[label] = parse(rec["tex_name"])
+        orig_names[label] = rec["name"]
+        for X in rec["representations"].get("Lie", []):
+            options[label].append(Lie(X))
+        if rec["wreathdata"]:
+            wreath_data[label] = rec["wreathdata"]
+        if rec["abelian"]:
+            assert rec["name"] == r"*".join(f"C{m}" for m in rec["smith_abelian_invariants"])
+            finalized.add(label)
+            if rec["cyclic"]:
+                cyclic.add(label)
+        if rec["direct_factorization"]:
+            direct_data[label] = rec["direct_factorization"]
+
+    # Now we get more options from gps_subgroups_test
+    subs = defaultdict(set) # Store normal subgroups from which we can construct new product decompositions
+    sub_update = defuaultdict(lambda: defaultdict(list)) # Record where we need to update the subgroup table after computing new tex_names
+    wd_lookup = defaultdict(dict)
+    for rec in db.gps_subgroups_test.search({}, ["label", "short_label", "subgroup", "ambient", "quotient", "subgroup_tex", "ambient_tex", "quotient_tex", "subgroup_order", "quotient_order", "split", "direct"]):
+        subgroup, ambient, quotient = rec["subgroup"], rec["ambient"], rec["quotient"]
+        assert ambient is not None
+        stex, atex, qtex = rec["subgroup_tex"], rec["ambient_tex"], rec["quotient_tex"]
+        for typ, label, tex in [("subgroup", subgroup, stex), ("ambient", ambient, atex), ("quotient", quotient, qtex)]:
+            if label is not None:
+                sub_update[typ][label].append(rec["label"])
+                if tex is not None and tex != orig_tex_names[label]:
+                    options[label].append(parse(tex))
+        if subgroup is not None and quotient is not None and rec["subgroup_order"] != 1 and rec["quotient_order"] != 1:
+            if rec["direct"]:
+                op = r"\times "
+            elif rec["split"]:
+                op = ":"
+            else:
+                op = "."
+            subs[ambient].add((subgroup, op, quotient))
+        if (ambient in wreath_data and
+            len(wreath_data[ambient]) == 4 and
+            rec["short_label"] in wreath_data[ambient][:2]):
+            wd_lookup[ambient][rec["short_label"]] = (subgroup, subgroup_tex)
+
+    ties = {}
+    for order in sorted(by_order):
+        for label in by_order[order]:
+            if label in finalized:
+                continue
+            if label in wreath_data:
+                wd = wreath_data[label]
+                if len(wd) == 3:
+                    wd = [(wd[0], r"\wr ", wd[1])]
+                else:
+                    Apair, Bpair = [wd_lookup[label][wd[i]] for i in range(2)]
+                    if Apair[0] is not None:
+                        A = Apair[0]
+                    elif Apair[1] is not None:
+                        A = parse(Apair[1])
+                    else:
+                        A = None
+                    if Bpair[0] is not None:
+                        B = Bpair[0]
+                    elif Bpair[1] is not None:
+                        B = parse(Bpair[1])
+                    else:
+                        B = None
+                    if A is None or B is None:
+                        wd = []
+                    else:
+                        wd = [(A, r"\wr ", B)]
+
+            for A, op, B in subs[label] + wd:
+                if isinstance(A, str):
+                    A = tex_name[A]
+                if isinstance(B, str):
+                    B = tex_name[B]
+                if A.minpriority < oppriority[op]:
+                    A = Paren(A)
+                if B.minpriority <= oppriority[op] and not (B.minpriority == oppriority[op] == 0): # direct products are associative
+                    B = Paren(B)
+                if isinstance(A, Prod):
+                    terms = A.terms
+                    ops = A.ops + [op]
+                else:
+                    terms = [A]
+                    ops = [op]
+                if isinstance(B, Prod):
+                    terms += B.terms
+                    ops += B.ops
+                else:
+                    terms += [B]
+                options[label].append(Prod(terms, ops))
+            if label in direct_data:
+                # TODO: collapse cyclic factors, collect terms appropriately before parenthesizing
+                terms = []
+                for base, e in direct_data[label]:
+                    base = tex_name[base]
+                    if e == 1:
+                        terms.append(base)
+                    elif isinstance(base, Prod):
+                        terms.append(Exp(Paren(base), str(e)))
+                    elif isinstance(base, (Lie, Atom)):
+                        terms.append(Exp(base, str(e)))
+                options[label].append(Prod(terms, [r"\times "] * (len(terms) - 1)))
+            # Would be nice to deduplicate
+            if options:
+                by_val = defaultdict(list)
+                by_val[tex_name[label].value].append(tex_name[label])
+                for opt in options[label]:
+                    by_val[opt.value].append(opt)
+                best = by_val[min(by_val)]
+                if len(best) > 1:
+                    ties[label] = best
+                    best.sort(key=lambda x: x.latex)
+                tex_name[label] = best[0]
+    return tex_name, ties
