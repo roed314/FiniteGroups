@@ -1441,8 +1441,9 @@ def get_all_names():
         if rec["wreath_data"]:
             wreath_data[label] = rec["wreath_data"]
         if rec["abelian"]:
-            if rec["order"] != 1:
-                assert rec["name"] == r"*".join(f"C{m}" for m in rec["smith_abelian_invariants"])
+            # Need to deal with exponents/multiplicities to make this work
+            #if rec["order"] != 1:
+            #    assert rec["name"] == r"*".join(f"C{m}" for m in rec["smith_abelian_invariants"])
             finalized.add(label)
             if rec["cyclic"]:
                 cyclic.add(label)
