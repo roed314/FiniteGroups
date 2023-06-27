@@ -1419,6 +1419,7 @@ def parse(tex_name):
 def get_all_names():
     sys.path.append(os.path.expanduser("~/lmfdb"))
     from lmfdb import db
+    t0 = time.time()
     # First we get the names recorded in gps_groups_test, as well as other data that will be useful for constructing additional names
     tex_names = {}
     orig_tex_names = {}
@@ -1449,7 +1450,7 @@ def get_all_names():
         if rec["direct_factorization"]:
             direct_data[label] = rec["direct_factorization"]
         if ctr and ctr % 100000 == 0:
-            print("groups", ctr)
+            print("groups", ctr, time.time() - t0)
 
     # Now we get more options from gps_subgroups_test
     subs = defaultdict(set) # Store normal subgroups from which we can construct new product decompositions
@@ -1460,7 +1461,7 @@ def get_all_names():
         assert ambient is not None
         stex, atex, qtex = rec["subgroup_tex"], rec["ambient_tex"], rec["quotient_tex"]
         for typ, label, tex in [("subgroup", subgroup, stex), ("ambient", ambient, atex), ("quotient", quotient, qtex)]:
-            if label is not None:
+            if label is not None and label in orig_tex_names: # we might not have added this small group
                 sub_update[typ][label].append(rec["label"])
                 if tex is not None and tex != orig_tex_names[label]:
                     options[label].append(parse(tex))
@@ -1477,12 +1478,12 @@ def get_all_names():
             rec["short_label"] in wreath_data[ambient][:2]):
             wd_lookup[ambient][rec["short_label"]] = (subgroup, stex)
         if ctr and ctr % 1000000 == 0:
-            print("subgroups", ctr)
+            print("subgroups", ctr, time.time() - t0)
 
     ties = {}
     for ctr, order in enumerate(sorted(by_order)):
         if ctr and ctr % 400 == 0:
-            print("Finalizing order", order)
+            print("Finalizing order", order, time.time() - t0)
         for label in by_order[order]:
             if label in finalized:
                 continue
