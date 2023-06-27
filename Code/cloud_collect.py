@@ -1073,15 +1073,6 @@ def make_collation(code_lookup=None, label_lookup=None):
 
 # To improve the comparison of latex names, we parse them into a structured form using regular expressions
 
-# Atomic latex names
-# Building up more complicated expressions
-powerre = fr"({atomicre})(\^\{{?\d+\}}?)?"
-latexre = fr"(?:(\()?{powerre}(\))?)(?:([:.]|\\times )(\()?{powerre}(\))?)*"
-
-nonatomic = fr"{powerre}(?:([:.]|\\times ){powerre})*"
-parened = fr"(\(){nonatomic}(\))"
-latexre = fr"(?:{nonatomic}|{parened})(?:([:.]|\\times )(?:{nonatomic}|{parened}))*"
-
 wreath_sub = re.compile(r"\{\\rm wr([^\}]+)\}")
 tokenD = dict([
     ("chev1", r"(?:\{\}\^(?P<chev1twist>\d))?(?P<chev1family>[A-G])_(?P<chev1d>\d)\((?P<chev1q>\d+)\)"), # chevalley groups in first notation; has to come before basic so that F_4(2) takes priority over F_4, etc.
