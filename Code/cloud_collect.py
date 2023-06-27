@@ -1388,7 +1388,7 @@ def parse_tokens(tokens):
             assert last in atoms + ["cparen", "exp"]
             plevel -= 1
             if plevel == 0:
-                terms.append(Paren(parse(subtokens)))
+                terms.append(Paren(parse_tokens(subtokens)))
             else:
                 subtokens.append((kind, tex, groups))
         elif plevel > 0:
