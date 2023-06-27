@@ -1453,7 +1453,7 @@ def get_all_names():
 
     # Now we get more options from gps_subgroups_test
     subs = defaultdict(set) # Store normal subgroups from which we can construct new product decompositions
-    sub_update = defuaultdict(lambda: defaultdict(list)) # Record where we need to update the subgroup table after computing new tex_names
+    sub_update = defaultdict(lambda: defaultdict(list)) # Record where we need to update the subgroup table after computing new tex_names
     wd_lookup = defaultdict(dict)
     for ctr, rec in enumerate(db.gps_subgroups_test.search({}, ["label", "short_label", "subgroup", "ambient", "quotient", "subgroup_tex", "ambient_tex", "quotient_tex", "subgroup_order", "quotient_order", "split", "direct"])):
         subgroup, ambient, quotient = rec["subgroup"], rec["ambient"], rec["quotient"]
