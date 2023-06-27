@@ -1223,7 +1223,7 @@ def interleave(A, B):
         if x is not None:
             yield x
 
-def Prod(Expr):
+class Prod(Expr):
     def __init__(self, terms, ops):
         self.terms = terms
         self.ops = ops
@@ -1272,7 +1272,7 @@ def Prod(Expr):
             return self.order
 
 lies = ["GL", "SL", "Sp", "SO", "SOPlus", "SOMinus", "SU", "GO", "GOPlus", "GOMinus", "GU", "CSp", "CSO", "CSOPlus", "CSOMinus", "CSU", "CO", "COPlus", "COMinus", "CU", "Omega", "OmegaPlus", "OmegaMinus", "Spin", "SpinPlus", "SpinMinus", "PSL", "PGL", "PSp", "PSO", "PSOPlus", "PSOMinus", "PSU", "PGO", "PGOPlus", "PGOMinus", "PGU", "POmega", "POmegaPlus", "POmegaMinus", "PGammaL", "PSigmaL", "PSigmaSp", "PGammaU", "AGL", "ASL", "ASp", "AGammaL", "ASigmaL", "ASigmaSp"]
-def Lie(Expr):
+class Lie(Expr):
     minpriority = 10
     def __init__(self, groups):
         self.family = groups["family"]
@@ -1302,7 +1302,7 @@ def Lie(Expr):
         return None # only used for RHS of wreath products, and we're probably not going to have a wreath product that big.
 
 basics = "SAQDFCM"
-def Atom(Expr): # Excludes Lie groups
+class Atom(Expr): # Excludes Lie groups
     minpriority = 10
     def __init__(self, kind, tex, groups):
         self.kind = kind
