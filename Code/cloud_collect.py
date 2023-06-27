@@ -1177,7 +1177,7 @@ class Exp(Expr):
         assert isinstance(n, str) and n
         self.n = int(n)
     def value(self):
-        return self.base.value + 2
+        return self.base.value + 5
     def latex(self):
         if len(self.n) == 1:
             return f"{self.base.latex}^{self.n}"
@@ -1416,8 +1416,10 @@ def parse(tex_name):
     fix_latex(tokens)
     return parse_tokens(tokens)
 
-def get_all_names():
-    sys.path.append(os.path.expanduser("~/lmfdb"))
+def get_tex_data_gps():
+    lmfdb_path = os.path.expanduser("~/lmfdb")
+    if lmfdb_path not in sys.path:
+        sys.path.append(lmfdb_path)
     from lmfdb import db
     t0 = time.time()
     # First we get the names recorded in gps_groups_test, as well as other data that will be useful for constructing additional names
@@ -1451,8 +1453,15 @@ def get_all_names():
             direct_data[label] = rec["direct_factorization"]
         if ctr and ctr % 100000 == 0:
             print("groups", ctr, time.time() - t0)
+    return tex_names, orig_tex_names, orig_names, options, by_order, wreath_data, direct_data, cyclic, finalized
 
+def get_tex_data_subs(orig_tex_names, wreath_data):
     # Now we get more options from gps_subgroups_test
+    lmfdb_path = os.path.expanduser("~/lmfdb")
+    if lmfdb_path not in sys.path:
+        sys.path.append(lmfdb_path)
+    from lmfdb import db
+    t0 = time.time()
     subs = defaultdict(set) # Store normal subgroups from which we can construct new product decompositions
     sub_update = defaultdict(lambda: defaultdict(list)) # Record where we need to update the subgroup table after computing new tex_names
     wd_lookup = defaultdict(dict)
@@ -1479,7 +1488,14 @@ def get_all_names():
             wd_lookup[ambient][rec["short_label"]] = (subgroup, stex)
         if ctr and ctr % 1000000 == 0:
             print("subgroups", ctr, time.time() - t0)
+    return subs, sub_update, wd_lookup
 
+def get_good_names(tex_names, options, by_order, wreath_data, wd_lookup, direct_data, finalized, subs):
+    lmfdb_path = os.path.expanduser("~/lmfdb")
+    if lmfdb_path not in sys.path:
+        sys.path.append(lmfdb_path)
+    from lmfdb import db
+    t0 = time.time()
     ties = {}
     for ctr, order in enumerate(sorted(by_order)):
         if ctr and ctr % 400 == 0:
@@ -1487,6 +1503,7 @@ def get_all_names():
         for label in by_order[order]:
             if label in finalized:
                 continue
+            wd = []
             if label in wreath_data:
                 wd = wreath_data[label]
                 if len(wd) == 3:
@@ -1512,9 +1529,9 @@ def get_all_names():
 
             for A, op, B in subs[label] + wd:
                 if isinstance(A, str):
-                    A = tex_name[A]
+                    A = tex_names[A]
                 if isinstance(B, str):
-                    B = tex_name[B]
+                    B = tex_names[B]
                 if A.minpriority < oppriority[op]:
                     A = Paren(A)
                 if B.minpriority <= oppriority[op] and not (B.minpriority == oppriority[op] == 0): # direct products are associative
@@ -1535,7 +1552,7 @@ def get_all_names():
                 # TODO: collapse cyclic factors, collect terms appropriately before parenthesizing
                 terms = []
                 for base, e in direct_data[label]:
-                    base = tex_name[base]
+                    base = tex_names[base]
                     if e == 1:
                         terms.append(base)
                     elif isinstance(base, Prod):
@@ -1544,14 +1561,24 @@ def get_all_names():
                         terms.append(Exp(base, str(e)))
                 options[label].append(Prod(terms, [r"\times "] * (len(terms) - 1)))
             # Would be nice to deduplicate
-            if options:
+            if options[label]:
                 by_val = defaultdict(list)
-                by_val[tex_name[label].value].append(tex_name[label])
+                by_val[tex_names[label].value].append(tex_names[label])
                 for opt in options[label]:
                     by_val[opt.value].append(opt)
                 best = by_val[min(by_val)]
                 if len(best) > 1:
                     ties[label] = best
                     best.sort(key=lambda x: x.latex)
-                tex_name[label] = best[0]
-    return tex_name, ties
+                tex_names[label] = best[0]
+    return ties
+
+def get_all_names():
+    tex_names, orig_tex_names, orig_names, options, by_order, wreath_data, direct_data, cyclic, finalized = get_tex_data_gps()
+
+    subs, sub_update, wd_lookup = get_tex_data_subs(orig_tex_names, wreath_data)
+
+    # also updates tex_names
+    ties = get_good_names(tex_names, options, by_order, wreath_data, wd_lookup, direct_data, finalized, subs)
+
+    return tex_names, orig_tex_names, orig_names, ties
