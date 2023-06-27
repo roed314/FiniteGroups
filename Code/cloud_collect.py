@@ -1092,7 +1092,6 @@ tok_regex = re.compile("|".join(f"(?P<{typ}>{val})" for (typ, val) in tokenD.ite
 def tokenize(name):
     # Fix some issues with existing data
     name, _ = wreath_sub.subn(r"\\wr \1", name)
-    name = name.replace("operatorname", r"\operatorname")
     tokens = []
     for m in tok_regex.finditer(name):
         kind = m.lastgroup
@@ -1430,7 +1429,7 @@ def get_all_names():
     direct_data = {}
     cyclic = set()
     finalized = set()
-    for rec in db.gps_groups_test.search({}, ["label", "tex_name", "name", "representations", "order", "cyclic", "abelian", "smith_abelian_invariants", "direct_factorization", "wreath_data"]):
+    for ctr, rec in enumerate(db.gps_groups_test.search({}, ["label", "tex_name", "name", "representations", "order", "cyclic", "abelian", "smith_abelian_invariants", "direct_factorization", "wreath_data"])):
         label = rec["label"]
         by_order[rec["order"]].append(label)
         orig_tex_names[label] = rec["tex_name"]
@@ -1449,12 +1448,14 @@ def get_all_names():
                 cyclic.add(label)
         if rec["direct_factorization"]:
             direct_data[label] = rec["direct_factorization"]
+        if ctr and ctr % 100000 == 0:
+            print("groups", ctr)
 
     # Now we get more options from gps_subgroups_test
     subs = defaultdict(set) # Store normal subgroups from which we can construct new product decompositions
     sub_update = defuaultdict(lambda: defaultdict(list)) # Record where we need to update the subgroup table after computing new tex_names
     wd_lookup = defaultdict(dict)
-    for rec in db.gps_subgroups_test.search({}, ["label", "short_label", "subgroup", "ambient", "quotient", "subgroup_tex", "ambient_tex", "quotient_tex", "subgroup_order", "quotient_order", "split", "direct"]):
+    for ctr, rec in enumerate(db.gps_subgroups_test.search({}, ["label", "short_label", "subgroup", "ambient", "quotient", "subgroup_tex", "ambient_tex", "quotient_tex", "subgroup_order", "quotient_order", "split", "direct"])):
         subgroup, ambient, quotient = rec["subgroup"], rec["ambient"], rec["quotient"]
         assert ambient is not None
         stex, atex, qtex = rec["subgroup_tex"], rec["ambient_tex"], rec["quotient_tex"]
@@ -1475,9 +1476,13 @@ def get_all_names():
             len(wreath_data[ambient]) == 4 and
             rec["short_label"] in wreath_data[ambient][:2]):
             wd_lookup[ambient][rec["short_label"]] = (subgroup, subgroup_tex)
+        if ctr and ctr % 1000000 == 0:
+            print("subgroups", ctr)
 
     ties = {}
-    for order in sorted(by_order):
+    for ctr, order in enumerate(sorted(by_order)):
+        if ctr and ctr % 400 == 0:
+            print("Finalizing order", order)
         for label in by_order[order]:
             if label in finalized:
                 continue
