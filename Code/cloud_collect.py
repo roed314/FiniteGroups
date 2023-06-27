@@ -1475,7 +1475,7 @@ def get_all_names():
         if (ambient in wreath_data and
             len(wreath_data[ambient]) == 4 and
             rec["short_label"] in wreath_data[ambient][:2]):
-            wd_lookup[ambient][rec["short_label"]] = (subgroup, subgroup_tex)
+            wd_lookup[ambient][rec["short_label"]] = (subgroup, stex)
         if ctr and ctr % 1000000 == 0:
             print("subgroups", ctr)
 
