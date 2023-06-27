@@ -1397,7 +1397,7 @@ def parse_tokens(tokens):
             assert last in atoms + ["cparen"]
             terms[-1] == Exp(terms[-1], groups["N"])
         elif kind == "prod":
-            assert last in atoms + ["cparen"]
+            assert last in atoms + ["exp", "cparen"]
             ops.append(tex)
         elif kind == "lie":
             assert last in [None, "prod", "oparen"]
