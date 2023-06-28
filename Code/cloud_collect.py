@@ -1156,8 +1156,10 @@ class Paren(Expr):
     @lazy_attribute
     def value(self):
         return self.inner.value + 10
+    @lazy_attribute
     def latex(self):
         return f"({self.inner.latex})"
+    @lazy_attribute
     def plain(self):
         return f"({self.inner.plain})"
     @lazy_attribute
@@ -1176,13 +1178,16 @@ class Exp(Expr):
         self.base = base
         assert isinstance(n, str) and n
         self.n = int(n)
+    @lazy_attribute
     def value(self):
         return self.base.value + 5
+    @lazy_attribute
     def latex(self):
-        if len(self.n) == 1:
+        if len(str(self.n)) == 1:
             return f"{self.base.latex}^{self.n}"
         else:
             return f"{self.base.latex}^{{{self.n}}}"
+    @lazy_attribute
     def plain(self):
         return f"{self.base.plain}^{self.n}"
     @lazy_attribute
