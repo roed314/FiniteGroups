@@ -1241,7 +1241,7 @@ class Prod(Expr):
         return sum(a.value for a in self.terms) + sum(opvalues[op] for op in self.ops) + extra
     @lazy_attribute
     def latex(self):
-        return "".join(x if isinstance(x, str) else for x in interleave(self.terms, self.ops))
+        return "".join(x if isinstance(x, str) else x.latex for x in interleave(self.terms, self.ops))
     @lazy_attribute
     def plain(self):
         return "".join(op_tex_to_plain[x] if isinstance(x, str) else x.plain for x in interleave(self.terms, self.ops))
