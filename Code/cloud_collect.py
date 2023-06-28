@@ -1092,6 +1092,7 @@ tok_regex = re.compile("|".join(f"(?P<{typ}>{val})" for (typ, val) in tokenD.ite
 def tokenize(name):
     # Fix some issues with existing data
     name, _ = wreath_sub.subn(r"\\wr \1", name)
+    name = name.replace("\t", r"\t") # not sure how this got there...
     tokens = []
     for m in tok_regex.finditer(name):
         kind = m.lastgroup
