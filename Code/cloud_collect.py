@@ -1385,7 +1385,7 @@ def fix_old_expr(expr):
     else:
         # Lie
         ans = Lie({"family": expr.family, "d": expr.d, "q": expr.q})
-    for k in ["value", "latex", "plain", "order", "abelian", "degree"]:
+    for k in ["latex", "plain", "order", "abelian", "degree"]:
         if hasattr(expr, k):
             setattr(ans, k, getattr(expr, k))
     return ans
