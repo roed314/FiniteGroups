@@ -1238,7 +1238,7 @@ class Prod(Expr):
                 extra += 2
             elif a.order == b.order and a.value > b.value:
                 extra += 1
-        return sum(a.value() for a in self.terms) + sum(opvalues[op] for op in self.ops) + extra
+        return sum(a.value for a in self.terms) + sum(opvalues[op] for op in self.ops) + extra
     @lazy_attribute
     def latex(self):
         return "".join(x.latex if isinstance(x, Expr) else x for x in interleave(self.terms, self.ops))
@@ -1367,6 +1367,28 @@ class Atom(Expr): # Excludes Lie groups
         elif self.kind == "basic":
             # This is where N comes from in the notation
             return self.N
+
+def fix_old_expr(expr):
+    # Just update the class to be the current class; copies over all stored data otherwise
+    if hasattr(expr, "terms"):
+        # Prod
+        ans = Prod([fix_old_expr(term) for term in expr.terms], ops)
+    elif hasattr(expr, "base"):
+        # Exp
+        ans = Exp(fix_old_expr(expr.base), str(expr.n))
+    elif hasattr(expr, "inner"):
+        # Paren
+        ans = Paren(fix_old_expr(expr.inner))
+    elif hasattr(expr, "kind"):
+        # Atom
+        ans = Atom(expr.kind, expr.tex, expr.groups)
+    else:
+        # Lie
+        ans = Lie({"family": expr.family, "d": expr.d, "q": expr.q})
+    for k in ["value", "latex", "plain", "order", "abelian", "degree"]:
+        if hasattr(expr, k):
+            setattr(ans, k, getattr(expr, k))
+    return ans
 
 def parse_tokens(tokens):
     # tokens should have already gone through fix_latex
