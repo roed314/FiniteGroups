@@ -1527,7 +1527,7 @@ def get_good_names(tex_names, options, by_order, wreath_data, wd_lookup, direct_
                     else:
                         wd = [(A, r"\wr ", B)]
 
-            for A, op, B in subs[label] + wd:
+            for A, op, B in subs[label].union(wd):
                 if isinstance(A, str):
                     A = tex_names[A]
                 if isinstance(B, str):
