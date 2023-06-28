@@ -1372,7 +1372,7 @@ def fix_old_expr(expr):
     # Just update the class to be the current class; copies over all stored data otherwise
     if hasattr(expr, "terms"):
         # Prod
-        ans = Prod([fix_old_expr(term) for term in expr.terms], ops)
+        ans = Prod([fix_old_expr(term) for term in expr.terms], expr.ops)
     elif hasattr(expr, "base"):
         # Exp
         ans = Exp(fix_old_expr(expr.base), str(expr.n))
