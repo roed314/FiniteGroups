@@ -20,9 +20,14 @@ G := MakeBigGroup(desc, label : preload:=true);
 
 subs := Split(Read(iname), "\n");
 for H in subs do
-    short_label, gens := Explode(Split(H, "|"));
-    gens := Split(gens, ",");
-    HH := sub<G`MagmaGrp | [LoadElt(g, G) : g in gens]>;
+    if H[#H] eq "|" then
+        short_label := H[1..#H-1];
+        HH := sub<G`MagmaGrp|>;
+    else
+        short_label, gens := Explode(Split(H, "|"));
+        gens := Split(gens, ",");
+        HH := sub<G`MagmaGrp | [LoadElt(g, G) : g in gens]>;
+    end if;
     Q := quo<G`MagmaGrp | HH>;
     Hid := IdentifyGroup(Q);
     PrintFile(oname, Sprintf("%o.%o|%o.%o", label, short_label, Hid[1], Hid[2]));
