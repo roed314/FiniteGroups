@@ -9,7 +9,7 @@ if base[#base] ne "/" then
 end if;
 iname := base * "subin/" * label;
 oname := base * "subout/" * label;
-done, F := OpenTest(ofile, "r");
+done, F := OpenTest(oname, "r");
 if done then
     print "Already complete";
     quit;
