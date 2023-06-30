@@ -1489,6 +1489,7 @@ def _tex_data_from_file(order_limit=None):
     typs = [str, str, str, str, str, str, str, str, int, int, lambda x: (x=="t"), lambda x: (x=="t")]
     with open("TexInfo.txt") as F:
         for line in F:
+            line = line.replace("\\\\", "\\") # fix double backslash
             vals = [None if x == r"\N" else typ(x) for (typ, x) in zip(typs, line.strip().split("|"))]
             if order_limit and vals[-3] * vals[-4] > order_limit:
                 continue
