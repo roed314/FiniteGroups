@@ -1277,7 +1277,8 @@ class Prod(Expr):
         if self.abelian: # only case where it's clear what to do
             return self.order
 
-lies = ["GL", "SL", "Sp", "SO", "SOPlus", "SOMinus", "SU", "GO", "GOPlus", "GOMinus", "GU", "CSp", "CSO", "CSOPlus", "CSOMinus", "CSU", "CO", "COPlus", "COMinus", "CU", "Omega", "OmegaPlus", "OmegaMinus", "Spin", "SpinPlus", "SpinMinus", "PSL", "PGL", "PSp", "PSO", "PSOPlus", "PSOMinus", "PSU", "PGO", "PGOPlus", "PGOMinus", "PGU", "POmega", "POmegaPlus", "POmegaMinus", "PGammaL", "PSigmaL", "PSigmaSp", "PGammaU", "AGL", "ASL", "ASp", "AGammaL", "ASigmaL", "ASigmaSp"]
+goodlies = ["GL", "SL", "PSL", "PGL", "Sp", "SO", "SU", "PSp", "PSO", "PSU", "SOPlus", "SOMinus", "GO", "GOPlus", "GOMinus", "GU", "Omega", "OmegaPlus", "OmegaMinus", "PSOPlus", "PSOMinus", "PGO", "PGOPlus", "PGOMinus", "PGU", "POmega", "POmegaPlus", "POmegaMinus"]
+badlies = ["Spin", "SpinPlus", "SpinMinus", "CSp", "CSO", "CSOPlus", "CSOMinus", "CSU", "CO", "COPlus", "COMinus", "CU", "PGammaL", "PSigmaL", "PSigmaSp", "PGammaU", "AGL", "ASL", "ASp", "AGammaL", "ASigmaL", "ASigmaSp"]
 class Lie(Expr):
     minpriority = 10
     def __init__(self, groups):
@@ -1286,7 +1287,10 @@ class Lie(Expr):
         self.q = groups["q"] # note that this could be a string like Z/4
     @lazy_attribute
     def value(self):
-        return 100 + lies.index(self.family) # This might have ties, which we break by d, then q.
+        if self.family in goodlies:
+            return 100 + goodlies.index(self.family) # This might have ties, which we break by d, then q.
+        else:
+            return 260 + badlies.index(self.family) # Prefer a 2-term product to these.
     @lazy_attribute
     def latex(self):
         # We require that appropriate macros for each family are defined
@@ -1307,7 +1311,7 @@ class Lie(Expr):
     def degree(self):
         return None # only used for RHS of wreath products, and we're probably not going to have a wreath product that big.
 
-basics = "SAQDFCM"
+basics = "CSADQFM"
 class Atom(Expr): # Excludes Lie groups
     minpriority = 10
     def __init__(self, kind, tex, groups):
