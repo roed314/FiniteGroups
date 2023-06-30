@@ -1277,7 +1277,8 @@ class Prod(Expr):
         if self.abelian: # only case where it's clear what to do
             return self.order
 
-goodlies = ["GL", "SL", "PSL", "PGL", "Sp", "SO", "SU", "PSp", "PSO", "PSU", "SOPlus", "SOMinus", "GO", "GOPlus", "GOMinus", "GU", "Omega", "OmegaPlus", "OmegaMinus", "PSOPlus", "PSOMinus", "PGO", "PGOPlus", "PGOMinus", "PGU", "POmega", "POmegaPlus", "POmegaMinus"]
+goodlies = ["GL", "SL", "PSL", "PGL", "Sp", "SO"] # prefer these to any product expression
+mediumlies = ["SU", "PSp", "PSO", "PSU", "SOPlus", "SOMinus", "GO", "GOPlus", "GOMinus", "GU", "Omega", "OmegaPlus", "OmegaMinus", "PSOPlus", "PSOMinus", "PGO", "PGOPlus", "PGOMinus", "PGU", "POmega", "POmegaPlus", "POmegaMinus"] # prefer these to non-direct product expressions
 badlies = ["Spin", "SpinPlus", "SpinMinus", "CSp", "CSO", "CSOPlus", "CSOMinus", "CSU", "CO", "COPlus", "COMinus", "CU", "PGammaL", "PSigmaL", "PSigmaSp", "PGammaU", "AGL", "ASL", "ASp", "AGammaL", "ASigmaL", "ASigmaSp"]
 class Lie(Expr):
     minpriority = 10
@@ -1287,8 +1288,11 @@ class Lie(Expr):
         self.q = groups["q"] # note that this could be a string like Z/4
     @lazy_attribute
     def value(self):
+        # These might have ties, which we break by d, then q.
         if self.family in goodlies:
-            return 105 + goodlies.index(self.family) # This might have ties, which we break by d, then q.
+            return 105 + goodlies.index(self.family)
+        elif self.family in mediumlies:
+            return 205 + mediumlies.index(self.family) # Prefer a 2-term direct product over this; prefer this over a semidirect or nonsplit product
         else:
             return 260 + badlies.index(self.family) # Prefer a 2-term product to these.
     @lazy_attribute
