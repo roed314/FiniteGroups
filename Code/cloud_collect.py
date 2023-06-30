@@ -1709,3 +1709,114 @@ def get_all_names(order_limit=None, from_db=False):
                     _ = Fout.write(f"{sub_label}|{newtex}\n")
 
     return tex_names, options, subs, orig_tex_names, orig_names, ties
+
+def splice_subgroup_names():
+    ambient_tex = {}
+    subgroup_tex = {}
+    quotient_tex = {}
+    with open("NewAmbientTexNames.txt") as F:
+        for i, line in enumerate(F):
+            if i and i % 1000000 == 0:
+                print("Ambient", i)
+            if i > 2:
+                label, tex = line.strip().split("|")
+                ambient_tex[label] = tex
+    print("Ambient loaded")
+    with open("NewSubgroupTexNames.txt") as F:
+        for i, line in enumerate(F):
+            if i and i % 1000000 == 0:
+                print("Subgroup", i)
+            if i > 2:
+                label, tex = line.strip().split("|")
+                subgroup_tex[label] = tex
+    print("Subgroup loaded")
+    with open("NewQuotientTexNames.txt") as F:
+        for i, line in enumerate(F):
+            if i and i % 1000000 == 0:
+                print("Quotient", i)
+            if i > 2:
+                label, tex = line.strip().split("|")
+                quotient_tex[label] = tex
+    print("Quotient loaded")
+    with open("SubGrp4.txt", "w") as Fout:
+        with open("SubGrp3.txt") as F:
+            for i, line in enumerate(F):
+                if i and i % 1000000 == 0:
+                    print("Writing", i)
+                if i > 2:
+                    pieces = line.split("|")
+                    label = pieces[31]
+                    if label in ambient_tex:
+                        pieces[3] = ambient_tex[label]
+                    if label in subgroup_tex:
+                        pieces[69] = subgroup_tex[label]
+                    if label in quotient_tex:
+                        pieces[58] = quotient_tex[label]
+                    line = "|".join(pieces)
+                _ = Fout.write(line)
+    print("Upload file created")
+
+    db.gps_subgroups_test.reload("SubGrp4.txt", adjust_schema=True)
+    for cols in [['ambient_order', 'ambient', 'quotient_order', 'subgroup'],
+                 ['outer_equivalence'],
+                 ['subgroup_order', 'subgroup'],
+                 ['perfect'],
+                 ['maximal'],
+                 ['quotient_order', 'quotient'],
+                 ['quotient_cyclic', 'quotient_abelian', 'quotient_solvable'],
+                 ['cyclic', 'abelian', 'solvable'],
+                 ['perfect', 'proper'],
+                 ['quotient_solvable',
+                  'ambient_order',
+                  'ambient',
+                  'quotient_order',
+                  'subgroup'],
+                 ['subgroup_order', 'ambient_order', 'ambient', 'quotient_order', 'subgroup'],
+                 ['subgroup'],
+                 ['subgroup_order'],
+                 ['ambient_order'],
+                 ['quotient'],
+                 ['quotient_order'],
+                 ['normal'],
+                 ['characteristic'],
+                 ['cyclic'],
+                 ['sylow'],
+                 ['hall'],
+                 ['maximal_normal'],
+                 ['minimal'],
+                 ['minimal_normal'],
+                 ['split'],
+                 ['central'],
+                 ['stem'],
+                 ['count'],
+                 ['conjugacy_class_count'],
+                 ['coset_action_label'],
+                 ['core'],
+                 ['normalizer'],
+                 ['normal_closure'],
+                 ['quotient_action_kernel'],
+                 ['quotient_action_image'],
+                 ['projective_image'],
+                 ['centralizer'],
+                 ['proper'],
+                 ['quotient_abelian'],
+                 ['quotient_solvable'],
+                 ['quotient_cyclic'],
+                 ['aut_label'],
+                 ['short_label'],
+                 ['weyl_group'],
+                 ['aut_weyl_group'],
+                 ['aut_weyl_index'],
+                 ['aut_centralizer_order'],
+                 ['abelian'],
+                 ['nilpotent'],
+                 ['solvable'],
+                 ['quotient_action_kernel_order'],
+                 ['mobius_sub'],
+                 ['mobius_quo'],
+                 ['direct'],
+                 ['label'],
+                 ['subgroup', 'maximal'],
+                 ['ambient'],
+                 ['quotient', 'minimal_normal']]:
+        db.gps_subgroups_test.create_index(cols)
