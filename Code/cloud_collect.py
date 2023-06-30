@@ -1654,6 +1654,7 @@ def get_all_names(order_limit=None, from_db=False):
     for typ in ["subgroup", "ambient", "quotient"]:
         print("Starting", typ)
         with open(f"New{typ.capitalize()}TexNames.txt", "w") as Fout:
+            _ = Fout.write(f"label|{typ}_tex\ntext|text\n\n")
             for abstract_label, sub_labels in sub_update[typ].items():
                 for sub_label in sub_labels:
                     _ = Fout.write(f"{sub_label}|{tex_names[abstract_label].latex}\n")
