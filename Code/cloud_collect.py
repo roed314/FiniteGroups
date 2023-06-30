@@ -1488,7 +1488,7 @@ def _gps_data_from_file(order_limit=None):
         for line in F:
             line = line.replace("\\\\", "\\") # fix double backslash
             vals = [None if x == r"\N" else typ(x) for (typ, x) in zip(typs, line.strip().split("|"))]
-            if order_limit and vals[-3] * vals[-4] > order_limit:
+            if order_limit and vals[4] > order_limit:
                 continue
             yield dict(zip(cols, vals))
 
