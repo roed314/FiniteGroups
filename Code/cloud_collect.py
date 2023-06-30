@@ -1285,7 +1285,7 @@ class Lie(Expr):
     def __init__(self, groups):
         self.family = groups["family"]
         self.d = groups["d"]
-        self.q = groups["q"] # note that this could be a string like Z/4
+        self.q = str(groups["q"]) # note that this could be a string like Z/4
     @lazy_attribute
     def value(self):
         # These might have ties, which we break by d, then q.
