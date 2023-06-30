@@ -1487,7 +1487,8 @@ def get_tex_data_gps(order_limit=None):
 def _tex_data_from_file(order_limit=None):
     cols = ["label", "short_label", "subgroup", "ambient", "quotient", "subgroup_tex", "ambient_tex", "quotient_tex", "subgroup_order", "quotient_order", "split", "direct"]
     typs = [str, str, str, str, str, str, str, str, int, int, lambda x: (x=="t"), lambda x: (x=="t")]
-    with open("TexInfo.txt") as F:
+    fname = f"TexInfo{order_limit if order_limit is not None else ''}.txt"
+    with open(fname) as F:
         for line in F:
             line = line.replace("\\\\", "\\") # fix double backslash
             vals = [None if x == r"\N" else typ(x) for (typ, x) in zip(typs, line.strip().split("|"))]
@@ -1607,7 +1608,10 @@ def get_good_names(tex_names, options, by_order, wreath_data, wd_lookup, direct_
                         terms.append(Exp(Paren(base), str(e)))
                     elif isinstance(base, (Lie, Atom)):
                         terms.append(Exp(base, str(e)))
-                options[label].append(Prod(terms, [r"\times "] * (len(terms) - 1)))
+                if len(terms) == 1:
+                    options[label].append(terms[0])
+                else:
+                    options[label].append(Prod(terms, [r"\times "] * (len(terms) - 1)))
             # Would be nice to deduplicate
             if options[label]:
                 by_val = defaultdict(list)
@@ -1646,4 +1650,4 @@ def get_all_names(order_limit=None, from_db=False):
                 for sub_label in sub_labels:
                     _ = Fout.write(f"{sub_label}|{tex_names[abstract_label].latex}\n")
 
-    return tex_names, orig_tex_names, orig_names, ties
+    return tex_names, options, orig_tex_names, orig_names, ties
