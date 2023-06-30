@@ -1452,6 +1452,26 @@ def parse(tex_name):
 
 def booler(x):
     return x == "t"
+def unbooler(x):
+    if x is True:
+        return "t"
+    elif x is False:
+        return "f"
+    elif x is None:
+        return r"\N"
+    raise RuntimeError
+
+def _make_gps_data_file(order_limit=None):
+    fname = f"GpTexInfo{order_limit if order_limit is not None else ''}.txt"
+    with open(fname, "w") as Fout:
+        for rec in db.gps_groups_test.search(query, ["label", "tex_name", "name", "representations", "order", "cyclic", "abelian", "smith_abelian_invariants", "direct_factorization", "wreath_data"]):
+            label, tex_name, name, order = rec["label"], rec["tex_name"], rec["name"], rec["order"]
+            cyclic, abelian = unbooler(rec["cyclic"]), unbooler(rec["abelian"])
+            representations = str(rec["representations"]).replace(" ", "")
+            smith = str(rec["smith_abelian_invariants"]).replace(" ", "")
+            direct = str(rec["direct_factorization"]).replace(" ", "")
+            wreath = str(rec["wreath_data"]).replace(" ", "")
+            _ = Fout.write(f"{label}|{tex_name}|{name}|{representations}|{order}|{cyclic}|{abelian}|{smith}|{direct}|{wreath}\n")
 
 def _gps_data_from_file(order_limit=None):
     cols = ["label", "tex_name", "name", "representations", "order", "cyclic", "abelian", "smith_abelian_invariants", "direct_factorization", "wreath_data"]
@@ -1460,6 +1480,10 @@ def _gps_data_from_file(order_limit=None):
     with open(fname) as F:
         for line in F:
             line = line.replace("\\\\", "\\") # fix double backslash
+            vals = [None if x == r"\N" else typ(x) for (typ, x) in zip(typs, line.strip().split("|"))]
+            if order_limit and vals[-3] * vals[-4] > order_limit:
+                continue
+            yield dict(zip(cols, vals))
 
 def get_tex_data_gps(order_limit=None, from_db=False):
     lmfdb_path = os.path.expanduser("~/lmfdb")
@@ -1477,10 +1501,14 @@ def get_tex_data_gps(order_limit=None, from_db=False):
     direct_data = {}
     cyclic = set()
     finalized = set()
-    query = {}
-    if order_limit:
-        query["order"] = {"$lte": order_limit}
-    for ctr, rec in enumerate(db.gps_groups_test.search(query, ["label", "tex_name", "name", "representations", "order", "cyclic", "abelian", "smith_abelian_invariants", "direct_factorization", "wreath_data"])):
+    if from_db:
+        query = {}
+        if order_limit:
+            query["order"] = {"$lte": order_limit}
+        gpsource = db.gps_groups_test.search(query, ["label", "tex_name", "name", "representations", "order", "cyclic", "abelian", "smith_abelian_invariants", "direct_factorization", "wreath_data"])
+    else:
+        gpsource = _gps_data_from_file(order_limit)
+    for ctr, rec in enumerate(gpsource):
         label = rec["label"]
         by_order[rec["order"]].append(label)
         orig_tex_names[label] = rec["tex_name"]
