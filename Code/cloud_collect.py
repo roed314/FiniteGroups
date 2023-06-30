@@ -1645,11 +1645,12 @@ def get_all_names(order_limit=None, from_db=False):
     ctr = 0
     with open("NewTexNames.txt", "w") as Fout:
         print("Starting to write tex_names")
+        _ = Fout.write("label|tex_name|name\ntext|text|text\n\n")
         for label in sorted(tex_names, key=sort_key):
             newtex = tex_names[label].latex
             if newtex != orig_tex_names[label]:
                 ctr += 1
-                _ = Fout.write(f"{label}|{newtex}\n")
+                _ = Fout.write(f"{label}|{newtex}|{tex_names[label].plain}\n")
         print(f"{ctr} latex updated")
     for typ in ["subgroup", "ambient", "quotient"]:
         print("Starting", typ)
