@@ -1460,6 +1460,10 @@ def unbooler(x):
     elif x is None:
         return r"\N"
     raise RuntimeError
+def unnone(x):
+    if x is None:
+        return r"\N"
+    return str(x).replace(" ", "")
 
 def _make_gps_data_file(order_limit=None):
     fname = f"GpTexInfo{order_limit if order_limit is not None else ''}.txt"
@@ -1470,10 +1474,10 @@ def _make_gps_data_file(order_limit=None):
         for rec in db.gps_groups_test.search(query, ["label", "tex_name", "name", "representations", "order", "cyclic", "abelian", "smith_abelian_invariants", "direct_factorization", "wreath_data"]):
             label, tex_name, name, order = rec["label"], rec["tex_name"], rec["name"], rec["order"]
             cyclic, abelian = unbooler(rec["cyclic"]), unbooler(rec["abelian"])
-            representations = str(rec["representations"]).replace(" ", "")
-            smith = str(rec["smith_abelian_invariants"]).replace(" ", "")
-            direct = str(rec["direct_factorization"]).replace(" ", "")
-            wreath = str(rec["wreath_data"]).replace(" ", "")
+            representations = unnone(rec["representations"])
+            smith = unnone(rec["smith_abelian_invariants"])
+            direct = unnone(rec["direct_factorization"])
+            wreath = unnone(rec["wreath_data"])
             _ = Fout.write(f"{label}|{tex_name}|{name}|{representations}|{order}|{cyclic}|{abelian}|{smith}|{direct}|{wreath}\n")
 
 def _gps_data_from_file(order_limit=None):
