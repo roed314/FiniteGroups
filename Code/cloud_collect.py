@@ -1482,7 +1482,7 @@ def _make_gps_data_file(order_limit=None):
 
 def _gps_data_from_file(order_limit=None):
     cols = ["label", "tex_name", "name", "representations", "order", "cyclic", "abelian", "smith_abelian_invariants", "direct_factorization", "wreath_data"]
-    typs = [str, str, str, sage_eval, int, booler, booler, sage_eval, sage_eval, save_eval]
+    typs = [str, str, str, sage_eval, int, booler, booler, sage_eval, sage_eval, sage_eval]
     fname = f"GpTexInfo{order_limit if order_limit is not None else ''}.txt"
     with open(fname) as F:
         for line in F:
