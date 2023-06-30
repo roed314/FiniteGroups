@@ -1442,7 +1442,7 @@ def parse(tex_name):
     fix_latex(tokens)
     return parse_tokens(tokens)
 
-def get_tex_data_gps(order_limit):
+def get_tex_data_gps(order_limit=None):
     lmfdb_path = os.path.expanduser("~/lmfdb")
     if lmfdb_path not in sys.path:
         sys.path.append(lmfdb_path)
@@ -1494,7 +1494,7 @@ def _tex_data_from_file(order_limit=None):
                 continue
             yield dict(zip(cols, vals))
 
-def get_tex_data_subs(orig_tex_names, wreath_data, from_db=False, order_limit=None):
+def get_tex_data_subs(orig_tex_names, wreath_data, options, order_limit=None, from_db=False):
     # Now we get more options from gps_subgroups_test
     lmfdb_path = os.path.expanduser("~/lmfdb")
     if lmfdb_path not in sys.path:
@@ -1510,7 +1510,7 @@ def get_tex_data_subs(orig_tex_names, wreath_data, from_db=False, order_limit=No
             query["ambient_order"] = {"$lte": order_limit}
         subsource = db.gps_subgroups_test.search(query, ["label", "short_label", "subgroup", "ambient", "quotient", "subgroup_tex", "ambient_tex", "quotient_tex", "subgroup_order", "quotient_order", "split", "direct"])
     else:
-        subsource = _tex_data_from_file()
+        subsource = _tex_data_from_file(order_limit)
     for ctr, rec in enumerate(subsource):
         subgroup, ambient, quotient = rec["subgroup"], rec["ambient"], rec["quotient"]
         assert ambient is not None
@@ -1619,10 +1619,11 @@ def get_good_names(tex_names, options, by_order, wreath_data, wd_lookup, direct_
                 tex_names[label] = best[0]
     return ties
 
-def get_all_names(order_limit=None):
+def get_all_names(order_limit=None, from_db=False):
     tex_names, orig_tex_names, orig_names, options, by_order, wreath_data, direct_data, cyclic, finalized = get_tex_data_gps(order_limit)
 
-    subs, sub_update, wd_lookup = get_tex_data_subs(orig_tex_names, wreath_data)
+    # also updates options
+    subs, sub_update, wd_lookup = get_tex_data_subs(orig_tex_names, wreath_data, options, order_limit=order_limit, from_db=from_db)
 
     # also updates tex_names
     ties = get_good_names(tex_names, options, by_order, wreath_data, wd_lookup, direct_data, finalized, subs)
