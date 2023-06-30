@@ -1650,4 +1650,4 @@ def get_all_names(order_limit=None, from_db=False):
                 for sub_label in sub_labels:
                     _ = Fout.write(f"{sub_label}|{tex_names[abstract_label].latex}\n")
 
-    return tex_names, options, orig_tex_names, orig_names, ties
+    return tex_names, options, subs, orig_tex_names, orig_names, ties
