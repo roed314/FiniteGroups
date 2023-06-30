@@ -1463,6 +1463,9 @@ def unbooler(x):
 
 def _make_gps_data_file(order_limit=None):
     fname = f"GpTexInfo{order_limit if order_limit is not None else ''}.txt"
+    query = {}
+    if order_limit is not None:
+        query["order"] = {"$lte": order_limit}
     with open(fname, "w") as Fout:
         for rec in db.gps_groups_test.search(query, ["label", "tex_name", "name", "representations", "order", "cyclic", "abelian", "smith_abelian_invariants", "direct_factorization", "wreath_data"]):
             label, tex_name, name, order = rec["label"], rec["tex_name"], rec["name"], rec["order"]
