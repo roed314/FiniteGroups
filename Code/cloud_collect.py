@@ -1492,8 +1492,7 @@ def _tex_data_from_file(order_limit=None):
             line = line.replace("\\\\", "\\") # fix double backslash
             vals = [None if x == r"\N" else typ(x) for (typ, x) in zip(typs, line.strip().split("|"))]
             if order_limit and vals[-3] * vals[-4] > order_limit:
-                print(line)
-                break # TexInfo is in order
+                continue
             yield dict(zip(cols, vals))
 
 def get_tex_data_subs(orig_tex_names, wreath_data, options, order_limit=None, from_db=False):
