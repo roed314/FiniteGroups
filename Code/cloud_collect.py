@@ -1492,7 +1492,7 @@ def _tex_data_from_file(order_limit=None):
             line = line.replace("\\\\", "\\") # fix double backslash
             vals = [None if x == r"\N" else typ(x) for (typ, x) in zip(typs, line.strip().split("|"))]
             if order_limit and vals[-3] * vals[-4] > order_limit:
-                continue
+                break # TexInfo is in order
             yield dict(zip(cols, vals))
 
 def get_tex_data_subs(orig_tex_names, wreath_data, options, order_limit=None, from_db=False):
@@ -1575,6 +1575,7 @@ def get_good_names(tex_names, options, by_order, wreath_data, wd_lookup, direct_
                         wd = [(A, r"\wr ", B)]
 
             for A, op, B in subs[label].union(wd):
+                Aorig, Borig = A, B
                 if isinstance(A, str):
                     A = tex_names[A]
                 if isinstance(B, str):
@@ -1584,13 +1585,13 @@ def get_good_names(tex_names, options, by_order, wreath_data, wd_lookup, direct_
                 if B.minpriority <= oppriority[op] and not (B.minpriority == oppriority[op] == 0): # direct products are associative
                     B = Paren(B)
                 if isinstance(A, Prod):
-                    terms = A.terms
+                    terms = list(A.terms)
                     ops = A.ops + [op]
                 else:
                     terms = [A]
                     ops = [op]
                 if isinstance(B, Prod):
-                    terms += B.terms
+                    terms += list(B.terms)
                     ops += B.ops
                 else:
                     terms += [B]
