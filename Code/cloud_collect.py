@@ -1288,7 +1288,7 @@ class Lie(Expr):
     @lazy_attribute
     def value(self):
         if self.family in goodlies:
-            return 100 + goodlies.index(self.family) # This might have ties, which we break by d, then q.
+            return 105 + goodlies.index(self.family) # This might have ties, which we break by d, then q.
         else:
             return 260 + badlies.index(self.family) # Prefer a 2-term product to these.
     @lazy_attribute
