@@ -1510,7 +1510,7 @@ def get_tex_data_subs(orig_tex_names, wreath_data, from_db=False, order_limit=No
             query["ambient_order"] = {"$lte": order_limit}
         subsource = db.gps_subgroups_test.search(query, ["label", "short_label", "subgroup", "ambient", "quotient", "subgroup_tex", "ambient_tex", "quotient_tex", "subgroup_order", "quotient_order", "split", "direct"])
     else:
-        subsource = _tex_dat_from_file()
+        subsource = _tex_data_from_file()
     for ctr, rec in enumerate(subsource):
         subgroup, ambient, quotient = rec["subgroup"], rec["ambient"], rec["quotient"]
         assert ambient is not None
