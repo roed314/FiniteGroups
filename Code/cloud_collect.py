@@ -1181,7 +1181,7 @@ class Exp(Expr):
         self.n = int(n)
     @lazy_attribute
     def value(self):
-        return self.base.value + self.n + 3
+        return self.base.value + 2*self.n + 1
     @lazy_attribute
     def latex(self):
         if len(str(self.n)) == 1:
