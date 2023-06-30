@@ -1230,6 +1230,7 @@ def interleave(A, B):
 
 class Prod(Expr):
     def __init__(self, terms, ops):
+        assert len(terms) == len(ops) + 1
         self.terms = terms
         self.ops = ops
     @lazy_attribute
@@ -1441,7 +1442,7 @@ def parse(tex_name):
     fix_latex(tokens)
     return parse_tokens(tokens)
 
-def get_tex_data_gps():
+def get_tex_data_gps(order_limit):
     lmfdb_path = os.path.expanduser("~/lmfdb")
     if lmfdb_path not in sys.path:
         sys.path.append(lmfdb_path)
@@ -1457,7 +1458,10 @@ def get_tex_data_gps():
     direct_data = {}
     cyclic = set()
     finalized = set()
-    for ctr, rec in enumerate(db.gps_groups_test.search({}, ["label", "tex_name", "name", "representations", "order", "cyclic", "abelian", "smith_abelian_invariants", "direct_factorization", "wreath_data"])):
+    query = {}
+    if order_limit:
+        query["order"] = {"$lte": order_limit}
+    for ctr, rec in enumerate(db.gps_groups_test.search(query, ["label", "tex_name", "name", "representations", "order", "cyclic", "abelian", "smith_abelian_invariants", "direct_factorization", "wreath_data"])):
         label = rec["label"]
         by_order[rec["order"]].append(label)
         orig_tex_names[label] = rec["tex_name"]
@@ -1480,7 +1484,17 @@ def get_tex_data_gps():
             print("groups", ctr, time.time() - t0)
     return tex_names, orig_tex_names, orig_names, options, by_order, wreath_data, direct_data, cyclic, finalized
 
-def get_tex_data_subs(orig_tex_names, wreath_data):
+def _tex_data_from_file(order_limit=None):
+    cols = ["label", "short_label", "subgroup", "ambient", "quotient", "subgroup_tex", "ambient_tex", "quotient_tex", "subgroup_order", "quotient_order", "split", "direct"]
+    typs = [str, str, str, str, str, str, str, str, int, int, lambda x: (x=="t"), lambda x: (x=="t")]
+    with open("TexInfo.txt") as F:
+        for line in F:
+            vals = [None if x == r"\N" else typ(x) for (typ, x) in zip(typs, line.strip().split("|"))]
+            if order_limit and vals[-3] * vals[-4] > order_limit:
+                continue
+            yield dict(cols, vals)
+
+def get_tex_data_subs(orig_tex_names, wreath_data, from_db=False, order_limit=None):
     # Now we get more options from gps_subgroups_test
     lmfdb_path = os.path.expanduser("~/lmfdb")
     if lmfdb_path not in sys.path:
@@ -1490,7 +1504,14 @@ def get_tex_data_subs(orig_tex_names, wreath_data):
     subs = defaultdict(set) # Store normal subgroups from which we can construct new product decompositions
     sub_update = defaultdict(lambda: defaultdict(list)) # Record where we need to update the subgroup table after computing new tex_names
     wd_lookup = defaultdict(dict)
-    for ctr, rec in enumerate(db.gps_subgroups_test.search({}, ["label", "short_label", "subgroup", "ambient", "quotient", "subgroup_tex", "ambient_tex", "quotient_tex", "subgroup_order", "quotient_order", "split", "direct"])):
+    if from_db:
+        query = {}
+        if order_limit:
+            query["ambient_order"] = {"$lte": order_limit}
+        subsource = db.gps_subgroups_test.search(query, ["label", "short_label", "subgroup", "ambient", "quotient", "subgroup_tex", "ambient_tex", "quotient_tex", "subgroup_order", "quotient_order", "split", "direct"])
+    else:
+        subsource = _tex_dat_from_file()
+    for ctr, rec in enumerate(subsource):
         subgroup, ambient, quotient = rec["subgroup"], rec["ambient"], rec["quotient"]
         assert ambient is not None
         stex, atex, qtex = rec["subgroup_tex"], rec["ambient_tex"], rec["quotient_tex"]
@@ -1598,12 +1619,28 @@ def get_good_names(tex_names, options, by_order, wreath_data, wd_lookup, direct_
                 tex_names[label] = best[0]
     return ties
 
-def get_all_names():
-    tex_names, orig_tex_names, orig_names, options, by_order, wreath_data, direct_data, cyclic, finalized = get_tex_data_gps()
+def get_all_names(order_limit=None):
+    tex_names, orig_tex_names, orig_names, options, by_order, wreath_data, direct_data, cyclic, finalized = get_tex_data_gps(order_limit)
 
     subs, sub_update, wd_lookup = get_tex_data_subs(orig_tex_names, wreath_data)
 
     # also updates tex_names
     ties = get_good_names(tex_names, options, by_order, wreath_data, wd_lookup, direct_data, finalized, subs)
+
+    ctr = 0
+    with open("NewTexNames.txt", "w") as Fout:
+        print("Starting to write tex_names")
+        for label in sorted(tex_names, key=sort_key):
+            newtex = tex_names[label].latex
+            if newtex != orig_tex_names[label]:
+                ctr += 1
+                _ = Fout.write(f"{label}|{newtex}\n")
+        print(f"{ctr} latex updated")
+    for typ in ["subgroup", "ambient", "quotient"]:
+        print("Starting", typ)
+        with open(f"New{typ.capitalize()}TexNames.txt", "w") as Fout:
+            for abstract_label, sub_labels in sub_update[typ].items():
+                for sub_label in sub_labels:
+                    _ = Fout.write(f"{sub_label}|{tex_names[abstract_label].latex}\n")
 
     return tex_names, orig_tex_names, orig_names, ties
