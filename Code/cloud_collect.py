@@ -1463,7 +1463,7 @@ def unbooler(x):
 def unnone(x):
     if x is None:
         return r"\N"
-    return str(x).replace(" ", "")
+    return str(x)
 
 def _make_gps_data_file(order_limit=None):
     fname = f"GpTexInfo{order_limit if order_limit is not None else ''}.txt"
