@@ -3,7 +3,7 @@
 import sys, os, re, string, time, itertools
 import argparse
 from collections import defaultdict, Counter
-from sage.all import factorial, ZZ, prod, lazy_attribute
+from sage.all import factorial, ZZ, prod, lazy_attribute, sage_eval
 
 opj = os.path.join
 ope = os.path.exists
@@ -1450,7 +1450,18 @@ def parse(tex_name):
     fix_latex(tokens)
     return parse_tokens(tokens)
 
-def get_tex_data_gps(order_limit=None):
+def booler(x):
+    return x == "t"
+
+def _gps_data_from_file(order_limit=None):
+    cols = ["label", "tex_name", "name", "representations", "order", "cyclic", "abelian", "smith_abelian_invariants", "direct_factorization", "wreath_data"]
+    typs = [str, str, str, sage_eval, int, booler, booler, sage_eval, sage_eval, save_eval]
+    fname = f"GpTexInfo{order_limit if order_limit is not None else ''}.txt"
+    with open(fname) as F:
+        for line in F:
+            line = line.replace("\\\\", "\\") # fix double backslash
+
+def get_tex_data_gps(order_limit=None, from_db=False):
     lmfdb_path = os.path.expanduser("~/lmfdb")
     if lmfdb_path not in sys.path:
         sys.path.append(lmfdb_path)
@@ -1492,9 +1503,9 @@ def get_tex_data_gps(order_limit=None):
             print("groups", ctr, time.time() - t0)
     return tex_names, orig_tex_names, orig_names, options, by_order, wreath_data, direct_data, cyclic, finalized
 
-def _tex_data_from_file(order_limit=None):
+def _sub_data_from_file(order_limit=None):
     cols = ["label", "short_label", "subgroup", "ambient", "quotient", "subgroup_tex", "ambient_tex", "quotient_tex", "subgroup_order", "quotient_order", "split", "direct"]
-    typs = [str, str, str, str, str, str, str, str, int, int, lambda x: (x=="t"), lambda x: (x=="t")]
+    typs = [str, str, str, str, str, str, str, str, int, int, booler, booler]
     fname = f"TexInfo{order_limit if order_limit is not None else ''}.txt"
     with open(fname) as F:
         for line in F:
@@ -1520,7 +1531,7 @@ def get_tex_data_subs(orig_tex_names, wreath_data, options, order_limit=None, fr
             query["ambient_order"] = {"$lte": order_limit}
         subsource = db.gps_subgroups_test.search(query, ["label", "short_label", "subgroup", "ambient", "quotient", "subgroup_tex", "ambient_tex", "quotient_tex", "subgroup_order", "quotient_order", "split", "direct"])
     else:
-        subsource = _tex_data_from_file(order_limit)
+        subsource = _sub_data_from_file(order_limit)
     for ctr, rec in enumerate(subsource):
         subgroup, ambient, quotient = rec["subgroup"], rec["ambient"], rec["quotient"]
         assert ambient is not None
@@ -1634,7 +1645,7 @@ def get_good_names(tex_names, options, by_order, wreath_data, wd_lookup, direct_
     return ties
 
 def get_all_names(order_limit=None, from_db=False):
-    tex_names, orig_tex_names, orig_names, options, by_order, wreath_data, direct_data, cyclic, finalized = get_tex_data_gps(order_limit)
+    tex_names, orig_tex_names, orig_names, options, by_order, wreath_data, direct_data, cyclic, finalized = get_tex_data_gps(order_limit=order_limit, from_db=from_db)
 
     # also updates options
     subs, sub_update, wd_lookup = get_tex_data_subs(orig_tex_names, wreath_data, options, order_limit=order_limit, from_db=from_db)
@@ -1649,6 +1660,7 @@ def get_all_names(order_limit=None, from_db=False):
         for label in sorted(tex_names, key=sort_key):
             newtex = tex_names[label].latex
             if newtex != orig_tex_names[label]:
+                newtex = newtex.replace("\\", "\\\\") # Need to double the backslashes to load into postgres
                 ctr += 1
                 _ = Fout.write(f"{label}|{newtex}|{tex_names[label].plain}\n")
         print(f"{ctr} latex updated")
@@ -1658,6 +1670,7 @@ def get_all_names(order_limit=None, from_db=False):
             _ = Fout.write(f"label|{typ}_tex\ntext|text\n\n")
             for abstract_label, sub_labels in sub_update[typ].items():
                 for sub_label in sub_labels:
-                    _ = Fout.write(f"{sub_label}|{tex_names[abstract_label].latex}\n")
+                    newtex = tex_names[abstract_label].latex.replace("\\", "\\\\")
+                    _ = Fout.write(f"{sub_label}|{newtex}\n")
 
     return tex_names, options, subs, orig_tex_names, orig_names, ties
