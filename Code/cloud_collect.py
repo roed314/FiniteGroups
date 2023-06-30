@@ -1492,7 +1492,7 @@ def _tex_data_from_file(order_limit=None):
             vals = [None if x == r"\N" else typ(x) for (typ, x) in zip(typs, line.strip().split("|"))]
             if order_limit and vals[-3] * vals[-4] > order_limit:
                 continue
-            yield dict(cols, vals)
+            yield dict(zip(cols, vals))
 
 def get_tex_data_subs(orig_tex_names, wreath_data, from_db=False, order_limit=None):
     # Now we get more options from gps_subgroups_test
