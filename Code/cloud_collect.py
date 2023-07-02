@@ -1583,7 +1583,7 @@ def get_tex_data_subs(orig_tex_names, wreath_data, options, order_limit=None, fr
                 op = ":"
             else:
                 op = "."
-            subs[ambient].add((subgroup, op, quotient))
+            subs[ambient].add((subgroup, stex, op, quotient, qtex))
         if (ambient in wreath_data and
             len(wreath_data[ambient]) == 4 and
             rec["short_label"] in wreath_data[ambient][:2]):
@@ -1609,32 +1609,26 @@ def get_good_names(tex_names, options, by_order, wreath_data, wd_lookup, direct_
             if label in wreath_data:
                 wd = wreath_data[label]
                 if len(wd) == 3:
-                    wd = [(parse(wd[0]), r"\wr ", parse(wd[1]))]
+                    wd = [(None, wd[0], r"\wr ", None, wd[1])]
                 else:
-                    Apair, Bpair = [wd_lookup[label][wd[i]] for i in range(2)]
-                    if Apair[0] is not None:
-                        A = Apair[0]
-                    elif Apair[1] is not None:
-                        A = parse(Apair[1])
-                    else:
-                        A = None
-                    if Bpair[0] is not None:
-                        B = Bpair[0]
-                    elif Bpair[1] is not None:
-                        B = parse(Bpair[1])
-                    else:
-                        B = None
-                    if A is None or B is None:
-                        wd = []
-                    else:
-                        wd = [(A, r"\wr ", B)]
+                    Apair, Bpair = [wd_lookup[label].get(wd[i], (None, None)) for i in range(2)]
+                    wd = [Apair + (r"\wr ",) + Bpair]
 
-            for A, op, B in subs[label].union(wd):
-                Aorig, Borig = A, B
-                if isinstance(A, str):
-                    A = tex_names[A]
-                if isinstance(B, str):
-                    B = tex_names[B]
+            for Alabel, Atex, op, Blabel, Btex in subs[label].union(wd):
+                if Alabel is not None and Alabel in tex_names:
+                    A = tex_names[Alabel]
+                elif Atex is not None:
+                    A = parse(Atex)
+                else:
+                    # Have no latex for A, so can't use this product expression
+                    continue
+                if Blabel is not None and Blabel in tex_names:
+                    B = tex_names[Blabel]
+                elif Btex is not None:
+                    B = parse(Btex)
+                else:
+                    # Have no latex for B, so can't use this product expression
+                    continue
                 if A.minpriority < oppriority[op]:
                     A = Paren(A)
                 if B.minpriority <= oppriority[op] and not (B.minpriority == oppriority[op] == 0): # direct products are associative
@@ -1757,66 +1751,66 @@ def splice_subgroup_names():
     print("Upload file created")
 
     db.gps_subgroups_test.reload("SubGrp4.txt", adjust_schema=True)
-    for cols in [['ambient_order', 'ambient', 'quotient_order', 'subgroup'],
-                 ['outer_equivalence'],
-                 ['subgroup_order', 'subgroup'],
-                 ['perfect'],
-                 ['maximal'],
-                 ['quotient_order', 'quotient'],
-                 ['quotient_cyclic', 'quotient_abelian', 'quotient_solvable'],
-                 ['cyclic', 'abelian', 'solvable'],
-                 ['perfect', 'proper'],
-                 ['quotient_solvable',
-                  'ambient_order',
-                  'ambient',
-                  'quotient_order',
-                  'subgroup'],
-                 ['subgroup_order', 'ambient_order', 'ambient', 'quotient_order', 'subgroup'],
-                 ['subgroup'],
-                 ['subgroup_order'],
-                 ['ambient_order'],
-                 ['quotient'],
-                 ['quotient_order'],
-                 ['normal'],
-                 ['characteristic'],
-                 ['cyclic'],
-                 ['sylow'],
-                 ['hall'],
-                 ['maximal_normal'],
-                 ['minimal'],
-                 ['minimal_normal'],
-                 ['split'],
-                 ['central'],
-                 ['stem'],
-                 ['count'],
-                 ['conjugacy_class_count'],
-                 ['coset_action_label'],
-                 ['core'],
-                 ['normalizer'],
-                 ['normal_closure'],
-                 ['quotient_action_kernel'],
-                 ['quotient_action_image'],
-                 ['projective_image'],
-                 ['centralizer'],
-                 ['proper'],
-                 ['quotient_abelian'],
-                 ['quotient_solvable'],
-                 ['quotient_cyclic'],
-                 ['aut_label'],
-                 ['short_label'],
-                 ['weyl_group'],
-                 ['aut_weyl_group'],
-                 ['aut_weyl_index'],
-                 ['aut_centralizer_order'],
-                 ['abelian'],
-                 ['nilpotent'],
-                 ['solvable'],
-                 ['quotient_action_kernel_order'],
-                 ['mobius_sub'],
-                 ['mobius_quo'],
-                 ['direct'],
-                 ['label'],
-                 ['subgroup', 'maximal'],
-                 ['ambient'],
-                 ['quotient', 'minimal_normal']]:
+for cols in [['ambient_order', 'ambient', 'quotient_order', 'subgroup'],
+             ['outer_equivalence'],
+             ['subgroup_order', 'subgroup'],
+             ['perfect'],
+             ['maximal'],
+             ['quotient_order', 'quotient'],
+             ['quotient_cyclic', 'quotient_abelian', 'quotient_solvable'],
+             ['cyclic', 'abelian', 'solvable'],
+             ['perfect', 'proper'],
+             ['quotient_solvable',
+              'ambient_order',
+              'ambient',
+              'quotient_order',
+              'subgroup'],
+             ['subgroup_order', 'ambient_order', 'ambient', 'quotient_order', 'subgroup'],
+             ['subgroup'],
+             ['subgroup_order'],
+             ['ambient_order'],
+             ['quotient'],
+             ['quotient_order'],
+             ['normal'],
+             ['characteristic'],
+             ['cyclic'],
+             ['sylow'],
+             ['hall'],
+             ['maximal_normal'],
+             ['minimal'],
+             ['minimal_normal'],
+             ['split'],
+             ['central'],
+             ['stem'],
+             ['count'],
+             ['conjugacy_class_count'],
+             ['coset_action_label'],
+             ['core'],
+             ['normalizer'],
+             ['normal_closure'],
+             ['quotient_action_kernel'],
+             ['quotient_action_image'],
+             ['projective_image'],
+             ['centralizer'],
+             ['proper'],
+             ['quotient_abelian'],
+             ['quotient_solvable'],
+             ['quotient_cyclic'],
+             ['aut_label'],
+             ['short_label'],
+             ['weyl_group'],
+             ['aut_weyl_group'],
+             ['aut_weyl_index'],
+             ['aut_centralizer_order'],
+             ['abelian'],
+             ['nilpotent'],
+             ['solvable'],
+             ['quotient_action_kernel_order'],
+             ['mobius_sub'],
+             ['mobius_quo'],
+             ['direct'],
+             ['label'],
+             ['subgroup', 'maximal'],
+             ['ambient'],
+             ['quotient', 'minimal_normal']]:
         db.gps_subgroups_test.create_index(cols)
