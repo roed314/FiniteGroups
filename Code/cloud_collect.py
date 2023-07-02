@@ -1648,18 +1648,71 @@ def get_good_names(tex_names, options, by_order, wreath_data, wd_lookup, direct_
             if label in direct_data:
                 # TODO: collapse cyclic factors, collect terms appropriately before parenthesizing
                 terms = []
+                cyclics = []
+                noncyclics = []
                 for base, e in direct_data[label]:
-                    base = tex_names[base]
+                    if base in tex_names:
+                        base = tex_names[base]
+                    else:
+                        break
+                    if base in cyclic:
+                        assert isinstance(base, Atom)
+                        cyclics.append((base, e))
+                    else:
+                        noncyclics.append((base, e))
                     if e == 1:
                         terms.append(base)
                     elif isinstance(base, Prod):
                         terms.append(Exp(Paren(base), str(e)))
-                    elif isinstance(base, (Lie, Atom)):
+                    elif isinstance(base, Exp):
+                        terms.append(Exp(base.base, str(base.n * e)))
+                    elif isinstance(base, (Lie, Atom, Paren)):
                         terms.append(Exp(base, str(e)))
-                if len(terms) == 1:
-                    options[label].append(terms[0])
                 else:
-                    options[label].append(Prod(terms, [r"\times "] * (len(terms) - 1)))
+                    # All of the factors have names
+                    if len(terms) == 1:
+                        options[label].append(terms[0])
+                    else:
+                        terms.sort(key=lambda term: (term.value, 1000000000 if term.order is None else term.order))
+                        options[label].append(Prod(terms, [r"\times "] * (len(terms) - 1)))
+                    if len(cyclics) > 1:
+                        invs = sum([[base.N]*e for (base, e) in cyclics], [])
+                        invs.sort()
+                        by_p = defaultdict(list)
+                        for q in invs:
+                            p, _ = q.is_prime_power(get_data=True)
+                            by_p[p].append(q)
+                        M = max(len(qs) for qs in by_p.values())
+                        for p, qs in by_p.items():
+                            by_p[p] = [1] * (M - len(qs)) + qs
+                        smith = [prod(qs) for qs in zip(*by_p.values())]
+                        withexp = [[smith[0], 1]]
+                        for m in smith[1:]:
+                            if m == withexp[-1][0]:
+                                withexp[-1][1] += 1
+                            else:
+                                withexp.append([m, 1])
+                        terms = []
+                        for m, e in withexp:
+                            base = Atom("basic", f"C_{{{m}}}" if m > 9 else f"C_{m}", {"family":"C", "N":m})
+                            if e == 1:
+                                terms.append(base)
+                            else:
+                                terms.append(Exp(base, str(e)))
+                        for base, e in noncyclics:
+                            if e == 1:
+                                terms.append(base)
+                            elif isinstance(base, Prod):
+                                terms.append(Exp(Paren(base), str(e)))
+                            elif isinstance(base, Exp):
+                                terms.append(Exp(base.base, str(base.n * e)))
+                            elif isinstance(base, (Lie, Atom, Paren)):
+                                terms.append(Exp(base, str(e)))
+                        if len(terms) == 1:
+                            options[label].append(terms[0])
+                        else:
+                            terms.sort(key=lambda term: (term.value, 1000000000 if term.order is None else term.order))
+                            options[label].append(Prod(terms, [r"\times "] * (len(terms) - 1)))
             # Would be nice to deduplicate
             if options[label]:
                 by_val = defaultdict(list)
