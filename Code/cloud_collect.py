@@ -1592,7 +1592,7 @@ def get_tex_data_subs(orig_tex_names, wreath_data, options, order_limit=None, fr
             print("subgroups", ctr, time.time() - t0)
     return subs, sub_update, wd_lookup
 
-def get_good_names(tex_names, options, by_order, wreath_data, wd_lookup, direct_data, finalized, subs):
+def get_good_names(tex_names, options, by_order, wreath_data, wd_lookup, direct_data, cyclic, finalized, subs):
     lmfdb_path = os.path.expanduser("~/lmfdb")
     if lmfdb_path not in sys.path:
         sys.path.append(lmfdb_path)
@@ -1733,7 +1733,7 @@ def get_all_names(order_limit=None, from_db=False):
     subs, sub_update, wd_lookup = get_tex_data_subs(orig_tex_names, wreath_data, options, order_limit=order_limit, from_db=from_db)
 
     # also updates tex_names
-    ties = get_good_names(tex_names, options, by_order, wreath_data, wd_lookup, direct_data, finalized, subs)
+    ties = get_good_names(tex_names, options, by_order, wreath_data, wd_lookup, direct_data, cyclic, finalized, subs)
 
     ctr = 0
     with open("NewTexNames.txt", "w") as Fout:
