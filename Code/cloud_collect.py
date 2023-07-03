@@ -1575,7 +1575,10 @@ def get_tex_data_subs(orig_tex_names, wreath_data, options, order_limit=None, fr
             if label is not None and label in orig_tex_names: # we might not have added this small group
                 sub_update[typ][label].append(rec["label"])
                 if tex is not None and tex != orig_tex_names[label]:
-                    options[label].append(parse(tex))
+                    newopt = parse(tex)
+                    N = int(label.split(".")[0])
+                    assert(newopt.order is None or newopt.order == N)
+                    options[label].append(newopt)
         if subgroup is not None and quotient is not None and rec["subgroup_order"] != 1 and rec["quotient_order"] != 1:
             if rec["direct"]:
                 op = r"\times "
@@ -1644,7 +1647,9 @@ def get_good_names(tex_names, options, by_order, wreath_data, wd_lookup, direct_
                     ops += B.ops
                 else:
                     terms += [B]
-                options[label].append(Prod(terms, ops))
+                newopt = Prod(terms, ops)
+                assert newopt.order in [None, order]
+                options[label].append(newopt)
             if label in direct_data:
                 # TODO: collapse cyclic factors, collect terms appropriately before parenthesizing
                 terms = []
@@ -1671,10 +1676,13 @@ def get_good_names(tex_names, options, by_order, wreath_data, wd_lookup, direct_
                 else:
                     # All of the factors have names
                     if len(terms) == 1:
+                        assert terms[0].order in [None, order]
                         options[label].append(terms[0])
                     else:
                         terms.sort(key=lambda term: (term.value, 1000000000 if term.order is None else term.order))
-                        options[label].append(Prod(terms, [r"\times "] * (len(terms) - 1)))
+                        newopt = Prod(terms, [r"\times "] * (len(terms) - 1))
+                        assert newopt.order in [None, order]
+                        options[label].append(newopt)
                     if len(cyclics) > 1:
                         invs = sum([[base.N]*e for (base, e) in cyclics], [])
                         invs.sort()
@@ -1709,10 +1717,13 @@ def get_good_names(tex_names, options, by_order, wreath_data, wd_lookup, direct_
                             elif isinstance(base, (Lie, Atom, Paren)):
                                 terms.append(Exp(base, str(e)))
                         if len(terms) == 1:
+                            assert terms[0].order in [None, order]
                             options[label].append(terms[0])
                         else:
                             terms.sort(key=lambda term: (term.value, 1000000000 if term.order is None else term.order))
-                            options[label].append(Prod(terms, [r"\times "] * (len(terms) - 1)))
+                            newopt = Prod(terms, [r"\times "] * (len(terms) - 1))
+                            assert newopt.order in [None, order]
+                            options[label].append(newopt)
             # Would be nice to deduplicate
             if options[label]:
                 by_val = defaultdict(list)
@@ -1867,3 +1878,96 @@ def splice_subgroup_names():
                  ['mobius_quo'],
                  ['direct']]:
         db.gps_subgroups_test.create_index(cols)
+
+#basics = "CSADQFM"
+
+    ("chev1", r"(?:\{\}\^(?P<chev1twist>\d))?(?P<chev1family>[A-G])_(?P<chev1d>\d)\((?P<chev1q>\d+)\)"), # chevalley groups in first notation; has to come before basic so that F_4(2) takes priority over F_4, etc.
+    ("basic", r"(?P<basicfamily>[ACDFMQS])_\{?(?P<basicN>\d+)\}?"), # alternating, cyclic, dihedral, Frobenius, Mathieu, generalized quaternion, symmetric
+    ("dihedral", r"(?:\{\\rm )?(?P<dihedralfamily>[OS]?D)\}?_\{?(?P<dihedralN>\d+)\}?"), # semidihedral, other-dihedral
+    ("heisenberg", r"(?:\{\\rm )?He\}?_\{?(?P<heisenbergN>\d+)\}?"), # Heisenberg
+    ("lie", r"(?:(?:\{\\rm )?(?P<liefamily>[AP]?[GS]L|[CP]?SU|P?SO?)\}?(?P<lieplus>\+?))\((?P<lied>\d+),(?P<lieq>\d+|Z/4)\)"), # matrix groups
+    ("chev2", r"(?P<chev2twist>\d)?(?P<chev2family>[A-G])\((?P<chev2d>\d+),(?P<chev2q>\d+)\)'?"), # chevalley groups in second notation
+    ("sporadic", r"(?:operatorname\{)?(?P<sporadicfamily>Ru|McL|He|J|Co|HS)\}?(?:_(?P<sporadicN>\d))?"),
+
+def make_special_names():
+    lmfdb_path = os.path.expanduser("~/lmfdb")
+    if lmfdb_path not in sys.path:
+        sys.path.append(lmfdb_path)
+    from lmfdb import db
+    def one(x):
+        # We double the backslashes since this will be loaded into postgres
+        return fr"^{x}(?P<n>\\d+)$"
+    def two(x):
+        return fr"^{x}\\((?P<n>\\d+),\\s*(?P<q>\\d+)\\)$"
+    familes = [
+        ("C", "Cyclic", "cyclic", "C_{{{n}}}", "CyclicGroup(n)", one("C")),
+        ("S", "Symmetric", "symmetric", "S_{{{n}}}", "Sym(n)", one("S")),
+        ("D", "Dihedral", "dihedral", "D_{{{n}}}", "DihedralGroup(n)", one("D")),
+        ("A", "Alternating", "alternating", "A_{{{n}}}", "AlternatingGroup(n)", one("A")),
+        ("Q", "(Generalized) Quaternion", "generalized_quaternion", "Q_{{{n}}}", 'Group("Qn")', one("Q")),
+        ("F", "Frobenius", "frobenius", "F_{{{n}}}", 'Group("Fn")', one("F")),
+        ("SD", "Semi-dihedral", "semi_dihedral", r"\\SD_{{{n}}}", 'Group("SDn")', one("SD")),
+        ("OD", "Other-dihedral", "other_dihedral", r"\\OD_{{{n}}}", 'Group("ODn")', one("OD")),
+        ("He", "Heisenberg", "heisenberg", r"\\He_{{{n}}}", 'Group("Hep")', one("He")),
+        ("Sporadic", "Sporadic", "sporadic", r"{fam}", 'Group("fam")', r"^(?P<fam>Ru|McL|He|J\\d|Co\\d|HS|M\\d\\d)$"), # The latex isn't quite right, but if we're using this for a dropdown I don't really want to split this
+    ]
+    for lie, name, knowl in [
+            ("GL", "General linear", "general_linear"),
+            ("SL", "Special linear", "special_linear"),
+            ("PSL", "Projective special linear", "special_linear"),
+            ("PGL", "Projective general linear", "general_linear"),
+            ("Sp", "Symplectic", "symplectic"),
+            ("SO", "Special orthogonal", "orthogonal"),
+            ("SU", "Special unitary", "unitary"),
+            ("PSp", "Projective symplectic", "symplectic"),
+            ("PSO", "Projective special orthogonal", "orthogonal"),
+            ("PSU", "Projective special unitary", "unitary"),
+            ("SOPlus", "Special orthogonal (plus)", "orthogonal"),
+            ("SOMinus", "Special orthogonal (minus)", "orthogonal"),
+            ("GO", "General orthogonal", "orthogonal"),
+            ("GOPlus", "General orthogonal (plus)", "orthogonal"),
+            ("GOMinus", "General orthogonal (minus)", "orthogonal"),
+            ("GU", "General unitary", "unitary"),
+            ("Omega", "Omega", "orthogonal"),
+            ("OmegaPlus", "Omega (plus)", "orthogonal"),
+            ("OmegaMinus", "Omega (minus)", "orthogonal"),
+            ("PSOPlus", "Projective special orthogonal (plus)", "orthogonal"),
+            ("PSOMinus", "Projective special orthogonal (minus)", "orthogonal"),
+            ("PGO", "Projective orthogonal", "orthogonal"),
+            ("PGOPlus", "Projective orthogonal (plus)", "orthogonal"),
+            ("PGOMinus", "Projective orthogonal (minus)", "orthogonal"),
+            ("PGU", "Projective unitary", "unitary"),
+            ("POmega", "Projective omega", "orthogonal"),
+            ("POmegaPlus", "Projective omega (plus)", "orthogonal"),
+            ("POmegaMinus", "Projective omega (minus)", "orthogonal"),
+            ("Spin", "Spin", "orthogonal"),
+            ("SpinPlus", "Spin (plus)", "orthogonal"),
+            ("SpinMinus", "Spin (minus)", "orthogonal"),
+            ("CSp", "Conformal symplectic", "symplectic"),
+            ("CSO", "Conformal special orthgonal", "orthogonal"),
+            ("CSOPlus", "Conformal special orthgonal (plus)", "orthogonal"),
+            ("CSOMinus", "Conformal special orthgonal (minus)", "orthogonal"),
+            ("CSU", "Conformal special unitary", "unitary"),
+            ("CO", "Conformal orthgonal", "orthogonal"),
+            ("COPlus", "Conformal orthgonal (plus)", "orthogonal"),
+            ("COMinus", "Conformal orthgonal (minus)", "orthogonal"),
+            ("CU", "Conformal unitary", "unitary"),
+            ("PGammaL", "Projective general linear automorphism", "general_linear"),
+            ("PSigmaL", "Projective special linear automorphism", "special_linear"),
+            ("PSigmaSp", "Projective symplectic automorphism", "symplectic"),
+            ("PGammaU", "Projective unitary automorphism group", "unitary"),
+            ("AGL", "Affine general linear", "general_linear"),
+            ("ASL", "Affine special linear", "special_linear"),
+            ("ASp", "Affine symplectic", "symplectic"),
+            ("AGammaL", "Affine general linear automorphism", "general_linear"),
+            ("ASigmaL", "Affine special linear automorphism", "special_linear"),
+            ("ASigmaSp", "Affine symplectic automorphism", "symplectic")]:
+        families.append((lie, name, knowl, r"\\%s({n},{q})", f"{lie}(n,q)", two(lie)))
+    families.append(("Chev", "Chevalley", "chevalley", "{fam}({n},{q})", 'ChevalleyGroup("fam",n,q)', two(r"(?P<fam>[A-G])")))
+    families.append(("TwistChev", "Twisted Chevalley", "chevalley", r"\\{{\\}}^{twist}{fam}({n},{q})", 'ChevalleyGroup("twistfam",n,q)', two(r"(?P<twist>\\d)(?P<fam>[A-G])")))
+
+    special_names = defaultdict(list)
+    for rec in db.gps_groups_test.search({}, ["label", "representations", "name"]):
+        if "Lie" in rec["representations"]:
+            for lie in rec["representations"]["Lie"]:
+                special_names[lie["family"]].add((lie["d"], lie["q"]))
