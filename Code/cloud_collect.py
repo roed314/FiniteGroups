@@ -1091,8 +1091,8 @@ tokenD = dict([
 tok_regex = re.compile("|".join(f"(?P<{typ}>{val})" for (typ, val) in tokenD.items()))
 def tokenize(name):
     # Fix some issues with existing data
-    name, _ = wreath_sub.subn(r"\\wr \1", name)
     name = name.replace("\t", r"\t").replace("\r", r"\r") # not sure how these got there...
+    name, _ = wreath_sub.subn(r"\\wr \1", name)
     tokens = []
     for m in tok_regex.finditer(name):
         kind = m.lastgroup
@@ -1805,6 +1805,10 @@ def splice_subgroup_names():
 
     db.gps_subgroups_test.reload("SubGrp4.txt", adjust_schema=True)
     for cols in [['ambient_order', 'ambient', 'quotient_order', 'subgroup'],
+                 ['label'],
+                 ['subgroup', 'maximal'],
+                 ['ambient'],
+                 ['quotient', 'minimal_normal'],
                  ['outer_equivalence'],
                  ['subgroup_order', 'subgroup'],
                  ['perfect'],
@@ -1861,9 +1865,5 @@ def splice_subgroup_names():
                  ['quotient_action_kernel_order'],
                  ['mobius_sub'],
                  ['mobius_quo'],
-                 ['direct'],
-                 ['label'],
-                 ['subgroup', 'maximal'],
-                 ['ambient'],
-                 ['quotient', 'minimal_normal']]:
+                 ['direct']]:
         db.gps_subgroups_test.create_index(cols)
