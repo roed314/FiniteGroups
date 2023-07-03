@@ -42,7 +42,7 @@ for H in subs do
         gens := Split(gens, ",");
         HH := sub<G`MagmaGrp | [LoadElt(g, G) : g in gens]>;
     end if;
-    Htex := GroupName(HH: prodeasylimit:=2, wreath_limit:=0, TeX:=true);
+    Htex := GroupName(HH: prodeasylimit:=2, wreathlimit:=0, TeX:=true);
     PrintFile(oname, Sprintf("%o.%o|%o", label, short_label, Htex));
 end for;
 quit;
