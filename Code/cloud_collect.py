@@ -1266,7 +1266,7 @@ class Prod(Expr):
                     lo, ro, d = orders[j], orders[j+1], self.terms[i+1].degree
                     if d is None:
                         return None
-                    orders[j:j+2] = [lo^d * ro]
+                    orders[j:j+2] = [lo**d * ro]
                     num_collapsed += 1
             return prod(orders)
     @lazy_attribute
