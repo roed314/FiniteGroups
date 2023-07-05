@@ -1,5 +1,5 @@
-// Usage: ls /scratch/grp/bigid/quoin/ | parallel -j120 --timeout 120 magma -b base:=/scratch/grp/bigid/ label:={1} QuoLabel.m
-// Needs to have DATA/descriptions set
+// Usage: ls /scratch/grp/bigid/quoin/ | parallel -j120 --timeout 120 magma -b base:=/scratch/grp/bigid/ lab:={1} QuoLabel.m
+// Needs to have DATA/descriptions set.  Note that lab is the command line argument, rather than label, so as to not conflict with the intrinsic.
 
 AttachSpec("spec");
 SetColumns(0);
@@ -7,16 +7,16 @@ SetColumns(0);
 if base[#base] ne "/" then
     base := base * "/";
 end if;
-iname := base * "quoin/" * label;
-oname := base * "quoout/" * label;
+iname := base * "quoin/" * lab;
+oname := base * "quoout/" * lab;
 done, F := OpenTest(oname, "r");
 if done then
     print "Already complete";
     quit;
 end if;
 
-desc := Read("DATA/descriptions/" * label);
-G := MakeBigGroup(desc, label : preload:=true);
+desc := Read("DATA/descriptions/" * lab);
+G := MakeBigGroup(desc, lab : preload:=true);
 
 subs := Split(Read(iname), "\n");
 for H in subs do
@@ -33,6 +33,6 @@ for H in subs do
     if Type(qlabel) eq NoneType then
         qlabel := "\\N";
     end if;
-    PrintFile(oname, Sprintf("%o.%o|%o", label, short_label, qlabel));
+    PrintFile(oname, Sprintf("%o.%o|%o", lab, short_label, qlabel));
 end for;
 quit;
