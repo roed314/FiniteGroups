@@ -28,7 +28,7 @@ for H in subs do
         gens := Split(gens, ",");
         HH := sub<G`MagmaGrp | [LoadElt(g, G) : g in gens]>;
     end if;
-    Q := quo<G`MagmaGrp | HH>;
+    Q := BestQuotient(G`MagmaGrp, HH);
     qlabel := label(Q);
     if Type(qlabel) eq NoneType then
         qlabel := "\\N";
