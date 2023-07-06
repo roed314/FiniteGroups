@@ -1375,13 +1375,18 @@ class Atom(Expr): # Excludes Lie groups
         return self.kind == "basic" and self.family == "C"
     @lazy_attribute
     def degree(self):
-        if self.kind == "dihedral": # SD_N and OD_N; we give the smallest degree faithful transitive rep
-            return self.N // 2
-        elif self.kind == "heisenberg":
-            return self.N**2
-        elif self.kind == "basic":
-            # This is where N comes from in the notation
+        # It would be great to be able to know the degree, but there are multiple transitive degrees except for abelian groups
+        if self.abelian:
             return self.N
+        return None
+
+        #if self.kind == "dihedral": # SD_N and OD_N; we give the smallest degree faithful transitive rep
+        #    return self.N // 2
+        #elif self.kind == "heisenberg":
+        #    return self.N**2
+        #elif self.kind == "basic":
+        #    # This is where N comes from in the notation
+        #    return self.N
 
 def fix_old_expr(expr):
     # Just update the class to be the current class; copies over all stored data otherwise
