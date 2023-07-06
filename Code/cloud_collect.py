@@ -1560,6 +1560,7 @@ def get_tex_data_subs(orig_tex_names, wreath_data, options, order_limit=None, fr
     subs = defaultdict(set) # Store normal subgroups from which we can construct new product decompositions
     sub_update = defaultdict(lambda: defaultdict(list)) # Record where we need to update the subgroup table after computing new tex_names
     wd_lookup = defaultdict(dict)
+    borked = []
     if from_db:
         query = {}
         if order_limit:
@@ -1577,8 +1578,10 @@ def get_tex_data_subs(orig_tex_names, wreath_data, options, order_limit=None, fr
                 if tex is not None and tex != orig_tex_names[label]:
                     newopt = parse(tex)
                     N = int(label.split(".")[0])
-                    assert(newopt.order is None or newopt.order == N)
-                    options[label].append(newopt)
+                    if newopt.order is None or newopt.order == N:
+                        options[label].append(newopt)
+                    else:
+                        borked.append((rec["label"], typ, label, tex))
         if subgroup is not None and quotient is not None and rec["subgroup_order"] != 1 and rec["quotient_order"] != 1:
             if rec["direct"]:
                 op = r"\times "
@@ -1593,7 +1596,7 @@ def get_tex_data_subs(orig_tex_names, wreath_data, options, order_limit=None, fr
             wd_lookup[ambient][rec["short_label"]] = (subgroup, stex)
         if ctr and ctr % 1000000 == 0:
             print("subgroups", ctr, time.time() - t0)
-    return subs, sub_update, wd_lookup
+    return subs, sub_update, wd_lookup, borked
 
 def get_good_names(tex_names, options, by_order, wreath_data, wd_lookup, direct_data, cyclic, finalized, subs):
     lmfdb_path = os.path.expanduser("~/lmfdb")
@@ -1741,7 +1744,7 @@ def get_all_names(order_limit=None, from_db=False):
     tex_names, orig_tex_names, orig_names, options, by_order, wreath_data, direct_data, cyclic, finalized = get_tex_data_gps(order_limit=order_limit, from_db=from_db)
 
     # also updates options
-    subs, sub_update, wd_lookup = get_tex_data_subs(orig_tex_names, wreath_data, options, order_limit=order_limit, from_db=from_db)
+    subs, sub_update, wd_lookup, borked = get_tex_data_subs(orig_tex_names, wreath_data, options, order_limit=order_limit, from_db=from_db)
 
     # also updates tex_names
     ties = get_good_names(tex_names, options, by_order, wreath_data, wd_lookup, direct_data, cyclic, finalized, subs)
@@ -1971,3 +1974,37 @@ def make_special_names():
         if "Lie" in rec["representations"]:
             for lie in rec["representations"]["Lie"]:
                 special_names[lie["family"]].add((lie["d"], lie["q"]))
+
+
+# badsub = []
+# badquo = []
+# with open("TexInfo.txt", "w") as Fout:
+#     with open("BadTexInfo.txt") as F:
+#         for line in F:
+#             label, short_label, subgroup, ambient, quotient, subgroup_tex, ambient_tex, quotient_tex, subgroup_order, quotient_order, split, direct = line.strip().split("|")
+#             if subgroup != r"\N":
+#                 N = subgroup.split(".")[0]
+#                 if N != subgroup_order or hash_ne(gp_hash.get(subgroup), sub_hash.get(label)):
+#                     subgroup = r"\N"
+#                 elif label in sub_labels and sub_labels[label] != subgroup:
+#                     badsub.append((label, sub_labels[label], subgroup))
+#             if quotient != r"\N":
+#                 N = quotient.split(".")[0]
+#                 if N != quotient_order or hash_ne(gp_hash.get(quotient), quo_hash.get(label)):
+#                     quotient = r"\N"
+#             if subgroup == r"\N" and label in sub_labels:
+#                 subgroup = sub_labels[label]
+#                 N = subgroup.split(".")[0]
+#                 if N != subgroup_order or hash_ne(gp_hash.get(subgroup), sub_hash.get(label)):
+#                     badsub.append((label, subgroup, "newsub"))
+#             if quotient == r"\N" and label in quo_labels:
+#                 quotient = quo_labels[label]
+#                 N = quotient.split(".")[0]
+#                 if N != quotient_order or hash_ne(gp_hash.get(quotient), quo_hash.get(label)):
+#                     badquo.append((label, quotient, "newquo"))
+#             if subgroup_tex == r"\N" and label in sub_tex:
+#                 subgroup_tex = sub_tex[label]
+#             if quotient_tex == r"\N" and label in quo_tex:
+#                 quotient_tex = quo_tex[label]
+#             line = "|".join([label, short_label, subgroup, ambient, quotient, subgroup_tex, ambient_tex, quotient_tex, subgroup_order, quotient_order, split, direct]) + "\n"
+#             _ = Fout.write(line)
