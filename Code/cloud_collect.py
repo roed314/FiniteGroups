@@ -1451,9 +1451,10 @@ def parse_tokens(tokens):
     return Prod(terms, ops)
 
 def parse(tex_name):
-    tokens = tokenize(tex_name)
-    fix_latex(tokens)
-    return parse_tokens(tokens)
+    if tex_name is not None:
+        tokens = tokenize(tex_name)
+        fix_latex(tokens)
+        return parse_tokens(tokens)
 
 def booler(x):
     return x == "t"
@@ -1527,7 +1528,7 @@ def get_tex_data_gps(order_limit=None, from_db=False):
         tex = parse(rec["tex_name"])
         if tex.order in [None, rec["order"]]:
             orig_tex_names[label] = rec["tex_name"]
-            tex_names[label] = parse(rec["tex_name"])
+            tex_names[label] = tex
             orig_names[label] = rec["name"]
         else:
             orig_tex_names[label] = tex_names[label] = orig_names[label] = None
@@ -1571,6 +1572,7 @@ def get_tex_data_subs(orig_tex_names, wreath_data, options, borked, order_limit=
     subs = defaultdict(set) # Store normal subgroups from which we can construct new product decompositions
     sub_update = defaultdict(lambda: defaultdict(list)) # Record where we need to update the subgroup table after computing new tex_names
     wd_lookup = defaultdict(dict)
+    sub_erase = defaultdict(set)
     if from_db:
         query = {}
         if order_limit:
@@ -1581,19 +1583,22 @@ def get_tex_data_subs(orig_tex_names, wreath_data, options, borked, order_limit=
     for ctr, rec in enumerate(subsource):
         subgroup, ambient, quotient = rec["subgroup"], rec["ambient"], rec["quotient"]
         assert ambient is not None
-        stex, atex, qtex = rec["subgroup_tex"], rec["ambient_tex"], rec["quotient_tex"]
-        for typ, label, tex in [("subgroup", subgroup, stex), ("ambient", ambient, atex), ("quotient", quotient, qtex)]:
+        stex, atex, qtex = parse(rec["subgroup_tex"]), parse(rec["ambient_tex"]), parse(rec["quotient_tex"])
+        sord, aord, qord = rec["subgroup_order"], rec["subgroup_order"]*rec["quotient_order"], rec["quotient_order"]
+        for typ, label, tex, size in [("subgroup", subgroup, stex, sord), ("ambient", ambient, atex, aord), ("quotient", quotient, qtex, qord)]:
+
             if label is not None and label in orig_tex_names: # we might not have added this small group
                 sub_update[typ][label].append(rec["label"])
                 if tex is not None and tex != orig_tex_names[label]:
-                    newopt = parse(tex)
                     N = int(label.split(".")[0])
-                    if newopt.order is None or newopt.order == N:
-                        options[label].append(newopt)
+                    if tex.order is None or tex.order == N:
+                        options[label].append(tex)
                     else:
                         borked.append((rec["label"], typ, label, tex))
-                        continue
-        if subgroup is not None and quotient is not None and rec["subgroup_order"] != 1 and rec["quotient_order"] != 1:
+            if tex is not None and tex.order not in [None, size]:
+                borked.append((rec["label"], typ, label, tex))
+                sub_erase[typ].add(rec["label"])
+        if subgroup is not None and quotient is not None and sord != 1 and qord != 1 and stex.order in [None, sord] and qtex.order in [None, qord]:
             if rec["direct"]:
                 op = r"\times "
             elif rec["split"]:
@@ -1607,9 +1612,9 @@ def get_tex_data_subs(orig_tex_names, wreath_data, options, borked, order_limit=
             wd_lookup[ambient][rec["short_label"]] = (subgroup, stex)
         if ctr and ctr % 1000000 == 0:
             print("subgroups", ctr, time.time() - t0)
-    return subs, sub_update, wd_lookup
+    return subs, sub_update, wd_lookup, sub_erase
 
-def get_good_names(tex_names, options, by_order, wreath_data, wd_lookup, direct_data, cyclic, finalized, subs):
+def get_good_names(tex_names, options, by_order, wreath_data, wd_lookup, direct_data, cyclic, finalized, subs, borked):
     lmfdb_path = os.path.expanduser("~/lmfdb")
     if lmfdb_path not in sys.path:
         sys.path.append(lmfdb_path)
@@ -1635,14 +1640,14 @@ def get_good_names(tex_names, options, by_order, wreath_data, wd_lookup, direct_
                 if Alabel is not None and tex_names.get(Alabel):
                     A = tex_names[Alabel]
                 elif Atex is not None:
-                    A = parse(Atex)
+                    A = Atex
                 else:
                     # Have no latex for A, so can't use this product expression
                     continue
                 if Blabel is not None and tex_names.get(Blabel):
                     B = tex_names[Blabel]
                 elif Btex is not None:
-                    B = parse(Btex)
+                    B = Btex
                 else:
                     # Have no latex for B, so can't use this product expression
                     continue
@@ -1752,39 +1757,55 @@ def get_good_names(tex_names, options, by_order, wreath_data, wd_lookup, direct_
                 if len(best) > 0: # Everything might be broken
                     tex_names[label] = best[0]
                 else:
-                    print(f"No name for {label}!")
+                    borked.append((label, None, "final"))
     return ties
 
 def get_all_names(order_limit=None, from_db=False):
     tex_names, orig_tex_names, orig_names, options, by_order, wreath_data, direct_data, cyclic, finalized, borked = get_tex_data_gps(order_limit=order_limit, from_db=from_db)
 
     # also updates options
-    subs, sub_update, wd_lookup, = get_tex_data_subs(orig_tex_names, wreath_data, options, borked, order_limit=order_limit, from_db=from_db)
+    subs, sub_update, wd_lookup, sub_erase = get_tex_data_subs(orig_tex_names, wreath_data, options, borked, order_limit=order_limit, from_db=from_db)
 
     # also updates tex_names
-    ties = get_good_names(tex_names, options, by_order, wreath_data, wd_lookup, direct_data, cyclic, finalized, subs)
+    ties = get_good_names(tex_names, options, by_order, wreath_data, wd_lookup, direct_data, cyclic, finalized, subs, borked)
 
     ctr = 0
+    null = 0
     with open("NewTexNames.txt", "w") as Fout:
         print("Starting to write tex_names")
         _ = Fout.write("label|tex_name|name\ntext|text|text\n\n")
         for label in sorted(tex_names, key=sort_key):
-            newtex = tex_names[label].latex
-            if newtex != orig_tex_names[label]:
-                newtex = newtex.replace("\\", "\\\\") # Need to double the backslashes to load into postgres
-                ctr += 1
-                _ = Fout.write(f"{label}|{newtex}|{tex_names[label].plain}\n")
-        print(f"{ctr} latex updated")
+            newtex = tex_names[label]
+            if newtex is None:
+                _ = Fout.write(f"{label}|\\N|\\N\n")
+                null += 1
+            else:
+                newtex = newtex.latex
+                if newtex != orig_tex_names[label]:
+                    newtex = newtex.replace("\\", "\\\\") # Need to double the backslashes to load into postgres
+                    ctr += 1
+                    _ = Fout.write(f"{label}|{newtex}|{tex_names[label].plain}\n")
+        print(f"{ctr} latex updated, {null} set to null")
     for typ in ["subgroup", "ambient", "quotient"]:
         print("Starting", typ)
+        seen = set()
+        ctr = 0
+        null = 0
         with open(f"New{typ.capitalize()}TexNames.txt", "w") as Fout:
             _ = Fout.write(f"label|{typ}_tex\ntext|text\n\n")
             for abstract_label, sub_labels in sub_update[typ].items():
                 for sub_label in sub_labels:
+                    seen.add(sub_label)
                     newtex = tex_names[abstract_label].latex.replace("\\", "\\\\")
                     _ = Fout.write(f"{sub_label}|{newtex}\n")
+                    ctr += 1
+            for sub_label in sub_erase[typ]:
+                if sub_label not in seen:
+                    null += 1
+                    _ = Fout.write(f"{sub_label}|\\N\n")
+        print(f"{ctr} latex udpated, {null} set to null")
 
-    return tex_names, options, subs, orig_tex_names, orig_names, ties
+    return tex_names, options, subs, orig_tex_names, orig_names, ties, borked
 
 def splice_subgroup_names():
     ambient_tex = {}
