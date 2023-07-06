@@ -1631,7 +1631,7 @@ def get_good_names(tex_names, options, by_order, wreath_data, wd_lookup, direct_
             if label in wreath_data:
                 wd = wreath_data[label]
                 if len(wd) == 3:
-                    wd = [(None, wd[0], r"\wr ", None, wd[1])]
+                    wd = [(None, parse(wd[0]), r"\wr ", None, parse(wd[1]))]
                 else:
                     Apair, Bpair = [wd_lookup[label].get(wd[i], (None, None)) for i in range(2)]
                     wd = [Apair + (r"\wr ",) + Bpair]
