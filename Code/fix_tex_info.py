@@ -19,7 +19,12 @@ with open(fname) as F:
                 for j in range(3):
                     label = pieces[2+j]
                     tex = parse(pieces[5+j])
-                    size = int(pieces[8+j])
+                    if j == 0:
+                        size = int(pieces[8])
+                    elif j == 1:
+                        size = int(pieces[8]) * int(pieces[9])
+                    else:
+                        size = int(pieces[9])
                     if tex is not None and tex.order not in [None, size]:
                         pieces[5+j] = r"\N"
                     if label != r"\N" and not label.startswith(pieces[8+j] + "."):
