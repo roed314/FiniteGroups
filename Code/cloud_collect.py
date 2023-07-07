@@ -1598,7 +1598,7 @@ def get_tex_data_subs(orig_tex_names, wreath_data, options, borked, order_limit=
             if tex is not None and tex.order not in [None, size]:
                 borked.append((rec["label"], typ, label, tex))
                 sub_erase[typ].add(rec["label"])
-        if subgroup is not None and quotient is not None and sord != 1 and qord != 1 and stex.order in [None, sord] and qtex.order in [None, qord]:
+        if subgroup is not None and quotient is not None and sord != 1 and qord != 1 and (stex is None or stex.order in [None, sord]) and (qtex is None or qtex.order in [None, qord]):
             if rec["direct"]:
                 op = r"\times "
             elif rec["split"]:
