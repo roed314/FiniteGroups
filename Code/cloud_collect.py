@@ -1550,11 +1550,13 @@ def _sub_data_from_file(order_limit=None):
     fname = f"TexInfo{order_limit if order_limit is not None else ''}.txt"
     with open(fname) as F:
         for line in F:
-            line = line.replace("\\\\", "\\") # fix double backslash
-            vals = [None if x == r"\N" else typ(x) for (typ, x) in zip(typs, line.strip().split("|"))]
-            if order_limit and vals[-3] * vals[-4] > order_limit:
-                continue
-            yield dict(zip(cols, vals))
+            line = line.strip()
+            if line:
+                line = line.replace("\\\\", "\\") # fix double backslash
+                vals = [None if x == r"\N" else typ(x) for (typ, x) in zip(typs, line.split("|"))]
+                if order_limit and vals[-3] * vals[-4] > order_limit:
+                    continue
+                yield dict(zip(cols, vals))
 
 def get_tex_data_subs(orig_tex_names, wreath_data, options, order_limit=None, from_db=False):
     # Now we get more options from gps_subgroups_test
