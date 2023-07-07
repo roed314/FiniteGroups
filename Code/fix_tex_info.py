@@ -18,7 +18,7 @@ with open(fname) as F:
                 pieces = line.split("|")
                 for j in range(3):
                     label = pieces[2+j]
-                    tex = parse(pieces[5+j])
+                    tex = parse(pieces[5+j].replace("\\\\", "\\")
                     if j == 0:
                         size = int(pieces[8])
                     elif j == 1:
