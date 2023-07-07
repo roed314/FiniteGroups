@@ -1,6 +1,6 @@
 #!/usr/bin/env -S sage -python
 
-# Usage: parallel -j100 ./fix_tex_info.py {1} 100 /scratch/grp/smallid/TexInfo.txt ::: 1..100
+# Usage: parallel -j100 ./fix_tex_info.py {1} 100 /scratch/grp/smallid/TexInfo.txt ::: {1..100}
 
 from cloud_collect import parse
 import argparse
@@ -9,9 +9,10 @@ parser.add_argument("n", type=int)
 parser.add_argument("total", type=int)
 parser.add_argument("fname")
 args = parser.parse_args()
+n, total, fname = args.n, args.total, args.fname
 
-with open(base) as F:
-    with open(f"{base}.{n}", "w") as Fout:
+with open(fname) as F:
+    with open(f"{fname}.{n}", "w") as Fout:
         for i, line in enumerate(F):
             if i % total == n:
                 pieces = line.split("|")
