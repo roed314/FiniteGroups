@@ -1,6 +1,8 @@
 #!/usr/bin/env -S sage -python
 
-from .cloud_collect import parse
+# Usage: parallel -j100 ./fix_tex_info.py {1} 100 /scratch/grp/smallid/TexInfo.txt ::: 1..100
+
+from cloud_collect import parse
 import argparse
 parser = argparse.ArgumentParser()
 parser.add_argument("n", type=int)
@@ -8,4 +10,17 @@ parser.add_argument("total", type=int)
 parser.add_argument("fname")
 args = parser.parse_args()
 
-print(args.n, args.total, args.fname, parse(r"(C_2\times D_4):S_5"))
+with open(base) as F:
+    with open(f"{base}.{n}", "w") as Fout:
+        for i, line in enumerate(F):
+            if i % total == n:
+                pieces = line.split("|")
+                for j in range(3):
+                    label = pieces[2+j]
+                    tex = parse(pieces[5+j])
+                    size = int(pieces[8+j])
+                    if tex is not None and tex.order not in [None, size]:
+                        pieces[5+j] = r"\N"
+                    if label != r"\N" and not label.startswith(pieces[8+j] + "."):
+                        pieces[2+j] = r"\N"
+                _ = Fout.write("|".join(pieces))

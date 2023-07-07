@@ -1451,7 +1451,7 @@ def parse_tokens(tokens):
     return Prod(terms, ops)
 
 def parse(tex_name):
-    if tex_name is not None:
+    if tex_name is not None and tex_name != r"\N":
         tokens = tokenize(tex_name)
         fix_latex(tokens)
         return parse_tokens(tokens)
