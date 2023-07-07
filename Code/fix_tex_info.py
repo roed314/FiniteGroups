@@ -27,6 +27,6 @@ with open(fname) as F:
                         size = int(pieces[9])
                     if tex is not None and tex.order not in [None, size]:
                         pieces[5+j] = r"\N"
-                    if label != r"\N" and not label.startswith(pieces[8+j] + "."):
+                    if label != r"\N" and not label.startswith(f"{size}."):
                         pieces[2+j] = r"\N"
                 _ = Fout.write("|".join(pieces))
