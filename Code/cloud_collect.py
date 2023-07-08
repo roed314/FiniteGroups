@@ -1793,9 +1793,10 @@ def get_all_names(order_limit=None, from_db=False):
             _ = Fout.write(f"label|{typ}_tex\ntext|text\n\n")
             for abstract_label, sub_labels in sub_update[typ].items():
                 for sub_label in sub_labels:
-                    newtex = tex_names[abstract_label].latex.replace("\\", "\\\\")
-                    _ = Fout.write(f"{sub_label}|{newtex}\n")
-                    ctr += 1
+                    if tex_names[abstract_label] is not None:
+                        newtex = tex_names[abstract_label].latex.replace("\\", "\\\\")
+                        _ = Fout.write(f"{sub_label}|{newtex}\n")
+                        ctr += 1
         print(f"{ctr} latex udpated")
 
     return tex_names, options, subs, orig_tex_names, orig_names, ties, borked
