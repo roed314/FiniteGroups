@@ -1524,9 +1524,15 @@ def get_tex_data_gps(order_limit=None, from_db=False):
     for ctr, rec in enumerate(gpsource):
         label = rec["label"]
         by_order[rec["order"]].append(label)
-        orig_tex_names[label] = rec["tex_name"]
-        tex_names[label] = parse(rec["tex_name"])
-        orig_names[label] = rec["name"]
+        tex = parse(rec["tex_name"])
+        if tex.order in [rec["order"], None]:
+            orig_tex_names[label] = rec["tex_name"]
+            tex_names[label] = tex
+            orig_names[label] = rec["name"]
+        else:
+            orig_tex_names[label] = None
+            tex_names[label] = None
+            orig_names[label] = None
         for X in rec["representations"].get("Lie", []):
             options[label].append(Lie(X))
         if rec["wreath_data"]:
