@@ -1847,7 +1847,9 @@ def splice_subgroup_names():
                 _ = Fout.write(line)
     print("Upload file created")
 
-    db.gps_subgroups_test.reload("SubGrp4.txt", adjust_schema=True)
+    #db.gps_subgroups_test.reload("SubGrp4.txt", adjust_schema=True)
+
+def create_gps_subgroups_indexes():
     for cols in [['ambient_order', 'ambient', 'quotient_order', 'subgroup'],
                  ['label'],
                  ['subgroup', 'maximal'],
