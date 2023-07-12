@@ -1946,6 +1946,7 @@ def make_special_names():
         ("He", "Heisenberg", "heisenberg", r"\\He_{{{n}}}", 'Group("Hep")', one("He")),
         ("Sporadic", "Sporadic", "sporadic", r"{fam}", 'Group("fam")', r"^(?P<fam>Ru|McL|He|J\\d|Co\\d|HS|M\\d\\d)$"), # The latex isn't quite right, but if we're using this for a dropdown I don't really want to split this
     ]
+    lies = set()
     for lie, name, knowl in [
             ("GL", "General linear", "general_linear"),
             ("SL", "Special linear", "special_linear"),
@@ -1998,6 +1999,7 @@ def make_special_names():
             ("ASigmaL", "Affine special linear automorphism", "special_linear"),
             ("ASigmaSp", "Affine symplectic automorphism", "symplectic")]:
         families.append((lie, name, knowl, r"\\%s({n},{q})", f"{lie}(n,q)", two(lie)))
+        lies.add(lie)
     families.append(("Chev", "Chevalley", "chevalley", "{fam}({n},{q})", 'ChevalleyGroup("fam",n,q)', two(r"(?P<fam>[A-G])")))
     families.append(("TwistChev", "Twisted Chevalley", "chevalley", r"\\{{\\}}^{twist}{fam}({n},{q})", 'ChevalleyGroup("twistfam",n,q)', two(r"(?P<twist>\\d)(?P<fam>[A-G])")))
 
@@ -2006,7 +2008,17 @@ def make_special_names():
         if "Lie" in rec["representations"]:
             for lie in rec["representations"]["Lie"]:
                 special_names[lie["family"]].add((lie["d"], lie["q"]))
-
+        name = rec["name"]
+        if not any(c in name for c in [":", ".", r"\times", r"\wr"]):
+            for fam, name, knowl, disp, magma, regex in families:
+                if fam in lies:
+                    continue
+                m = re.fullmatch(regex, name)
+                if m:
+                    special_names.append((fam, rec["label"], m.groupdict()))
+                    break
+    # Also have to add exceptional collisions for small orders that aren't detected by the names
+    return families, special_names
 
 # badsub = []
 # badquo = []
