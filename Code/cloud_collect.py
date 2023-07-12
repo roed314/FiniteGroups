@@ -1931,9 +1931,9 @@ def make_special_names():
     from lmfdb import db
     def one(x):
         # We double the backslashes since this will be loaded into postgres
-        return fr"^{x}(?P<n>\\d+)$"
+        return fr"^{x}(?P<n>\d+)$"
     def two(x):
-        return fr"^{x}\\((?P<n>\\d+),\\s*(?P<q>\\d+)\\)$"
+        return fr"^{x}\((?P<n>\d+),\s*(?P<q>\d+)\)$"
     families = [
         ("C", "Cyclic", "cyclic", "C_{{{n}}}", "CyclicGroup(n)", one("C")),
         ("S", "Symmetric", "symmetric", "S_{{{n}}}", "Sym(n)", one("S")),
@@ -1944,7 +1944,7 @@ def make_special_names():
         ("SD", "Semi-dihedral", "semi_dihedral", r"\\SD_{{{n}}}", 'Group("SDn")', one("SD")),
         ("OD", "Other-dihedral", "other_dihedral", r"\\OD_{{{n}}}", 'Group("ODn")', one("OD")),
         ("He", "Heisenberg", "heisenberg", r"\\He_{{{n}}}", 'Group("Hep")', one("He")),
-        ("Sporadic", "Sporadic", "sporadic", r"{fam}", 'Group("fam")', r"^(?P<fam>Ru|McL|He|J\\d|Co\\d|HS|M\\d\\d)$"), # The latex isn't quite right, but if we're using this for a dropdown I don't really want to split this
+        ("Sporadic", "Sporadic", "sporadic", r"{fam}", 'Group("fam")', r"^(?P<fam>Ru|McL|He|J\d|Co\d|HS|M\d\d)$"), # The latex isn't quite right, but if we're using this for a dropdown I don't really want to split this
     ]
     lies = set()
     for lie, name, knowl in [
@@ -2001,21 +2001,20 @@ def make_special_names():
         families.append((lie, name, knowl, r"\\%s({n},{q})", f"{lie}(n,q)", two(lie)))
         lies.add(lie)
     families.append(("Chev", "Chevalley", "chevalley", "{fam}({n},{q})", 'ChevalleyGroup("fam",n,q)', two(r"(?P<fam>[A-G])")))
-    families.append(("TwistChev", "Twisted Chevalley", "chevalley", r"\\{{\\}}^{twist}{fam}({n},{q})", 'ChevalleyGroup("twistfam",n,q)', two(r"(?P<twist>\\d)(?P<fam>[A-G])")))
+    families.append(("TwistChev", "Twisted Chevalley", "chevalley", r"\\{{\\}}^{twist}{fam}({n},{q})", 'ChevalleyGroup("twistfam",n,q)', two(r"(?P<twist>\d)(?P<fam>[A-G])")))
 
     special_names = defaultdict(list)
     for rec in db.gps_groups_test.search({}, ["label", "representations", "name"]):
         if "Lie" in rec["representations"]:
             for lie in rec["representations"]["Lie"]:
-                special_names[lie["family"]].append((lie["family"], rec["label"], {"d":lie["d"], "q":lie["q"]}))
-        name = rec["name"]
+                special_names[lie["family"]].append((rec["label"], {"d":lie["d"], "q":lie["q"]}))
         if not any(c in name for c in [":", ".", r"\times", r"\wr"]):
             for fam, name, knowl, disp, magma, regex in families:
                 if fam in lies:
                     continue
-                m = re.fullmatch(regex, name)
+                m = re.fullmatch(regex, rec["name"])
                 if m:
-                    special_names.append((fam, rec["label"], m.groupdict()))
+                    special_names[fam].append((rec["label"], m.groupdict()))
                     break
     # Also have to add exceptional collisions for small orders that aren't detected by the names
     return families, special_names
