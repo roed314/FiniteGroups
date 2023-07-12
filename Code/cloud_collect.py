@@ -1934,7 +1934,7 @@ def make_special_names():
         return fr"^{x}(?P<n>\\d+)$"
     def two(x):
         return fr"^{x}\\((?P<n>\\d+),\\s*(?P<q>\\d+)\\)$"
-    familes = [
+    families = [
         ("C", "Cyclic", "cyclic", "C_{{{n}}}", "CyclicGroup(n)", one("C")),
         ("S", "Symmetric", "symmetric", "S_{{{n}}}", "Sym(n)", one("S")),
         ("D", "Dihedral", "dihedral", "D_{{{n}}}", "DihedralGroup(n)", one("D")),
