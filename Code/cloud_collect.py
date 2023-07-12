@@ -2007,7 +2007,7 @@ def make_special_names():
     for rec in db.gps_groups_test.search({}, ["label", "representations", "name"]):
         if "Lie" in rec["representations"]:
             for lie in rec["representations"]["Lie"]:
-                special_names[lie["family"]].add((lie["d"], lie["q"]))
+                special_names[lie["family"]].append((lie["family"], rec["label"], {"d":lie["d"], "q":lie["q"]}))
         name = rec["name"]
         if not any(c in name for c in [":", ".", r"\times", r"\wr"]):
             for fam, name, knowl, disp, magma, regex in families:
