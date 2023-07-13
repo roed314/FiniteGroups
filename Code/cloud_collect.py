@@ -2004,10 +2004,18 @@ def make_special_names():
     families.append(("TwistChev", "Twisted Chevalley", "chevalley", r"\\{{\\}}^{twist}{fam}({n},{q})", 'ChevalleyGroup("twistfam",n,q)', two(r"(?P<twist>\d)(?P<fam>[A-G])")))
 
     special_names = defaultdict(list)
+    # Have to add exceptional collisions for small orders that aren't detected by the names
+    special_names["S"] = [('1.1', {'n': '1'}), ('2.1', {'n': '2'})]
+    special_names["A"] = [('1.1', {'n': '1'}), ('1.1', {'n': '2'}), ('3.1', {'n': '3'})]
+    special_names["D"] = [('2.1', {'n': '1'}), ('4.2', {'n': '2'}), ('6.1', {'n': '3'})]
+    special_names["F"] = [('2.1', {'n': '2'}), ('6.1', {'n': '3'}), ('12.3', {'n': '4'})]
+    special_names["Q"] = [('1.1', {'n': '1'}), ('2.1', {'n': '2'}), ('4.1', {'n': '4'})]
+    special_names["SD"] = [('1.1', {'n': '1'}), ('2.1', {'n': '2'}), ('4.2', {'n': '4'}), ('8.2', {'n': '8'})]
+    special_names["OD"] = [('1.1', {'n': '1'}), ('2.1', {'n': '2'}), ('4.2', {'n': '4'}), ('8.3', {'n': '8'})]
     for rec in db.gps_groups_test.search({}, ["label", "representations", "name"]):
         if "Lie" in rec["representations"]:
             for lie in rec["representations"]["Lie"]:
-                special_names[lie["family"]].append((rec["label"], {"d":lie["d"], "q":lie["q"]}))
+                special_names[lie["family"]].append((rec["label"], {"n":lie["d"], "q":lie["q"]}))
         if not any(c in name for c in [":", ".", r"\times", r"\wr"]):
             for fam, name, knowl, disp, magma, regex in families:
                 if fam in lies:
@@ -2016,7 +2024,26 @@ def make_special_names():
                 if m:
                     special_names[fam].append((rec["label"], m.groupdict()))
                     break
-    # Also have to add exceptional collisions for small orders that aren't detected by the names
+    for fam, lie, nfunc in [("A", "SL", lambda n: n-1), ("B", "Omega", lambda n: (n-1)//2), ("C", "Sp", lambda n: n//2), ("D", "OmegaPlus", lambda n: n//2)]:
+        for label, params in special_names[lie]:
+            params = dict(params)
+            params["fam"] = fam
+            params["n"] = str(nfunc(int(params["n"])))
+            special_names["Chev"].append((label, params))
+    for twist, fam, lie, nfunc in [("2", "A", "SU", lambda n: n-1), ("2", "D", "OmegaMinus", lambda n: n//2)]:
+        for label, params in special_names[lie]:
+            params = dict(params)
+            params["twist"] = twist
+            params["fam"] = fam
+            params["n"] = str(nfunc(int(params["n"])))
+            special_names["TwistChev"].append((label, params))
+    for fam, L in special_names:
+        by_params = defaultdict(list)
+        for label, params in L:
+            by_params[tuple(params.items())].append(label)
+        for params, labels in by_params.items():
+            if len(labels) > 1:
+                print(len(set(labels)), params, labels)
     return families, special_names
 
 # badsub = []
