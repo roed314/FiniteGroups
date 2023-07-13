@@ -2043,7 +2043,7 @@ def make_special_names():
             by_params[tuple(params.items())].append(label)
         for params, labels in by_params.items():
             if len(labels) > 1:
-                print(len(set(labels)), params, labels)
+                print(len(set(labels)), fam, params, labels)
     return families, special_names
 
 # badsub = []
