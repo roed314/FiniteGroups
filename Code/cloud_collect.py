@@ -2037,7 +2037,7 @@ def make_special_names():
             params["fam"] = fam
             params["n"] = str(nfunc(int(params["n"])))
             special_names["TwistChev"].append((label, params))
-    for fam, L in special_names:
+    for fam, L in special_names.items():
         by_params = defaultdict(list)
         for label, params in L:
             by_params[tuple(params.items())].append(label)
