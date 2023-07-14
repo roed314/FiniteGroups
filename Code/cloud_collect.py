@@ -2022,6 +2022,10 @@ def make_special_names():
                     continue
                 m = re.fullmatch(regex, rec["name"])
                 if m:
+                    if fam == "C":
+                        # Some problems in the names data right now...
+                        if rec["name"][1:] != rec["label"].split(".")[0]:
+                            continue
                     special_names[fam].append((rec["label"], m.groupdict()))
                     break
     for fam, lie, nfunc in [("A", "SL", lambda n: n-1), ("B", "Omega", lambda n: (n-1)//2), ("C", "Sp", lambda n: n//2), ("D", "OmegaPlus", lambda n: n//2)]:
