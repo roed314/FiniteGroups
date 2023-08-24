@@ -23,8 +23,11 @@ res := New(SubgroupLat);
 res`Grp := G;
 res`subs := [];
 lines := [Split(H, "|") : H in Split(Read(fname), "\n")];
-inds := [StringToInteger(data[quo_i]) : data in lines];
-ParallelSort(~inds, ~lines);
+slines := [data : data in lines | data[1][1] eq "s"];
+Slines := [data : data in lines | data[1][1] eq "S"];
+inds := [StringToInteger(data[quo_i]) : data in Slines];
+ParallelSort(~inds, ~Slines);
+lines := slines cat Slines;
 for data in lines do
     if data[1] eq "s" * label then
         res`outer_equivalence := LoadBool(data[out_eq_i]);
