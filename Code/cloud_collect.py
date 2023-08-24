@@ -1944,6 +1944,7 @@ def make_special_names():
         ("SD", "Semi-dihedral", "semi_dihedral", r"\\SD_{{{n}}}", 'Group("SDn")', one("SD")),
         ("OD", "Other-dihedral", "other_dihedral", r"\\OD_{{{n}}}", 'Group("ODn")', one("OD")),
         ("He", "Heisenberg", "heisenberg", r"\\He_{{{n}}}", 'Group("Hep")', one("He")),
+        ("Dic", "Dicyclic", "dicyclic", r"\\Dic_{{{n}}}", 'DicyclicGroup(n)', one("Dic")),
         ("Sporadic", "Sporadic", "sporadic", r"{fam}", 'Group("fam")', r"^(?P<fam>Ru|McL|He|J\d|Co\d|HS|M\d\d)$"), # The latex isn't quite right, but if we're using this for a dropdown I don't really want to split this
     ]
     lies = set()
@@ -2012,6 +2013,10 @@ def make_special_names():
     special_names["Q"] = [('1.1', {'n': '1'}), ('2.1', {'n': '2'}), ('4.1', {'n': '4'})]
     special_names["SD"] = [('1.1', {'n': '1'}), ('2.1', {'n': '2'}), ('4.2', {'n': '4'}), ('8.2', {'n': '8'})]
     special_names["OD"] = [('1.1', {'n': '1'}), ('2.1', {'n': '2'}), ('4.2', {'n': '4'}), ('8.3', {'n': '8'})]
+    # We don't use dicyclic for names, so have to find the labels
+    ab = set(db.gps_groups_test.search({"abelian":True}, "label"))
+    dic = {int(label.split(".")[0])//4:label for label in set(rec["ambient"] for rec in db.gps_subgroups_test.search({"cyclic":True, "quotient_order":2, "split":False}, ["ambient", "ambient_order"]) if rec["ambient"] not in ab and rec["ambient_order"] % 4 == 0)}
+    special_names["Dic"] = [(label, {'n': str(n)}) for (n, label) in sorted(dic.items())]
     for rec in db.gps_groups_test.search({}, ["label", "representations", "name"]):
         if "Lie" in rec["representations"]:
             for lie in rec["representations"]["Lie"]:
