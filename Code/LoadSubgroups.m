@@ -8,6 +8,7 @@ agg_cols := Split(cols, "|");
 short_label_i := Index(agg_cols, "short_label");
 gens_i := Index(agg_cols, "generators");
 contained_in_i := Index(agg_cols, "contained_in");
+quo_i := Index(agg_cols, "quotient_order");
 _, cols := Explode(Split(Read("sub.tmpheader"), "\n"));
 sub_cols := Split(cols, "|");
 out_eq_i := Index(sub_cols, "outer_equivalence");
@@ -21,9 +22,10 @@ contained_in := AssociativeArray();
 res := New(SubgroupLat);
 res`Grp := G;
 res`subs := [];
-lines := Split(Read(fname), "\n");
-for H in lines do
-    data := Split(H, "|");
+lines := [Split(H, "|") : H in Split(Read(fname), "\n")];
+inds := [StringToInteger(data[quo_i]) : data in lines];
+ParallelSort(~inds, ~lines);
+for data in lines do
     if data[1] eq "s" * label then
         res`outer_equivalence := LoadBool(data[out_eq_i]);
         res`inclusions_known := LoadBool(data[inc_known_i]);
