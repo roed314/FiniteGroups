@@ -195,6 +195,7 @@ intrinsic LoadElt(inp::MonStgElt, GG::Grp) -> Any
             n, r := Quotrem(n, p);
             Append(~v, r);
         end for;
+        assert n eq 0;
         return GG!v;
     elif Type(GG) eq GrpPerm then
         n := Degree(GG);
