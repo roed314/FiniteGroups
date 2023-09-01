@@ -290,7 +290,7 @@ intrinsic metabelian(G::LMFDBGrp) -> BoolElt
     return IsAbelian(DerivedSubgroup(g));
 end intrinsic;
 
-intrinsic monomial_number(n::RntIntElt) -> BoolElt
+intrinsic monomial_number(n::RngxIntElt) -> BoolElt
 {If true, then all SOLVABLE groups of this order are monomial}
     // This routine was ported from GAP (https://github.com/gap-system/gap/blob/46eef40fd7f14c8769d8ba993a52b485e6075b89/lib/ctblmono.gi#L932)
     nu2 := Valuation(n, 2);
