@@ -317,7 +317,7 @@ intrinsic monomial_number(n::RngIntElt) -> BoolElt
         end for;
     end for;
     // minimal nonmonomial groups of type 4
-    if nu2 ge 4 and &or[pair[1] ne 2 and nu2 ge 2 * Modorder(2, pair[1]) + 2] then
+    if nu2 ge 4 and &or[pair[1] ne 2 and nu2 ge 2 * Modorder(2, pair[1]) + 2 : pair in fac] then
         return false;
     end if;
     // minimal nonmonomial groups of type 5
