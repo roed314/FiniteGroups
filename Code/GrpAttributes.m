@@ -302,7 +302,6 @@ intrinsic monomial(G::LMFDBGrp) -> BoolElt
     else
         ct := Get(G,"MagmaCharacterTable");
         maxd := Integers() ! Degree(ct[#ct]); // Crazy that coercion is needed
-        stat := [false : c in ct];
         ls := LowIndexSubgroups(G, maxd);
         if Type(ls) eq NoneType then
             return None();
