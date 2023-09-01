@@ -290,6 +290,56 @@ intrinsic metabelian(G::LMFDBGrp) -> BoolElt
     return IsAbelian(DerivedSubgroup(g));
 end intrinsic;
 
+intrinsic monomial_number(n::RntIntElt) -> BoolElt
+{If true, then all SOLVABLE groups of this order are monomial}
+    // This routine was ported from GAP (https://github.com/gap-system/gap/blob/46eef40fd7f14c8769d8ba993a52b485e6075b89/lib/ctblmono.gi#L932)
+    nu2 := Valuation(n, 2);
+    fac := Factorization(n);
+    // minimal nonmonomial groups of type 1
+    if nu2 ge 2 and &or[pair[1] mod 4 eq 3 and pair[2] ge 3 : pair in fac] then
+        return false;
+    end if;
+    // minimal nonmonomial groups of type 2
+    if nu2 ge 3 and &or[pair[1] mod 4 eq 1 and pair[2] ge 3 : pair in fac] then
+        return false;
+    end if;
+    // minimal nonmonomial groups of type 3
+    for pair in fac do
+        p, e := Explode(pair);
+        for pair2 in fac do
+            q, f := Explode(pair2);
+            if p ne q and q ne 2 then
+                ord := Modorder(p, q);
+                if IsEven(ord) and ord lt e then
+                    return false;
+                end if;
+            end if;
+        end for;
+    end for;
+    // minimal nonmonomial groups of type 4
+    if nu2 ge 4 and &or[pair[1] ne 2 and nu2 ge 2 * Modorder(2, pair[1]) + 2] then
+        return false;
+    end if;
+    // minimal nonmonomial groups of type 5
+    if nu2 ge 2 then
+        for pair in fac do
+            p, e := Explode(pair);
+            if p mod 4 eq 1 and e ge 3 then
+                for pair2 in fac do
+                    q, f := Explode(pair2);
+                    if q ne 2 then
+                        ord := Modorder(p, q);
+                        if IsOdd(ord) and 2 * ord lt e then
+                            return false;
+                        end if;
+                    end if;
+                end for;
+            end if;
+        end for;
+    end if;
+    return true;
+end intrinsic;
+
 intrinsic monomial(G::LMFDBGrp) -> BoolElt
     {Determine if a group is monomial}
     g:=G`MagmaGrp;
@@ -297,7 +347,9 @@ intrinsic monomial(G::LMFDBGrp) -> BoolElt
         return false;
     elif Get(G, "supersolvable") then
         return true;
-    elif Get(G,"solvable") and Get(G,"Agroup") then
+    elif Get(G,"Agroup") then
+        return true;
+    elif monomial_number(G) then
         return true;
     else
         ct := Get(G,"MagmaCharacterTable");
