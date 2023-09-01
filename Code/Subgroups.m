@@ -3311,7 +3311,7 @@ intrinsic LowIndexSubgroups(G::LMFDBGrp, d::RngIntElt) -> SeqEnum
         LIS := [];
         ordbd := Get(G, "order") div d;
         for H in Get(G, "Subgroups") do
-            if Get(H, "subgroup_order") gt ordbd then
+            if Get(H, "subgroup_order") ge ordbd then
                 Append(~LIS, H);
             end if;
         end for;
