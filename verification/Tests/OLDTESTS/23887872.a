@@ -1,0 +1,33 @@
+23887872.a
+Running: abelian IsAbelian
+Running: almost_simple IsAlmostSimpleGroup
+Running: cyclic IsCyclic
+Running: monomial IsMonomialGroup
+Running: nilpotent IsNilpotentGroup
+Running: perfect IsPerfectGroup
+Running: quasisimple IsQuasisimpleGroup
+Running: simple IsSimpleGroup
+Running: solvable IsSolvableGroup
+Running: supersolvable IsSupersolvableGroup
+Running: order Order
+Running: derived_length DerivedLength
+Running: commutator_length CommutatorLength
+Running: exponent Exponent
+T Checking boolean and numeric values ran in 5.669919013977051 seconds 
+Running: commutator_label DerivedSubgroup
+W Cannot determine label for group represented in commutator_label. 
+Running: center_label Center
+Running: frattini_label FrattiniSubgroup
+Running: abelian_quotient CommutatorFactorGroup
+T Checking labels of special subgroups ran in 0.26554226875305176 seconds 
+Running: irrep_stats
+T Checking irreducible representations stats ran in 2450.823768377304 seconds 
+Running size of automorphism group 
+T Checking the automorphism group order ran in 492.161372423172 seconds 
+Running conjugacy class sizes 
+T Checking conjugacy class sizes ran in 6.449850082397461 seconds 
+T Checking #char = #conjugacy classes ran in 5.53131103515625e-05 seconds 
+T Checking number of elements of each  order ran in 0.0002071857452392578 seconds 
+number of subgroups 
+T Checking number of subgroup classes ran in 0.0002155303955078125 seconds 
+T Checking number of normal subgroup classes ran in 0.9523606300354004 seconds 
