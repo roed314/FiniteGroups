@@ -1,0 +1,24 @@
+200000000.dox
+T Generating the group took 0.017578125 seconds 
+Running: abelian IsAbelian
+Running: almost_simple IsAlmostSimpleGroup
+Running: cyclic IsCyclic
+Running: monomial IsMonomialGroup
+Running: nilpotent IsNilpotentGroup
+Running: perfect IsPerfectGroup
+Running: quasisimple IsQuasisimpleGroup
+Running: simple IsSimpleGroup
+Running: solvable IsSolvableGroup
+Running: supersolvable IsSupersolvableGroup
+Running: order Order
+Running: derived_length DerivedLength
+Running: commutator_length CommutatorLength
+Running: exponent Exponent
+T Checking boolean and numeric values ran in 0.4615931510925293 seconds 
+Running: commutator_label DerivedSubgroup
+W Cannot determine label for group represented in commutator_label. 
+Running: center_label Center
+Running: frattini_label FrattiniSubgroup
+Running: abelian_quotient CommutatorFactorGroup
+T Checking labels of special subgroups ran in 0.00754094123840332 seconds 
+Running: size of automorphism group 
