@@ -349,7 +349,7 @@ intrinsic monomial(G::LMFDBGrp) -> BoolElt
         return true;
     elif Get(G,"Agroup") then
         return true;
-    elif monomial_number(G) then
+    elif monomial_number(G`Grp) then
         return true;
     else
         ct := Get(G,"MagmaCharacterTable");
