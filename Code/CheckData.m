@@ -21,21 +21,20 @@ data := AssociativeArray();
 for run in runs do
     for line in Split(Read(Sprintf("/scratch/grp/collated/%o/%o", label, run)), "\n") do
         code := line[1];
-        line := line[2..#line];
         base, attrs := Explode(code_lookup[code]);
         tmp := AssociativeArray();
-        pieces := Split(line, "|");
+        pieces := Split(line[2..#line], "|");
         assert #pieces eq #attrs; // TODO: better error handling
         for i in [1..#pieces] do
             tmp[attrs[i]] := pieces[i];
         end for;
-        if not HasKey(data, code) then
+        if not IsDefined(data, code) then
             data[code] := [];
         end if;
         Append(~data[code], <run, tmp>);
     end for;
 end for;
-assert HasKey(data, "b"); // TODO: better error handling
+assert IsDefined(data, "b"); // TODO: better error handling
 by_rep := AssociativeArray();
 reps := {line[2]["representations"] : line in data["b"]};
 assert #reps eq 1; // TODO: better eror handling
@@ -43,7 +42,7 @@ for rep in reps do
     for rtype -> rdata in LoadJsonb(rep) do
         if rtype eq "PC" then
             // polycyclic group
-            if HasKey(rdata, "pres") then
+            if IsDefined(rdata, "pres") then
                 G := PCGroup(rdata["pres"]);
             else
                 G := SmallGroupDecoding(rdata["code"], N);
