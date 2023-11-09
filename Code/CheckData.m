@@ -1,4 +1,4 @@
-// USAGE: ls /scratch/gps/collated | parallel -j128 --timeout 30 magma -b label:={1} CheckData.m
+// USAGE: ls /scratch/grp/collated | parallel -j128 --timeout 30 magma -b label:={1} CheckData.m
 // This script loads data from the collated folders and checks various things:
 // * that element_repr_type is correct (tested by computing sizes of conjugacy classes and subgroups using the different possibilities)
 // * that subgroup labels are correct
@@ -6,7 +6,7 @@
 AttachSpec("spec");
 N, i := Explode(Split(label, "."));
 N := StringToInteger(N);
-runs := Split(Pipe("ls /scratch/gps/collated/" * label, ""), "\n");
+runs := Split(Pipe("ls /scratch/grp/collated/" * label, ""), "\n");
 files := Split(Pipe("ls", ""), "\n");
 code_lookup := AssociativeArray();
 for fname in files do
@@ -19,7 +19,7 @@ for fname in files do
 end for;
 data := AssociativeArray();
 for run in runs do
-    for line in Split(Read(Sprintf("/scratch/gps/collated/%o/%o", label, run)), "\n") do
+    for line in Split(Read(Sprintf("/scratch/grp/collated/%o/%o", label, run)), "\n") do
         code := line[1];
         line := line[2..#line];
         base, attrs := Explode(code_lookup[code]);
