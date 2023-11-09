@@ -3,7 +3,9 @@
 // * that element_repr_type is correct (tested by computing sizes of conjugacy classes and subgroups using the different possibilities)
 // * that subgroup labels are correct
 
+SetColumns(0);
 AttachSpec("spec");
+AddAttribute(SubgroupLat, "stored_label");
 N, i := Explode(Split(label, "."));
 N := StringToInteger(N);
 runs := Split(Pipe("ls /scratch/grp/collated/" * label, ""), "\n");
@@ -63,6 +65,7 @@ for rep in reps do
                 else
                     G := CMD(d, q);
                 end if;
+                // TODO: deal with covering maps
             else
                 // matrix group
                 if rtype eq "GLZ" then
@@ -97,4 +100,100 @@ for rep in reps do
         assert #G eq N; // TODO: better error handling
         by_rep[rtype] := G;
     end for;
+end for;
+
+// Determine the correct element_repr_type
+acceptable := AssociativeArray();
+for run in runs do
+    acceptable[run] := Keys(by_rep);
+end for;
+Hs := AssociativeArray();
+for pair in data["S"] do
+    run, rec := Explode(pair);
+    for rtype in acceptable[run] do
+        G := by_rep[rtype];
+        try
+            gens := [LoadElt(Sprint(gen), G) : gen in rec["generators"]];
+            H := sub<G | gens>;
+            if #H eq rec["subgroup_order"] then
+                Hs[<run, rtype, rec["label"]>] := H;
+            else
+                Exclude(~acceptable[run], rtype);
+            end if;
+        catch e
+            Exclude(~acceptable[run], rtype);
+        end try;
+    end for;
+end for;
+Zs := AssociativeArray();
+for pair in data["J"] do
+    run, rec := Explode(pair);
+    for rtype in acceptable[run] do
+        G := by_rep[rtype];
+        try
+            rep := LoadElt(Sprint(rec["representative"]), G);
+            Z := Centralizer(G, rep);
+            if #Z * rec["size"] eq #G then
+                Zs[<run, rtype, rec["label"]>] := Z;
+            else
+                Exclude(~acceptable[run], rtype);
+            end if;
+        catch e
+            Exclude(~acceptable[run], rtype);
+        end try;
+    end for;
+end for;
+assert &and{#rtypes eq 1 : run -> rtypes in acceptable}; // TODO: better error handling
+// TODO: Compare with stored element_repr_type
+Grp := AssociativeArray();
+basicdata := data["b"][1][2];
+for run in runs do
+    G := NewLMFDBGrp(by_rep[Representative(acceptable[run])], label);
+    for attr in GetBasicAttributes do
+        db_attr := attr[2];
+        G``db_attr := LoadAttr(db_attr, basicdata[db_attr], G);
+    end for;
+    oe := {rec[2]["outer_equivalence"] : rec in data["s"] | rec[1] eq run};
+    assert #oe eq 1; // TODO: better error handling
+    G`outer_equivalence := LoadBool(Representative(oe));
+    sik := {rec[2]["subgroup_inclusions_known"] : rec in data["s"] | rec[1] eq run};
+    assert #sik eq 1; // TODO: better error handling
+    G`subgroup_inclusions_known := LoadBool(Representative(sik));
+    sib := {rec[2]["subgroup_index_bound"] : rec in data["s"] | rec[1] eq run};
+    assert #sib eq 1; // TODO: better error handling
+    G`subgroup_index_bound := StringToInteger(Representative(sib));
+
+    Grp[run] := G;
+end for;
+
+// Check subgroup labels
+Lat := AssociativeArray();
+for run in runs do
+    rtype := Representative(acceptable[run]);
+    res := New(SubgroupLat);
+    G := Grp[run];
+    res`Grp := G;
+    res`outer_equivalence := G`outer_equivalence;
+    res`inclusions_known := G`subgroup_inclusions_known;
+    res`index_bound := G`subgroup_index_bound;
+    stored := [rec[2] : rec in data["S"] | rec[1] eq run];
+    subs := [SubgroupLatElement(res, Hs[<run, rtype, stored[i]["label"]>], i:=i) : i in [1..#stored]];
+    if res`inclusions_known then
+        by_label := AssociativeArray();
+        for i in [1..#stored] do
+            subs[i]`stored_label := stored[i]["label"];
+            by_label[stored[i]["label"]] := i;
+        end for;
+        for i in [1..#stored] do
+            // sometimes we should be storing aut_overs instead...
+            subs[i]`overs := [by_label[label] : label in LoadTextList(stored[i]["contained_in"])];
+        end for;
+    end if;
+    LabelSubgroups(res);
+    for sub in subs do
+        if sub`label ne sub`stored_label then
+            print run, sub`label, sub`stored_label;
+        end if;
+    end for;
+    Lat[run] := res;
 end for;
