@@ -416,6 +416,11 @@ intrinsic SplitMatrixCodes(L::MonStgElt, d::RngIntElt, Rcode::MonStgElt) -> SeqE
     return [L[i..i+d^2-1] : i in [1..#L by d^2]], R;
 end intrinsic;
 
+intrinsic Pad(X::SeqEnum, m::RngIntElt) -> SeqEnum
+{Pad X with 0s until it has length at least m}
+    return #X ge m select X else X cat [0 : i in [1..m-#X]];
+end intrinsic;
+
 intrinsic SplitMATRIXCodes(L::MonStgElt, d::RngIntElt, Rcode::MonStgElt, b::MonStgElt) -> SeqEnum, Rng
 {}
     if Rcode eq "0" then
@@ -434,9 +439,6 @@ intrinsic SplitMATRIXCodes(L::MonStgElt, d::RngIntElt, Rcode::MonStgElt, b::MonS
     end if;
     L := [StringToInteger(c) : c in Split(L, ",")];
     L := [IntegerToSequence(mat, b) : mat in L];
-    function Pad(X, m)
-        return #X ge m select X else X cat [0 : i in [1..m-#X]];
-    end function;
     if Rcode[1] eq "q" then
         k := Degree(R);
         L := [Pad(mat, k*d^2) : mat in L];
