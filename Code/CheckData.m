@@ -112,7 +112,7 @@ for pair in data["S"] do
     run, rec := Explode(pair);
     for rtype in acceptable[run] do
         G := by_rep[rtype];
-        try
+        //try
             gens := [LoadElt(Sprint(gen), G) : gen in rec["generators"]];
             H := sub<G | gens>;
             if #H eq rec["subgroup_order"] then
@@ -122,10 +122,10 @@ for pair in data["S"] do
                 print "SNO", rec["label"], run, rtype;
                 Exclude(~acceptable[run], rtype);
             end if;
-        catch e
-            print "SER", rec["label"], run, rtype;
-            Exclude(~acceptable[run], rtype);
-        end try;
+        //catch e
+        //    print "SER", rec["label"], run, rtype;
+        //    Exclude(~acceptable[run], rtype);
+        //end try;
     end for;
 end for;
 Zs := AssociativeArray();
@@ -133,7 +133,7 @@ for pair in data["J"] do
     run, rec := Explode(pair);
     for rtype in acceptable[run] do
         G := by_rep[rtype];
-        try
+        //try
             rep := LoadElt(Sprint(rec["representative"]), G);
             Z := Centralizer(G, rep);
             if #Z * rec["size"] eq #G then
@@ -143,10 +143,10 @@ for pair in data["J"] do
                 print "JNO", rec["label"], run, rtype;
                 Exclude(~acceptable[run], rtype);
             end if;
-        catch e
-            print "JER", rec["label"], run, rtype;
-            Exclude(~acceptable[run], rtype);
-        end try;
+        //catch e
+        //    print "JER", rec["label"], run, rtype;
+        //    Exclude(~acceptable[run], rtype);
+        //end try;
     end for;
 end for;
 assert &and{#rtypes eq 1 : run -> rtypes in acceptable}; // TODO: better error handling
