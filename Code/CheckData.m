@@ -116,14 +116,14 @@ for pair in data["S"] do
             gens := [LoadElt(Sprint(gen), G) : gen in rec["generators"]];
             H := sub<G | gens>;
             if #H eq rec["subgroup_order"] then
-                print("SOK", rec["label"], run, rtype)
+                print "SOK", rec["label"], run, rtype;
                 Hs[<run, rtype, rec["label"]>] := H;
             else
-                print("SNO", rec["label"], run, rtype)
+                print "SNO", rec["label"], run, rtype;
                 Exclude(~acceptable[run], rtype);
             end if;
         catch e
-            print("SER", rec["label"], run, rtype)
+            print "SER", rec["label"], run, rtype;
             Exclude(~acceptable[run], rtype);
         end try;
     end for;
@@ -137,14 +137,14 @@ for pair in data["J"] do
             rep := LoadElt(Sprint(rec["representative"]), G);
             Z := Centralizer(G, rep);
             if #Z * rec["size"] eq #G then
-                print("JOK", rec["label"], run, rtype)
+                print "JOK", rec["label"], run, rtype;
                 Zs[<run, rtype, rec["label"]>] := Z;
             else
-                print("JNO", rec["label"], run, rtype)
+                print "JNO", rec["label"], run, rtype;
                 Exclude(~acceptable[run], rtype);
             end if;
         catch e
-            print("JER", rec["label"], run, rtype)
+            print "JER", rec["label"], run, rtype;
             Exclude(~acceptable[run], rtype);
         end try;
     end for;
