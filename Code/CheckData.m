@@ -113,7 +113,7 @@ for pair in data["S"] do
     for rtype in acceptable[run] do
         G := by_rep[rtype];
         //try
-            gens := [LoadElt(Sprint(gen), G) : gen in rec["generators"]];
+            gens := [LoadElt(Sprint(gen), G) : gen in LoadTextList(rec["generators"])];
             H := sub<G | gens>;
             if #H eq rec["subgroup_order"] then
                 print "SOK", rec["label"], run, rtype;
