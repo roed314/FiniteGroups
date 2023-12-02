@@ -86,7 +86,7 @@ def linQ_degree(group, prec=40, irrQ_degree=None, mobius=None, poset=None, chars
     if f.is_zero():
         # The actual degree may be more than our estimate
         assert prec < group_order
-        return linC_degree(group, 2*prec, irrQ_degree=irrQ_degree, mobius=mobius, poset=poset, chars=chars)
+        return linQ_degree(group, 2*prec, irrQ_degree=irrQ_degree, mobius=mobius, poset=poset, chars=chars)
     v = f.valuation()
     return v, f[v]
 
