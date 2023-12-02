@@ -80,7 +80,7 @@ def linQ_degree(group, prec=40, irrQ_degree=None, mobius=None, poset=None, chars
         _, _, chars, irrQ_degree = char_data(group)
     if irrQ_degree != -1:
         # faithful Q-irrep
-        prec = irrQ_degree
+        prec = irrQ_degree + 1
     f = rep_series(prec, mobius, poset, chars)
     #print(f)
     if f.is_zero():
