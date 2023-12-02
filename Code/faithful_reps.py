@@ -1,7 +1,8 @@
+#!/usr/bin/env -S sage -python
 
 from sage.all import PowerSeriesRing, ZZ, Poset
 from collections import defaultdict, Counter
-import sys, re, time, argparse
+import os, sys, re, time, argparse
 CHAR_LABEL_RE = re.compile(r"(\d+\.[0-9a-z]+.\d+[a-z]+)\d*")
 
 def poset_data(group):
@@ -27,7 +28,7 @@ def char_data(group):
         qlabel = m.group(1)
         kernels[qlabel] = K
         if rec["faithful"]:
-            irrC_degree = min(d if irrC_degree == -1 else irrC_degree, d)
+            irrC_degree = min(rec["dim"] if irrC_degree == -1 else irrC_degree, rec["dim"])
     Qchars = defaultdict(Counter)
     irrQ_degree = -1
     for rec in db.gps_qchar.search({"group": group}, ["label", "qdim", "schur_index", "faithful"]):
