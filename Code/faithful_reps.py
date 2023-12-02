@@ -1,7 +1,7 @@
 
 from sage.all import PowerSeriesRing, ZZ, Poset
 from collections import defaultdict, Counter
-import re, time, argparse
+import sys, re, time, argparse
 CHAR_LABEL_RE = re.compile(r"(\d+\.[0-9a-z]+.\d+[a-z]+)\d*")
 
 def poset_data(group):
@@ -139,6 +139,8 @@ parser.add_argument("n", type=int, nargs="?")
 parser.add_argument("-i", action="store_true") # to support interactive use from Sage
 args = parser.parse_args()
 if args.n is not None:
+    sys.path.append(os.path.expanduser("~/lmfdb"))
+    from lmfdb import db
     infile = f"DATA/faithful_in/{args.n}"
     outfile = f"DATA/faithful_out/{args.n}"
     mobfile = f"DATA/faithful_mob/{args.n}"
