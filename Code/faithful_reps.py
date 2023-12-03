@@ -132,7 +132,7 @@ def finish_irrQ():
         for G, d in irrQ.items():
             _ = F.write(f"{G}|{d}\n")
     found = set(irrQ)
-    old = set(db.gps_groups.search({"irrQ_degree":{"$exists":True}}, "label"))
+    old = set(db.gps_groups.search({"irrQ_degree":{"$ne":-1}}, "label"))
     missing = old.difference(found)
     return missing
 
