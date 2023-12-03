@@ -66,7 +66,8 @@ def linC_degree(group, prec=40, irrC_degree=None, mobius=None, poset=None, chars
     f = rep_series(prec, mobius, poset, chars)
     #print(f)
     if f.is_zero():
-        assert prec < group_order
+        if prec >= group_order:
+            raise RuntimeError("Surpassed group order")
         # The actual degree may be more than our estimate, so we need to search until we find a representation
         return linC_degree(group, 2*prec, irrC_degree=irrC_degree, mobius=mobius, poset=poset, chars=chars)
     v = f.valuation()
@@ -84,8 +85,9 @@ def linQ_degree(group, prec=40, irrQ_degree=None, mobius=None, poset=None, chars
     f = rep_series(prec, mobius, poset, chars)
     #print(f)
     if f.is_zero():
+        if prec >= group_order:
+            raise RuntimeError("Surpassed group order")
         # The actual degree may be more than our estimate
-        assert prec < group_order
         return linQ_degree(group, 2*prec, irrQ_degree=irrQ_degree, mobius=mobius, poset=poset, chars=chars)
     v = f.valuation()
     return v, f[v]
@@ -145,16 +147,20 @@ if args.n is not None:
     infile = f"DATA/faithful_in/{args.n}"
     outfile = f"DATA/faithful_out/{args.n}"
     mobfile = f"DATA/faithful_mob/{args.n}"
-    for x in ["out", "mob"]:
+    runfile = f"DATA/faithful_run/{args.n}"
+    for x in ["out", "mob", "run"]:
         os.makedirs(f"DATA/faithful_{x}", exist_ok=True)
     with open(infile) as F:
         with open(outfile, "w") as Fout:
             with open(mobfile, "w") as Fmob:
-                for label in F:
-                    label = label.strip()
-                    try:
-                        linC, linC_count, linQ, linQ_count = linCQ_degree(label)
-                    except ValueError:
-                        _ = Fmob.write(label + "\n")
-                    else:
-                        _ = Fout.write(f"{label}|{linC}|{linQ}|{linC_count}|{linQ_count}\n")
+                with open(runfile, "w") as Frun:
+                    for label in F:
+                        label = label.strip()
+                        try:
+                            linC, linC_count, linQ, linQ_count = linCQ_degree(label)
+                        except ValueError:
+                            _ = Fmob.write(label + "\n")
+                        except RuntimeError:
+                            _ = Frun.write(label + "\n")
+                        else:
+                            _ = Fout.write(f"{label}|{linC}|{linQ}|{linC_count}|{linQ_count}\n")
