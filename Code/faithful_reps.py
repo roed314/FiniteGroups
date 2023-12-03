@@ -120,7 +120,24 @@ def write_todo(n):
             if label not in todo:
                 _ = F.write(label + "\n")
 
+def finish_irrQ():
+    irrQ = defaultdict(lambda: -1)
+    for rec in db.gps_qchar.search({}, ["group", "qdim", "schur_index", "faithful"]):
+        G = rec["group"]
+        d = rec["qdim"] * rec["schur_index"]
+        if rec["faithful"]:
+            irrQ[G] = min(d if irrQ[G] == -1 else irrQ[G], d)
+    with open("DATA/irrQ.update", "w") as F:
+        _ = F.write("label|irrQ_degree\ntext|integer\n\n")
+        for G, d in irrQ.items():
+            _ = F.write(f"{G}|{d}\n")
+    found = set(irrQ)
+    old = set(db.gps_groups.search({"irrQ_degree":{"$exists":True}}, "label"))
+    missing = old.difference(found)
+    return missing
+
 def check_linQ(linQ):
+    # Function for checking the correctness of linQ_degree by matching the representation dictionary
     timings = {}
     missing_mobius = []
     invalid = []
