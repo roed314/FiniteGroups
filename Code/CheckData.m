@@ -169,7 +169,7 @@ for pair in data["J"] do
     run, rec := Explode(pair);
     for rtype in acceptable[run] do
         G := by_rep[rtype];
-        //try
+        try
             rep := LoadElt(Sprint(rec["representative"]), G);
             Z := Centralizer(G, rep);
             if #Z * StringToInteger(rec["size"]) eq #G then
