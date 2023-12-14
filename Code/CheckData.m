@@ -2,10 +2,12 @@
 // This script loads data from the collated folders and checks various things:
 // * that element_repr_type is correct (tested by computing sizes of conjugacy classes and subgroups using the different possibilities)
 // * that subgroup labels are correct
+// * If the order is identifiable, that IdentifyGroup returns the right thing for each rep
 
 SetColumns(0);
+SetVerbose("User1", 1);
 AttachSpec("spec");
-AddAttribute(SubgroupLat, "stored_label");
+AddAttribute(SubgroupLatElt, "stored_label");
 N, i := Explode(Split(label, "."));
 N := StringToInteger(N);
 runs := Split(Pipe("ls /scratch/grp/collated/" * label, ""), "\n");
@@ -19,6 +21,8 @@ for fname in files do
         code_lookup[code] := <base, attrs>;
     end if;
 end for;
+errfile := Sprintf("/scratch/grp/check_errors/%o", label);
+subfile := Sprintf("/scratch/grp/sub_mismatch/%o", label);
 data := AssociativeArray();
 for run in runs do
     for line in Split(Read(Sprintf("/scratch/grp/collated/%o/%o", label, run)), "\n") do
@@ -26,7 +30,10 @@ for run in runs do
         base, attrs := Explode(code_lookup[code]);
         tmp := AssociativeArray();
         pieces := Split(line[2..#line], "|");
-        assert #pieces eq #attrs; // TODO: better error handling
+        if #pieces ne #attrs then
+            PrintFile(errfile, Sprintf("%o|1|%o|%o|%o", label, code, #pieces, #attrs)); // err 1
+            exit;
+        end if;
         for i in [1..#pieces] do
             tmp[attrs[i]] := pieces[i];
         end for;
@@ -36,10 +43,27 @@ for run in runs do
         Append(~data[code], <run, tmp>);
     end for;
 end for;
-assert IsDefined(data, "b"); // TODO: better error handling
+if not IsDefined(data, "b") then
+    PrintFile(errfile, Sprintf("%o|2", label)); // err 2
+    exit;
+end if;
+if IsDefined(data, "s") then
+    sruns := [pair[1] : pair in data["s"]];
+else
+    sruns := [];
+end if;
 by_rep := AssociativeArray();
 reps := {line[2]["representations"] : line in data["b"]};
-assert #reps eq 1; // TODO: better eror handling
+if #reps ne 1 then
+    PrintFile(errfile, Sprintf("%o|3", label)); // err 3
+    exit;
+end if;
+hashes := {line[2]["hash"] : line in data["b"]};
+if #hashes ne 1 then
+    PrintFile(errfile, Sprintf("%o|4", label)); // err 4
+    exit;
+end if;
+Ghash := StringToInteger(Representative(hashes));
 for rep in reps do
     for rtype -> rdata in LoadJsonb(rep) do
         if rtype eq "PC" then
@@ -97,7 +121,19 @@ for rep in reps do
                 G := MatrixGroup<d, R | L>;
             end if;
         end if;
-        assert #G eq N; // TODO: better error handling
+        if #G ne N then
+            PrintFile(errfile, Sprintf("%o|5|%o|%o", label, rtype, #G)); // err 5
+        elif CanIdentifyGroup(N) then
+            _, Gid := IdentifyGroup(G);
+            if StringToInteger(i) ne Gid then
+                PrintFile(errfile, Sprintf("%o|6|%o|%o", label, rtype, Gid)); // err 6
+            end if;
+        else
+            hsh := hash(G);
+            if hsh ne Ghash then
+                PrintFile(errfile, Sprintf("%o|7|%o|%o|%o", label, rtype, Ghash, hsh));
+            end if;
+        end if;
         by_rep[rtype] := G;
     end for;
 end for;
@@ -112,20 +148,20 @@ for pair in data["S"] do
     run, rec := Explode(pair);
     for rtype in acceptable[run] do
         G := by_rep[rtype];
-        //try
+        try
             gens := [LoadElt(Sprint(gen), G) : gen in LoadTextList(rec["generators"])];
             H := sub<G | gens>;
-            if #H eq rec["subgroup_order"] then
-                print "SOK", rec["label"], run, rtype;
+            if #H eq StringToInteger(rec["subgroup_order"]) then
+                //print "SOK", rec["label"], run, rtype;
                 Hs[<run, rtype, rec["label"]>] := H;
             else
-                print "SNO", rec["label"], run, rtype;
+                //print "SNO", rec["label"], run, rtype;
                 Exclude(~acceptable[run], rtype);
             end if;
-        //catch e
-        //    print "SER", rec["label"], run, rtype;
-        //    Exclude(~acceptable[run], rtype);
-        //end try;
+        catch e
+            //print "SER", rec["label"], run, rtype;
+            Exclude(~acceptable[run], rtype);
+        end try;
     end for;
 end for;
 Zs := AssociativeArray();
@@ -136,45 +172,60 @@ for pair in data["J"] do
         //try
             rep := LoadElt(Sprint(rec["representative"]), G);
             Z := Centralizer(G, rep);
-            if #Z * rec["size"] eq #G then
-                print "JOK", rec["label"], run, rtype;
+            if #Z * StringToInteger(rec["size"]) eq #G then
+                //print "JOK", rec["label"], run, rtype;
                 Zs[<run, rtype, rec["label"]>] := Z;
             else
-                print "JNO", rec["label"], run, rtype;
+                //print "JNO", rec["label"], run, rtype;
                 Exclude(~acceptable[run], rtype);
             end if;
-        //catch e
-        //    print "JER", rec["label"], run, rtype;
-        //    Exclude(~acceptable[run], rtype);
-        //end try;
+        catch e
+            //print "JER", rec["label"], run, rtype;
+            Exclude(~acceptable[run], rtype);
+        end try;
     end for;
 end for;
-assert &and{#rtypes eq 1 : run -> rtypes in acceptable}; // TODO: better error handling
+if &or{#rtypes ne 1 : run -> rtypes in acceptable} then
+    zero := Join([run : run -> rtypes in acceptable | # rtypes eq 0], ",");
+    big := Join([run : run -> rtypes in acceptable | # rtypes gt 1], ",");
+    PrintFile(errfile, Sprintf("%o|8|%o|%o", label, zero, big)); // err 8
+    exit;
+end if;
 // TODO: Compare with stored element_repr_type
 Grp := AssociativeArray();
 basicdata := data["b"][1][2];
-for run in runs do
+for run in sruns do
     G := NewLMFDBGrp(by_rep[Representative(acceptable[run])], label);
-    for attr in GetBasicAttributes do
+    for attr in GetBasicAttributesGrp() do
         db_attr := attr[2];
         G``db_attr := LoadAttr(db_attr, basicdata[db_attr], G);
     end for;
     oe := {rec[2]["outer_equivalence"] : rec in data["s"] | rec[1] eq run};
-    assert #oe eq 1; // TODO: better error handling
+    if #oe ne 1 then
+        PrintFile(errfile, Sprintf("%o|9|%o", label, run)); // err 9
+        exit;
+    end if;
     G`outer_equivalence := LoadBool(Representative(oe));
     sik := {rec[2]["subgroup_inclusions_known"] : rec in data["s"] | rec[1] eq run};
-    assert #sik eq 1; // TODO: better error handling
+    if #sik ne 1 then
+        PrintFile(errfile, Sprintf("%o|A|%o", label, run)); // err A
+        exit;
+    end if;
     G`subgroup_inclusions_known := LoadBool(Representative(sik));
     sib := {rec[2]["subgroup_index_bound"] : rec in data["s"] | rec[1] eq run};
-    assert #sib eq 1; // TODO: better error handling
+    if #sib ne 1 then
+        PrintFile(errfile, Sprintf("%o|B|%o", label, run)); // err B
+        exit;
+    end if;
     G`subgroup_index_bound := StringToInteger(Representative(sib));
-
     Grp[run] := G;
+    print run, Representative(acceptable[run]);
 end for;
 
 // Check subgroup labels
 Lat := AssociativeArray();
-for run in runs do
+mismatched := false;
+for run in sruns do
     rtype := Representative(acceptable[run]);
     res := New(SubgroupLat);
     G := Grp[run];
@@ -183,23 +234,35 @@ for run in runs do
     res`inclusions_known := G`subgroup_inclusions_known;
     res`index_bound := G`subgroup_index_bound;
     stored := [rec[2] : rec in data["S"] | rec[1] eq run];
-    subs := [SubgroupLatElement(res, Hs[<run, rtype, stored[i]["label"]>], i:=i) : i in [1..#stored]];
+    // TODO: short circuit here if the short_labels are non-canonical
+    subs := [SubgroupLatElement(res, Hs[<run, rtype, stored[i]["label"]>]: i:=i) : i in [1..#stored]];
     if res`inclusions_known then
         by_label := AssociativeArray();
         for i in [1..#stored] do
-            subs[i]`stored_label := stored[i]["label"];
-            by_label[stored[i]["label"]] := i;
+            subs[i]`normal := LoadBool(stored[i]["normal"]);
+            subs[i]`characteristic := LoadBool(stored[i]["characteristic"]); // TODO: better error handling if characteristic wrong
+            subs[i]`stored_label := stored[i]["short_label"];
+            by_label[stored[i]["short_label"]] := i;
         end for;
         for i in [1..#stored] do
             // sometimes we should be storing aut_overs instead...
             subs[i]`overs := [by_label[label] : label in LoadTextList(stored[i]["contained_in"])];
         end for;
     end if;
+    res`subs := subs;
+    SetClosures(~res);
     LabelSubgroups(res);
     for sub in subs do
         if sub`label ne sub`stored_label then
-            print run, sub`label, sub`stored_label;
+            if not mismatched then
+                mismatched := true;
+                PrintFile(errfile, Sprintf("%o|C"));
+            end if;
+            PrintFile(subfile, Sprintf("%o|%o|%o|%o", label, run, sub`short_label, sub`stored_label));
         end if;
     end for;
     Lat[run] := res;
 end for;
+if not mismatched then
+    PrintFile(errfile, Sprintf("%o|0"));
+end if;
