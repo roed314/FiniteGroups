@@ -2304,8 +2304,8 @@ intrinsic characteristic(H::SubgroupLatElt) -> BoolElt
     return Get(H, "subgroup_count") eq 1 and (L`outer_equivalence or #Get(L, "aut_orbit")[H`i] eq 1);
 end intrinsic;
 
-procedure SetClosures(~L)
-    // Set normal and characteristic closures
+intrinsic SetClosures(~L::SubgroupLat)
+{Set normal and characteristic closures}
     t0 := ReportStart(L`Grp, "SetClosures");
     subs := Get(L, "ordered_subs");
     subs[1]`normal_closure := 1;
@@ -2338,7 +2338,7 @@ procedure SetClosures(~L)
         end for;
     end for;
     ReportEnd(L`Grp, "SetClosures", t0);
-end procedure;
+end intrinsic;
 
 /*AttachSpec("spec");
 SetVerbose("User1", 1);

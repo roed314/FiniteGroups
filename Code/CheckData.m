@@ -219,7 +219,7 @@ for run in sruns do
     end if;
     G`subgroup_index_bound := StringToInteger(Representative(sib));
     Grp[run] := G;
-    print run, Representative(acceptable[run]);
+    //print run, Representative(acceptable[run]);
 end for;
 
 // Check subgroup labels
@@ -264,5 +264,5 @@ for run in sruns do
     Lat[run] := res;
 end for;
 if not mismatched then
-    PrintFile(errfile, Sprintf("%o|0"));
+    PrintFile(errfile, Sprintf("%o|0", label));
 end if;
