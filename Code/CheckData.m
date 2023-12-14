@@ -124,7 +124,7 @@ for rep in reps do
         if #G ne N then
             PrintFile(errfile, Sprintf("%o|5|%o|%o", label, rtype, #G)); // err 5
         elif CanIdentifyGroup(N) then
-            _, Gid := IdentifyGroup(G);
+            _, Gid := Explode(IdentifyGroup(G));
             if StringToInteger(i) ne Gid then
                 PrintFile(errfile, Sprintf("%o|6|%o|%o", label, rtype, Gid)); // err 6
             end if;
