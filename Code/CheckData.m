@@ -63,7 +63,10 @@ if #hashes ne 1 then
     PrintFile(errfile, Sprintf("%o|4", label)); // err 4
     exit;
 end if;
-Ghash := StringToInteger(Representative(hashes));
+Ghash := Representative(hashes);
+if Ghash ne "\\N" then
+    Ghash := StringToInteger(Ghash);
+end if;
 for rep in reps do
     for rtype -> rdata in LoadJsonb(rep) do
         if rtype eq "PC" then
@@ -130,7 +133,7 @@ for rep in reps do
             end if;
         else
             hsh := hash(G);
-            if hsh ne Ghash then
+            if Type(Ghash) eq RngIntElt and hsh ne Ghash then
                 PrintFile(errfile, Sprintf("%o|7|%o|%o|%o", label, rtype, Ghash, hsh));
             end if;
         end if;
