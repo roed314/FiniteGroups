@@ -250,6 +250,7 @@ for run in sruns do
         for i in [1..#stored] do
             // sometimes we should be storing aut_overs instead...
             subs[i]`overs := [by_label[label] : label in LoadTextList(stored[i]["contained_in"])];
+            subs[i]`unders := [by_label[label] : label in LoadTextList(stored[i]["contains"])];
         end for;
     end if;
     res`subs := subs;
