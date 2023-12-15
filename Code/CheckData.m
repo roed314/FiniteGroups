@@ -249,8 +249,14 @@ for run in sruns do
         end for;
         for i in [1..#stored] do
             // sometimes we should be storing aut_overs instead...
-            subs[i]`overs := [by_label[label] : label in LoadTextList(stored[i]["contained_in"])];
-            subs[i]`unders := [by_label[label] : label in LoadTextList(stored[i]["contains"])];
+            subs[i]`overs := AssociativeArray();
+            for label in LoadTextList(stored[i]["contained_in"]) do
+                subs[i]`overs[by_label[label]] := true;
+            end for;
+            subs[i]`unders := AssociativeArray();
+            for label in LoadTextList(stored[i]["contains"]) do
+                subs[i]`unders[by_label[label]] := true;
+            end for;
         end for;
     end if;
     res`subs := subs;
