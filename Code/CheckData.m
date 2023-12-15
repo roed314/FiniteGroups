@@ -269,7 +269,7 @@ for run in sruns do
                 print "Mismatched", run;
                 PrintFile(errfile, Sprintf("%o|C|%o", label, run));
             end if;
-            PrintFile(subfile, Sprintf("%o|%o|%o|%o", label, run, sub`short_label, sub`stored_label));
+            PrintFile(subfile, Sprintf("%o|%o|%o|%o", label, run, sub`label, sub`stored_label));
         end if;
     end for;
     Lat[run] := res;
