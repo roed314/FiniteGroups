@@ -227,7 +227,7 @@ end for;
 
 // Check subgroup labels
 Lat := AssociativeArray();
-mismatched := false;
+mismatched := {};
 for run in sruns do
     rtype := Representative(acceptable[run]);
     res := New(SubgroupLat);
@@ -264,15 +264,18 @@ for run in sruns do
     LabelSubgroups(res);
     for sub in subs do
         if sub`label ne sub`stored_label then
-            if not mismatched then
-                mismatched := true;
-                PrintFile(errfile, Sprintf("%o|C"));
+            if not (run in mismatched) then
+                Include(~mismatched, run);
+                print "Mismatched", run;
+                PrintFile(errfile, Sprintf("%o|C|%o", label, run));
             end if;
             PrintFile(subfile, Sprintf("%o|%o|%o|%o", label, run, sub`short_label, sub`stored_label));
         end if;
     end for;
     Lat[run] := res;
 end for;
-if not mismatched then
+if #mismatched lt #sruns then
     PrintFile(errfile, Sprintf("%o|0", label));
+else
+    PrintFile(errfile, Sprintf("%o|X", label));
 end if;
