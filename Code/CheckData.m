@@ -269,14 +269,14 @@ for run in sruns do
                 print "Mismatched", run;
                 PrintFile(errfile, Sprintf("%o|D|%o", label, run));
             end if;
-            PrintFile(subfile, Sprintf("%o|D|%o|%o|%o", label, run, sub`label, sub`stored_label));
+            PrintFile(subfile, Sprintf("%o|%o|?|%o", label, run, sub`stored_label));
         elif sub`label ne sub`stored_label then
             if not (run in mismatched) then
                 Include(~mismatched, run);
                 print "Mismatched", run;
                 PrintFile(errfile, Sprintf("%o|C|%o", label, run));
             end if;
-            PrintFile(subfile, Sprintf("%o|C|%o|%o|%o", label, run, sub`label, sub`stored_label));
+            PrintFile(subfile, Sprintf("%o|%o|%o|%o", label, run, sub`label, sub`stored_label));
         end if;
     end for;
     Lat[run] := res;
