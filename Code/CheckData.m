@@ -239,14 +239,14 @@ for run in sruns do
     stored := [rec[2] : rec in data["S"] | rec[1] eq run];
     // TODO: short circuit here if the short_labels are non-canonical
     subs := [SubgroupLatElement(res, Hs[<run, rtype, stored[i]["label"]>]: i:=i) : i in [1..#stored]];
+    by_label := AssociativeArray();
+    for i in [1..#stored] do
+        subs[i]`normal := LoadBool(stored[i]["normal"]);
+        subs[i]`characteristic := LoadBool(stored[i]["characteristic"]); // TODO: better error handling if characteristic wrong
+        subs[i]`stored_label := stored[i]["short_label"];
+        by_label[stored[i]["short_label"]] := i;
+    end for;
     if res`inclusions_known then
-        by_label := AssociativeArray();
-        for i in [1..#stored] do
-            subs[i]`normal := LoadBool(stored[i]["normal"]);
-            subs[i]`characteristic := LoadBool(stored[i]["characteristic"]); // TODO: better error handling if characteristic wrong
-            subs[i]`stored_label := stored[i]["short_label"];
-            by_label[stored[i]["short_label"]] := i;
-        end for;
         for i in [1..#stored] do
             // sometimes we should be storing aut_overs instead...
             subs[i]`overs := AssociativeArray();
