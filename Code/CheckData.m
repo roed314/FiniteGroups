@@ -260,7 +260,9 @@ for run in sruns do
         end for;
     end if;
     res`subs := subs;
-    SetClosures(~res);
+    if res`inclusions_known then
+        SetClosures(~res);
+    end if;
     LabelSubgroups(res);
     for sub in subs do
         if not assigned sub`label then
