@@ -191,7 +191,7 @@ end for;
 if &or{#rtypes ne 1 : run -> rtypes in acceptable} then
     zero := Join([run : run -> rtypes in acceptable | # rtypes eq 0], ",");
     big := Join([run : run -> rtypes in acceptable | # rtypes gt 1], ",");
-    valid := Join([Join(rtypes, ",") : run -> rtypes in acceptable | #rtypes gt 1], ";");
+    valid := Join([Join([rtype : rtype in rtypes], ",") : run -> rtypes in acceptable | #rtypes gt 1], ";");
     PrintFile(errfile, Sprintf("%o|8|%o|%o|%o", label, zero, big, valid)); // err 8
     exit;
 end if;
