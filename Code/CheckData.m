@@ -188,10 +188,11 @@ for pair in data["J"] do
         end try;
     end for;
 end for;
-if &or{#acceptable[run] ne 1 : run in sruns} then
-    zero := Join([run : run in sruns | #acceptable[run] eq 0], ",");
-    big := Join([run : run in sruns | #acceptable[run] gt 1], ",");
-    valid := Join([Join([rtype : rtype in rtypes], ",") : run in sruns | #acceptable[run] gt 1], ";");
+SJruns := {pair[1] : pair in data["J"] cat data["S"]};
+if &or{#acceptable[pair[1]] ne 1 : pair in SJruns} then
+    zero := Join([run : run in SJruns | #acceptable[run] eq 0], ",");
+    big := Join([run : run in SJruns | #acceptable[run] gt 1], ",");
+    valid := Join([Join([rtype : rtype in rtypes], ",") : run in SJruns | #acceptable[run] gt 1], ";");
     PrintFile(errfile, Sprintf("%o|8|%o|%o|%o", label, zero, big, valid)); // err 8
     exit;
 end if;
