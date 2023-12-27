@@ -448,7 +448,7 @@ counter        | smallint   | `j`, a 1-based ordering of characters of this grou
 kernel         | text       | The subgroup label for the kernel of this character
 center         | text       | The subgroup label for the subgroup that this character maps into the diagonal matrices
 faithful       | boolean    | Whether the corresponding homomorphism is injective
-q_character    | text       | Label of the corresponding Q-character
+q_character    | text       | Label of the corresponding Q-character NOT CURRENTLY STORED, can be read from label.
 indicator      | smallint   | the Frobenius-Schur indicator
 image          | text       | The label for the image as a subgroup of GL_n(C)
 nt             | int[]      | the pair [n,t] where nTt is the smallest permutation representation containing the character
