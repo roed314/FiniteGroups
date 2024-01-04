@@ -323,7 +323,7 @@ for run in sruns do
             if subs[i]`normal then
                 actual_char := characteristic(subs[i]);
                 stored_char := subs[i]`characteristic;
-                if subs[i]`order eq 1 or actual_char ne stored_char then
+                if subs[i]`order eq 1 or actual_char cmpne stored_char then
                     print i, subs[i]`order, actual_char, stored_char;
                 end if;
             end if;
