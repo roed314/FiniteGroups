@@ -13,10 +13,10 @@ N, i := Explode(Split(label, "."));
 N := StringToInteger(N);
 runs := Split(Pipe("ls /scratch/grp/collated/" * label, ""), "\n");
 
-function PrintBoth(fname, s)
+procedure PrintBoth(fname, s)
     PrintFile(fname, s);
     print s;
-end function;
+end procedure;
 
 // Load the specifications for the output codes
 files := Split(Pipe("ls", ""), "\n");
