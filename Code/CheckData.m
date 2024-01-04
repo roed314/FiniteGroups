@@ -13,6 +13,11 @@ N, i := Explode(Split(label, "."));
 N := StringToInteger(N);
 runs := Split(Pipe("ls /scratch/grp/collated/" * label, ""), "\n");
 
+function PrintBoth(fname, s)
+    PrintFile(fname, s);
+    print s;
+end function;
+
 // Load the specifications for the output codes
 files := Split(Pipe("ls", ""), "\n");
 code_lookup := AssociativeArray();
@@ -39,7 +44,7 @@ for run in runs do
         tmp := AssociativeArray();
         pieces := Split(line[2..#line], "|");
         if #pieces ne #attrs then
-            PrintFile(errfile, Sprintf("%o|1|%o|%o|%o", label, code, #pieces, #attrs)); // err 1, fatal: the code specification was not correct.
+            PrintBoth(errfile, Sprintf("%o|1|%o|%o|%o", label, code, #pieces, #attrs)); // err 1, fatal: the code specification was not correct.
             exit;
         end if;
         for i in [1..#pieces] do
@@ -52,7 +57,7 @@ for run in runs do
     end for;
 end for;
 if not IsDefined(data, "b") then
-    PrintFile(errfile, Sprintf("%o|2", label)); // err 2, fatal: there was no basic output
+    PrintBoth(errfile, Sprintf("%o|2", label)); // err 2, fatal: there was no basic output
     exit;
 end if;
 
@@ -67,14 +72,14 @@ end if;
 by_rep := AssociativeArray();
 reps := {line[2]["representations"] : line in data["b"]};
 if #reps ne 1 then
-    PrintFile(errfile, Sprintf("%o|3", label)); // err 3, fatal: there were multiple representation dictionaries for different basic runs; this is unexpected
+    PrintBoth(errfile, Sprintf("%o|3", label)); // err 3, fatal: there were multiple representation dictionaries for different basic runs; this is unexpected
     exit;
 end if;
 
 // Get the hash values
 hashes := {line[2]["hash"] : line in data["b"]};
 if #hashes ne 1 then
-    PrintFile(errfile, Sprintf("%o|4", label)); // err 4, fatal: there were multiple hash values for different basic runs; this is unexpected
+    PrintBoth(errfile, Sprintf("%o|4", label)); // err 4, fatal: there were multiple hash values for different basic runs; this is unexpected
     exit;
 end if;
 Ghash := Representative(hashes);
@@ -141,16 +146,16 @@ for rep in reps do
             end if;
         end if;
         if #G ne N then
-            PrintFile(errfile, Sprintf("%o|5|%o|%o", label, rtype, #G)); // err 5, nonfatal: the number of elements in the group doesn't match
+            PrintBoth(errfile, Sprintf("%o|5|%o|%o", label, rtype, #G)); // err 5, nonfatal: the number of elements in the group doesn't match
         elif CanIdentifyGroup(N) then
             _, Gid := Explode(IdentifyGroup(G));
             if StringToInteger(i) ne Gid then
-                PrintFile(errfile, Sprintf("%o|6|%o|%o", label, rtype, Gid)); // err 6, nonfatal: the group identification is wrong
+                PrintBoth(errfile, Sprintf("%o|6|%o|%o", label, rtype, Gid)); // err 6, nonfatal: the group identification is wrong
             end if;
         else
             hsh := hash(G);
             if Type(Ghash) eq RngIntElt and hsh ne Ghash then
-                PrintFile(errfile, Sprintf("%o|7|%o|%o|%o", label, rtype, Ghash, hsh)); // err 7, nonfatal: for unidentifiable groups, the hash value is wrong
+                PrintBoth(errfile, Sprintf("%o|7|%o|%o|%o", label, rtype, Ghash, hsh)); // err 7, nonfatal: for unidentifiable groups, the hash value is wrong
             end if;
         end if;
         by_rep[rtype] := G;
@@ -208,8 +213,8 @@ sSJruns := {pair[1] : pair in data["s"] cat data["S"] cat data["J"]};
 if &or{#acceptable[run] ne 1 : run in sSJruns} then
     zero := Join([run : run in sSJruns | #acceptable[run] eq 0], ",");
     big := Join([run : run in sSJruns | #acceptable[run] gt 1], ",");
-    valid := Join([Join([rtype : rtype in rtypes], ",") : run in sSJruns | #acceptable[run] gt 1], ";");
-    PrintFile(errfile, Sprintf("%o|8|%o|%o|%o", label, zero, big, valid)); // err 8, fatal: there wasn't a unique elt_repr_type for a run that computed subgroups or conjugacy classes
+    valid := Join([Join([rtype : rtype in acceptable[run]], ",") : run in sSJruns | #acceptable[run] gt 1], ";");
+    PrintBoth(errfile, Sprintf("%o|8|%o|%o|%o", label, zero, big, valid)); // err 8, fatal: there wasn't a unique elt_repr_type for a run that computed subgroups or conjugacy classes
     exit;
 end if;
 for run in sSJruns do
@@ -221,7 +226,7 @@ for pair in data["b"] do
     run, bdata := Explode(pair);
     stored_ert := bdata["element_repr_type"];
     if stored_ert ne acceptable[run] then
-        PrintFile(errfile, Sprintf("%o|9|%o|%o|%o", label, run, stored_ert, acceptable[run])); // err 9, nonfatal: the stored ert is not acceptable
+        PrintBoth(errfile, Sprintf("%o|9|%o|%o|%o", label, run, stored_ert, acceptable[run])); // err 9, nonfatal: the stored ert is not acceptable
     end if;
 end for;
 
@@ -236,19 +241,19 @@ for run in sruns do
     end for;
     oe := {rec[2]["outer_equivalence"] : rec in data["s"] | rec[1] eq run};
     if #oe ne 1 then
-        PrintFile(errfile, Sprintf("%o|A|%o", label, run)); // err A
+        PrintBoth(errfile, Sprintf("%o|A|%o", label, run)); // err A
         exit;
     end if;
     G`outer_equivalence := LoadBool(Representative(oe));
     sik := {rec[2]["subgroup_inclusions_known"] : rec in data["s"] | rec[1] eq run};
     if #sik ne 1 then
-        PrintFile(errfile, Sprintf("%o|B|%o", label, run)); // err B
+        PrintBoth(errfile, Sprintf("%o|B|%o", label, run)); // err B
         exit;
     end if;
     G`subgroup_inclusions_known := LoadBool(Representative(sik));
     sib := {rec[2]["subgroup_index_bound"] : rec in data["s"] | rec[1] eq run};
     if #sib ne 1 then
-        PrintFile(errfile, Sprintf("%o|C|%o", label, run)); // err C
+        PrintBoth(errfile, Sprintf("%o|C|%o", label, run)); // err C
         exit;
     end if;
     G`subgroup_index_bound := StringToInteger(Representative(sib));
@@ -330,24 +335,24 @@ for run in sruns do
             if not (run in mismatched) then
                 Include(~mismatched, run);
                 print "Mismatched", run;
-                PrintFile(errfile, Sprintf("%o|D|%o", label, run));
+                PrintBoth(errfile, Sprintf("%o|D|%o", label, run));
             end if;
-            PrintFile(subfile, Sprintf("%o|%o|?|%o", label, run, sub`stored_label));
+            PrintBoth(subfile, Sprintf("%o|%o|?|%o", label, run, sub`stored_label));
         elif sub`label ne sub`stored_label then
             if not (run in mismatched) then
                 Include(~mismatched, run);
                 print "Mismatched", run;
-                PrintFile(errfile, Sprintf("%o|C|%o", label, run));
+                PrintBoth(errfile, Sprintf("%o|C|%o", label, run));
             end if;
-            PrintFile(subfile, Sprintf("%o|%o|%o|%o", label, run, sub`label, sub`stored_label));
+            PrintBoth(subfile, Sprintf("%o|%o|%o|%o", label, run, sub`label, sub`stored_label));
         end if;
     end for;
     Lat[run] := res;
 end for;
 print #mismatched, "mismatched, out of", #sruns;
 if #mismatched lt #sruns then
-    PrintFile(errfile, Sprintf("%o|0", label));
+    PrintBoth(errfile, Sprintf("%o|0", label));
 else
-    PrintFile(errfile, Sprintf("%o|X", label));
+    PrintBoth(errfile, Sprintf("%o|X", label));
 end if;
 print "Overall time", Cputime() - start_time;
