@@ -277,7 +277,7 @@ for run in sruns do
     if IsDefined(data, "a") then
         for pair in data["a"] do
             if pair[1] eq run and pair[2]["aut_gens"] ne "\\N" then
-                G`aut_gens := LoadIntegerList(pair[2]);
+                G`aut_gens := LoadIntegerList(pair[2]["aut_gens"]);
                 break;
             end if;
         end for;
