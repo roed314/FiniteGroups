@@ -318,6 +318,8 @@ for run in sruns do
         end for;
         continue;
     end if;
+    // skip set closures for the moment
+    continue;
 
     if res`inclusions_known then
         SetClosures(~res);
