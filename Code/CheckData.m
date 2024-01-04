@@ -257,6 +257,13 @@ for run in sruns do
         exit;
     end if;
     G`subgroup_index_bound := StringToInteger(Representative(sib));
+    ck := {rec[2]["complements_known"] : rec in data["s"] | rec[1] eq run};
+    if #ck ne 1 then
+        PrintBoth(errfile, Sprintf("%o|D|%o", label, run)); // err D
+        exit;
+    end if;
+    G`complements_known := LoadBool(Representative(ck));
+    G`AllSubgroupsOk := AllSubgroupsOk(G);
     Grp[run] := G;
     //print run, Representative(acceptable[run]);
 end for;
@@ -317,7 +324,7 @@ for run in sruns do
                 actual_char := characteristic(subs[i]);
                 stored_char := subs[i]`characteristic;
                 if subs[i]`order eq 1 or actual_char ne stored_char then
-                    print i, actual_char, stored_char;
+                    print i, subs[i]`order, actual_char, stored_char;
                 end if;
             end if;
         end for;
