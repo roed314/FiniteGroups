@@ -346,15 +346,13 @@ for run in sruns do
         if not assigned sub`label then
             if not (run in mismatched) then
                 Include(~mismatched, run);
-                print "Mismatched", run;
-                PrintBoth(errfile, Sprintf("%o|D|%o", label, run));
+                PrintBoth(errfile, Sprintf("%o|F|%o", label, run));
             end if;
             PrintBoth(subfile, Sprintf("%o|%o|?|%o", label, run, sub`stored_label));
         elif sub`label ne sub`stored_label then
             if not (run in mismatched) then
                 Include(~mismatched, run);
-                print "Mismatched", run;
-                PrintBoth(errfile, Sprintf("%o|C|%o", label, run));
+                PrintBoth(errfile, Sprintf("%o|G|%o", label, run));
             end if;
             PrintBoth(subfile, Sprintf("%o|%o|%o|%o", label, run, sub`label, sub`stored_label));
         end if;
