@@ -330,14 +330,13 @@ for run in sruns do
                 actual_char := characteristic(subs[i]);
                 stored_char := subs[i]`characteristic;
                 if subs[i]`order eq 1 or actual_char cmpne stored_char then
-                    print i, subs[i]`order, actual_char, stored_char;
+                    PrintBoth(charfile, Sprintf("%o|%o|%o|%o", label, run, subs[i]`stored_label, actual_char select "t" else "f"));
                 end if;
             end if;
         end for;
         continue;
     end if;
     // skip set closures for the moment
-    continue;
 
     if res`inclusions_known then
         SetClosures(~res);
@@ -369,3 +368,4 @@ else
     PrintBoth(errfile, Sprintf("%o|X", label));
 end if;
 print "Overall time", Cputime() - start_time;
+exit;
