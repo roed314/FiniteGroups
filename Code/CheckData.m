@@ -263,6 +263,12 @@ for run in sruns do
         exit;
     end if;
     G`complements_known := LoadBool(Representative(ck));
+    nsk := {rec[2]["normal_subgroups_known"] : rec in data["s"] | rec[1] eq run};
+    if #nsk ne 1 then
+        PrintBoth(errfile, Sprintf("%o|E|%o", label, run)); // err E
+        exit;
+    end if;
+    G`normal_subgroups_known := LoadBool(Representative(nsk));
     G`AllSubgroupsOk := AllSubgroupsOk(G);
     Grp[run] := G;
     //print run, Representative(acceptable[run]);

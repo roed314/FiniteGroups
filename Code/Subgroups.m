@@ -2286,7 +2286,7 @@ intrinsic characteristic(H::SubgroupLatElt) -> BoolElt
     if FindSubsWithoutAut(G) then
         if not Get(H, "normal") then return false; end if;
         d := G`order div H`order;
-        if L`index_bound eq 0 or d le L`index_bound then
+        if L`index_bound eq 0 or d le L`index_bound or Get(G, "normal_subgroups_known") then
             norms := [N : N in Get(L, "by_index")[d] | Get(N, "normal")];
             if #norms eq 1 then return true; end if;
         end if;
