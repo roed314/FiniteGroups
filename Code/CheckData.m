@@ -288,7 +288,7 @@ for run in sruns do
     res`index_bound := G`subgroup_index_bound;
     if IsDefined(data, "a") then
         for pair in data["a"] do
-            if pair[1] eq run and pair[2]["aut_gens"] ne "\\N" then
+            if acceptable[pair[1]] eq acceptable[run] and pair[2]["aut_gens"] ne "\\N" then
                 G`aut_gens := LoadIntegerList(pair[2]["aut_gens"]);
                 break;
             end if;
