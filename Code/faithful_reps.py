@@ -19,16 +19,35 @@ def poset_data(group):
 
 def char_data(group):
     Cchars = defaultdict(Counter)
+    Rchars = defaultdict(Counter)
     kernels = {}
     irrC_degree = -1
-    for rec in db.gps_char.search({"group": group}, ["label", "dim", "kernel", "faithful"]):
+    irrR_degree = -1
+    for rec in db.gps_char.search({"group": group}, ["label", "dim", "kernel", "faithful", "indicator"]):
+        rdim = rec["dim"] if rec["indicator"] == 1 else 2*rec["dim"]
         K = rec["kernel"]
         Cchars[K][rec["dim"]] += 1
+        if rec["indicator"] == 1:
+            # real rep
+            rdim = rec["dim"]
+            Rchars[K][rdim] += 1
+        elif rec["indicator"] == 0:
+            # complex rep
+            rdim = 2*rec["dim"]
+            Rchars[K][rdim] += ZZ(1)/ZZ(2) # only count half, since complex conjugate gives same rep
+        else:
+            # quaternionic: real valued character, but need two copies to realize rep over R
+            rdim = 2*rec["dim"]
+            Rchars[K][rdim] += 1
         m = CHAR_LABEL_RE.match(rec["label"])
         qlabel = m.group(1)
         kernels[qlabel] = K
         if rec["faithful"]:
             irrC_degree = min(rec["dim"] if irrC_degree == -1 else irrC_degree, rec["dim"])
+            irrR_degree = min(rdim if irrR_degree == -1 else irrR_degree, rdim)
+    for D in Rchars.values():
+        for dim, cnt in D.items():
+            D[dim] = ZZ(cnt)
     Qchars_deg = defaultdict(Counter)
     irrQ_degree = -1
     Qchars_dim = defaultdict(Counter)
@@ -41,7 +60,7 @@ def char_data(group):
         if rec["faithful"]:
             irrQ_degree = min(deg if irrQ_degree == -1 else irrQ_degree, deg)
             irrQ_dim = min(dim if irrQ_dim == -1 else irrQ_dim, dim)
-    return Cchars, irrC_degree, Qchars_deg, irrQ_degree, Qchars_dim, irrQ_dim
+    return Cchars, irrC_degree, Rchars, irrR_degree, Qchars_deg, irrQ_degree, Qchars_dim, irrQ_dim
 
 def rep_series(prec, mobius, poset, chars):
     R = PowerSeriesRing(ZZ, "x")
@@ -64,7 +83,7 @@ def linC_degree(group, prec=40, irrC_degree=None, mobius=None, poset=None, chars
     if mobius is None or poset is None:
         mobius, poset = poset_data(group)
     if chars is None:
-        chars, irrC_degree, _, _, _, _ = char_data(group)
+        chars, irrC_degree, _, _, _, _, _, _ = char_data(group)
     if irrC_degree != -1:
         # faithful irrep
         prec = irrC_degree + 1
@@ -78,12 +97,32 @@ def linC_degree(group, prec=40, irrC_degree=None, mobius=None, poset=None, chars
     v = f.valuation()
     return v, f[v]
 
+# linR, linR_count = linR_degree(group, irrR_degree=irrR_degree, mobius=mobius, poset=poset, chars=Rchars)
+def linR_degree(group, prec=40, irrR_degree=None, mobius=None, poset=None, chars=None):
+    group_order = ZZ(group.split(".")[0])
+    if mobius is None or poset is None:
+        mobius, poset = poset_data(group)
+    if chars is None:
+        _, _, chars, irrR_degree, _, _, _, _ = char_data(group)
+    if irrR_degree != -1:
+        # faithful irrep
+        prec = irrC_degree + 1
+    f = rep_series(prec, mobius, poset, chars)
+    #print(f)
+    if f.is_zero():
+        if prec >= group_order:
+            raise RuntimeError("Surpassed group order")
+        # The actual degree may be more than our estimate, so we need to search until we find a representation
+        return linR_degree(group, 2*prec, irrR_degree=irrR_degree, mobius=mobius, poset=poset, chars=chars)
+    v = f.valuation()
+    return v, f[v]
+
 def linQ_degree(group, prec=40, irrQ_degree=None, mobius=None, poset=None, chars=None):
     group_order = ZZ(group.split(".")[0])
     if mobius is None or poset is None:
         mobius, poset = poset_data(group)
     if chars is None:
-        _, _, chars, irrQ_degree, _, _ = char_data(group)
+        _, _, _, _, chars, irrQ_degree, _, _ = char_data(group)
     if irrQ_degree != -1:
         # faithful Q-irrep
         prec = irrQ_degree + 1
@@ -116,13 +155,14 @@ def linQ_dim(group, prec=40, irrQ_dim=None, mobius=None, poset=None, chars=None)
     v = f.valuation()
     return v, f[v]
 
-def linCQ_degree(group):
+def linCRQ_degree(group):
     mobius, poset = poset_data(group)
-    Cchars, irrC_degree, Qchars_deg, irrQ_degree, Qchars_dim, irrQ_dim = char_data(group)
+    Cchars, irrC_degree, Rchars, irrR_degree, Qchars_deg, irrQ_degree, Qchars_dim, irrQ_dim = char_data(group)
     linC, linC_count = linC_degree(group, irrC_degree=irrC_degree, mobius=mobius, poset=poset, chars=Cchars)
+    linR, linR_count = linR_degree(group, irrR_degree=irrR_degree, mobius=mobius, poset=poset, chars=Rchars)
     Q_deg, Qdeg_count = linQ_degree(group, irrQ_degree=irrQ_degree, mobius=mobius, poset=poset, chars=Qchars_deg)
     Q_dim, Qdim_count = linQ_dim(group, irrQ_dim=irrQ_dim, mobius=mobius, poset=poset, chars=Qchars_dim)
-    return linC, linC_count, Q_deg, Qdeg_count, Q_dim, Qdim_count
+    return linC, linC_count, linR, linR_count, Q_deg, Qdeg_count, Q_dim, Qdim_count
 
 def linQ_todo():
     # This function tests the algorithm by comparing with the stored representations in the 
@@ -199,10 +239,10 @@ if args.n is not None:
                     for label in F:
                         label = label.strip()
                         try:
-                            linC, linC_count, Qdeg, Qdeg_count, Qdim, Qdim_count = linCQ_degree(label)
+                            linC, linC_count, linR, linR_count, Qdeg, Qdeg_count, Qdim, Qdim_count = linCRQ_degree(label)
                         except ValueError:
                             _ = Fmob.write(label + "\n")
                         except RuntimeError:
                             _ = Frun.write(label + "\n")
                         else:
-                            _ = Fout.write(f"{label}|{linC}|{Qdeg}|{Qdim}|{linC_count}|{Qdeg_count}|{Qdim_count}\n")
+                            _ = Fout.write(f"{label}|{linC}|{linR}|{Qdeg}|{Qdim}|{linC_count}|{linR_count}|{Qdeg_count}|{Qdim_count}\n")
