@@ -106,7 +106,7 @@ def linR_degree(group, prec=40, irrR_degree=None, mobius=None, poset=None, chars
         _, _, chars, irrR_degree, _, _, _, _ = char_data(group)
     if irrR_degree != -1:
         # faithful irrep
-        prec = irrC_degree + 1
+        prec = irrR_degree + 1
     f = rep_series(prec, mobius, poset, chars)
     #print(f)
     if f.is_zero():
