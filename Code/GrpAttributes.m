@@ -1602,8 +1602,7 @@ intrinsic characters_add_sort_and_labels(G::LMFDBGrp, cchars::Any, rchars::Any) 
   // Before that is the old index of its complex conjugate
   sortme := <<Degree(ct[j]), #matching[comp2rat[j]], ntlist[j][1], ntlist[j][2]> cat forlexsortrat[j]
      cat forlexsort[j] cat <0,0,0> : j in [1..#ct]>;
-//"sortme";
-//sortme;
+//"sortme",  sortme;
 //"done";
   len := #sortme[1];
   for j:=1 to #ct do
@@ -1645,7 +1644,7 @@ intrinsic characters_add_sort_and_labels(G::LMFDBGrp, cchars::Any, rchars::Any) 
         rindex := Integers()!dat[len-1];
         rchars[rindex]`counter := rtotalcnt;
         rchars[rindex]`label := Sprintf("%o.%o%o",glabel,dat[1],rcode);
-        rchars[rindex]`nt := [dat[3],dat[2]];
+        rchars[rindex]`nt := [dat[3],dat[4]];
         rchars[rindex]`qvalues := [Integers()! dat[j+4] : j in [1..#ct]];
       end if;
       ccnt +:= 1;
@@ -1653,7 +1652,7 @@ intrinsic characters_add_sort_and_labels(G::LMFDBGrp, cchars::Any, rchars::Any) 
       Include(~donec, dat[len]);
       cindex := Integers()!dat[len];
       cchars[cindex]`counter := ctotalcnt;
-      cchars[cindex]`nt := [dat[3],dat[2]];
+      cchars[cindex]`nt := [dat[3],dat[4]];
       cextra :=  (dat[2] eq 1) select "" else Sprintf("%o", ccnt);
       cchars[cindex]`label := Sprintf("%o.%o%o", glabel, dat[1],rcode)*cextra;
       // Encode values
