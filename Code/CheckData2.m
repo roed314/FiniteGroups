@@ -36,7 +36,7 @@ if db_hash ne "\\N" then
     db_hash := StringToInteger(db_hash);
 end if;
 db_reps := Split(dblines[3], "|"); // inputs for StringToGroup, the first corresponding to db_ert
-G_reps := [StringToGroup(rep) : rep in db_reps];
+G_reps := [* StringToGroup(rep) : rep in db_reps *];
 // Check IdentifyGroup and hash
 for i in [1..G_reps] do
     GG := G_reps[i];
