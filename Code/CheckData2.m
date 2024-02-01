@@ -136,9 +136,81 @@ if not invalid_gen then
             end if;
         end if;
     end for;
+    PrintBoth(errfile, "S|%o", label);
+    CS := ChiefSeries(GG);
+    LCS := LowerCentralSeries(GG);
+    DS := DerivedSeries(GG);
+    SS := Get(G, "MagmaSylowSubgroups");
+    ps := Keys(SS);
+    complen := #CompositionFactors(GG);
+    for sub in subs do
+        fake_label := Sprintf("%o.a", sub`order);
+        HH := sub`subgroup;
+        H := NewLMFDBGrp(HH, fake_label);
+        agp := SaveAttr("Agroup", Get(H, "Agroup"), H);
+        zgp := SaveAttr("Zgroup", Get(H, "Zgroup"), H);
+        ssolv := SaveAttr("supersolvable", Get(H, "supersolvable"), H);
+        subcomplen := #CompositionFactors(HH);
+        if sub`normal then
+            qnil := SaveBool(quotient_is_nilpotent(sub, LCS));
+            qma := SaveBool(#DS le 3 or (DS[3] subset HH));
+            qagp := SaveBool(&and[DerivedSubgroup(SS[p]) subset HH : p in ps]);
+            qsolv := SaveBool(DS[#DS] subset HH);
+            if qsolv eq "f" then
+                qssolv := "f";
+            elif qnil eq "t" then
+                qssolv := "t";
+            else
+                CSords := [Order(sub<GG|U,HH>) : U in CS];
+                CSrats := [CSords[i] div CSords[i+1] : i in [1..#CSords-1]];
+                qssolv := SaveBool(&and[m eq 1 or IsPrime(m) : m in CSrats]);
+            end if;
+            qsimp := SaveBool(subcomplen eq (complen - 1));
+        else
+            qnil := "\\N";
+            qma := "\\N";
+            qagp := "\\N";
+            qssolv := "\\N";
+            qsimp := "\\N";
+        end if;
+        simp := SaveBool(subcomplen eq 1);
+        solv := Get(H, "solvable");
+        if solv then
+            D := DerivedSubgroup(HH);
+            ma := IsAbelian(D);
+            mc := EasyIsMetacyclic(H);
+            if mc cmpeq 0 then
+                if Get(H, "pgroup") then
+                    mc := IsMetacyclicPGroup(HH);
+                else
+                    if IsCyclic(D) then
+                        invcnt := #AbelianQuotientInvariants(HH);
+                        if invcnt eq 1 then
+                            mc := true;
+                        elif invcnt gt 2 then
+                            mc := false;
+                        else
+                            mc := 0; // give up; will try to fill from data in gps_groups
+                        end if;
+                    else
+                        mc := false;
+                    end if;
+                end if;
+            end if;
+            if Type(mc) eq BoolElt then mc := SaveBool(mc); end if;
+        else
+            ma := "f";
+            mc := "f";
+        end if;
+        // The other boolean properties (monomial, rational, almost_simple, quasisimple, complete; qZgroup, qmc, qperfect) we only look up from already-computed quantities based on identifications in subgroup and quotient
+        PrintFile(boolfile, Sprintf("%o.%o|%o|%o|%o|%o|%o|%o|%o|%o|%o|%o|%o", label, sub`stored_label, agp, zgp, ma, mc, ssolv, simp, qnil, qagp, qma, qssolv, qsimp));
+    end for;
+    PrintBoth(errfile, "T|%o", label);
 end if;
 
-if not failed then
+if failed then
+    PrintBoth(errfile, "X|%o", label);
+else
     failed := not PrintBoth(errfile, "0|%o", label);
     exit;
 end if;

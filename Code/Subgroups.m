@@ -2304,6 +2304,18 @@ intrinsic characteristic(H::SubgroupLatElt) -> BoolElt
     return Get(H, "subgroup_count") eq 1 and (L`outer_equivalence or #Get(L, "aut_orbit")[H`i] eq 1);
 end intrinsic;
 
+intrinsic quotient_is_nilpotent(H::SubgroupLatElt, LCS::SeqEnum) -> BoolElt
+{LCS should be the lower central series of the ambient group}
+    if not Get(H, "normal") then
+        return None();
+    end if;
+    G := H`Lat`Grp;
+    if IsPrimePower(G`order div H`order) then
+        return true;
+    end if;
+    return LCS[#LCS] subset H`subgroup;
+end intrinsic;
+
 intrinsic SetClosures(~L::SubgroupLat)
 {Set normal and characteristic closures}
     t0 := ReportStart(L`Grp, "SetClosures");

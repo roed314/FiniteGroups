@@ -666,7 +666,7 @@ end intrinsic;
 
 intrinsic Zgroup(G::LMFDBGrp) -> Any
   {Check whether all the Syllowsubgroups are cylic}
-  SS := MagmaSylowSubgroups(G);
+  SS := Get(G, "MagmaSylowSubgroups");
   K := Keys(SS);
   for k in K do
     if not IsCyclic(SS[k]) then
@@ -678,7 +678,7 @@ end intrinsic;
 
 intrinsic Agroup(G::LMFDBGrp) -> Any
   {Check whether all the Syllowsubgroups are abelian}
-  SS := MagmaSylowSubgroups(G);
+  SS := Get(G, "MagmaSylowSubgroups");
   K := Keys(SS);
   for k in K do
     if not IsAbelian(SS[k]) then
