@@ -94,3 +94,4 @@ def create_input_files():
             cur_ambient = rec["ambient"]
         cur_lines.append("|".join(["J"+rec["label"], str(rec["size"]), str(rec["order"]), str(rec["representative"])]))
     write(cur_ambient, cur_lines)
+    return bad_ert

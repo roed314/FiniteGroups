@@ -2312,7 +2312,6 @@ intrinsic SetClosures(~L::SubgroupLat)
     subs[1]`characteristic_closure := 1;
     ord_bnd := (L`index_bound eq 0) select 1 else (L`Grp`order div L`index_bound);
     for k in [1..#subs] do
-        print "k", k;
         H := subs[k];
         if H`order lt ord_bnd then break; end if; // stop at index bound
         mark := AssociativeArray();
@@ -2323,7 +2322,6 @@ intrinsic SetClosures(~L::SubgroupLat)
                 H``attr := H`i;
                 current_layer := Keys(H`unders);
                 while #current_layer gt 0 do
-                    print "Layer", prop, #current_layer;
                     next_layer := {@ @};
                     for j in current_layer do
                         cur := L`subs[j]; // the layer indices are into L`subs rather than ordered_subs
@@ -2335,7 +2333,6 @@ intrinsic SetClosures(~L::SubgroupLat)
                     current_layer := next_layer;
                 end while;
             else
-                print "Asserting", attr;
                 assert assigned H``attr;
             end if;
         end for;
