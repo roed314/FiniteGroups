@@ -178,7 +178,7 @@ if not invalid_gen then
         simp := SaveBool(subcomplen eq 1);
         if H`solvable then
             D := DerivedSubgroup(HH);
-            ma := IsAbelian(D);
+            ma := SaveBool(IsAbelian(D));
             mc := EasyIsMetacyclic(H);
             if mc cmpeq 0 then
                 if Get(H, "pgroup") ne 0 then
