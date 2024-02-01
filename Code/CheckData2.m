@@ -150,6 +150,7 @@ if not invalid_gen then
         HH := sub`subgroup;
         H := NewLMFDBGrp(HH, fake_label);
         H`order := sub`order;
+        H`cyclic := IsCyclic(HH);
         H`solvable := IsSolvable(HH);
         H`nilpotent := IsNilpotent(HH);
         agp := SaveAttr("Agroup", Get(H, "Agroup"), H);
