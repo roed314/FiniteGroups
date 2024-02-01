@@ -52,7 +52,7 @@ for i in [1..#G_reps] do
     else
         hsh := hash(GG);
         if Type(db_hash) eq RngIntElt and hsh ne db_hash then
-            PrintBoth(errfile, Sprintf("%3|%o|%o|%o|%o", label, db_hash, hsh, db_reps[i])); // err 3: for unidentifiable groups, the hash value is wrong
+            failed := PrintBoth(errfile, Sprintf("%3|%o|%o|%o|%o", label, db_hash, hsh, db_reps[i])); // err 3: for unidentifiable groups, the hash value is wrong
         end if;
     end if;
 end for;
@@ -132,11 +132,11 @@ if not invalid_gen then
             actual_char := characteristic(sub);
             stored_char := sub`characteristic;
             if actual_char cmpne stored_char then
-                PrintBoth(charfile, Sprintf("%o.%o|%o", label, sub`stored_label, actual_char select "t" else "f"));
+                _ := PrintBoth(charfile, Sprintf("%o.%o|%o", label, sub`stored_label, actual_char select "t" else "f"));
             end if;
         end if;
     end for;
-    PrintBoth(errfile, Sprintf("S|%o", label));
+    _ := PrintBoth(errfile, Sprintf("S|%o", label));
     CS := ChiefSeries(GG);
     LCS := LowerCentralSeries(GG);
     DS := DerivedSeries(GG);
@@ -205,11 +205,11 @@ if not invalid_gen then
         // The other boolean properties (monomial, rational, almost_simple, quasisimple, complete; qZgroup, qmc, qperfect) we only look up from already-computed quantities based on identifications in subgroup and quotient
         PrintFile(boolfile, Sprintf("%o.%o|%o|%o|%o|%o|%o|%o|%o|%o|%o|%o|%o", label, sub`stored_label, agp, zgp, ma, mc, ssolv, simp, qnil, qagp, qma, qssolv, qsimp));
     end for;
-    PrintBoth(errfile, "T|%o", label);
+    _ := PrintBoth(errfile, "T|%o", label);
 end if;
 
 if failed then
-    PrintBoth(errfile, "X|%o", label);
+    failed := PrintBoth(errfile, "X|%o", label);
 else
     failed := not PrintBoth(errfile, "0|%o", label);
     exit;
