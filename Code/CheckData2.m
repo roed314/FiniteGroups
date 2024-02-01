@@ -210,9 +210,9 @@ if not invalid_gen then
 end if;
 
 if failed then
-    failed := PrintBoth(errfile, "X|%o", label);
+    failed := PrintBoth(errfile, Sprintf("X|%o", label));
 else
-    failed := not PrintBoth(errfile, "0|%o", label);
+    failed := not PrintBoth(errfile, Sprintf("0|%o", label));
     exit;
 end if;
 
