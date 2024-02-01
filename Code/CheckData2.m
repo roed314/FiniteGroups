@@ -155,6 +155,7 @@ if not invalid_gen then
         zgp := SaveAttr("Zgroup", Get(H, "Zgroup"), H);
         ssolv := SaveAttr("supersolvable", Get(H, "supersolvable"), H);
         subcomplen := #CompositionFactors(HH);
+        print "A";
         if sub`normal then
             qnil := SaveBool(quotient_is_nilpotent(sub, LCS));
             qma := SaveBool(#DS le 3 or (DS[3] subset HH));
@@ -177,6 +178,7 @@ if not invalid_gen then
             qssolv := "\\N";
             qsimp := "\\N";
         end if;
+        print "B";
         simp := SaveBool(subcomplen eq 1);
         if H`solvable then
             D := DerivedSubgroup(HH);
@@ -205,6 +207,7 @@ if not invalid_gen then
             ma := "f";
             mc := "f";
         end if;
+        print "C";
         // The other boolean properties (monomial, rational, almost_simple, quasisimple, complete; qZgroup, qmc, qperfect) we only look up from already-computed quantities based on identifications in subgroup and quotient
         PrintFile(boolfile, Sprintf("%o.%o|%o|%o|%o|%o|%o|%o|%o|%o|%o|%o|%o", label, sub`stored_label, agp, zgp, ma, mc, ssolv, simp, qnil, qagp, qma, qssolv, qsimp));
     end for;
