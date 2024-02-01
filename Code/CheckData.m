@@ -154,7 +154,7 @@ for rep in reps do
             end if;
         else
             hsh := hash(G);
-            if Type(Ghash) eq RngIntElt and hsh ne Ghash then
+            if Type(Ghash) eq RngIntElt and hsh ne Ghash and not IsInSmallGroupDatabase(N) then
                 PrintBoth(errfile, Sprintf("%o|7|%o|%o|%o", label, rtype, Ghash, hsh)); // err 7, nonfatal: for unidentifiable groups, the hash value is wrong
             end if;
         end if;
