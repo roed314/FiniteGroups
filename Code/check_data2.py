@@ -44,7 +44,7 @@ def RepToString(rep_type, data, N):
 def create_input_files():
     seen = set()
     bad_ert = set()
-    for rec in db.gps_groups.search({}, ["label", "element_repr_type", "hash", "representatives", "aut_gens", "outer_equivalence", "subgroup_inclusions_known", "subgroup_index_bound", "complements_known", "normal_subgroups_known"]):
+    for rec in db.gps_groups.search({}, ["label", "element_repr_type", "hash", "representations", "aut_gens", "outer_equivalence", "subgroup_inclusions_known", "subgroup_index_bound", "complements_known", "normal_subgroups_known"]):
         if rec["outer_equivalence"] is None:
             continue
         label = rec["label"]
@@ -59,7 +59,7 @@ def create_input_files():
         else:
             aut_gens = str(rec["aut_gens"]).replace(" ", "").replace("[", "{").replace("]", "}")
         ert = rec['element_repr_type']
-        reps = rec["representatives"]
+        reps = rec["representations"]
         if ert not in reps:
             bad_ert.add(label)
             continue
