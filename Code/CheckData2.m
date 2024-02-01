@@ -72,6 +72,7 @@ G`AllSubgroupsOk := AllSubgroupsOk(G);
 // Skipping contains, contained_in
 
 res := New(SubgroupLat);
+res`Grp := G;
 res`outer_equivalence := G`outer_equivalence;
 res`inclusions_known := G`subgroup_inclusions_known;
 res`index_bound := G`subgroup_index_bound;
