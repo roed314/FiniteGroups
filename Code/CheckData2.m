@@ -149,10 +149,7 @@ if not invalid_gen then
         fake_label := Sprintf("%o.a", sub`order);
         HH := sub`subgroup;
         H := NewLMFDBGrp(HH, fake_label);
-        H`order := sub`order;
-        H`cyclic := IsCyclic(HH);
-        H`solvable := IsSolvable(HH);
-        H`nilpotent := IsNilpotent(HH);
+        AssignBasicAttributes(H);
         agp := SaveAttr("Agroup", Get(H, "Agroup"), H);
         zgp := SaveAttr("Zgroup", Get(H, "Zgroup"), H);
         ssolv := SaveAttr("supersolvable", Get(H, "supersolvable"), H);
