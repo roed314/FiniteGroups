@@ -136,7 +136,7 @@ if not invalid_gen then
             end if;
         end if;
     end for;
-    PrintBoth(errfile, "S|%o", label);
+    PrintBoth(errfile, Sprintf("S|%o", label));
     CS := ChiefSeries(GG);
     LCS := LowerCentralSeries(GG);
     DS := DerivedSeries(GG);
