@@ -186,7 +186,7 @@ if not invalid_gen then
             mc := EasyIsMetacyclic(H);
             print "b";
             if mc cmpeq 0 then
-                if Get(H, "pgroup") then
+                if Get(H, "pgroup") ne 0 then
                     print "c";
                     mc := IsMetacyclicPGroup(HH);
                 else
