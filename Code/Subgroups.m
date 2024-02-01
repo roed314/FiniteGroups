@@ -2310,7 +2310,7 @@ intrinsic quotient_is_nilpotent(H::SubgroupLatElt, LCS::SeqEnum) -> BoolElt
         return None();
     end if;
     G := H`Lat`Grp;
-    if IsPrimePower(G`order div H`order) then
+    if G`order eq H`order or IsPrimePower(G`order div H`order) then
         return true;
     end if;
     return LCS[#LCS] subset H`subgroup;
