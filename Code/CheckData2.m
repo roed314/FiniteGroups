@@ -181,13 +181,17 @@ if not invalid_gen then
         print "B";
         simp := SaveBool(subcomplen eq 1);
         if H`solvable then
+            print "a";
             D := DerivedSubgroup(HH);
             ma := IsAbelian(D);
             mc := EasyIsMetacyclic(H);
+            print "b";
             if mc cmpeq 0 then
                 if Get(H, "pgroup") then
+                    print "c";
                     mc := IsMetacyclicPGroup(HH);
                 else
+                    print "d";
                     if IsCyclic(D) then
                         invcnt := #AbelianQuotientInvariants(HH);
                         if invcnt eq 1 then
@@ -202,6 +206,7 @@ if not invalid_gen then
                     end if;
                 end if;
             end if;
+            print "e";
             if Type(mc) eq BoolElt then mc := SaveBool(mc); end if;
         else
             ma := "f";
