@@ -126,8 +126,8 @@ for line in dblines[10..#dblines] do
     end if;
 end for;
 if not invalid_gen then
-    res`subs := subs;
-    for sub in subs do
+    res`subs := subgroups;
+    for sub in subgroups do
         if sub`normal and noncanonical_label(sub`stored_label) then
             actual_char := characteristic(sub);
             stored_char := sub`characteristic;
@@ -143,7 +143,7 @@ if not invalid_gen then
     SS := Get(G, "MagmaSylowSubgroups");
     ps := Keys(SS);
     complen := #CompositionFactors(GG);
-    for sub in subs do
+    for sub in subgroups do
         fake_label := Sprintf("%o.a", sub`order);
         HH := sub`subgroup;
         H := NewLMFDBGrp(HH, fake_label);
