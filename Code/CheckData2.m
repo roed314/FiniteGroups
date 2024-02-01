@@ -145,6 +145,7 @@ if not invalid_gen then
     ps := Keys(SS);
     complen := #CompositionFactors(GG);
     for sub in subgroups do
+        print sub`stored_label;
         fake_label := Sprintf("%o.a", sub`order);
         HH := sub`subgroup;
         H := NewLMFDBGrp(HH, fake_label);
