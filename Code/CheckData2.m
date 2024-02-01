@@ -174,7 +174,7 @@ if not invalid_gen then
             qsimp := "\\N";
         end if;
         simp := SaveBool(subcomplen eq 1);
-        solv := Get(H, "solvable");
+        solv := IsSolvable(HH);
         if solv then
             D := DerivedSubgroup(HH);
             ma := IsAbelian(D);
