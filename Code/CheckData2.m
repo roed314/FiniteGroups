@@ -145,7 +145,6 @@ if not invalid_gen then
     ps := Keys(SS);
     complen := #CompositionFactors(GG);
     for sub in subgroups do
-        print sub`stored_label;
         fake_label := Sprintf("%o.a", sub`order);
         HH := sub`subgroup;
         H := NewLMFDBGrp(HH, fake_label);
@@ -154,7 +153,6 @@ if not invalid_gen then
         zgp := SaveAttr("Zgroup", Get(H, "Zgroup"), H);
         ssolv := SaveAttr("supersolvable", Get(H, "supersolvable"), H);
         subcomplen := #CompositionFactors(HH);
-        print "A";
         if sub`normal then
             qnil := SaveBool(quotient_is_nilpotent(sub, LCS));
             qma := SaveBool(#DS le 3 or (DS[3] subset HH));
@@ -177,20 +175,15 @@ if not invalid_gen then
             qssolv := "\\N";
             qsimp := "\\N";
         end if;
-        print "B";
         simp := SaveBool(subcomplen eq 1);
         if H`solvable then
-            print "a";
             D := DerivedSubgroup(HH);
             ma := IsAbelian(D);
             mc := EasyIsMetacyclic(H);
-            print "b";
             if mc cmpeq 0 then
                 if Get(H, "pgroup") ne 0 then
-                    print "c";
                     mc := IsMetacyclicPGroup(HH);
                 else
-                    print "d";
                     if IsCyclic(D) then
                         invcnt := #AbelianQuotientInvariants(HH);
                         if invcnt eq 1 then
@@ -205,17 +198,15 @@ if not invalid_gen then
                     end if;
                 end if;
             end if;
-            print "e";
             if Type(mc) eq BoolElt then mc := SaveBool(mc); end if;
         else
             ma := "f";
             mc := "f";
         end if;
-        print "C";
         // The other boolean properties (monomial, rational, almost_simple, quasisimple, complete; qZgroup, qmc, qperfect) we only look up from already-computed quantities based on identifications in subgroup and quotient
         PrintFile(boolfile, Sprintf("%o.%o|%o|%o|%o|%o|%o|%o|%o|%o|%o|%o|%o", label, sub`stored_label, agp, zgp, ma, mc, ssolv, simp, qnil, qagp, qma, qssolv, qsimp));
     end for;
-    _ := PrintBoth(errfile, "T|%o", label);
+    _ := PrintBoth(errfile, Sprintf("T|%o", label));
 end if;
 
 if failed then
