@@ -38,7 +38,7 @@ end if;
 db_reps := Split(dblines[3], "|"); // inputs for StringToGroup, the first corresponding to db_ert
 G_reps := [* StringToGroup(rep) : rep in db_reps *];
 // Check IdentifyGroup and hash
-for i in [1..G_reps] do
+for i in [1..#G_reps] do
     GG := G_reps[i];
     if CanIdentifyGroup(N) then
         _, Gid := Explode(IdentifyGroup(GG));
