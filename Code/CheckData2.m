@@ -46,7 +46,7 @@ for i in [1..#G_reps] do
             failed := PrintBoth(errfile, Sprintf("1|%o|%o|%o", label, Gid, db_reps[i])); // err 1: the group identification is wrong
         end if;
     elif IsInSmallGroupDatabase(N) then
-        if not IsIsomorphic(GG, SmallGroup(N, labeli)) then
+        if not IsIsomorphic(GG, SmallGroup(N, StringToInteger(labeli))) then
             failed := PrintBoth(errfile, Sprintf("2|%o|%o", label, db_reps[i])); // err 2: the group identification is wrong
         end if;
     else
@@ -93,14 +93,14 @@ for line in dblines[10..#dblines] do
             try
                 Append(~gens, LoadElt(gen, G));
             catch e
-                failed := PrintBoth(errfile, "4|%o|%o|%o|%o", label, db_reps[1], short_label, gen); // err 4: invalid subgroup generator
+                failed := PrintBoth(errfile, Sprintf("4|%o|%o|%o|%o", label, db_reps[1], short_label, gen)); // err 4: invalid subgroup generator
                 invalid_gen := true;
             end try;
         end for;
         if invalid_gen then break; end if;
         H := sub<GG | gens>;
         if #H ne sub_order then
-            failed := PrintBoth(errfile, "5|%o|%o|%o|%o", label, db_reps[1], short_label, pieces[6]); // err 5: incorrect subgroup order
+            failed := PrintBoth(errfile, Sprintf("5|%o|%o|%o|%o", label, db_reps[1], short_label, pieces[6])); // err 5: incorrect subgroup order
         end if;
         latelt := SubgroupLatElement(res, H: i:=i);
         latelt`normal := normal;
@@ -116,13 +116,13 @@ for line in dblines[10..#dblines] do
             rep := LoadElt(pieces[4], G);
             Z := Centralizer(GG, rep);
             if #Z * size ne N then
-                failed := PrintBoth(errfile, "6|%o|%o|%o|%o|%o", label, db_reps[1], conj_label, pieces[4], size); // err 6: incorrect conjugacy class size
+                failed := PrintBoth(errfile, Sprintf("6|%o|%o|%o|%o|%o", label, db_reps[1], conj_label, pieces[4], size)); // err 6: incorrect conjugacy class size
             end if;
             if order ne Order(rep) then
-                failed := PrintBoth(errfile, "7|%o|%o|%o|%o|%o", label, db_reps[1], conj_label, pieces[4], order); // err 7: incorrect conjugacy class order
+                failed := PrintBoth(errfile, Sprintf("7|%o|%o|%o|%o|%o", label, db_reps[1], conj_label, pieces[4], order)); // err 7: incorrect conjugacy class order
             end if;
         catch e
-            failed := PrintBoth(errfile, "8|%o|%o|%o|%o", label, db_reps[1], conj_label, pieces[4]); // err 8: invalid conjugacy class rep
+            failed := PrintBoth(errfile, Sprintf("8|%o|%o|%o|%o", label, db_reps[1], conj_label, pieces[4])); // err 8: invalid conjugacy class rep
         end try;
     end if;
 end for;
