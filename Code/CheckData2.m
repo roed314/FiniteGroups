@@ -58,8 +58,8 @@ for i in [1..#G_reps] do
 end for;
 
 
-GG := G_reps[1];
 G := MakeBigGroup(db_reps[1], label : preload:=true);
+GG := G`MagmaGrp;
 if dblines[4] ne "\\N" then
     G`aut_gens := LoadIntegerList(dblines[4]); // aut_gens
 end if;
@@ -185,13 +185,17 @@ if not invalid_gen then
                     mc := IsMetacyclicPGroup(HH);
                 else
                     if IsCyclic(D) then
-                        invcnt := #AbelianQuotientInvariants(HH);
-                        if invcnt eq 1 then
-                            mc := true;
-                        elif invcnt gt 2 then
-                            mc := false;
+                        if Type(HH) eq GrpPC then
+                            invcnt := #AbelianQuotientInvariants(HH);
+                            if invcnt eq 1 then
+                                mc := true;
+                            elif invcnt gt 2 then
+                                mc := false;
+                            else
+                                mc := "\\N"; // give up; will try to fill from data in gps_groups
+                            end if;
                         else
-                            mc := 0; // give up; will try to fill from data in gps_groups
+                            mc := "\\N"; // give up
                         end if;
                     else
                         mc := false;
