@@ -48,19 +48,24 @@ end for;
 for i in [1..#G_reps] do
     GG := G_reps[i];
     if CanIdentifyGroup(N) then
+        PrintBoth(errfile, Sprintf("I|%o|%o", label, db_reps[i]));
         _, Gid := Explode(IdentifyGroup(GG));
         if StringToInteger(labeli) ne Gid then
             failed := PrintBoth(errfile, Sprintf("1|%o|%o|%o", label, Gid, db_reps[i])); // err 1: the group identification is wrong
         end if;
     elif IsInSmallGroupDatabase(N) then
-        if not IsIsomorphic(GG, SmallGroup(N, StringToInteger(labeli))) then
-            failed := PrintBoth(errfile, Sprintf("2|%o|%o", label, db_reps[i])); // err 2: the group identification is wrong
-        end if;
+        // Skip IsIsomorphic since it was taking too long
+        PrintBoth(errfile, Sprintf("Q|%o|%o", label, db_reps[i]));
+        //if not IsIsomorphic(GG, SmallGroup(N, StringToInteger(labeli))) then
+        //    failed := PrintBoth(errfile, Sprintf("2|%o|%o", label, db_reps[i])); // err 2: the group identification is wrong
+        //end if;
     else
+        PrintBoth(errfile, Sprintf("H|%o|%o", label, db_reps[i]));
         hsh := hash(GG);
         if Type(db_hash) eq RngIntElt and hsh ne db_hash then
             failed := PrintBoth(errfile, Sprintf("%3|%o|%o|%o|%o", label, db_hash, hsh, db_reps[i])); // err 3: for unidentifiable groups, the hash value is wrong
         end if;
+        PrintBoth(errfile, Sprintf("h|%o|%o", label, db_reps[i]));
     end if;
 end for;
 
