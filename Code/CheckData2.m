@@ -44,7 +44,6 @@ for rep in db_reps do
         failed := PrintBoth(errfile, Sprintf("C|%o|%o", label, rep));
     end try;
 end for;
-G_reps := [* StringToGroup(rep) : rep in db_reps *];
 // Check IdentifyGroup and hash
 for i in [1..#G_reps] do
     GG := G_reps[i];
