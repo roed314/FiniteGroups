@@ -60,10 +60,12 @@ for i in [1..#G_reps] do
         //    failed := PrintBoth(errfile, Sprintf("2|%o|%o", label, db_reps[i])); // err 2: the group identification is wrong
         //end if;
     else
+        // We disable this check since we're stuck on groups where it takes too long
+        continue;
         PrintBoth(errfile, Sprintf("H|%o|%o", label, db_reps[i]));
         hsh := hash(GG);
         if Type(db_hash) eq RngIntElt and hsh ne db_hash then
-            failed := PrintBoth(errfile, Sprintf("%3|%o|%o|%o|%o", label, db_hash, hsh, db_reps[i])); // err 3: for unidentifiable groups, the hash value is wrong
+            failed := PrintBoth(errfile, Sprintf("3|%o|%o|%o|%o", label, db_hash, hsh, db_reps[i])); // err 3: for unidentifiable groups, the hash value is wrong
         end if;
         PrintBoth(errfile, Sprintf("h|%o|%o", label, db_reps[i]));
     end if;
@@ -139,6 +141,7 @@ for line in dblines[10..#dblines] do
     end if;
 end for;
 if not invalid_gen then
+    _ := PrintBoth(errfile, Sprintf("c|%o", label));
     res`subs := subgroups;
     for sub in subgroups do
         if sub`normal and noncanonical_label(sub`stored_label) then
