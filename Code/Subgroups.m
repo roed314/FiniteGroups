@@ -2157,6 +2157,7 @@ end function;
 */
 
 intrinsic ComputeLatticeEdges(L::SubgroupLat, Ambient::Grp, inj::HomGrp : normal_lattice:=false)
+{}
     t0 := ReportStart(L`Grp, "ComputeLatticeEdges");
     one := Identity(Ambient);
     n := L`Grp`order;
