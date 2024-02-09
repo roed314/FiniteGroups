@@ -2156,7 +2156,7 @@ function SubgroupLattice(GG, aut)
 end function;
 */
 
-intrinsic ComputeLatticeEdges(L::SubgroupLat, Ambient::Grp, inj::HomGrp : normal_lattice:=false)
+intrinsic ComputeLatticeEdges(L::SubgroupLat, Ambient::Grp, inj::Map : normal_lattice:=false)
 {}
     t0 := ReportStart(L`Grp, "ComputeLatticeEdges");
     one := Identity(Ambient);
