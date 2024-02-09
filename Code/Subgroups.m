@@ -2156,7 +2156,7 @@ function SubgroupLattice(GG, aut)
 end function;
 */
 
-procedure ComputeLatticeEdges(~L, Ambient, inj : normal_lattice:=false)
+intrinsic ComputeLatticeEdges(L::SubgroupLat, Ambient::Grp, inj::HomGrp : normal_lattice:=false)
     t0 := ReportStart(L`Grp, "ComputeLatticeEdges");
     one := Identity(Ambient);
     n := L`Grp`order;
@@ -2377,7 +2377,7 @@ function SubgroupLattice_edges(G, aut)
         Ambient := GG;
         inj := IdentityHomomorphism(GG);
     end if;
-    ComputeLatticeEdges(~L, Ambient, inj);
+    ComputeLatticeEdges(L, Ambient, inj);
     SetClosures(~L);
     L`inclusions_known := true;
     return L;
@@ -3257,7 +3257,7 @@ intrinsic NormSubGrpLat(G::LMFDBGrp) -> SubgroupLat
     L`subs := [SubgroupLatElement(L, subs[i]`subgroup : i:=i, normal:=true) : i in [1..#subs]];
     ReportEnd(G, "NormSubGrpLat", t0);
     if Get(G, "subgroup_inclusions_known") then
-        ComputeLatticeEdges(~L, GG, IdentityHomomorphism(GG) : normal_lattice:=true);
+        ComputeLatticeEdges(L, GG, IdentityHomomorphism(GG) : normal_lattice:=true);
         SetClosures(~L);
     end if;
     return L;
@@ -3277,7 +3277,7 @@ intrinsic NormSubGrpLatAut(G::LMFDBGrp) -> SubgroupLat
         L`subs := [SubgroupLatElement(L, subs[i]`subgroup : i:=i, normal:=true) : i in [1..#subs]];
         ReportEnd(G, "NormSubGrpLatAut", t0);
         if Get(G, "subgroup_inclusions_known") then
-            ComputeLatticeEdges(~L, Get(G, "Holomorph"), Get(G, "HolInj"));
+            ComputeLatticeEdges(L, Get(G, "Holomorph"), Get(G, "HolInj"));
             SetClosures(~L);
         end if;
         return L;
