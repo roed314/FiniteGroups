@@ -2273,7 +2273,7 @@ intrinsic ComputeLatticeEdges(L::SubgroupLat, Ambient::Grp, inj::HomGrp : normal
         end for;
     end for;
     ReportEnd(L`Grp, "ComputeLatticeEdges", t0);
-end procedure;
+end intrinsic;
 
 intrinsic normal(H::SubgroupLatElt) -> BoolElt
 {Whether this subgroup is normal}
