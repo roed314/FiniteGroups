@@ -853,7 +853,7 @@ intrinsic aut_gens(G::LMFDBGrp) -> SeqEnum
 {Returns a list of lists of integers encoding elements of the group.
  The first list gives a set of generators of G, while later lists give the images of these generators under generators of the automorphism group of G}
     gens := Get(G, "Generators");
-    saved := [[SaveElt(g) : g in gens]] cat [[SaveElt(phi(g)) : g in gens] : phi in Get(G, "AutGenerators")];
+    saved := [[SaveElt(g, G) : g in gens]] cat [[SaveElt(phi(g), G) : g in gens] : phi in Get(G, "AutGenerators")];
     return saved;
 end intrinsic
 
