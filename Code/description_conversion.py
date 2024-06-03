@@ -1,7 +1,7 @@
 
 
 # ['GLFp', 'GLFq', 'GLZ', 'GLZN', 'GLZq', 'Lie']
-def representation_to_description(order, reps, rtype):
+def representation_to_description(order, reps, rtype, element=False):
     rep = reps[rtype]
     if rtype == "PC":
         if "pres" in rep:
@@ -9,7 +9,13 @@ def representation_to_description(order, reps, rtype):
         else:
             return f"{order}PC{rep['code']}"
     if rtype == "Lie":
-        return f"{rep['family']}({rep['d']},{rep['q']})"
+        fam = rep['family']
+        if element and fam[0] == "P":
+            if "amma" in fam or "igma" in fam:
+                fam = fam[2] + fam[-1]
+            else:
+                fam = fam[1:]
+        return f"{fam}({rep['d']},{rep['q']})"
     gens = ','.join(str(g) for g in rep['gens'])
     if rtype == "Perm":
         return f"{rep['d']}Perm{gens}"
