@@ -5,6 +5,9 @@ end intrinsic;
 
 intrinsic DecodePerm(x::RngIntElt, n::RngIntElt) -> GrpPermElt
     {Given rank x, return corresponding permutation in Sym(n)}
+    if x ge Factorial(n) then
+        error Sprintf("Input larger than %o!", n);
+    end if;
     return LehmerCodeToPermutation(RankToLehmerCode(x,n));
 end intrinsic;
 
