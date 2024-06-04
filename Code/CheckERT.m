@@ -47,3 +47,4 @@ for line in lines[1..3] do
         end if;
     end if;
 end for;
+quit;
