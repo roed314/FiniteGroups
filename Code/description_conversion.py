@@ -5,29 +5,32 @@ def representation_to_description(order, reps, rtype, element=False):
     rep = reps[rtype]
     if rtype == "PC":
         if "pres" in rep:
-            return f"{order}pc{','.join(str(c) for c in rep['pres'])}"
+            return [(rtype, f"{order}pc{','.join(str(c) for c in rep['pres'])}")]
         else:
-            return f"{order}PC{rep['code']}"
+            return [(rtype, f"{order}PC{rep['code']}")]
     if rtype == "Lie":
-        rep = rep[0]
-        fam = rep['family']
-        if element and fam[0] == "P":
-            if "amma" in fam or "igma" in fam:
-                fam = fam[2] + fam[-1]
-            else:
-                fam = fam[1:]
-        return f"{fam}({rep['d']},{rep['q']})"
+        ans = []
+        for i, r in enumerate(rep):
+            fam = r['family']
+            ans.append((f"Lie{i+1}", f"{fam}({r['d']},{r['q']})"))
+            if element and fam[0] == "P":
+                if "amma" in fam or "igma" in fam:
+                    fam = fam[2] + fam[-1]
+                else:
+                    fam = fam[1:]
+                ans.append((f"PLie{i+1}", f"{fam}({r['d']},{r['q']})"))
+        return ans
     gens = ','.join(str(g) for g in rep['gens'])
     if rtype == "Perm":
-        return f"{rep['d']}Perm{gens}"
+        return [(rtype, f"{rep['d']}Perm{gens}")]
     if rtype == "GLZ":
-        return f"{rep['d']},0,{rep['b']}MAT{gens}"
+        return [(rtype, f"{rep['d']},0,{rep['b']}MAT{gens}")]
     if rtype in ["GLZN", "GLFp"]:
         R = str(rep['p'])
     elif rtype == "GLZq":
         R = str(rep['q'])
     else:
         R = f"q{rep['q']}"
-    return f"{rep['d']},{R}MAT{gens}"
+    return [(rtype, f"{rep['d']},{R}MAT{gens}")]
 
 # description_to_representation is more complicated, and is currently implemented in create_descriptions.py:make_representations_dict
