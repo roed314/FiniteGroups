@@ -4,6 +4,7 @@
 
 import os
 opj = os.path.join
+import re
 
 from lmfdb import db
 
@@ -95,3 +96,28 @@ def create_input_files():
         cur_lines.append("|".join(["J"+rec["label"], str(rec["size"]), str(rec["order"]), str(rec["representative"])]))
     write(cur_ambient, cur_lines)
     return bad_ert
+
+perm_re = re.compile(r"[ASM]\d+")
+pc_re = re.compile(r"(C|D|F|Q|SD|OD|He)\d+")
+lie_re = re.compile(r"(SL|PSL|GL|PGL|SO|PSO|Omega|Sp|PSp|SU|PSU|GU|PGU)[+\-]?\(\d+,\d+\)")
+lie_re = re.compile(r"(SL|GL|PSL|PGL|SO|PSO|Omega|GO|PGO|CO|CSO|Spin|Sp|PSp|CSp|SU|PSU|CSU|GU|PGU|CU|AGL|ASL|AGammaL|ASigmaL|ASigmaSp|PGammaL|PGammaU|PSigmaSp)[+\-]?\(\d+,\d+\)")
+chev_re = re.compile(r"(?P<chev2twist>\d)?(?P<chev2family>[A-G])\((?P<chev2d>\d+),(?P<chev2q>\d+)\)'?")
+spor_re = re.compile(r"(?:operatorname\{)?(?P<sporadicfamily>Ru|McL|He|J|Co|HS)\}?(?:(?P<sporadicN>\d))?")
+def ert_preference(name, abelian):
+    # If pattern matches on the name to see if there's an element_repr_type that users would strongly prefer
+    if abelian or pc_re.fullmatch(name):
+        return "PC"
+    elif perm_re.fullmatch(name):
+        return "Perm"
+    elif lie_re.fullmatch(name):
+        return "Lie"
+    elif name == "GL(2,Z/4)":
+        return "GLZq"
+    if any(c in name for c in [".","*",":","wr","^"]) or chev_re.fullmatch(name) or spor_re.fullmatch(name):
+        return None
+    raise RuntimeError(name)
+
+def check_name_ert():
+    # Compare names for groups with element_repr_type, to find things like S5 displayed as PGL(2,5) instead.
+    for rec in db.gps_groups.search({}, ["name", "element_repr_type", "representations", "abelian"]):
+        

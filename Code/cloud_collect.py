@@ -2014,10 +2014,10 @@ def make_special_names():
     special_names["SD"] = [('1.1', {'n': '1'}), ('2.1', {'n': '2'}), ('4.2', {'n': '4'}), ('8.2', {'n': '8'})]
     special_names["OD"] = [('1.1', {'n': '1'}), ('2.1', {'n': '2'}), ('4.2', {'n': '4'}), ('8.3', {'n': '8'})]
     # We don't use dicyclic for names, so have to find the labels
-    ab = set(db.gps_groups_test.search({"abelian":True}, "label"))
-    dic = {int(label.split(".")[0])//4:label for label in set(rec["ambient"] for rec in db.gps_subgroups_test.search({"cyclic":True, "quotient_order":2, "split":False}, ["ambient", "ambient_order"]) if rec["ambient"] not in ab and rec["ambient_order"] % 4 == 0)}
+    ab = set(db.gps_groups.search({"abelian":True}, "label"))
+    dic = {int(label.split(".")[0])//4:label for label in set(rec["ambient"] for rec in db.gps_subgroups.search({"cyclic":True, "quotient_order":2, "split":False}, ["ambient", "ambient_order"]) if rec["ambient"] not in ab and rec["ambient_order"] % 4 == 0)}
     special_names["Dic"] = [(label, {'n': str(n)}) for (n, label) in sorted(dic.items())]
-    for rec in db.gps_groups_test.search({}, ["label", "representations", "name"]):
+    for rec in db.gps_groups.search({}, ["label", "representations", "name"]):
         if "Lie" in rec["representations"]:
             for lie in rec["representations"]["Lie"]:
                 special_names[lie["family"]].append((rec["label"], {"n":lie["d"], "q":lie["q"]}))

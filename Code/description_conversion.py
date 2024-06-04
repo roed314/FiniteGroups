@@ -9,6 +9,7 @@ def representation_to_description(order, reps, rtype, element=False):
         else:
             return f"{order}PC{rep['code']}"
     if rtype == "Lie":
+        rep = rep[0]
         fam = rep['family']
         if element and fam[0] == "P":
             if "amma" in fam or "igma" in fam:
