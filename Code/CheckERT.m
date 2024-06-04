@@ -9,7 +9,7 @@
 // If the corresponding input line was blank, the output line will be blank as well.
 
 SetColumns(0);
-AttachSpec("hashspec");
+AttachSpec("spec");
 
 lines := PySplit(Read("DATA/ert_check/" * label), "\n");
 
