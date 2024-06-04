@@ -15,8 +15,10 @@ lines := PySplit(Read("DATA/ert_check/" * label), "\n");
 
 Gs := AssociativeArray();
 for line in lines[4..#lines] do
-    name, desc := Explode(Split(line, "|"));
-    Gs[name] := StringToGroup(desc);
+    if #line gt 0 then
+        name, desc := Explode(Split(line, "|"));
+        Gs[name] := StringToGroup(desc);
+    end if;
 end for;
 
 System("mkdir -p DATA/ert_out");
