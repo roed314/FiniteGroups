@@ -15,7 +15,7 @@ def representation_to_description(order, reps, rtype, element=False):
             ans.append((f"Lie{i+1}", f"{fam}({r['d']},{r['q']})"))
             if element and fam[0] == "P":
                 if "amma" in fam or "igma" in fam:
-                    fam = fam[2] + fam[-1]
+                    fam = fam[1] + fam[-1]
                 else:
                     fam = fam[1:]
                 ans.append((f"PLie{i+1}", f"{fam}({r['d']},{r['q']})"))
