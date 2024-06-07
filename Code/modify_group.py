@@ -42,6 +42,14 @@ def update_element_repr_type(changes, ncores=24, force=False):
     upload_ert_to_db(outfolder, Swritten, jwritten)
 
 def fix_element_repr_type(fixfile, ncores=24):
+    changes, fix = load_fix(fixfile)
+    current, representations, autgens, subgens, ccreps = ert_inputs(changes, force=True)
+    todofile = write_ert_input(changes, current, representations, autgens, subgens, ccreps, fix=fix)
+    run_ert_magma(todofile, ncores)
+    collate_ert_output(changes)
+    # We upload manually so that we can double check things
+
+def load_fix(fixfile):
     changes = {}
     fix = {}
     descbase = Path("DATA/descriptions")
@@ -56,13 +64,9 @@ def fix_element_repr_type(fixfile, ncores=24):
                 label = pieces[0]
                 changes[label] = re.sub(r"\d+", "", pieces[2]) # Change Lie1 to Lie
                 with open(descbase / label) as Fdesc:
-                    filedesc = F.read().strip()
+                    filedesc = Fdesc.read().strip()
                 fix[label] = (pieces, descs, filedesc)
-    current, representations, autgens, subgens, ccreps = ert_inputs(changes, force=True)
-    todofile = write_ert_input(changes, current, representations, autgens, subgens, ccreps, fix=fix)
-    run_ert_magma(todofile, ncores)
-    collate_ert_output(changes)
-    # We upload manually so that we can double check things
+    return changes, fix
 
 def ccpair(label):
     N, i = label.split(".")
