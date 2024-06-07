@@ -786,7 +786,11 @@ intrinsic StringToGroupHom(s::MonStgElt) -> Map, BoolElt
     if "--" in s then
         // Describe the homomorphism explicitly
         pieces := PySplit(s, "--");
-        if #pieces ne 3 then
+        if #pieces eq 2 then
+            // Allows for the identity homomorphism on PGL(d,q)
+            assert pieces[2] eq ">"*pieces[1];
+            return IdentityHomomorphism(StringToGroup(pieces[1]));
+        elif #pieces ne 3 then
             error "Invalid hom string with", #pieces-1, "-- segments";
         end if;
         G, f, HH := Explode(pieces);
