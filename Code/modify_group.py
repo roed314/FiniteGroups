@@ -170,7 +170,7 @@ def collate_ert_output(changes):
             _ = Fsubgroups.write("label|generators\ntext|numeric[]\n\n")
             Swritten = False
             with open(outfolder / "gps_conj_classes.txt", "w") as Fconj:
-                _ = Fconj.write("id|representative\integer|numeric\n\n")
+                _ = Fconj.write("id|representative|integer|numeric\n\n")
                 jwritten = False
                 for label in changes:
                     group_order, group_counter = ccpair(label)
