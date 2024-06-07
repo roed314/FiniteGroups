@@ -141,8 +141,9 @@ def write_ert_input(changes, current, representations, autgens, subgens, ccreps,
                                 descs[j] = representation_to_description(order, rep, pieces[j])
                         elif pieces[j].startswith("Lie") and descs[j].startswith("P") and j > 2:
                             # Override the default behavior of lifting PGL(d,q), since elements are encoded as permutations
-                            descs[j] = f"{descs[j]}-->{descs[j]}"
-                        elif pieces[j].startswith("PLie"):
+                            if "--" not in descs[j]:
+                                descs[j] = f"{descs[j]}-->{descs[j]}"
+                        elif pieces[j].startswith("PLie") and descs[j][0] != "P":
                             # Elements are correctly stored as lifted matrices
                             descs[j] = "P" + descs[j]
                     _ = F.write("&".join(descs[3:]) + "\n")
