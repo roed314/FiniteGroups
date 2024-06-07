@@ -4,7 +4,8 @@ lie_re = re.compile(r"(P)?Lie(\d+)?")
 
 # ['GLFp', 'GLFq', 'GLZ', 'GLZN', 'GLZq', 'Lie']
 def representation_to_description(order, reps, rtype):
-    rep = reps[rtype]
+    basictype = re.sub(r"\d+", "", rtype) # Change Lie1 to Lie
+    rep = reps[basictype]
     if rtype == "PC":
         if "pres" in rep:
             return f"{order}pc{','.join(str(c) for c in rep['pres'])}"
