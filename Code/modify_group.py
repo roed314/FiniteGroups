@@ -19,6 +19,7 @@ from pathlib import Path
 from description_conversion import representation_to_description
 from psycodict.utils import DelayCommit
 from psycodict.encoding import copy_dumps
+import re
 
 def update_element_repr_type(changes, ncores=24, force=False):
     """
