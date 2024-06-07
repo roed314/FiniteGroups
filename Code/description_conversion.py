@@ -23,7 +23,7 @@ def representation_to_description(order, reps, rtype):
                 fam = fam[1] + fam[-1]
             else:
                 fam = fam[1:]
-        return f"{fam}({r['d']},{r['q']})"
+        return f"{fam}({rep['d']},{rep['q']})"
     gens = ','.join(str(g) for g in rep['gens'])
     if rtype == "Perm":
         return f"{rep['d']}Perm{gens}"
