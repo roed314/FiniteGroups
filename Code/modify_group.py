@@ -146,7 +146,7 @@ def write_ert_input(changes, current, representations, autgens, subgens, ccreps,
                             # Elements are correctly stored as lifted matrices
                             descs[j] = "P" + descs[j]
                     _ = F.write("&".join(descs[3:]) + "\n")
-                    _ = F.write(descs[2])
+                    _ = F.write(descs[2] + "\n")
                     if autgens[label] is not None:
                         _ = F.write(f"a{autgens[label]}\n")
                     if descs[2] != descs[5]:
