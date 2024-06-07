@@ -134,6 +134,8 @@ def write_ert_input(changes, current, representations, autgens, subgens, ccreps,
                                 # Elements are correctly stored as matrices
                                 assert "--" in filedesc
                                 descs[j] = filedesc
+                            elif not pieces[j]: # No data, so it doesn't matter what we put as long as it parses correctly
+                                descs[j] = representation_to_description(order, rep, pieces[1])
                             else:
                                 descs[j] = representation_to_description(order, rep, pieces[j])
                         elif pieces[j].startswith("Lie") and descs[j].startswith("P") and j > 2:
