@@ -1450,13 +1450,14 @@ intrinsic ConjugacyClasses(G::LMFDBGrp) ->  SeqEnum
         ix := perm[j];
         magccs[j]`Grp := G;
         magccs[j]`MagmaConjCls := cc[ix];
-        magccs[j]`label := labels[j];
+        magccs[j]`label := labels[ix];
         magccs[j]`size := cc[ix][2];
-        magccs[j]`counter := j;
+        magccs[j]`counter := ix;
         magccs[j]`order := cc[ix][1];
         magccs[j]`powers := [perm[pm(ix,p)] : p in plist];
         magccs[j]`representative := cc[ix][3];
     end for;
+    Sort(~magccs, func<x,y|x`counter-y`counter>);
     ReportEnd(G, "LabelConjugacyClasses", t0);
     return magccs;
 end intrinsic;
