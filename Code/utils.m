@@ -781,6 +781,23 @@ intrinsic SubgroupToString(G::Grp, H::Grp) -> MonStgElt
     end if;
 end intrinsic;
 
+function LieHom(cmd, n, q, up)
+    up := eval up;
+    cmd := eval cmd;
+    G := up(n, q);
+    P, S := cmd(n, q);
+    nonzero := [Min([i : i in [1..Degree(v)] | v[i] ne 0]) : v in S];
+    function Slook(v)
+        for i in [1..#S] do
+            if v eq S[i] * v[nonzero[i]] / S[i][nonzero[i]] then
+                return i;
+            end if;
+        end for;
+    end function;
+    f := hom<G -> P | [g -> P![Slook(v * g) : v in S] : g in Generators(G)]>;
+    return f;
+end function;
+
 intrinsic StringToGroupHom(s::MonStgElt) -> Map, BoolElt
 {Returns the map described, together with a boolean describing whether elements should be lifted from the codomain to the domain (indicated by a >> arrowhead) or mapped from the domain to the codomain (true in first case, false in second)}
     if "--" in s then
@@ -824,33 +841,22 @@ intrinsic StringToGroupHom(s::MonStgElt) -> Map, BoolElt
         Ggens := [g : g in Generators(G)];
         assert #Ggens eq #f;
         return hom<G -> H | [Ggens[i] -> f[i] : i in [1..#Ggens]]>, cover;
-    elif s[#s] eq ")" and #Split(s, "(") eq 2 and Split(s, "(")[1] in ["PGL", "PSL", "PSp", "PSO", "PSOPlus", "PSOMinus", "PSU", "PGO", "PGOPlus", "PGOMinus", "PGU", "POmega", "POmegaPlus", "POmegaMinus", "PGammaL", "PSigmaL", "PSigmaSp", "PGammaU"] then
+    elif s[#s] eq ")" and #Split(s, "(") eq 2 and Split(s, "(")[1] in ["PGL", "PSL", "PSp", "PSO", "PSOPlus", "PSOMinus", "PSU", "PGO", "PGOPlus", "PGOMinus", "PGU", "POmega", "POmegaPlus", "POmegaMinus", "PGammaL", "PSigmaL", "PSigmaSp"] then
         cmd, data := Explode(Split(s[1..#s-1], "("));
         n, q := Explode([StringToInteger(c) : c in Split(data, ",")]);
-        if "amma" in cmd or "igma" in cmd then
-            up := cmd[2] * cmd[#cmd]; // GL, SL, Sp or GU
+        if cmd in ["PGammaL", "PSigmaL", "PSigmaSp"] then
+            if IsPrime(q) then
+                up := cmd[2] * cmd[#cmd]; // GL, SL, Sp or GU
+                return LieHom(cmd, n, q, up), true;
+            end if;
         else
             up := cmd[2..#cmd];
+            return LieHom(cmd, n, q, up), true;
         end if;
-        up := eval up;
-        cmd := eval cmd;
-        G := up(n, q);
-        P, S := cmd(n, q);
-        nonzero := [Min([i : i in [1..Degree(v)] | v[i] ne 0]) : v in S];
-        function Slook(v)
-            for i in [1..#S] do
-                if v eq S[i] * v[nonzero[i]] / S[i][nonzero[i]] then
-                    return i;
-                end if;
-            end for;
-        end function;
-        f := hom<G -> P | [g -> P![Slook(v * g) : v in S] : g in Generators(G)]>;
-        return f, true;
-    else
-        // The identity homomorphism on a single group
-        G := StringToGroup(s);
-        return IdentityHomomorphism(G), false;
     end if;
+    // The identity homomorphism on a single group
+    G := StringToGroup(s);
+    return IdentityHomomorphism(G), false;
 end intrinsic;
 
 intrinsic GroupHomToString(f::Map : cover:=false, GG:="", HH:="") -> MonStgElt
@@ -884,6 +890,7 @@ intrinsic PStringToHomString(s::MonStgElt) -> MonStgElt
     cmd, data := Explode(Split(s[1..#s-1], "("));
     n, q := Explode([StringToInteger(c) : c in Split(data, ",")]);
     if "amma" in cmd or "igma" in cmd then
+        error Sprintf("%o does not have lifting", cmd);
         up := cmd[2] * cmd[#cmd]; // GL, SL, Sp or GU
     else
         up := cmd[2..#cmd];
