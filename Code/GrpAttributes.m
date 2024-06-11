@@ -1433,14 +1433,14 @@ intrinsic ConjugacyClasses(G::LMFDBGrp) ->  SeqEnum
     // perm2 is its inverse
     perm := [0 : j in [1..#cc]];
     perminv := [0 : j in [1..#cc]];
-    for j:=1 to #cc do
-        perm[cm(ordercc[j])] := j;
-        perminv[j] := cm(ordercc[j]);
+    for i:=1 to #cc do
+        perm[cm(ordercc[i])] := i;
+        perminv[i] := cm(ordercc[i]);
     end for;
     G`CCpermutation := perm;
     G`CCpermutationInv := perminv;
     sset := {1..#cc};
-    permmap := map<sset->sset | [j -> perminv[j] : j in sset]>;
+    permmap := map<sset->sset | [i -> perm[i] : i in sset]>;
     G`ClassMap := cm*permmap; // Magma does composition backwards!
     magccs := [ New(LMFDBGrpConjCls) : j in cc];
     gord := Get(G, "order");
@@ -1448,16 +1448,15 @@ intrinsic ConjugacyClasses(G::LMFDBGrp) ->  SeqEnum
     //gord:=Get(G, 'Order');
     for j:=1 to #cc do
         ix := perm[j];
-        magccs[j]`Grp := G;
-        magccs[j]`MagmaConjCls := cc[ix];
-        magccs[j]`label := labels[ix];
-        magccs[j]`size := cc[ix][2];
-        magccs[j]`counter := ix;
-        magccs[j]`order := cc[ix][1];
-        magccs[j]`powers := [perm[pm(ix,p)] : p in plist];
-        magccs[j]`representative := cc[ix][3];
+        magccs[ix]`Grp := G;
+        magccs[ix]`MagmaConjCls := cc[j];
+        magccs[ix]`label := labels[ix];
+        magccs[ix]`size := cc[j][2];
+        magccs[ix]`counter := ix;
+        magccs[ix]`order := cc[j][1];
+        magccs[ix]`powers := [perm[pm(j,p)] : p in plist];
+        magccs[ix]`representative := cc[j][3];
     end for;
-    Sort(~magccs, func<x,y|x`counter-y`counter>);
     ReportEnd(G, "LabelConjugacyClasses", t0);
     return magccs;
 end intrinsic;
