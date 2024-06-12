@@ -20,7 +20,7 @@ for line in output do
         elif line[1] eq "j" then
             elt := LoadElt(Split(line, "|")[2], G);
         else
-            error, "Unexpected start character";
+            error "Unexpected start character";
         end if;
     catch e
         PrintFile("DATA/ert_ugh/" * label, line);
