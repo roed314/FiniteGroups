@@ -179,7 +179,7 @@ def collate_ert_output(changes):
             _ = Fsubgroups.write("label|generators\ntext|numeric[]\n\n")
             Swritten = False
             with open(outfolder / "gps_conj_classes.txt", "w") as Fconj:
-                _ = Fconj.write("id|representative|integer|numeric\n\n")
+                _ = Fconj.write("id|representative\ninteger|numeric\n\n")
                 jwritten = False
                 for label in changes:
                     group_order, group_counter = ccpair(label)
@@ -205,8 +205,8 @@ def collate_ert_output(changes):
 
 def upload_ert_to_db(outfolder, Swritten, jwritten):
     with DelayCommit(db):
+        if jwritten:
+            db.gps_conj_classes.update_from_file(outfolder / "gps_conj_classes.txt", label_col="id")
         db.gps_groups.update_from_file(outfolder / "gps_groups.txt")
         if Swritten:
             db.gps_subgroups.update_from_file(outfolder / "gps_subgroups.txt")
-        if jwritten:
-            db.gps_conj_classes.update_from_file(outfolder / "gps_conj_classes.txt", label_col="id")
