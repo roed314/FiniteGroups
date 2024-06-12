@@ -39,7 +39,9 @@ for line in lines[3..#lines] do
     GG := G`MagmaGrp;
     GH := <GG,HH>;
     if not IsDefined(homs, GH) then
-        if GG cmpeq HH then
+        if Type(GG) eq GrpPC and Type(HH) eq GrpPC and CompactPresentation(GG) eq CompactPresentation(HH) then
+            homs[GH] := hom<GG->HH | [<GG.i, HH.i> : i in [1..Ngens(GG)]]>;
+        elif GG cmpeq HH then
             homs[GH] := IdentityHomomorphism(GG);
         else
             ok, homs[GH] := IsIsomorphic(GG, HH);

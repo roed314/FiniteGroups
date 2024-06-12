@@ -47,7 +47,7 @@ def fix_element_repr_type(fixfile, ncores=24):
     current, representations, autgens, subgens, ccreps = ert_inputs(changes, force=True)
     todofile = write_ert_input(changes, current, representations, autgens, subgens, ccreps, fix=fix)
     run_ert_magma(todofile, ncores)
-    collate_ert_output(changes)
+    outfolder, Swritten, jwritten = collate_ert_output(changes)
     # We upload manually so that we can double check things
 
 def load_fix(fixfile):
