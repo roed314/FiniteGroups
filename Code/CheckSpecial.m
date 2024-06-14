@@ -22,13 +22,25 @@ for line in todo do
         PrintFile(outfile, Sprintf("%o|\\N|\\N", code));
     else
         rightlabel := label_subgroup(G, C);
-        PrintFile(outfile, Sprintf("%o|%o|%o", code, (sublabel eq rightlabel) select "t" else "f", rightlabel));
+        if Type(rightlabel) eq NoneType then
+            rightlabel := "\\N";
+            equal := "f";
+        else
+            equal := (sublabel eq rightlabel) select "t" else "f";
+        end if;
+        PrintFile(outfile, Sprintf("%o|%o|%o", code, equal, rightlabel));
     end if;
     if quolabel eq "\\N" then
         PrintFile(outfile, Sprintf("%oQ|\\N|\\N", code));
     else
         rightlabel := label_quotient(G, C);
-        PrintFile(outfile, Sprintf("%oQ|%o|%o", code, (quolabel eq rightlabel) select "t" else "f", rightlabel));
+        if Type(rightlabel) eq NoneType then
+            rightlabel := "\\N";
+            equal := "f";
+        else
+            equal := (quolabel eq rightlabel) select "t" else "f";
+        end if;
+        PrintFile(outfile, Sprintf("%oQ|%o|%o", code, equal, rightlabel));
     end if;
     if gens eq "\\N" then
         PrintFile(outfile, Sprintf("%oG|\\N|\\N", code));
