@@ -16,7 +16,7 @@ codes["D"] := "MagmaCommutator";
 codes["Phi"] := "MagmaFrattini";
 
 for line in todo do
-    code, label, sublabel, quolabel, gens := Explode(Split(line, "|"));
+    code, label, sublabel, quolabel, gens := Explode(PySplit(line, "|"));
     C := Get(G, codes[code]);
     if sublabel eq "\\N" then
         PrintFile(outfile, Sprintf("%o|\\N|\\N", code));
