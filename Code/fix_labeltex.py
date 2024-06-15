@@ -3,6 +3,7 @@
 
 import time
 from collections import defaultdict
+opj = os.path.join
 broken_aut = []
 broken_outer = []
 special = defaultdict(dict)
@@ -215,9 +216,9 @@ for folder in os.listdir("/scratch/grp/"):
                         slabel = pieces[0]
                         tex_subdata[slabel].add(pieces)
     if any(folder.startswith(h) for h in ["15", "60", "fixsmall", "highmem", "lowmem", "noaut", "sopt", "tex", "Xrun", "last"]):
-        for sub in os.listdir(folder):
+        for sub in os.listdir(opj("/scratch/grp/",folder)):
             if sub == "raw":
-                for fname in os.listdir(opj(folder, "raw")):
+                for fname in os.listdir(opj("/scratch/grp/",folder, "raw")):
                     if fname.startswith("grp-") and fname.endswith(".txt"):
                         process_file(opj("/scratch/grp", folder, "raw", fname))
             elif sub.startswith("output"):
@@ -286,10 +287,10 @@ for (D, new) in [(tex_subname1, new_subtex), (tex_quoname1, new_quotex)]:
                 fix_latex(t)
             texs = [parse_tokens(t) for t in texs]
             texs.sort(key=lambda t: (t.value, t.latex))
-            y = texs[0].latex
-            D[label] = y
+            x = texs[0].latex
+        D[label] = x
 
-def _make_gps_data_file():
+def _make_gps_data_file2():
     fname = f"GpTexInfo.txt"
     with open(fname, "w") as Fout:
         for rec in db.gps_groups.search({}, ["label", "representations", "order", "cyclic", "abelian", "smith_abelian_invariants", "direct_factorization", "wreath_data"]):
