@@ -46,8 +46,7 @@ uhoh = set() # unneeded
 missing_cent = set() # unneeded
 subdata = {}
 t0 = time.time()
-for i, rec in enumerate(db.gps_subgroups.search({}, ["label", "ambient", "ambient_order", "subgroup", "subgroup_order", "subgroup_hash", "quotient", "quotient_order", "quotient_hash", "normal", "weyl_group", "normalizer", "centralizer
-", "centralizer_order", "special_labels"])):
+for i, rec in enumerate(db.gps_subgroups.search({}, ["label", "ambient", "ambient_order", "subgroup", "subgroup_order", "subgroup_hash", "quotient", "quotient_order", "quotient_hash", "normal", "weyl_group", "normalizer", "centralizer", "centralizer_order", "special_labels"])):
     if i and i%500000 == 0:
         print(f"{i // 500000}({time.time()-t0:.1f})")
         t0 = time.time()
