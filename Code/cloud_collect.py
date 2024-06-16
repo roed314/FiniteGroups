@@ -993,6 +993,20 @@ def write_upload_files(datafolder, outfolder="/scratch/grp/upload/", overwrite=F
     #                 _ = F.write("|".join(D.get(col, r"\N") for col in final_cols) + "\n")
 
 def get_hshing():
+    # There is an off-by-one error here.  We keep this code intact so that we can identify cases that were misidentified.
+    D = defaultdict(list)
+    for folder in ["gps_to_id", "gps_to_id1"]:
+        for fname in os.listdir(folder):
+            with open(opj(folder, fname) )as F:
+                for i, line in enumerate(F):
+                    if line.strip():
+                        source, desc = line.strip().split("|")
+                        hsh = hash(desc)
+                        code = 1000*int(fname) + i
+                        D[hsh].append(code)
+    return D
+def fixed_hshing():
+    # This is the fixed version of get_hshing
     D = defaultdict(list)
     for folder in ["gps_to_id", "gps_to_id1"]:
         for fname in os.listdir(folder):
@@ -1077,11 +1091,11 @@ wreath_sub = re.compile(r"\{\\rm wr([^\}]+)\}")
 tokenD = dict([
     ("chev1", r"(?:\{\}\^(?P<chev1twist>\d))?(?P<chev1family>[A-G])_(?P<chev1d>\d)\((?P<chev1q>\d+)\)"), # chevalley groups in first notation; has to come before basic so that F_4(2) takes priority over F_4, etc.
     ("basic", r"(?P<basicfamily>[ACDFMQS])_\{?(?P<basicN>\d+)\}?"), # alternating, cyclic, dihedral, Frobenius, Mathieu, generalized quaternion, symmetric
-    ("dihedral", r"(?:\{\\rm )?(?P<dihedralfamily>[OS]?D)\}?_\{?(?P<dihedralN>\d+)\}?"), # semidihedral, other-dihedral
-    ("heisenberg", r"(?:\{\\rm )?He\}?_\{?(?P<heisenbergN>\d+)\}?"), # Heisenberg
-    ("lie", r"(?:(?:\{\\rm )?(?P<liefamily>[AP]?[GS]L|[CP]?SU|P?SO?)\}?(?P<lieplus>\+?))\((?P<lied>\d+),(?P<lieq>\d+|Z/4)\)"), # matrix groups
+    ("dihedral", r"(?:\{\\rm |\\)?(?P<dihedralfamily>[OS]?D)\}?_\{?(?P<dihedralN>\d+)\}?"), # semidihedral, other-dihedral
+    ("heisenberg", r"(?:\{\\rm |\\)?He\}?_\{?(?P<heisenbergN>\d+)\}?"), # Heisenberg
+    ("lie", r"(?:(?:\{\\rm |\\)?(?P<liefamily>[AP]?[GS]L|[CP]?SU|P?SO?)\}?(?P<lieplus>\+?))\((?P<lied>\d+),(?P<lieq>\d+|Z/4)\)"), # matrix groups
     ("chev2", r"(?P<chev2twist>\d)?(?P<chev2family>[A-G])\((?P<chev2d>\d+),(?P<chev2q>\d+)\)'?"), # chevalley groups in second notation
-    ("sporadic", r"(?:operatorname\{)?(?P<sporadicfamily>Ru|McL|He|J|Co|HS)\}?(?:_(?P<sporadicN>\d))?"),
+    ("sporadic", r"(?:operatorname\{|\\)?(?P<sporadicfamily>Ru|McL|He|J|Co|HS)\}?(?:_(?P<sporadicN>\d))?"),
     ("oparen", r"\("),
     ("cparen", r"\)"),
     ("exp", r"\^\{?(?P<expN>\d+)\}?"),
