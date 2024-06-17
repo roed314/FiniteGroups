@@ -6,6 +6,7 @@ including the following tasks:
 * Change element_repr_type, making elements display using a different construction for the group.
 * Update the label to use small group ids when they become available in GAP
   (for example, update groups of order 2100 to use newly available labels)
+* Add identifications for subgroup, quotient, aut_group, outer_group.  This can also update latex for other groups.
 
 This file should be attached to a running instance of Sage, with `from lmfdb import db` already executed.
 You must also have write access to the database.
@@ -204,6 +205,7 @@ def collate_ert_output(changes):
     return outfolder, Swritten, jwritten
 
 def upload_ert_to_db(outfolder, Swritten, jwritten):
+    # Note that doing this in a DelayCommit means that tables are locked until all of them finish.  The alternative is to have inconsistent data while one table has been reloaded but not another.
     with DelayCommit(db):
         if jwritten:
             db.gps_conj_classes.update_from_file(outfolder / "gps_conj_classes.txt", label_col="id")
