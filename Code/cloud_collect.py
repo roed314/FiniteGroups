@@ -1095,7 +1095,7 @@ tokenD = dict([
     ("heisenberg", r"(?:\{\\rm |\\)?He\}?_\{?(?P<heisenbergN>\d+)\}?"), # Heisenberg
     ("lie", r"(?:(?:\{\\rm |\\)?(?P<liefamily>[AP]?[GS]L|[CP]?SU|P?SO?)\}?(?P<lieplus>\+?))\((?P<lied>\d+),(?P<lieq>\d+|(?:\\mathbb\{)?Z\}?/4)\)"), # matrix groups
     ("chev2", r"(?:\{\}\^)?(?P<chev2twist>\d)?(?P<chev2family>[A-G])\((?P<chev2d>\d+),(?P<chev2q>\d+)\)'?"), # chevalley groups in second notation
-    ("sporadic", r"(?:operatorname\{|\\)?(?P<sporadicfamily>Ru|McL|He|J|Co|HS)\}?(?:_(?P<sporadicN>\d))?"),
+    ("sporadic", r"(?:\\?operatorname\{|\\)?(?P<sporadicfamily>Ru|McL|He|J|Co|HS)\}?(?:_(?P<sporadicN>\d))?"),
     ("oparen", r"\("),
     ("cparen", r"\)"),
     ("exp", r"\^\{?(?P<expN>\d+)\}?"),
@@ -1491,14 +1491,14 @@ def _make_gps_data_file(order_limit=None):
     if order_limit is not None:
         query["order"] = {"$lte": order_limit}
     with open(fname, "w") as Fout:
-        for rec in db.gps_groups_test.search(query, ["label", "tex_name", "name", "representations", "order", "cyclic", "abelian", "smith_abelian_invariants", "direct_factorization", "wreath_data"]):
+        for rec in db.gps_groups.search(query, ["label", "tex_name", "name", "representations", "order", "cyclic", "abelian", "smith_abelian_invariants", "direct_factorization", "wreath_data"]):
             label, tex_name, name, order = rec["label"], rec["tex_name"], rec["name"], rec["order"]
             cyclic, abelian = unbooler(rec["cyclic"]), unbooler(rec["abelian"])
-            representations = unnone(rec["representations"])
+            lie = str(rec["representations"].get("Lie", [])).replace(" ", "")
             smith = unnone(rec["smith_abelian_invariants"])
             direct = unnone(rec["direct_factorization"])
             wreath = unnone(rec["wreath_data"])
-            _ = Fout.write(f"{label}|{tex_name}|{name}|{representations}|{order}|{cyclic}|{abelian}|{smith}|{direct}|{wreath}\n")
+            _ = Fout.write(f"{label}|{tex_name}|{name}|{lie}|{order}|{cyclic}|{abelian}|{smith}|{direct}|{wreath}\n")
 
 def _gps_data_from_file(order_limit=None):
     cols = ["label", "tex_name", "name", "representations", "order", "cyclic", "abelian", "smith_abelian_invariants", "direct_factorization", "wreath_data"]
@@ -1532,7 +1532,7 @@ def get_tex_data_gps(order_limit=None, from_db=False):
         query = {}
         if order_limit:
             query["order"] = {"$lte": order_limit}
-        gpsource = db.gps_groups_test.search(query, ["label", "tex_name", "name", "representations", "order", "cyclic", "abelian", "smith_abelian_invariants", "direct_factorization", "wreath_data"])
+        gpsource = db.gps_groups.search(query, ["label", "tex_name", "name", "representations", "order", "cyclic", "abelian", "smith_abelian_invariants", "direct_factorization", "wreath_data"])
     else:
         gpsource = _gps_data_from_file(order_limit)
     for ctr, rec in enumerate(gpsource):
@@ -1547,7 +1547,10 @@ def get_tex_data_gps(order_limit=None, from_db=False):
             orig_tex_names[label] = None
             tex_names[label] = None
             orig_names[label] = None
-        for X in rec["representations"].get("Lie", []):
+        reps = rec["representations"]
+        if isinstance(reps, dict):
+            reps = reps.get("Lie", [])
+        for X in reps:
             options[label].append(Lie(X))
         if rec["wreath_data"]:
             wreath_data[label] = rec["wreath_data"]
