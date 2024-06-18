@@ -874,7 +874,7 @@ def write_upload_files(datafolder, outfolder="/scratch/grp/upload/", overwrite=F
         "Grp": "blajcqshtguomwinv" # skip zr since they're just used internally
     }
     finals = {oname: odata for (oname, odata) in headers().items() if oname in final_to_tmp}
-    if not overwrite and any(ope(f"{final}.txt") for final in final_to_tmp):
+    if not overwrite and any(ope(opj(outfolder, f"{final}.txt")) for final in final_to_tmp):
         raise ValueError("An output file already exists; you can use overwrite to proceed anyway")
     writers = {final: open(opj(outfolder, f"{final}.txt"), "w") for final in final_to_tmp}
     try:
