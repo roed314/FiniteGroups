@@ -1461,6 +1461,42 @@ intrinsic ConjugacyClasses(G::LMFDBGrp) ->  SeqEnum
     return magccs;
 end intrinsic;
 
+intrinsic CheckConjugacyClasses(G::LMFDBGrp)
+{Run some tests on the output of ConjugacyClasses(G)}
+    C := Get(G, "ConjugacyClasses");
+    cm := Get(G, "MagmaClassMap");
+    // Check that the order part of the label is correct
+    orders := [Sprint(c`order) : c in C];
+    assert &and[(C[i]`label)[1..#orders[i]] eq orders[i] : i in [1..#C]];
+    // Check that powers is correct
+    plist := [z[1] : z in Factorization(Get(G, "order")) * Factorization(EulerPhi(Get(G, "exponent")))];
+    assert &and[#(c`powers) eq #plist and &and[cm((c`representative)^(plist[i])) eq cm(C[(c`powers)[i]]`representative) : i in [1..#plist]] : c in C];
+    // Check that "inverse classes" are actually inverse
+    by_label := AssociativeArray();
+    for c in C do
+        by_label[c`label] := c;
+    end for;
+    for c in C do
+        if "-" in c`label then
+            assert cm((c`representative)^-1) eq cm(by_label[ReplaceString(c`label, "-", "")]`representative);
+        end if;
+    end for;
+    // Check that classes are sorted correctly by (order, size)
+    assert &and[<C[i]`order, C[i]`size> le <C[i+1]`order, C[i+1]`size> : i in [1..#C-1]];
+    // Check that classes of size 1 are exactly the center
+    size_one := [c : c in C | c`size eq 1];
+    Z := Get(G, "MagmaCenter");
+    assert #size_one eq #Z;
+    assert &and[c`representative in Z : c in size_one];
+end intrinsic;
+
+intrinsic CheckConjugacyClasses(label::MonStgElt)
+{Run tests based on label}
+    desc := Read("DATA/descriptions/"*label);
+    G := MakeBigGroup(desc, label);
+    CheckConjugacyClasses(G);
+end intrinsic;
+
 intrinsic MagmaCharacterTable(G::LMFDBGrp) -> Any
 {Return Magma's character table.}
     t0 := ReportStart(G, "MagmaCharacterTable");
