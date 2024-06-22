@@ -780,6 +780,37 @@ intrinsic proper(H::LMFDBSubGrp) -> Any
   return (Order(HH) ne 1 and Index(GG, HH) ne 1);
 end intrinsic;
 
+
+intrinsic stored_label(H::LMFDBSubGrp) -> Any
+{Label of this subgroup from a previous run}
+    if not assigned H`LatElt`stored_label then
+        SetStoredLabels(H`LatElt`Lat);
+    end if;
+    return H`LatElt`stored_label;
+end intrinsic;
+
+intrinsic SetStoredLabels(Lat::SubgroupLat)
+{}
+    infile := "/scratch/grp/relabel/" * label; // For now, put files in scratch since it has more space
+    lines := Split(Read(infile), "\n");
+    G := Lat`Grp;
+    GG := G`MagmaGrp;
+    for line in lines do
+        stored_label, gens, normal, cha, overs, unders, normal_closure := Explode(Split(line, "|"));
+        gens := [LoadElt(Sprint(gen), G) : gen in LoadTextList(gens)];
+        HH := sub<GG| gens>;
+        i := SubgroupIdentify(Lat, HH : error_if_missing:=false);
+        if i ne -1 then
+            Lat`subs[i]`stored_label := stored_label;
+        end if;
+    end for;
+    for i in [1..#Lat] do
+        if not assigned Lat`subs[i]`stored_label then
+            Lat`subs[i]`stored_label := None();
+        end if;
+    end for;
+end intrinsic;
+
 /* TODO
 intrinsic diagramx(H::LMFDBSubGrp) -> Any
 {A list of integer x-coordinates (between 0 and 10000) of length 2 (outer_equivalence and not normal), 4(outer_equivalence and normal or not outer_equivalence and not normal), or 8 (not outer_equivalence and normal)}

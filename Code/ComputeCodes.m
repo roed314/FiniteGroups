@@ -128,10 +128,8 @@ if "R" in codes then
     G`outer_equivalence, G`subgroup_inclusions_known, G`complements_known, G`normal_subgroups_known := Explode([LoadBool(x) : x in Split(lines[1], "|")]);
     G`complements_known := false; // We don't recompute complements, since with the labels in hand we can redo this.
     G`subgroup_index_bound := StringToInteger(lines[2]);
-    res := LoadSubgroupLattice(G, lines[3..#lines]);
-    if G`outer_equivalence then
-        G`SubGrpLatAut := res;
-    else
+    if not G`outer_equivalence then
+        res := LoadSubgroupLattice(G, lines[3..#lines]);
         G`SubGrpLat := res;
     end if;
 end if;
