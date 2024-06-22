@@ -138,6 +138,7 @@ intrinsic ComputeBools(H::LMFDBSubGrp)
     H`Zgroup := Get(HG, "Zgroup");
     H`supersolvable := Get(HG, "supersolvable");
     subcomplen := #CompositionFactors(HH);
+    H`simple := (subcomplen eq 1);
     quotient_order := Get(H, "quotient_order");
     if Get(H, "normal") then
         if quotient_order eq 1 or IsPrimePower(quotient_order) then
