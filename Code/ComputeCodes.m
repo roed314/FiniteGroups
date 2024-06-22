@@ -5,7 +5,7 @@ SetColumns(0);
 
 if not assigned codes then
     // default order for computing invariants
-    codes := "blajJzcCrqQsvSLWhtguoIimw";
+    codes := "blajJzcCrqQsvSBLWhtguoIimw";
 end if;
 if not assigned label then
     if not ("X" in codes or "Y" in codes) then
@@ -118,6 +118,21 @@ aggregate_attr["S"] := "Subgroups";
 aggregate_attr["L"] := "Subgroups";
 aggregate_attr["W"] := "Subgroups";
 aggregate_attr["I"] := "Subgroups";
+aggregate_attr["R"] := "Subgroups"; // Relabel
+aggregate_attr["B"] := "Subgroups"; // Booleans
+if "R" in codes then
+    // Load stored subgroup data so that we can speed up constructing the subgroup lattice and match with saved data.
+    infile := "DATA/relabel/" * label;
+    lines := Split(Read(infile), "\n");
+    G`outer_equivalence, G`subgroup_inclusions_known, G`complements_known, G`normal_subgroups_known := Explode([LoadBool(x) : x in Split(lines[1], "|")]);
+    G`subgroup_index_bound := StringToInteger(lines[2]);
+    res := LoadSubgroupLattice(G, lines[3..#lines]);
+    if G`outer_equivalence then
+        G`SubGrpLatAut := res;
+    else
+        G`SubGrpLat := res;
+    end if;
+end if;
 
 tstart := Cputime();
 procedure run_codes()

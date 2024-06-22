@@ -119,6 +119,187 @@ intrinsic sylow(H::LMFDBSubGrp) -> RngIntElt // Need to be subgroup attribute fi
     return 0;
 end intrinsic;
 
+intrinsic ComputeBools(H::LMFDBSubGrp)
+{Compute a bunch of boolean quantities}
+    fake_label := Sprintf("%o.a", sub`order);
+    G := H`Grp;
+    GG := G`MagmaGrp;
+    CS := Get(G, "MagmaChiefSeries");
+    LCS := Get(G, "MagmaLowerCentralSeries");
+    DS := Get(G, "MagmaDerivedSeries");
+    SS := Get(G, "MagmaSylowSubgroups");
+    ps := Keys(SS);
+    complen := Get(G, "composition_length");
+
+    HH := H`MagmaSubGrp;
+    HG := NewLMFDBGrp(HH, fake_label);
+    AssignBasicAttributes(HG); // port
+    H`Agroup := Get(HG, "Agroup");
+    H`Zgroup := Get(HG, "Zgroup");
+    H`supersolvable := Get(HG, "supersolvable");
+    subcomplen := #CompositionFactors(HH);
+    quotient_order := Get(H, "quotient_order");
+    if Get(H, "normal") then
+        if G`order eq H`order or IsPrimePower(quotient_order) then
+            H`quotient_nilpotent := true;
+        else
+            H`quotient_nilpotent := (LCS[#LCS] subset HH);
+        end if;
+        H`quotient_metabelian := (#DS le 3 or (DS[3] subset HH));
+        H`quotient_Agroup := &and[DerivedSubgroup(SS[p]) subset HH : p in ps];
+        fac := Factorization(quotient_order);
+        if #fac lt 3 or &and[x[2] eq 1 : x in fac] then
+            H`quotient_solvable := true;
+        else
+            H`quotient_solvable := DS[#DS] subset HH;
+        end if;
+        if not H`quotient_solvable then
+            H`quotient_supersolvable := false;
+        elif H`quotient_nilpotent then
+            H`quotient_supersolvable := true;
+        else
+            CSords := [Order(sub<GG|HH>) : U in CS];
+            CSrats := [CSords[i] div CSords[i+1] : i in [1..#CSords-1]];
+            H`quotient_supersolvable := &and[m eq 1 or IsPrime(m) : m in CSrats];
+        end if;
+        H`quotient_simple := subcomplen eq (complen - 1);
+    else
+        H`quotient_nilpotent := None();
+        H`quotient_metabelian := None();
+        H`quotient_Agroup := None();
+        H`quotient_solvable := None();
+        H`quotient_supersolvable := None();
+        H`quotient_simple := None();
+    end if;
+    if Get(H, "solvable") then
+        D := DerivedSubgroup(HH);
+        H`metabelian := IsAbelian(D);
+        mc := EasyMetacylic(HG);
+        if mc cmpeq 0 then
+            if Get(HG, "pgroup") ne 0 then
+                mc := IsMetacyclicPGroup(HH);
+            else
+                if IsCyclic(D) then
+                    if Type(HH) eq GrpPC then
+                        invcnt := #AbelianQuotientInvariants(HH);
+                        if invcnt eq 1 then
+                            mc := true;
+                        elif invcnt gt 2 then
+                            mc := false;
+                        else
+                            mc := None(); // give up
+                        end if;
+                    else
+                        mc := None();
+                    end if;
+                else
+                    mc := false;
+                end if;
+            end if;
+        end if;
+        H`metacyclic := mc;
+    else
+        H`metabelian := false;
+        H`metacyclic := false;
+    end if;
+end intrinsic;
+
+intrinsic Agroup(H::LMFDBSubGrp) -> BoolElt
+{}
+    ComputeBools(H);
+    return H`Agroup;
+end intrinsic;
+
+intrinsic Zgroup(H::LMFDBSubGrp) -> BoolElt
+{}
+    ComputeBools(H);
+    return H`Zgroup;
+end intrinsic;
+
+intrinsic metabelian(H::LMFDBSubGrp) -> BoolElt
+{}
+    ComputeBools(H);
+    return H`metabelian;
+end intrinsic;
+
+intrinsic metacyclic(H::LMFDBSubGrp) -> BoolElt
+{}
+    ComputeBools(H);
+    return H`metacyclic;
+end intrinsic;
+
+intrinsic supersolvable(H::LMFDBSubGrp) -> BoolElt
+{}
+    ComputeBools(H);
+    return H`supersolvable;
+end intrinsic;
+
+intrinsic simple(H::LMFDBSubGrp) -> BoolElt
+{}
+    ComputeBools(H);
+    return H`simple;
+end intrinsic;
+
+intrinsic quotient_nilpotent(H::LMFDBSubGrp) -> BoolElt
+{}
+    ComputeBools(H);
+    return H`quotient_nilpotent;
+end intrinsic;
+
+intrinsic quotient_Agroup(H::LMFDBSubGrp) -> BoolElt
+{}
+    ComputeBools(H);
+    return H`quotient_Agroup;
+end intrinsic;
+
+intrinsic quotient_metabelian(H::LMFDBSubGrp) -> BoolElt
+{}
+    ComputeBools(H);
+    return H`quotient_metablian;
+end intrinsic;
+
+intrinsic quotient_supersolvable(H::LMFDBSubGrp) -> BoolElt
+{}
+    ComputeBools(H);
+    return H`quotient_supersolvable;
+end intrinsic;
+
+intrinsic quotient_simple(H::LMFDBSubGrp) -> BoolElt
+{}
+    ComputeBools(H);
+    return H`quotient_simple;
+end intrinsic;
+
+intrinsic quotient_cyclic(H::LMFDBSubGrp) -> Any
+{Whether the quotient exists and is cyclic}
+    if Get(H, "normal") then
+        C := Get(H`Grp, "MagmaCommutator");
+        if not C subset H`MagmaSubGrp then
+            return false;
+        end if;
+        return IsCyclic(Get(H, "Quotient"));
+    else
+        return None();
+    end if;
+end intrinsic;
+
+intrinsic quotient_abelian(H::LMFDBSubGrp) -> Any
+{Whether the quotient exists and is abelian}
+    if Get(H, "normal") then
+        C := Get(H`Grp, "MagmaCommutator");
+        return C subset H`MagmaSubGrp;
+    else
+        return None();
+    end if;
+end intrinsic;
+
+intrinsic quotient_solvable(H::LMFDBSubGrp) -> Any
+{Whether the quotient exists and is solvable}
+    ComputeBools(H);
+    return H`quotient_solvable;
+end intrinsic;
+
+
 intrinsic subgroup(H::LMFDBSubGrp) -> MonStgElt // Need to be together with all the labels
 {Determine label of subgroup}
     hsh := Get(H, "subgroup_hash");
@@ -420,6 +601,7 @@ end intrinsic;
 intrinsic quotient_action_image(H::LMFDBSubGrp) -> Any
 {the label for Q/K as an abstract group, where K is the quotient action kernel (NULL if H is not normal)}
     // Taking the image of the QuotientActionMap can cause segfaults (e.g. 336.172) so we disable it for now.
+    return None();
     f := Get(H, "QuotientActionMap");
     if Type(f) eq NoneType then
         return None();
@@ -432,6 +614,7 @@ end intrinsic;
 intrinsic quotient_action_kernel(H::LMFDBSubGrp) -> Any
 {the label of the kernel of the map from Q to A, as an abstract group (NULL if H is not normal). }
     // Taking the kernel of the QuotientActionMap can cause segfaults (e.g. 336.172) so we disable it for now.
+    return None();
     f := Get(H, "QuotientActionMap");
     if Type(f) eq NoneType then
         return None();
@@ -505,42 +688,6 @@ intrinsic quotient_tex(H::LMFDBSubGrp) -> Any
     if Get(H, "normal") then
         gn:= GroupName(Get(H, "Quotient"): TeX:=true, prodeasylimit:=2);
         return ReplaceString(gn, "\\", "\\\\");
-    else
-        return None();
-    end if;
-end intrinsic;
-
-intrinsic quotient_cyclic(H::LMFDBSubGrp) -> Any
-{Whether the quotient exists and is cyclic}
-    if Get(H, "normal") then
-        C := Get(H`Grp, "MagmaCommutator");
-        if not C subset H`MagmaSubGrp then
-            return false;
-        end if;
-        return IsCyclic(Get(H, "Quotient"));
-    else
-        return None();
-    end if;
-end intrinsic;
-
-intrinsic quotient_abelian(H::LMFDBSubGrp) -> Any
-{Whether the quotient exists and is abelian}
-    if Get(H, "normal") then
-        C := Get(H`Grp, "MagmaCommutator");
-        return C subset H`MagmaSubGrp;
-    else
-        return None();
-    end if;
-end intrinsic;
-
-intrinsic quotient_solvable(H::LMFDBSubGrp) -> Any
-  {Whether the quotient exists and is solvable}
-    if Get(H, "normal") then
-        F := Factorization(Get(H, "quotient_order"));
-        if #F lt 3 or &and[x[2] eq 1 : x in F] then
-            return true;
-        end if;
-        return IsSolvable(Get(H, "Quotient"));
     else
         return None();
     end if;

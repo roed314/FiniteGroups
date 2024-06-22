@@ -690,6 +690,10 @@ multiG = []
 multiL = []
 def collate_sources(sources, lines, tmps, ambient_label):
     def todict(code, line):
+        # D is listed as ambient|label|diagram, but in actuality it is ambient|short_label|diagram
+        if code == "D":
+            ambient, short_label, diagramx = line.split("|")
+            return {"ambient":ambient, "label":f"{ambient}.{short_label}", "diagramx": diagramx}
         return dict(zip(tmps[code], line.split("|")))
     def merge(code, Ds, arbitrary=[], known_conflict=[]):
         merged = defaultdict(lambda: r"\N")
@@ -1093,7 +1097,7 @@ tokenD = dict([
     ("basic", r"(?P<basicfamily>[ACDFMQS])_\{?(?P<basicN>\d+)\}?"), # alternating, cyclic, dihedral, Frobenius, Mathieu, generalized quaternion, symmetric
     ("dihedral", r"(?:\{\\rm |\\)?(?P<dihedralfamily>[OS]?D)\}?_\{?(?P<dihedralN>\d+)\}?"), # semidihedral, other-dihedral
     ("heisenberg", r"(?:\{\\rm |\\)?He\}?_\{?(?P<heisenbergN>\d+)\}?"), # Heisenberg
-    ("lie", r"(?:(?:\{\\rm |\\)?(?P<liefamily>[AP]?[GS]L|[CP]?SU|P?SO?)\}?(?P<lieplus>\+?))\((?P<lied>\d+),(?P<lieq>\d+|(?:\\mathbb\{)?Z\}?/4)\)"), # matrix groups
+    ("lie", r"(?:(?:\{\\rm |\\)?(?P<liefamily>[AP]?[GS](?:igma|amma)?L|[CP]?[GS]?(?:amma)?U|[ACP]?(?:G|S|SigmaS)?[Op](?:Plus|Minus)?|P?(?:Omega|Spin)(?:Plus|Minus)?)\}?(?P<lieplus>\+?))\((?P<lied>\d+),(?P<lieq>\d+|(?:\\mathbb\{)?Z\}?/4)\)"), # matrix groups
     ("chev2", r"(?:\{\}\^)?(?P<chev2twist>\d)?(?P<chev2family>[A-G])\((?P<chev2d>\d+),(?P<chev2q>\d+)\)'?"), # chevalley groups in second notation
     ("sporadic", r"(?:\\?operatorname\{|\\)?(?P<sporadicfamily>Ru|McL|He|J|Co|HS)\}?(?:_(?P<sporadicN>\d))?"),
     ("oparen", r"\("),

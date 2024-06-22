@@ -89,6 +89,26 @@ intrinsic quasisimple(G::LMFDBGrp) -> BoolElt
     end if;
 end intrinsic;
 
+intrinsic MagmaLowerCentralSeries(G::LMFDBGrp) -> SeqEnum
+{}
+    return LowerCentralSeries(G`MagmaGrp);
+end intrinsic;
+
+intrinsic MagmaUpperCentralSeries(G::LMFDBGrp) -> SeqEnum
+{}
+    return UpperCentralSeries(G`MagmaGrp);
+end intrinsic;
+
+intrinsic MagmaChiefSeries(G::LMFDBGrp) -> SeqEnum
+{}
+    return ChiefSeries(G`MagmaGrp);
+end intrinsic;
+
+intrinsic MagmaDerivedSeries(G::LMFDBGrp) -> SeqEnum
+{}
+    return DerivedSeries(G`MagmaGrp);
+end intrinsic;
+
 intrinsic supersolvable(G::LMFDBGrp) -> BoolElt
     {Check if LMFDBGrp is supersolvable}
     if not Get(G, "solvable") then
@@ -98,7 +118,7 @@ intrinsic supersolvable(G::LMFDBGrp) -> BoolElt
         return true;
     end if;
     GG := G`MagmaGrp;
-    C := [Order(H) : H in ChiefSeries(GG)];
+    C := [Order(H) : H in Get(G, "MagmaChiefSeries")];
     for i := 1 to #C-1 do
         if not IsPrime(C[i] div C[i+1]) then
             return false;
@@ -1481,6 +1501,8 @@ intrinsic CheckConjugacyClasses(G::LMFDBGrp)
             assert cm((c`representative)^-1) eq cm(by_label[ReplaceString(c`label, "-", "")]`representative);
         end if;
     end for;
+    // Check that order, size, counter are correct
+    assert &and[C[i]`counter eq i and C[i]`order eq Order(C[i]`representative) and C[i]`size eq Index(G`MagmaGrp, Centralizer(G`MagmaGrp, C[i]`representative)) : i in [1..#C]];
     // Check that classes are sorted correctly by (order, size)
     assert &and[<C[i]`order, C[i]`size> le <C[i+1]`order, C[i+1]`size> : i in [1..#C-1]];
     // Check that classes of size 1 are exactly the center

@@ -8,7 +8,6 @@ start_time := Cputime();
 SetColumns(0);
 SetVerbose("User1", 1);
 AttachSpec("spec");
-AddAttribute(SubgroupLatElt, "stored_label");
 N, i := Explode(Split(label, "."));
 N := StringToInteger(N);
 runs := Split(Pipe("ls /scratch/grp/collated/" * label, ""), "\n");

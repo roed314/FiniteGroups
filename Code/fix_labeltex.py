@@ -267,6 +267,8 @@ for label, tups in tex_subdata.items():
 # Load from /scratch/grp/subtex
 new_subtex = {}
 new_quotex = {}
+new_ambtex1 = {}
+new_ambtex2 = {}
 for ambient in os.listdir("/scratch/grp/subtex/subout"):
     with open("/scratch/grp/subtex/subout/"+ambient) as F:
         for line in F:
@@ -277,9 +279,16 @@ for ambient in os.listdir("/scratch/grp/subtex/quoout"):
         for line in F:
             slabel, qtex = line.strip().split("|")
             new_quotex[slabel] = qtex
+for ambient in os.listdir("/home/roed/FiniteGroups/Code/DATA/texnameout"):
+    with open("/home/roed/FiniteGroups/Code/DATA/texnameout/"+ambient) as F:
+        new_ambtex1[ambient] = F.read().strip()
+with open("/home/roed/FiniteGroups/Code/DATA/tex.output") as F:
+    for line in F:
+        ambient, pn, tn = line[1:].strip().split("|")
+        new_ambtex2[ambient] = tn
 
-for (D, new) in [(tex_subname1, new_subtex), (tex_quoname1, new_quotex)]:
-    for label, x in new:
+for (D, new) in [(tex_subname1, new_subtex), (tex_quoname1, new_quotex), (tex_name1, new_ambtex1), (tex_name1, new_ambtex2)]:
+    for label, x in new.items():
         y = D.get(label)
         if y is not None:
             texs = [tokenize(t) for t in [x, y]]
@@ -296,11 +305,11 @@ def _make_gps_data_file2():
         for rec in db.gps_groups.search({}, ["label", "representations", "order", "cyclic", "abelian", "smith_abelian_invariants", "direct_factorization", "wreath_data"]):
             label, order = rec["label"], rec["order"]
             cyclic, abelian = unbooler(rec["cyclic"]), unbooler(rec["abelian"])
-            representations = unnone(rec["representations"])
+            lie = str(rec["representations"].get("Lie", [])).replace(" ", "")
             smith = unnone(rec["smith_abelian_invariants"])
             direct = unnone(rec["direct_factorization"])
             wreath = unnone(rec["wreath_data"])
-            _ = Fout.write(f"{label}|{tex_name1[label]}|\\N|{representations}|{order}|{cyclic}|{abelian}|{smith}|{direct}|{wreath}\n")
+            _ = Fout.write(f"{label}|{tex_name1[label]}|\\N|{lie}|{order}|{cyclic}|{abelian}|{smith}|{direct}|{wreath}\n")
 
 
 

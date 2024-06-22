@@ -113,6 +113,7 @@ declare attributes SubgroupLatElt:
         full_label, // list of integers giving the full label
         label, // string giving the label (omitting the N.i from the group label)
         special_labels, // other labels (normal, maximal, special; omitting the N.i)
+        stored_label, // Used when recomputing labels from stored data
         unders, // other subs this sub contains maximally, as an associative array i->cnt, where i is the index in subs and cnt is the number of reps in that class contained in a single rep of this class
         overs, // other subs this sub is contained in minimally, in the same format
         normal_unders, // normal subgroups this sub contains maximally, as a set of i
@@ -1455,10 +1456,10 @@ intrinsic IncludeSpecialSubgroups(L::SubgroupLat : index_bound:=0)
     So := Socle(G);  /* run special routine in case matrix group */
 
     // Add series
-    Un := Reverse(UpperCentralSeries(GG));
-    Ln := LowerCentralSeries(GG);
-    Dn := DerivedSeries(GG);
-    Cn := ChiefSeries(GG);
+    Un := Reverse(Get(G, "MagmaUpperCentralSeries"));
+    Ln := Get(G, "MagmaLowerCentralSeries");
+    Dn := Get(G, "MagmaDerivedSeries");
+    Cn := Get(G, "MagmaChiefSeries");
     /* all of the special groups are normal; we record which are characteristic as the last part of the tuple */
     SpecialGrps := [<Z,"Z",true>, <D,"D",true>, <F,"F",true>, <Ph,"Phi",true>, <R,"R",true>, <So,"S",true>, <Dn[#Dn],"PC",true>];
     Series := [<Un,"U",true>, <Ln,"L",true>, <Dn,"D",true>, <Cn,"C",false>];
@@ -2156,6 +2157,44 @@ function SubgroupLattice(GG, aut)
 end function;
 */
 
+procedure add_edge(~CC, ~kb, ~ka, ~new_edges, bottom, mid, top, one, L : normal_lattice:=false)
+    if not IsDefined(CC, [bottom, top]) then
+        //print "Adding", bottom, mid, top;
+        if normal_lattice then
+            CC[[bottom, top]] := true;
+        else
+            if CC[[bottom, mid]] eq one and CC[[mid, top]] eq one then
+                CC[[bottom, top]] := one;
+            elif L`subs[bottom]`subgroup subset L`subs[top]`subgroup then
+                // We want use use one whenever possible
+                CC[[bottom, top]] := one;
+            else
+                CC[[bottom, top]] := CC[[bottom, mid]] * CC[[mid, top]];
+            end if;
+        end if;
+        Include(~kb[top], bottom);
+        Include(~ka[bottom], top);
+        Append(~new_edges, [bottom, top]);
+    end if;
+end procedure;
+procedure propogate_edges(~CC, ~kb, ~ka, edges, one, L : normal_lattice:=false)
+    // Recursively propogate the addition of some edges to fill in all relevant new comparisons in C
+    vprint User1: #edges, "edges";
+    while #edges gt 0 do
+        new_edges := [];
+        for edge in edges do
+            for bottom in kb[edge[1]] do
+                add_edge(~CC, ~kb, ~ka, ~new_edges, bottom, edge[1], edge[2], one, L : normal_lattice:=normal_lattice);
+            end for;
+            for top in ka[edge[2]] do
+                add_edge(~CC, ~kb, ~ka, ~new_edges, edge[1], edge[2], top, one, L : normal_lattice:=normal_lattice);
+            end for;
+        end for;
+        edges := new_edges;
+    end while;
+end procedure;
+
+
 intrinsic ComputeLatticeEdges(L::SubgroupLat, Ambient::Grp, inj::Map : normal_lattice:=false)
 {}
     t0 := ReportStart(L`Grp, "ComputeLatticeEdges");
@@ -2179,43 +2218,6 @@ intrinsic ComputeLatticeEdges(L::SubgroupLat, Ambient::Grp, inj::Map : normal_la
     end for;
     //D := Reverse(Sort([k : k in Keys(by_index)]));
     //print "D", D;
-
-    procedure add_edge(~CC, ~kb, ~ka, ~new_edges, bottom, mid, top)
-        if not IsDefined(CC, [bottom, top]) then
-            //print "Adding", bottom, mid, top;
-            if normal_lattice then
-                CC[[bottom, top]] := true;
-            else
-                if CC[[bottom, mid]] eq one and CC[[mid, top]] eq one then
-                    CC[[bottom, top]] := one;
-                elif L`subs[bottom]`subgroup subset L`subs[top]`subgroup then
-                    // We want use use one whenever possible
-                    CC[[bottom, top]] := one;
-                else
-                    CC[[bottom, top]] := CC[[bottom, mid]] * CC[[mid, top]];
-                end if;
-            end if;
-            Include(~kb[top], bottom);
-            Include(~ka[bottom], top);
-            Append(~new_edges, [bottom, top]);
-        end if;
-    end procedure;
-    procedure propogate_edges(~CC, ~kb, ~ka, edges)
-        // Recursively propogate the addition of some edges to fill in all relevant new comparisons in C
-        vprint User1: #edges, "edges";
-        while #edges gt 0 do
-            new_edges := [];
-            for edge in edges do
-                for bottom in kb[edge[1]] do
-                    add_edge(~CC, ~kb, ~ka, ~new_edges, bottom, edge[1], edge[2]);
-                end for;
-                for top in ka[edge[2]] do
-                    add_edge(~CC, ~kb, ~ka, ~new_edges, edge[1], edge[2], top);
-                end for;
-            end for;
-            edges := new_edges;
-        end while;
-    end procedure;
 
     for len in [1..pcn] do
         vprint User1: Sprintf("Adding length %o edges", len);
@@ -2255,7 +2257,7 @@ intrinsic ComputeLatticeEdges(L::SubgroupLat, Ambient::Grp, inj::Map : normal_la
                 end for;
             end for;
         end for;
-        propogate_edges(~C, ~known_below, ~known_above, new_edges);
+        propogate_edges(~C, ~known_below, ~known_above, new_edges, one, L : normal_lattice:=normal_lattice);
         vprint User1: Sprintf("Length %o edges added", len);
     end for;
     L`conjugator := C;
@@ -3144,6 +3146,78 @@ intrinsic Subgroups(G::LMFDBGrp) -> SeqEnum
     /*if Get(G, "all_subgroups_known") then
         SaveSubgroupCache(G, S);
     end if;*/
+end intrinsic;
+
+intrinsic LoadSubgroupLattice(G::LMFDBGrp, lines::SeqEnum) -> SubgroupLat
+{Load a subgroup lattice from a list of strings describing the subgroups (typically loaded from a file)}
+    res := New(SubgroupLat);
+    GG := G`MagmaGrp;
+    res`Grp := G;
+    res`outer_equivalence := G`outer_equivalence;
+    res`inclusions_known := G`subgroup_inclusions_known;
+    res`index_bound := G`subgroup_index_bound;
+
+    subs := [];
+    for line in lines do
+        stored_label, gens, normal, cha, overs, unders, normal_closure := Explode(Split(line, "|"));
+        gens := [LoadElt(Sprint(gen), G) : gen in LoadTextList(gens)];
+        HH := sub<GG | gens>;
+        H := SubgroupLatElement(res, HH : i:=1+#subs);
+        H`stored_label := stored_label;
+        H`normal := LoadBool(normal);
+        H`characteristic := LoadBool(cha);
+        if res`inclusions_known then
+            H`overs := AssociativeArray();
+            for j in LoadIntegerList(overs) do
+                H`overs[j] := true;
+            end for;
+            H`unders := AssociativeArray();
+            for j in LoadIntegerList(unders) do
+                H`unders[j] := true;
+            end for;
+        end if;
+        if normal_closure ne "\\N" then
+            H`normal_closure := StringToInteger(normal_closure);
+        end if;
+        Append(~subs, H);
+    end for;
+    res`subs := subs;
+    if res`inclusions_known then
+        // Need to compute G`conjugator, as in ComputeLatticeEdges
+        C := AssociativeArray();
+        Ambient := G`MagmaGrp;
+        one := Identity(Ambient);
+        prev := AssociativeArray();
+        for i in [1..#subs] do
+            for j in Keys(subs[i]`unders) do
+                conj, elt := IsConjugateSubgroup(Ambient, subs[i]`subgroup, subs[j]`subgroup);
+                assert conj;
+                C[[j, i]] := elt;
+            end for;
+        end for;
+        known_below := AssociativeArray();
+        known_above := AssociativeArray();
+        for i in [1..#subs] do
+            known_below[i] := {i};
+            known_above[i] := {i};
+        end for;
+        while #prev gt 0 do
+            cur := [];
+            for pair in prev do
+                mid, top := Explode(pair);
+                for bottom in subs[mid]`unders do
+                    if not IsDefined(C, [bottom, top]) then
+                        add_edge(~C, ~known_below, ~known_above, ~cur, bottom, mid, top, one, res : normal_lattice:=false);
+                    end if;
+                end for;
+            end for;
+            prev := cur;
+        end while;
+        res`conjugator := C;
+        // normal_closure was set, but not characteristic_closure
+        SetClosures(~res);
+    end if;
+    return res;
 end intrinsic;
 
 intrinsic SetMobiusQuo(L::SubgroupLat)

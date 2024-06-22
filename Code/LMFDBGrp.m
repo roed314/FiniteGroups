@@ -33,6 +33,10 @@ declare attributes LMFDBGrp:
   MagmaCharacterTable,
   MagmaRationalCharacterTable,
   MagmaCharacterMatching,
+  MagmaLowerCentralSeries,
+  MagmaUpperCentralSeries,
+  MagmaChiefSeries,
+  MagmaDerivedSeries,
   CycEltCache,
   CCpermutation,
   CCpermutationInv,
@@ -307,6 +311,17 @@ declare attributes LMFDBSubGrp:
   aut_quo_index,
   aut_centralizer_order,
   proper,
+  Agroup,
+  Zgroup,
+  metabelian,
+  metacyclic,
+  supersolvable,
+  simple,
+  quotient_nilpotent,
+  quotient_Agroup,
+  quotient_metabelian,
+  quotient_supersolvable,
+  quotient_simple,
   MagmaCentralizer;  // added to deal with magma bug with 120.5
 
 intrinsic Print(H::LMFDBSubGrp)
