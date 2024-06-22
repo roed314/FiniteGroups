@@ -174,7 +174,7 @@ intrinsic ComputeBools(H::LMFDBSubGrp)
     if Get(H, "solvable") then
         D := DerivedSubgroup(HH);
         H`metabelian := IsAbelian(D);
-        mc := EasyMetacylic(HG);
+        mc := EasyIsMetacylic(HG);
         if mc cmpeq 0 then
             if Get(HG, "pgroup") ne 0 then
                 mc := IsMetacyclicPGroup(HH);

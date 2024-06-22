@@ -122,7 +122,8 @@ aggregate_attr["R"] := "Subgroups"; // Relabel
 aggregate_attr["B"] := "Subgroups"; // Booleans
 if "R" in codes then
     // Load stored subgroup data so that we can speed up constructing the subgroup lattice and match with saved data.
-    infile := "DATA/relabel/" * label;
+    //infile := "DATA/relabel/" * label;
+    infile := "/scratch/grp/relabel/" * label; // For now, put files in scratch since it has more space
     lines := Split(Read(infile), "\n");
     G`outer_equivalence, G`subgroup_inclusions_known, G`complements_known, G`normal_subgroups_known := Explode([LoadBool(x) : x in Split(lines[1], "|")]);
     G`subgroup_index_bound := StringToInteger(lines[2]);
