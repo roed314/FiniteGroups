@@ -131,7 +131,7 @@ intrinsic ComputeBools(H::LMFDBSubGrp)
     complen := Get(G, "composition_length");
 
     HH := H`MagmaSubGrp;
-    fake_label := Sprintf("%o.a", H`subgroup_order);
+    fake_label := Sprintf("%o.a", Get(H, "subgroup_order"));
     HG := NewLMFDBGrp(HH, fake_label);
     AssignBasicAttributes(HG); // port
     H`Agroup := Get(HG, "Agroup");
