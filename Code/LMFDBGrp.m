@@ -236,6 +236,7 @@ declare attributes LMFDBSubGrp:
   label, // process
   short_label,
   aut_label,
+  stored_label, // used in relabeling
   special_labels,
   outer_equivalence, // input
   aut_counter,

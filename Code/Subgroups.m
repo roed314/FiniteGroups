@@ -3061,6 +3061,9 @@ intrinsic LMFDBSubgroup(H::SubgroupLatElt : normal_lattice:=false) -> LMFDBSubGr
     res`standard_generators := H`standard_generators;
     res`label := G`label * "." * H`label;
     res`short_label := H`label;
+    if assigned H`stored_label then
+        res`stored_label := H`stored_label;
+    end if;
     if assigned H`aut_label then
         res`aut_label := Sprintf("%o.%o%o", H`aut_label[1], CremonaCode(H`aut_label[2]), H`aut_label[3]);
         if H`label[#H`label - 1..#H`label] eq ".N" then
