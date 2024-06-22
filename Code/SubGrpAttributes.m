@@ -140,7 +140,7 @@ intrinsic ComputeBools(H::LMFDBSubGrp)
     subcomplen := #CompositionFactors(HH);
     quotient_order := Get(H, "quotient_order");
     if Get(H, "normal") then
-        if G`order eq H`order or IsPrimePower(quotient_order) then
+        if quotient_order eq 1 or IsPrimePower(quotient_order) then
             H`quotient_nilpotent := true;
         else
             H`quotient_nilpotent := (LCS[#LCS] subset HH);
