@@ -121,7 +121,7 @@ end intrinsic;
 
 intrinsic ComputeBools(H::LMFDBSubGrp)
 {Compute a bunch of boolean quantities}
-    fake_label := Sprintf("%o.a", sub`order);
+    fake_label := Sprintf("%o.a", H`order);
     G := H`Grp;
     GG := G`MagmaGrp;
     CS := Get(G, "MagmaChiefSeries");
