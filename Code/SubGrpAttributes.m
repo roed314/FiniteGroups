@@ -791,9 +791,9 @@ end intrinsic;
 
 intrinsic SetStoredLabels(Lat::SubgroupLat)
 {}
-    infile := "/scratch/grp/relabel/" * label; // For now, put files in scratch since it has more space
-    lines := Split(Read(infile), "\n");
     G := Lat`Grp;
+    infile := "/scratch/grp/relabel/" * G`label; // For now, put files in scratch since it has more space
+    lines := Split(Read(infile), "\n");
     GG := G`MagmaGrp;
     for line in lines do
         stored_label, gens, normal, cha, overs, unders, normal_closure := Explode(Split(line, "|"));
