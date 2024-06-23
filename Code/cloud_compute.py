@@ -27,6 +27,9 @@ parser.add_argument("job", type=int, help="job number")
 args = parser.parse_args()
 job = args.job - 1 # shift from 1-based to 0-based indexing
 
+#OUTPUT = "output"
+OUTPUT = "/scratch/grp/relabel.output" # Temporarily change output location for disc reasons
+
 # This sets the preload, but not the saved final values in basics
 def set_preload(label, attr, value):
     fname = opj("DATA", "preload", label)
@@ -66,7 +69,7 @@ def run(label, codes, timeout, memlimit, subgroup_index_bound, subgroup_inclusio
         subprocess.run('parallel -n0 --timeout %s "magma -b %s:=%s codes:=%s ComputeCodes.m >> DATA/errors/%s 2>&1" ::: 1' % (ceil(timeout), labelname, label, codes, label), shell=True)
     # Move timing and error information to the common output file and extract timeout and error information
     sublines = []
-    with open("output", "a") as Fout:
+    with open(OUTPUT, "a") as Fout:
         t = opj("DATA", "timings", label)
         finished = ""
         time_used = 0
@@ -274,7 +277,7 @@ splines=line;
 def compute_diagramx(label, sublines, subgroup_index_bound, end_time, memlimit):
     start_time = time.time()
     cols = read_tmpheader("subagg1")
-    with open("output", "a") as F:
+    with open(OUTPUT, "a") as F:
         _ = F.write(f"T{label}({utcnow()})|Starting Code-D\n")
         subs = []
         norms = []
@@ -326,16 +329,16 @@ def compute_diagramx(label, sublines, subgroup_index_bound, end_time, memlimit):
                 raise subprocess.CalledProcessError(1, "dot")
             xcoords.append(layout_graph(label, graph, timeout, memlimit, rank_by_order=False))
     except subprocess.CalledProcessError:
-        with open("output", "a") as Fout:
+        with open(OUTPUT, "a") as Fout:
             _ = Fout.write(f"E{label}({utcnow()})|Killed diagramx\n")
         return "D"
     except Exception:
-        with open("output", "a") as Fout:
+        with open(OUTPUT, "a") as Fout:
             errstr = traceback.format_exc().strip().replace("\n", f"\nE{label}|diagramx: ")
             _ = Fout.write(f"E{label}({utcnow()})|diagramx: {errstr}\n")
         return "D"
     else:
-        with open("output", "a") as F:
+        with open(OUTPUT, "a") as F:
             for accessor in accessors:
                 slabel = accessor[-1]
                 diagramx = "{" + ",".join([str(D.get(key, -1)) for (D, key) in zip(xcoords, accessor)]) + "}"
@@ -448,7 +451,7 @@ with open("DATA/manifest") as F:
                 #3 When complement failing on a PC group (or more generally?), try switching to permutation representation
                 #4 Backup labeling strategy (conjugacy classes, subgroups)
                 if time.time() - start_time > total_timeout:
-                    with open("output", "a") as Fout:
+                    with open(OUTPUT, "a") as Fout:
                         _ = Fout.write(f"T{label}({utcnow()})|HitTotalTimeout({time.time() - start_time})\n")
                     skipped += f"[{codes}]"
                     codes = ""
@@ -470,15 +473,15 @@ with open("DATA/manifest") as F:
                     # Ideally, we'd have some known errors that are possible to work around here
                     codes, skipped = skip_codes(codes, skipped)
             if skipped:
-                with open("output", "a") as Fout:
+                with open(OUTPUT, "a") as Fout:
                     _ = Fout.write(f"T{label}({utcnow()})|Skip-{skipped}\n")
             else:
-                with open("output", "a") as Fout:
+                with open(OUTPUT, "a") as Fout:
                     _ = Fout.write(f"T{label}({utcnow()})|NoSkip\n")
             break
         else:
             job -= cnt
     else:
         # job number was larger than the number of lines; write an empty file so that google cloud doesn't try to restart.
-        with open("output", "a") as Fout:
+        with open(OUTPUT, "a") as Fout:
             _ = Fout.write("")
