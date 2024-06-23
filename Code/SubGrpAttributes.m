@@ -795,7 +795,7 @@ intrinsic SetStoredLabels(Lat::SubgroupLat)
     infile := "/scratch/grp/relabel/" * G`label; // For now, put files in scratch since it has more space
     lines := Split(Read(infile), "\n");
     GG := G`MagmaGrp;
-    for line in lines do
+    for line in lines[3..#lines] do
         stored_label, gens, normal, cha, overs, unders, normal_closure := Explode(Split(line, "|"));
         gens := [LoadElt(Sprint(gen), G) : gen in LoadTextList(gens)];
         HH := sub<GG| gens>;
