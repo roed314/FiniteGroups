@@ -1,5 +1,4 @@
-// GHMXYZ dek
-
+/*
 MagmaOuterGroup, MagmaOuterProjection, MagmaClassAction, MagmaInnerGroup, MagmaAutcent, MagmaAutcentquo, OutLabelIso, AutLabelIso, OuterGenerators, InnerGenerators, OutPermGenerators, AutPermGenerators, InnPermGenerators, SkipAutMinDegRep, SkipAutFewGenerators, SkipAutLabel, SkipOutLabel, SkipAutcentLabel, SkipAutcentquoLabel, SkipInnSplit, SkipAutcentSplit
 inner_order, autcent_order, autcentquo_order // numeric
 autcent_group, autcentquo_group // text
@@ -17,6 +16,7 @@ outer_cyclic, outer_abelian, outer_nilpotent, outer_supersolvable, outer_solvabl
 autcent_cyclic, autcent_abelian, autcent_nilpotent, autcent_supersolvable, autcent_solvable, autcent_exponent, autcent_hash, autcent_tex
 autcentquo_cyclic, autcentquo_abelian, autcentquo_nilpotent, autcentquo_supersolvable, autcentquo_solvable, autcentquo_exponent, autcentquo_hash, autcentquo_tex
 center_order
+*/
 
 //TODO: Add mechanism for reconstructing MagmaOuterGroup, MagmaAutGroupPerm from aut_perms, outer_perms (probably in MagmaAutGroup)
 //-> inner_order, center_order
@@ -93,48 +93,120 @@ intrinsic MagmaAutGroup(G::LMFDBGrp) -> Grp
     return A;
 end intrinsic;
 
-intrinsic AutGenerators(G::LMFDBGrp) -> SeqEnum
+// We have escalating versions of some intrinsics since some desired parts of the computation may time out
+
+intrinsic AutGenerators0(G::LMFDBGrp) -> SeqEnum
+{Version 0: just take the generators of MagmaAutGroup}
+    A := Get(G, "MagmaAutGroup");
+    return [A.i : i in [1..Ngens(A)]];
+end intrinsic;
+
+intrinsic aut_gens0(G::LMFDBGrp) -> SeqEnum
+{Version 0: just take the generators of MagmaAutGroup}
+    gens := Get(G, "Generators");
+    return [[SaveElt(g, G) : g in gens]] cat [[SaveElt(phi(g), G) : g in gens] : phi in Get(G, "AutGenerators0")];
+end intrinsic;
+
+intrinsic AutGenerators1(G::LMFDBGrp) -> SeqEnum
+{Version 1: Compute ClassAction to get an isomorphism with a permutation group}
+    m, P := Explode(Get(G, "MagmaClassAction"));
+    G`AutPermGenerators1 := GeneratorsSequence(P);
+    return [g @@ m : g in G`AutPermGenerators1];
+end intrinsic;
+
+intrinsic aut_gens1(G::LMFDBGrp) -> SeqEnum
+{Version 1: Compute ClassAction to get an isomorphism with a permutation group}
+    gens := Get(G, "Generators");
+    return [[SaveElt(g, G) : g in gens]] cat [[SaveElt(phi(g), G) : g in gens] : phi in Get(G, "AutGenerators1")];
+end intrinsic;
+
+intrinsic AutGenerators2(G::LMFDBGrp) -> SeqEnum
+{Version 2: Optimize permutation group with FewGenerators}
+    m, P := Explode(Get(G, "MagmaClassAction"));
+    t0 := ReportStart(G, "AutFewGenerators");
+    G`AutPermGenerators2 := FewGenerators(P);
+    ReportEnd(G, "AutFewGenerators", t0);
+    return [g @@ m : g in G`AutPermGenerators2];
+end intrinsic;
+
+intrinsic aut_gens2(G::LMFDBGrp) -> SeqEnum
+{Version 2: Optimize permutation group with FewGenerators}
+    gens := Get(G, "Generators");
+    return [[SaveElt(g, G) : g in gens]] cat [[SaveElt(phi(g), G) : g in gens] : phi in Get(G, "AutGenerators2")];
+end intrinsic;
+
+intrinsic AutGenerators3(G::LMFDBGrp) -> SeqEnum
 {The chosen generators for the automorphism group.
  This can be reset to match an isomorphism with the labeled automorphism group.}
     m, P := Explode(Get(G, "MagmaClassAction"));
-    autlabel := Get(G, "aut_group"); // sets G`AutLabelIso
-    autiso := G`AutLabelIso;
+    autiso := Get(G, "AutLabelIso");
     if Type(autiso) eq NoneType then
-        if assigned G`SkipAutFewGenerators then
-            G`AutPermGenerators := GeneratorsSequence(P);
-        else
-            t0 := ReportStart(G, "AutFewGenerators");
-            G`AutPermGenerators := FewGenerators(P);
-            ReportEnd(G, "AutFewGenerators", t0);
-        end if;
+        return None();
     else
-        G`AutPermGenerators := [g @@ outiso : g in GeneratorsSequence(Codomain(autiso))];
+        G`AutPermGenerators3 := [g @ autiso : g in GeneratorsSequence(Domain(autiso))];
     end if;
-    return [g @@ m : g in G`AutPermGenerators];
+    return [g @@ m : g in G`AutPermGenerators3];
 end intrinsic;
 
-intrinsic aut_gens(G::LMFDBGrp) -> SeqEnum
+intrinsic aut_gens3(G::LMFDBGrp) -> Any
 {Returns a list of lists of integers encoding elements of the group.
  The first list gives a set of generators of G, while later lists give the images of these generators under generators of the automorphism group of G}
     gens := Get(G, "Generators");
-    saved := [[SaveElt(g, G) : g in gens]] cat [[SaveElt(phi(g), G) : g in gens] : phi in Get(G, "AutGenerators")];
-    return saved;
-end intrinsic
+    agens := Get(G, "AutGenerators3");
+    if Type(agens) eq NoneType then
+        return None();
+    end if;
+    return [[SaveElt(g, G) : g in gens]] cat [[SaveElt(phi(g), G) : g in gens] : phi in agens];
+end intrinsic;
 
-intrinsic aut_permdeg(G::LMFDBGrp) -> RingIntElt
+intrinsic aut_permdeg(G::LMFDBGrp) -> RngIntElt
 {}
     return Degree(MagmaAutGroupPerm(G));
 end intrinsic;
 
-intrinsic aut_perms(G::LMFDBGrp) -> SeqEnum
+intrinsic aut_perms1(G::LMFDBGrp) -> SeqEnum
 {}
-    dummy := Get(G, "AutGenerators"); // sets AutPermGenerators
-    return [EncodePerm(g) : g in G`AutPermGenerators];
+    dummy := Get(G, "AutGenerators1"); // sets AutPermGenerators1
+    return [EncodePerm(g) : g in G`AutPermGenerators1];
 end intrinsic;
 
-intrinsic aut_gen_orders(G::LMFDBGrp) -> SeqEnum
+intrinsic aut_perms2(G::LMFDBGrp) -> SeqEnum
 {}
-    return [Order(phi) : phi in Get(G, "AutGenerators")];
+    dummy := Get(G, "AutGenerators2"); // sets AutPermGenerators2
+    return [EncodePerm(g) : g in G`AutPermGenerators2];
+end intrinsic;
+
+intrinsic aut_perms3(G::LMFDBGrp) -> SeqEnum
+{}
+    dummy := Get(G, "AutGenerators3"); // sets AutPermGenerators3
+    if Type(dummy) eq NoneType then
+        return None();
+    end if;
+    return [EncodePerm(g) : g in G`AutPermGenerators3];
+end intrinsic;
+
+intrinsic aut_gen_orders0(G::LMFDBGrp) -> SeqEnum
+{}
+    return [Order(phi) : phi in Get(G, "AutGenerators0")];
+end intrinsic;
+
+intrinsic aut_gen_orders1(G::LMFDBGrp) -> SeqEnum
+{}
+    return [Order(phi) : phi in Get(G, "AutGenerators1")];
+end intrinsic;
+
+intrinsic aut_gen_orders2(G::LMFDBGrp) -> SeqEnum
+{}
+    return [Order(phi) : phi in Get(G, "AutGenerators2")];
+end intrinsic;
+
+intrinsic aut_gen_orders3(G::LMFDBGrp) -> SeqEnum
+{}
+    agens := Get(G, "AutGenerators3");
+    if Type(agens) eq NoneType then
+        return None();
+    end if;
+    return [Order(phi) : phi in agens];
 end intrinsic;
 
 intrinsic InnerGenerators(G::LMFDBGrp) -> SeqEnum
@@ -147,7 +219,7 @@ end intrinsic;
 
 intrinsic InnPermGenerators(G::LMFDBGrp) -> SeqEnum
 {}
-    m, P := Get(G, "MagmaClassAction");
+    m, P := Explode(Get(G, "MagmaClassAction"));
     return [phi @ m : phi in Get(G, "InnerGenerators")];
 end intrinsic;
 
@@ -179,59 +251,214 @@ intrinsic inner_gen_orders(G::LMFDBGrp) -> SeqEnum
     return [Order(phi) : phi in Get(G, "InnerGenerators")];
 end intrinsic;
 
-intrinsic OuterGenerators(G::LMFDBGrp) -> SeqEnum
-{automorphisms of G that map to a generating set in Out(G)}
+intrinsic OuterGenerators0(G::LMFDBGrp) -> SeqEnum
+{}
+    A := Get(G, "MagmaAutGroup");
+    I := sub<A|Get(G, "InnerGenerators")>;
+    ogens := [];
+    for i in [1..Ngens(A)] do
+        if not A.i in I then
+            I := sub<A|I,A.i>;
+            Append(~ogens, A.i);
+        end if;
+    end for;
+    return ogens;
+end intrinsic;
+
+intrinsic outer_gens0(G::LMFDBGrp) -> SeqEnum
+{}
+    gens := Get(G, "Generators");
+    return [[SaveElt(phi(g), G) : g in gens] : phi in Get(G, "OuterGenerators0")];
+end intrinsic;
+
+intrinsic OuterGenerators1(G::LMFDBGrp) -> SeqEnum
+{}
     A := Get(G, "MagmaAutGroup");
     GG := G`MagmaGrp;
     m, P := Explode(Get(G, "MagmaClassAction"));
     O := Get(G, "MagmaOuterGroup"); // sets G`MagmaOuterProjection
     outproj := G`MagmaOuterProjection;
-    outlabel := Get(G, "outer_group"); // sets G`OutLabelIso
-    outiso := G`OutLabelIso;
-    if Type(outiso) eq NoneType then
-        
-        G`OutPermGenerators := FewGenerators(O);
-    else
-        G`OutPermGenerators := [g @@ outiso : g in GeneratorsSequence(Codomain(outiso))];
-    end if;
-    return [(g @@ outproj) @@ m : g in G`OutPermGenerators];
+    G`OutPermGenerators1 := GeneratorsSequence(O);
+    return [(g @@ outproj) @@ m : g in G`OutPermGenerators1];
 end intrinsic;
 
-intrinsic outer_permdeg(G::LMFDBGrp) -> RingIntElt
+intrinsic outer_gens1(G::LMFDBGrp) -> SeqEnum
+{}
+    gens := Get(G, "Generators");
+    return [[SaveElt(phi(g), G) : g in gens] : phi in Get(G, "OuterGenerators1")];
+end intrinsic;
+
+intrinsic OuterGenerators2(G::LMFDBGrp) -> SeqEnum
+{}
+    A := Get(G, "MagmaAutGroup");
+    GG := G`MagmaGrp;
+    m, P := Explode(Get(G, "MagmaClassAction"));
+    O := Get(G, "MagmaOuterGroup"); // sets G`MagmaOuterProjection
+    outproj := G`MagmaOuterProjection;
+    G`OutPermGenerators2 := FewGenerators(O);
+    return [(g @@ outproj) @@ m : g in G`OutPermGenerators2];
+end intrinsic;
+
+intrinsic outer_gens2(G::LMFDBGrp) -> SeqEnum
+{}
+    gens := Get(G, "Generators");
+    return [[SaveElt(phi(g), G) : g in gens] : phi in Get(G, "OuterGenerators2")];
+end intrinsic;
+
+intrinsic OuterGenerators3(G::LMFDBGrp) -> SeqEnum
+{}
+    A := Get(G, "MagmaAutGroup");
+    GG := G`MagmaGrp;
+    m, P := Explode(Get(G, "MagmaClassAction"));
+    O := Get(G, "MagmaOuterGroup"); // sets G`MagmaOuterProjection
+    outproj := G`MagmaOuterProjection;
+    outiso := Get(G, "OutLabelIso");
+    if Type(outiso) eq NoneType then
+        return None();
+    end if;
+    G`OutPermGenerators3 := [g @ outiso : g in GeneratorsSequence(Domain(outiso))];
+    return [(g @@ outproj) @@ m : g in G`OutPermGenerators3];
+end intrinsic;
+
+intrinsic outer_gens3(G::LMFDBGrp) -> SeqEnum
+{}
+    gens := Get(G, "Generators");
+    ogens := Get(G, "OuterGenerators3");
+    if Type(ogens) eq NoneType then
+        return None();
+    end if;
+    return [[SaveElt(phi(g), G) : g in gens] : phi in ogens];
+end intrinsic;
+
+intrinsic outer_permdeg(G::LMFDBGrp) -> RngIntElt
 {}
     return Degree(Get(G, "MagmaOuterGroup"));
 end intrinsic;
 
-intrinsic outer_perms(G::LMFDBGrp) -> SeqEnum
+intrinsic outer_perms1(G::LMFDBGrp) -> SeqEnum
 {}
-    dummy := Get(G, "OuterGenerators"); // sets OutPermGenerators
-    return [EncodePerm(g) : g in G`OutPermGenerators];
+    dummy := Get(G, "OuterGenerators1"); // sets OutPermGenerators1
+    return [EncodePerm(g) : g in G`OutPermGenerators1];
 end intrinsic;
 
-intrinsic outer_gens(G::LMFDBGrp) -> SeqEnum
+intrinsic outer_perms2(G::LMFDBGrp) -> SeqEnum
 {}
-    gens := Get(G, "Generators");
-    return [[SaveElt(phi(g), G) : g in gens] : phi in Get(G, "OuterGenerators")];
+    dummy := Get(G, "OuterGenerators2"); // sets OutPermGenerators2
+    return [EncodePerm(g) : g in G`OutPermGenerators2];
 end intrinsic;
 
-intrinsic outer_gen_orders(G::LMFDBGrp) -> SeqEnum
+intrinsic outer_perms3(G::LMFDBGrp) -> Any
+{}
+    dummy := Get(G, "OuterGenerators3"); // sets OutPermGenerators3
+    if Type(dummy) eq NoneType then
+        return None();
+    end if;
+    return [EncodePerm(g) : g in G`OutPermGenerators3];
+end intrinsic;
+
+intrinsic outer_gen_orders0(G::LMFDBGrp) -> SeqEnum
 { Note that these are orders in Out(G) rather than Aut(G)}
-    dummy := Get(G, "OuterGenerators"); // sets OutPermGenerators
-    return [Order(phi) : phi in Get(G, "OutPermGenerators")];
+    gens := Get(G, "OuterGenerators0");
+    ords := [];
+    G`outer_gen_pows0 := [];
+    for g in gens do
+        m := Order(g);
+        ps := PrimeDivisors(m);
+        inn := Identity(G`MagmaGrp);
+        while #ps gt 0 do
+            new_ps := [];
+            for p in ps do
+                m_p := m div p;
+                if m_p eq 1 then
+                    // We know g is not inner, so we're done
+                    break;
+                end if;
+                h := g^m_p;
+                isinn, inn0 := IsInner(h);
+                if isinn then
+                    m := m_p;
+                    inn := inn0;
+                    if m mod p eq 0 then
+                        Append(~new_ps, p);
+                    end if;
+                end if;
+                // Otherwise the order is exactly divisible by the number of ps currently in m, so we can stop dividing by p
+            end for;
+            ps := new_ps;
+        end while;
+        Append(~ords, m);
+        Append(~G`outer_gen_pows0, SaveElt(inn, G));
+    end for;
+    return ords;
 end intrinsic;
 
-intrinsic outer_gen_pows(G::LMFDBGrp) -> SeqEnum
-{Each generator in outer_gens, when raised to the corresponding power in outer_gen_orders, yields an inner automorphism.  Here we store elements of G that induce that automorphism under conjugation}
-    GG := G`MagmaGrp;
-    A := Get(G, "MagmaAutGroup");
-    gens := Get(G, "Generators");
-    inn := Get(G, "InnerGenerators");
-    conjhom := hom<GG->A|[<gens[i], inn[i]> : i in [1..#gens]]>;
-    out := Get(G, "OuterGenerators");
-    ords := Get(G, "outer_gen_orders");
-    pows := [out[i]^ords[i] : i in [1..#out]];
-    pows := [phi @@ conjhom : phi in pows];
-    return [SaveElt(g, G) : g in pows];
+intrinsic outer_gen_orders1(G::LMFDBGrp) -> SeqEnum
+{ Note that these are orders in Out(G) rather than Aut(G)}
+    dummy := Get(G, "OuterGenerators1"); // sets OutPermGenerators1
+    return [Order(phi) : phi in G`OutPermGenerators1];
+end intrinsic;
+
+intrinsic outer_gen_orders2(G::LMFDBGrp) -> SeqEnum
+{ Note that these are orders in Out(G) rather than Aut(G)}
+    dummy := Get(G, "OuterGenerators1"); // sets OutPermGenerators2
+    return [Order(phi) : phi in G`OutPermGenerators2];
+end intrinsic;
+
+intrinsic outer_gen_orders3(G::LMFDBGrp) -> SeqEnum
+{ Note that these are orders in Out(G) rather than Aut(G)}
+    dummy := Get(G, "OuterGenerators3"); // sets OutPermGenerators3
+    if Type(dummy) eq NoneType then
+        return None();
+    end if;
+    return [Order(phi) : phi in G`OutPermGenerators3];
+end intrinsic;
+
+intrinsic outer_gen_pows0(G::LMFDBGrp) -> SeqEnum
+{Each generator in outer_gens0, when raised to the corresponding power in outer_gen_orders0, yields an inner automorphism.  Here we store elements of G that induce that automorphism under conjugation}
+    dummy := Get(G, "outer_gen_orders0"); // sets outer_gen_pows0
+    return G`outer_gen_pows0;
+end intrinsic;
+
+intrinsic outer_gen_pows1(G::LMFDBGrp) -> SeqEnum
+{Each generator in outer_gens1, when raised to the corresponding power in outer_gen_orders1, yields an inner automorphism.  Here we store elements of G that induce that automorphism under conjugation}
+    gens := Get(G, "OuterGenerators1");
+    ords := Get(G, "outer_gen_orders1");
+    ans := [];
+    for i in [1..#gens] do
+        ok, g := IsInner(gens[i]^ords[i]);
+        assert ok;
+        Append(~ans, SaveElt(g, G));
+    end for;
+    return ans;
+end intrinsic;
+
+intrinsic outer_gen_pows2(G::LMFDBGrp) -> SeqEnum
+{Each generator in outer_gens2, when raised to the corresponding power in outer_gen_orders2, yields an inner automorphism.  Here we store elements of G that induce that automorphism under conjugation}
+    gens := Get(G, "OuterGenerators2");
+    ords := Get(G, "outer_gen_orders2");
+    ans := [];
+    for i in [1..#gens] do
+        ok, g := IsInner(gens[i]^ords[i]);
+        assert ok;
+        Append(~ans, SaveElt(g, G));
+    end for;
+    return ans;
+end intrinsic;
+
+intrinsic outer_gen_pows3(G::LMFDBGrp) -> SeqEnum
+{Each generator in outer_gens3, when raised to the corresponding power in outer_gen_orders3, yields an inner automorphism.  Here we store elements of G that induce that automorphism under conjugation}
+    gens := Get(G, "OuterGenerators3");
+    if Type(gens) eq NoneType then
+        return None();
+    end if;
+    ords := Get(G, "outer_gen_orders3");
+    ans := [];
+    for i in [1..#gens] do
+        ok, g := IsInner(gens[i]^ords[i]);
+        assert ok;
+        Append(~ans, SaveElt(g, G));
+    end for;
+    return ans;
 end intrinsic;
 
 intrinsic MagmaClassAction(G::LMFDBGrp) -> Tup
@@ -240,12 +467,14 @@ intrinsic MagmaClassAction(G::LMFDBGrp) -> Tup
     t0 := ReportStart(G, "MagmaClassAction");
     m, P, Y := ClassAction(aut);
     ReportEnd(G, "MagmaClassAction", t0);
-    if not assigned G`SkipAutMinDegRep then
-        t0 := ReportStart(G, "MinimizeClassAction");
-        rho, P := MinimalDegreePermutationRepresentation(P);
-        m *:= rho;
-        ReportEnd(G, "MinimizeClassAction", t0);
-    end if;
+    // It would be nice to call MinimalDegreePermutationRepresentation on P
+    // but it proved to be too slow for most examples
+    //if not assigned G`SkipAutMinDegRep then
+    //    t0 := ReportStart(G, "MinimizeClassAction");
+    //    rho, P := MinimalDegreePermutationRepresentation(P);
+    //    m *:= rho;
+    //    ReportEnd(G, "MinimizeClassAction", t0);
+    //end if;
     assert #P eq Get(G, "aut_order");
     return <m, P>;
 end intrinsic;
@@ -257,7 +486,6 @@ end intrinsic;
 
 intrinsic aut_group(G::LMFDBGrp) -> MonStgElt
 {returns label of the automorphism group}
-    G`AutLabelIso := None();
     if not PossiblyLabelable(Get(G, "aut_order")) then
         return None();
     end if;
@@ -271,16 +499,26 @@ intrinsic aut_group(G::LMFDBGrp) -> MonStgElt
     end if;
     if assigned phi then
         G`AutLabelIso := phi;
-    elif Type(s) ne NoneType then
-        H := GroupsWithLabels([s])[1][2];
-        t0 := ReportStart(G, "LabelIsoAutGroup");
-        _, G`AutLabelIso := IsIsomorphic(P, H);
-        ReportEnd(G, "LabelIsoAutGroup", t0);
     end if;
     return s;
 end intrinsic;
 
-intrinsic aut_order(G::LMFDBGrp) -> RingIntElt
+intrinsic AutLabelIso(G::LMFDBGrp) -> Map
+{}
+    s := Get(G, "aut_group");
+    if Type(s) eq NoneType then
+        G`AutLabelIso := None();
+    elif not assigned G`AutLabelIso then
+        P := MagmaAutGroupPerm(G);
+        H := GroupsWithLabels([s])[1][2];
+        t0 := ReportStart(G, "LabelIsoAutGroup");
+        _, G`AutLabelIso := IsIsomorphic(H, P);
+        ReportEnd(G, "LabelIsoAutGroup", t0);
+    end if;
+    return G`AutLabelIso;
+end intrinsic;
+
+intrinsic aut_order(G::LMFDBGrp) -> RngIntElt
    {returns order of automorphism group}
    return #Get(G, "MagmaAutGroup");
 end intrinsic;
@@ -292,23 +530,23 @@ intrinsic factors_of_aut_order(G::LMFDBGrp) -> SeqEnum
    return PrimeFactors(Get(G,"aut_order"));
 end intrinsic;
 
-intrinsic inner_order(G::LMFDBGrp) -> RingIntElt
+intrinsic inner_order(G::LMFDBGrp) -> RngIntElt
 {}
     return Get(G, "order") div Get(G, "center_order");
 end intrinsic;
 
-intrinsic outer_order(G::LMFDBGrp) -> RingIntElt
+intrinsic outer_order(G::LMFDBGrp) -> RngIntElt
     {returns order of OuterAutomorphisms }
     aut := Get(G, "MagmaAutGroup");
     return OuterOrder(aut);
 end intrinsic;
 
-intrinsic autcent_order(G::LMFDBGrp) -> RingIntElt
+intrinsic autcent_order(G::LMFDBGrp) -> RngIntElt
 {}
     return #Get(G, "MagmaAutcent");
 end intrinsic;
 
-intrinsic autcentquo_order(G::LMFDBGrp) -> RingIntElt
+intrinsic autcentquo_order(G::LMFDBGrp) -> RngIntElt
 {}
     return Get(G, "aut_order") div Get(G, "autcent_order");
 end intrinsic;
@@ -338,12 +576,14 @@ intrinsic MagmaOuterGroup(G::LMFDBGrp) -> Grp
     t0 := ReportStart(G, "MagmaOuterGroup");
     out, outproj := BestQuotient(P, inners);
     ReportEnd(G, "MagmaOuterGroup", t0);
-    if not assigned G`SkipAutMinDegRep then
-        t0 := ReportStart(G, "MinimizeOuterGroup");
-        rho, out := MinimalDegreePermutationRepresentation(out);
-        outproj *:= rho;
-        ReportEnd(G, "MinimizeOuterGroup", t0);
-    end if;
+    // It would be nice to call MinimalDegreePermutationRepresentation on P
+    // but it proved to be too slow for most examples
+    //if not assigned G`SkipAutMinDegRep then
+    //    t0 := ReportStart(G, "MinimizeOuterGroup");
+    //    rho, out := MinimalDegreePermutationRepresentation(out);
+    //    outproj *:= rho;
+    //    ReportEnd(G, "MinimizeOuterGroup", t0);
+    //end if;
     G`MagmaOuterProjection := outproj;
     return out;
 end intrinsic;
@@ -368,11 +608,8 @@ end intrinsic;
 intrinsic outer_group(G::LMFDBGrp) -> Any
 {returns OuterAutomorphism Group}
     if G`abelian then
-        s := Get(G, "aut_group");
-        G`OutLabelIso := G`AutLabelIso;
-        return s;
+        return Get(G, "aut_group");
     end if;
-    G`OutLabelIso := None();
     if not PossiblyLabelable(Get(G, "outer_order")) then
         return None();
     end if;
@@ -386,13 +623,26 @@ intrinsic outer_group(G::LMFDBGrp) -> Any
     end if;
     if assigned phi then
         G`OutLabelIso := phi;
-    elif Type(s) ne NoneType then
-        O := GroupsWithLabels([s])[1][2];
-        t0 := ReportStart(G, "LabelIsoOutGroup");
-        _, G`OutLabelIso := IsIsomorphic(out, O);
-        ReportEnd(G, "LabelIsoOutGroup", t0);
     end if;
     return s;
+end intrinsic;
+
+intrinsic OutLabelIso(G::LMFDBGrp) -> Map
+{}
+    if G`abelian then
+        return Get(G, "AutLabelIso");
+    end if;
+    s := Get(G, "outer_group");
+    if Type(s) eq NoneType then
+        G`OutLabelIso := None();
+    elif not assigned G`OutLabelIso then
+        out := Get(G, "MagmaOuterGroup");
+        O := GroupsWithLabels([s])[1][2];
+        t0 := ReportStart(G, "LabelIsoOutGroup");
+        _, G`OutLabelIso := IsIsomorphic(O, out);
+        ReportEnd(G, "LabelIsoOutGroup", t0);
+    end if;
+    return G`OutLabelIso;
 end intrinsic;
 
 intrinsic autcent_group(G::LMFDBGrp) -> Any
@@ -491,12 +741,12 @@ intrinsic aut_solvable(G::LMFDBGrp) -> BoolElt
     return IsSolvable(MagmaAutGroupPerm(G));
 end intrinsic;
 
-intrinsic aut_exponent(G::LMFDBGrp) -> RingIntElt
+intrinsic aut_exponent(G::LMFDBGrp) -> RngIntElt
 {}
     return Exponent(MagmaAutGroupPerm(G));
 end intrinsic;
 
-intrinsic aut_hash(G::LMFDBGrp) -> RingIntElt
+intrinsic aut_hash(G::LMFDBGrp) -> RngIntElt
 {}
     return hash(MagmaAutGroupPerm(G));
 end intrinsic;
@@ -506,12 +756,12 @@ intrinsic aut_tex(G::LMFDBGrp) -> MonStgElt
     return GroupName(MagmaAutGroupPerm(G) : TeX:=true, prodeasylimit:=2, wreathlimit:=0);
 end intrinsic;
 
-intrinsic aut_nilpotency_class(G::LMFDBGrp) -> RingIntElt
+intrinsic aut_nilpotency_class(G::LMFDBGrp) -> RngIntElt
 {}
     return NilpotencyClass(MagmaAutGroupPerm(G));
 end intrinsic;
 
-intrinsic aut_derived_length(G::LMFDBGrp) -> RingIntElt
+intrinsic aut_derived_length(G::LMFDBGrp) -> RngIntElt
 {}
     return DerivedLength(MagmaAutGroupPerm(G));
 end intrinsic;
@@ -542,12 +792,12 @@ intrinsic inner_solvable(G::LMFDBGrp) -> BoolElt
     return IsSolvable(Get(G, "MagmaInnerGroup"));
 end intrinsic;
 
-intrinsic inner_exponent(G::LMFDBGrp) -> RingIntElt
+intrinsic inner_exponent(G::LMFDBGrp) -> RngIntElt
 {}
     return Exponent(Get(G, "MagmaInnerGroup"));
 end intrinsic;
 
-intrinsic inner_hash(G::LMFDBGrp) -> RingIntElt
+intrinsic inner_hash(G::LMFDBGrp) -> RngIntElt
 {}
     return hash(Get(G, "MagmaInnerGroup"));
 end intrinsic;
@@ -583,12 +833,12 @@ intrinsic outer_solvable(G::LMFDBGrp) -> BoolElt
     return IsSolvable(Get(G, "MagmaOuterGroup"));
 end intrinsic;
 
-intrinsic outer_exponent(G::LMFDBGrp) -> RingIntElt
+intrinsic outer_exponent(G::LMFDBGrp) -> RngIntElt
 {}
     return Exponent(Get(G, "MagmaOuterGroup"));
 end intrinsic;
 
-intrinsic outer_hash(G::LMFDBGrp) -> RingIntElt
+intrinsic outer_hash(G::LMFDBGrp) -> RngIntElt
 {}
     return hash(Get(G, "MagmaOuterGroup"));
 end intrinsic;
@@ -624,12 +874,12 @@ intrinsic autcent_solvable(G::LMFDBGrp) -> BoolElt
     return IsSolvable(Get(G, "MagmaAutcent"));
 end intrinsic;
 
-intrinsic autcent_exponent(G::LMFDBGrp) -> RingIntElt
+intrinsic autcent_exponent(G::LMFDBGrp) -> RngIntElt
 {}
     return Exponent(Get(G, "MagmaAutcent"));
 end intrinsic;
 
-intrinsic autcent_hash(G::LMFDBGrp) -> RingIntElt
+intrinsic autcent_hash(G::LMFDBGrp) -> RngIntElt
 {}
     return hash(Get(G, "MagmaAutcent"));
 end intrinsic;
@@ -665,12 +915,12 @@ intrinsic autcentquo_solvable(G::LMFDBGrp) -> BoolElt
     return IsSolvable(Get(G, "MagmaAutcentquo"));
 end intrinsic;
 
-intrinsic autcentquo_exponent(G::LMFDBGrp) -> RingIntElt
+intrinsic autcentquo_exponent(G::LMFDBGrp) -> RngIntElt
 {}
     return Exponent(Get(G, "MagmaAutcentquo"));
 end intrinsic;
 
-intrinsic autcentquo_hash(G::LMFDBGrp) -> RingIntElt
+intrinsic autcentquo_hash(G::LMFDBGrp) -> RngIntElt
 {}
     return hash(Get(G, "MagmaAutcentquo"));
 end intrinsic;

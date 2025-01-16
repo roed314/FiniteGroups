@@ -112,7 +112,8 @@ declare attributes LMFDBGrp:
   MagmaTransitiveSubgroup,
   faithful_reps,
   smallrep, // old style; to be removed
-  aut_order, aut_group, aut_gens, aut_gen_orders, aut_permdeg, aut_perms, aut_cyclic, aut_abelian, aut_nilpotent, aut_supersolvable, aut_solvable, aut_exponent, aut_hash, aut_tex, aut_nilpotency_class, aut_derived_length, aut_phi_ratio,
+        aut_order, aut_group, aut_gens, aut_gen_orders, aut_permdeg, aut_perms, aut_cyclic, aut_abelian, aut_nilpotent, aut_supersolvable, aut_solvable, aut_exponent, aut_hash, aut_tex, aut_nilpotency_class, aut_derived_length, aut_phi_ratio,
+        AutGenerators0, AutGenerators1, AutGenerators2, AutGenerators3, aut_gens0, aut_gens1, aut_gens2, aut_gens3, AutPermGenerators1, AutPermGenerators2, AutPermGenerators3, aut_perms1, aut_perms2, aut_perms3, aut_gen_orders0, aut_gen_orders1, aut_gen_orders2, aut_gen_orders3, OuterGenerators0, OuterGenerators1, OuterGenerators2, OuterGenerators3, OutPermGenerators1, OutPermGenerators2, OutPermGenerators3, outer_gens0, outer_gens1, outer_gens2, outer_gens3, outer_perms1, outer_perms2, outer_perms3, outer_gen_orders0, outer_gen_orders1, outer_gen_orders2, outer_gen_orders3, outer_gen_pows0, outer_gen_pows1, outer_gen_pows2, outer_gen_pows3,
   inner_order, inner_gens, inner_gen_orders, inner_used, inner_split, inner_cyclic, inner_abelian, inner_nilpotent, inner_supersolvable, inner_solvable, inner_exponent, inner_hash, inner_tex,
   outer_order, outer_group, outer_gens, outer_gen_orders, outer_gen_pows, outer_permdeg, outer_perms, outer_cyclic, outer_abelian, outer_nilpotent, outer_supersolvable, outer_solvable, outer_exponent, outer_hash, outer_tex,
   autcent_order, autcent_group, autcent_split, autcent_cyclic, autcent_abelian, autcent_nilpotent, autcent_supersolvable, autcent_solvable, autcent_exponent, autcent_hash, autcent_tex,

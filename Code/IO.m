@@ -4,12 +4,13 @@ IntegerCols := ["alias_spot", "arith_equiv", "aut_counter", "auts", "cdim", "com
 SmallintCols := ["elt_rep_type", "composition_length", "derived_length", "ngens", "nilpotency_class", "pgroup", "sylow", "easy_rank", "rank", "pc_rank", "solvability_type", "backup_solvability_type", "aut_nilpotency_class", "aut_derived_length"];
 BigintCols := ["mobius_sub", "mobius_quo", "hash", "subgroup_hash", "quotient_hash", "aut_hash", "inner_hash", "outer_hash", "autcent_hash", "autcentquo_hash"];
 NumericCols := ["hall", "eulerian_function", "order", "aut_order", "outer_order", "ambient_order", "subgroup_order", "quotient_order", "quotient_action_kernel_order", "aut_centralizer_order", "aut_weyl_index", "aut_stab_index", "aut_quo_index", "count", "conjugacy_class_count", "pc_code", "core_order", "centralizer_order", "SubGrpLstByDivisorTerminate", "normal_order_bound", "normal_index_bound", "subgroup_index_bound", "number_subgroups", "exponent", "size", "inner_order", "center_order", "autcent_order", "autcentquo_order", "aut_exponent", "inner_exponent", "outer_exponent", "autcent_exponent", "autcentquo_exponent"];
+DoubleCols := ["aut_phi_ratio"];
 
 TextListCols := ["composition_factors", "special_labels", "wreath_data"];
 
 IntegerListCols := ["cycle_type", "denominators", "factors_of_aut_order", "powers", "primary_abelian_invariants", "schur_multiplier", "smith_abelian_invariants", "subgroup_fusion", "nt","qvalues", "trace_field", "normal_counts"];
 SmallintListCols := ["factors_of_order", "gens_used", "exponents_of_order", "diagramx", "inner_used"];
-NumericListCols := ["order_stats","cc_stats","div_stats","aut_stats","irrep_stats","ratrep_stats","field","perm_gens", "aut_gens", "faithful_reps", "inner_gens", "outer_gens", "aut_gen_orders", "inner_gen_orders", "outer_gen_orders", "outer_gen_pows", "aut_perms", "outer_perms"];
+NumericListCols := ["order_stats","cc_stats","div_stats","aut_stats","irrep_stats","ratrep_stats","field","perm_gens", "aut_gens", "aut_gens0", "aut_gens1", "aut_gens2", "aut_gens3", "faithful_reps", "inner_gens", "outer_gens", "outer_gens0", "outer_gens1", "outer_gens2", "outer_gens3", "aut_gen_orders", "aut_gen_orders0", "aut_gen_orders1", "aut_gen_orders2", "aut_gen_orders3", "inner_gen_orders", "outer_gen_orders", "outer_gen_orders0", "outer_gen_orders1", "outer_gen_orders2", "outer_gen_orders3", "outer_gen_pows", "outer_gen_pows0", "outer_gen_pows1", "outer_gen_pows2", "outer_gen_pows3", "aut_perms", "aut_perms1", "aut_perms2", "aut_perms3", "outer_perms", "outer_perms1", "outer_perms2", "outer_perms3"];
 
 BoolCols := ["Agroup", "Zgroup", "abelian", "all_subgroups_known", "complex_characters_known", "rational_characters_known", "almost_simple", "central", "central_product", "characteristic", "cyclic", "direct", "direct_product", "faithful", "indecomposible", "irreducible", "maximal", "maximal_normal", "maximal_subgroups_known", "metabelian", "metacyclic", "minimal", "minimal_normal", "monomial", "nilpotent", "normal", "normal_subgroups_known", "complements_known", "outer_equivalence", "perfect", "prime", "primitive", "quasisimple", "rational", "semidirect_product", "simple", "solvable", "split", "stem", "subgroup_inclusions_known", "supersolvable", "sylow_subgroups_known", "wreath_product", "standard_generators", "quotient_cyclic", "quotient_abelian", "quotient_solvable", "quotient_nilpotent", "quotient_Agroup", "quotient_metabelian", "quotient_supersolvable", "quotient_simple", "proper", "complete", "central_factor", "AllSubgroupsOk", "UseSolvAut", "HaveHolomorph", "inner_split", "autcent_split", "aut_cyclic", "aut_abelian", "aut_nilpotent", "aut_supersolvable", "aut_solvable", "inner_cyclic", "inner_abelian", "inner_nilpotent", "inner_supersolvable", "inner_solvable", "outer_cyclic", "outer_abelian", "outer_nilpotent", "outer_supersolvable", "outer_solvable", "autcent_cyclic", "autcent_abelian", "autcent_nilpotent", "autcent_supersolvable", "autcent_solvable", "autcentquo_cyclic", "autcentquo_abelian", "autcentquo_nilpotent", "autcentquo_supersolvable", "autcentquo_solvable"];
 
@@ -325,6 +326,8 @@ intrinsic LoadAttr(attr::MonStgElt, inp::MonStgElt, obj::Any) -> Any
         return inp;
     elif attr in IntegerCols or attr in SmallintCols or attr in BigintCols or attr in NumericCols then
         return StringToInteger(inp);
+    elif attr in DoubleCols then
+        return eval inp; // It would be better to have a function do this....
     elif attr in BoolCols then
         return LoadBool(inp);
     elif attr in JsonbCols then
@@ -363,6 +366,8 @@ intrinsic SaveAttr(attr::MonStgElt, val::Any, obj::Any) -> MonStgElt
         return val;
     elif attr in IntegerCols or attr in SmallintCols or attr in BigintCols or attr in NumericCols then
         return IntegerToString(val);
+    elif attr in DoubleCols then
+        return Sprint(val);
     elif attr in BoolCols then
         return SaveBool(val);
     elif attr in JsonbCols then
@@ -578,6 +583,8 @@ intrinsic AttrType(attr::MonStgElt) -> MonStgElt
         return "bigint";
     elif attr in NumericCols then
         return "numeric";
+    elif attr in DoubleCols then
+        return "double precision";
     elif attr in BoolCols then
         return "boolean";
     elif attr in JsonbCols then
