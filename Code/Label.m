@@ -9,12 +9,17 @@ intrinsic GroupsWithHash(N::RngIntElt, h::RngIntElt) -> List
     ok := OpenTest(hfile, "r");
     if ok then
         labels := Split(Read(hfile), "\n");
-        descs := [strip(Read("DATA/descriptions/" * label)) : label in labels];
-        homs := [* StringToGroupHom(descs[i]) : i in [1..#labels] *];
-        return [* <labels[i], ">>" in descs[i] select Codomain(homs[i]) else Domain(homs[i])> : i in [1..#labels] *];
+        return GroupsWithLabels(labels);
     else
         return [* *];
     end if;
+end intrinsic;
+
+intrinsic GroupsWithLabels(labels::SeqEnum) -> List
+{Loads groups with the given labels}
+    descs := [strip(Read("DATA/descriptions/" * label)) : label in labels];
+    homs := [* StringToGroupHom(descs[i]) : i in [1..#labels] *];
+    return [* <labels[i], ">>" in descs[i] select Codomain(homs[i]) else Domain(homs[i])> : i in [1..#labels] *];
 end intrinsic;
 
 intrinsic PossiblyLabelable(N::RngIntElt) -> BoolElt

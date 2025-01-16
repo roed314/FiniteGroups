@@ -392,7 +392,7 @@ intrinsic LabelSubgroups(S::SubgroupLat)
                 by_anum := SortGClass(asubs, true);
             end if;
             for anum in [1..#by_anum] do
-                atie := (inc_known or #asubs eq 1) select IntegerToString(anum) else CremonaCode(anum : upper:=true);
+                atie := (inc_known or #asubs eq 1) select IntegerToString(anum) else CremonaCode(anum-1 : upper:=true);
                 if autjugacy then
                     sub := by_anum[anum][1];
                     sub`aut_label := [index, acode, anum];
@@ -417,7 +417,7 @@ intrinsic LabelSubgroups(S::SubgroupLat)
                             sub := by_cnum[cnum];
                             sub`aut_label := [index, acode, anum];
                             sub`full_label := [index, acode, anum, ccode, cnum];
-                            ctie := (inc_known or #csubs eq 1) select IntegerToString(cnum) else CremonaCode(cnum : upper:=true);
+                            ctie := (inc_known or #csubs eq 1) select IntegerToString(cnum) else CremonaCode(cnum-1 : upper:=true);
                             sub`label := IntegerToString(index) * "." * CremonaCode(acode) * atie * "." * CremonaCode(ccode) * ctie;
                         end for;
                     end for;

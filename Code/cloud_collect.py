@@ -3,7 +3,7 @@
 import sys, os, re, string, time, itertools
 import argparse
 from collections import defaultdict, Counter
-from sage.all import factorial, ZZ, prod, lazy_attribute, sage_eval
+from sage.all import factorial, ZZ, prod, lazy_attribute, sage_eval, cached_function
 
 opj = os.path.join
 ope = os.path.exists
@@ -387,7 +387,7 @@ def extract_unlabeled_groups(infolders, outfolder, skipfile, todofile, curfolder
 
 def extract_unfinished_file(infolder, outfile):
     finished = defaultdict(set)
-    allcodes = "blajJzcCrqQsvSDLWhtguoIimw"
+    allcodes = "blajJzcCrqQsvSnDLWhtguoIimw"
     sik = defaultdict(bool)
     for root, dirs, files in os.walk(infolder):
         for fname in files:
@@ -1304,6 +1304,11 @@ class Lie(Expr):
         self.family = groups["family"]
         self.d = groups["d"]
         self.q = str(groups["q"]) # note that this could be a string like Z/4
+        # Adjust to use GL/SL rather than PSL in some circumstances
+        if self.family in ["SL", "PSL", "PGL"] and self.q == "2":
+            self.family = "GL"
+        if self.family == "PSL" and self.q.isdigit() and (int(self.q) % 2 == 0 and self.d == "2" or self.q == "3" and int(self.d) % 2 == 1):
+            self.family = "SL"
     @lazy_attribute
     def value(self):
         # These might have ties, which we break by d, then q.
@@ -1333,6 +1338,49 @@ class Lie(Expr):
     def degree(self):
         return None # only used for RHS of wreath products, and we're probably not going to have a wreath product that big.
 
+chev_replace = {'2A(2,3)': r'\SU(3,3)',
+                'C(2,3)': r'\SU(4,2)',
+                '2A(2,4)': r'\SU(3,4)',
+                '2A(2,5)': r'\PSU(3,5)',
+                '2A(3,3)': r'\PSU(4,3)',
+                'C(2,5)': r'\PSp(4,5)',
+                '2A(2,8)': r'\PSU(3,8)',
+                '2A(2,7)': r'\SU(3,7)',
+                '2A(4,2)': r'\SU(5,2)',
+                '2A(2,9)': r'\SU(3,9)',
+                '2A(2,11)': r'\PSU(3,11)',
+                'C(2,7)': r'\PSp(4,7)',
+                'D(4,2)': r'\OmegaPlus(8,2)',
+                '2D(4,2)': r'\OmegaMinus(8,2)',
+                '2A(2,13)': r'\SU(3,13)',
+                '2A(3,4)': r'\SU(4,4)',
+                'C(2,9)': r'\PSp(4,9)',
+                '2A(2,17)': r'\PSU(3,17)',
+                '2A(2,16)': r'\SU(3,16)',
+                'B(3,3)': r'\Omega(7,3)',
+                'C(3,3)': r'\PSp(6,3)',
+                '2A(5,2)': r'\PSU(6,2)',
+                'C(2,11)': r'\PSp(4,11)',
+                '2A(3,5)': r'\PSU(4,5)',
+                '2A(2,19)': r'\SU(3,19)',
+                'C(2,13)': r'\PSp(4,13)',
+                '2A(4,3)': r'\SU(5,3)',
+                'C(2,17)': r'\PSp(4,17)',
+                '2A(3,7)': r'\PSU(4,7)',
+                'C(2,19)': r'\PSp(4,19)',
+                'D(4,3)': r'\POmegaPlus(8,3)',
+                '2D(4,3)': r'\OmegaMinus(8,3)',
+                'D(5,2)': r'\OmegaPlus(10,2)',
+                '2D(5,2)': r'\OmegaMinus(10,2)',
+                '2A(3,8)': r'\SU(4,8)',
+                '2A(4,4)': r'\PSU(5,4)',
+                '2A(6,2)': r'\SU(7,2)',
+                'C(3,5)': r'\PSp(6,5)',
+                '2A(5,3)': r'\PSU(6,3)',
+                'B(4,3)': r'\Omega(9,3)',
+                'C(4,3)': r'\PSp(8,3)',
+                '2A(7,2)': r'\SU(8,2)'}
+
 basics = "CSADQFM"
 class Atom(Expr): # Excludes Lie groups
     minpriority = 10
@@ -1358,12 +1406,22 @@ class Atom(Expr): # Excludes Lie groups
             raise RuntimeError
     @lazy_attribute
     def latex(self):
+        if self.kind == "chev" and self.basic_plain in chev_replace:
+            return chev_replace[self.basic_plain]
         return self.tex
     @lazy_attribute
-    def plain(self):
+    def basic_plain(self):
         plain = self.tex
         for old, new in [("{}^", ""), ("\\", ""), ("_", ""), ("Plus", "+"), ("Minus","-"), ("{", ""), ("}", "")]:
             plain = plain.replace(old, new)
+        return plain
+    @lazy_attribute
+    def plain(self):
+        plain = self.basic_plain
+        if self.kind == "chev" and plain in chev_replace:
+            plain = chev_replace[plain]
+            for old, new in [("{}^", ""), ("\\", ""), ("_", ""), ("Plus", "+"), ("Minus","-"), ("{", ""), ("}", "")]:
+                plain = plain.replace(old, new)
         return plain
     @lazy_attribute
     def order(self):
@@ -1468,6 +1526,7 @@ def parse_tokens(tokens):
         return terms[0]
     return Prod(terms, ops)
 
+@cached_function
 def parse(tex_name):
     if tex_name is not None and tex_name != r"\N":
         tokens = tokenize(tex_name)
@@ -1516,6 +1575,25 @@ def _gps_data_from_file(order_limit=None):
                 continue
             yield dict(zip(cols, vals))
 
+def smith_to_names(invs):
+    if not invs:
+        return "C1", "C_1"
+    SAI = sorted(Counter(invs).items())
+    texterms = []
+    nameterms = []
+    for n, e in SAI:
+        base = ("C_{%s}" % n) if n >= 10 else ("C_%s" % n)
+        if e >= 10:
+            texp = "^{%s}" % e
+            nexp = f"^{e}"
+        elif e > 1:
+            texp = nexp = f"^{e}"
+        else:
+            texp = nexp = ""
+        texterms.append(f"{base}{texp}")
+        nameterms.append(f"C{n}{nexp}")
+    return "*".join(nameterms), r"\times ".join(texterms)
+
 def get_tex_data_gps(order_limit=None, from_db=False):
     lmfdb_path = os.path.expanduser("~/lmfdb")
     if lmfdb_path not in sys.path:
@@ -1542,8 +1620,14 @@ def get_tex_data_gps(order_limit=None, from_db=False):
     for ctr, rec in enumerate(gpsource):
         label = rec["label"]
         by_order[rec["order"]].append(label)
+        if rec["abelian"]:
+            # Need to deal with exponents/multiplicities to make this work
+            rec["name"], rec["tex_name"] = smith_to_names(rec["smith_abelian_invariants"])
+            finalized.add(label)
+            if rec["cyclic"]:
+                cyclic.add(label)
         tex = parse(rec["tex_name"])
-        if tex.order in [rec["order"], None]:
+        if tex is not None and tex.order in [rec["order"], None]:
             orig_tex_names[label] = rec["tex_name"]
             tex_names[label] = tex
             orig_names[label] = rec["name"]
@@ -1558,13 +1642,6 @@ def get_tex_data_gps(order_limit=None, from_db=False):
             options[label].append(Lie(X))
         if rec["wreath_data"]:
             wreath_data[label] = rec["wreath_data"]
-        if rec["abelian"]:
-            # Need to deal with exponents/multiplicities to make this work
-            #if rec["order"] != 1:
-            #    assert rec["name"] == r"*".join(f"C{m}" for m in rec["smith_abelian_invariants"])
-            finalized.add(label)
-            if rec["cyclic"]:
-                cyclic.add(label)
         if rec["direct_factorization"]:
             direct_data[label] = rec["direct_factorization"]
         if ctr and ctr % 100000 == 0:
@@ -1802,10 +1879,10 @@ def get_all_names(order_limit=None, from_db=False):
                 null += 1
             else:
                 newtex = newtex.latex
-                if newtex != orig_tex_names[label]:
-                    newtex = newtex.replace("\\", "\\\\") # Need to double the backslashes to load into postgres
-                    ctr += 1
-                    _ = Fout.write(f"{label}|{newtex}|{tex_names[label].plain}\n")
+                # Smith computations were done in orig_tex_names, so we include everything.
+                newtex = newtex.replace("\\", "\\\\") # Need to double the backslashes to load into postgres
+                ctr += 1
+                _ = Fout.write(f"{label}|{newtex}|{tex_names[label].plain}\n")
         print(f"{ctr} latex updated, {null} set to null")
     for typ in ["subgroup", "ambient", "quotient"]:
         print("Starting", typ)
@@ -1818,7 +1895,7 @@ def get_all_names(order_limit=None, from_db=False):
                         newtex = tex_names[abstract_label].latex.replace("\\", "\\\\")
                         _ = Fout.write(f"{sub_label}|{newtex}\n")
                         ctr += 1
-        print(f"{ctr} latex udpated")
+        print(f"{ctr} latex updated")
 
     return tex_names, options, subs, orig_tex_names, orig_names, ties, borked
 
