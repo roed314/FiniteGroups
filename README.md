@@ -1,27 +1,7 @@
 # FiniteGroups
 Repository for finite groups in the LMFDB
 
-## Current process for adding groups
 
-1. Create input files in the `Code/DATA` folder by labeling and concatenating files from various sources.
-  * `to_add.txt` with lines consisting of the groups to add, formatted as either a label (for groups with a small group id) or a space separated list of [a label, the hash, a display string and a string for computing with] (e.g. `1024.dig 8786600968869603230 32T65262 32T65262`)
-  * `aliases.txt` and `mat_aliases.txt` with lines consisting of a label, a space, and a description (e.g. `512.1 2,257MAT10224231` and `2.1 2,6MAT560`)
-  * `TinyLie.txt` in the same format, with groups of Lie type that have small group ids (e.g. `180.19 GL(2,4)`)
-  * `PerfChevSpor.txt` giving translations of Perf, Chev and sporadic group codes into concrete permutation and matrix group descriptions (e.g. `Perf1 5Perm8,25`)
-  * `LieGens.txt` consisting of group descriptions (and thus explicit generators) for classical groups of Lie type, with each line consisting of a magma command, a space, and a description (e.g. `GL(2,9) 2,q9MAT173,732`)
-  * `nTt_to_Perm.txt` consisting of explicit generators for transitive permutation groups (e.g. `16T1085 16Perm12526722811577,5606450467177,14002566278422`)
-  * `abelian.txt` lists the labels of the abelian groups to be added, used so that abelian groups always prioritize their polycyclic presentation over a permutation representation.
-  * In the `homs` folder, add maps to permutation groups and polycyclic groups from groups that are harder to compute with, such as matrix groups over Z/N (e.g. `homs/1024.bf` contains `1024pc10,2,2,2,2,2,2,2,2,2,2,20,12602,1942,11843,3143,113,624,144,7866,2836,206--21513,48261,54373,61575,15427-->2,16Mat1,8,0,1,1,4,0,1,1,2,0,1,9,0,0,1,3,0,0,1,9,0,0,9,1,8,8,9,7,12,4,3,13,12,4,5,3,12,4,3`)
-  * In the `pcreps` folder, give polycyclic presentations by listing the output of `SmallGroupEncoding`, the generators used, and the output of `CompactPresentation` (e.g. `pcreps/1024.bo` contains `24137635498254323920630793634327656083180394407851|1,2,4,6,8|10,2,2,2,2,2,2,2,2,2,2,7680,601,51,602,113,21125,175,40326,26257,1657,237,268|17800996435040569003106554739653241,35031083215738271150547183770583655,26340829465340581229718422655917118,34580164663022324854485395269967086,66960863642116864457196449188071078`).  The `pcreps_fast` and `pcreps_fastest` contain files with the same format, but produced by algorithms that are faster to run.
-  * In the `RePresentations` folder, give the output of `CompactPresentation`, along with generators used and a time spent (e.g. `RePresentations/100.10` contains `<PCGroup([ 4, -2, -2, -5, -5, 8, 98, 102, 1283 ]), [ 4, 3, 1 ], 0.240>`)
-  * In the `minreps` folder, give the minimal degree permutation representations, giving the label, a description, the degree, and encoded generators for permutations in that degree (e.g. `minreps/1024.bo` contains `1024.bo|2,16Mat1,8,0,1,1,4,0,1,1,2,0,1,9,0,0,1,3,1,0,1,9,0,0,9,1,8,8,9,13,8,8,5,7,12,4,3,3,12,4,3|32|{97575703332664760306835443712000,17800996435040569003106554739653241,43069475033578083881057708593152000,26278631729877200938898280140268692,35092986950487841343844644183560602,43069475033578083881063516986888602,42989583273087273728074402253135086,9090923229567031635381750036860221,26349671180800888109669597755820520,26871335136546588359936854917464802}`)
-1. Use `create_descriptions.py` to create cloud input data:
-  * The `descriptions` folder, with files named by label and contents the output of `StringToGroup` on a group with that label
-  * The `preload` folder, with files named by label and contents the quantities for that group that have already been created (label, hash, representations, element_repr_type, transitive degree, permutation degree, pc rank, name, tex_name, some others in certain cases).  These files are used to prepopulate quantities that are already known.
-  * The `hash_lookup` folder, with subfolders for each label, files for each hash containing lines with the labels having that order and hash.
-1. Use `cloud_prep.py` to create a tarball containing all of the code needed for running in the cloud.  This currently needs a bit of cleaning up.
-1. Extract the tarball anywhere you like, then run `./cloud_compute.py M`, where `M` is an integer from 1 to the number of groups (you can also run multiple such commands in parallel).  This will copy all output to the `output` file, labeled with a prefix.
-1. If running computations on multiple machines, collect all the output files and concatenate them into one large output file.  Then run `cloud_collect.py` to produce upload files for postgres (this file needs a bit more work).
 
 ## Sample Code
 
@@ -149,18 +129,31 @@ For some of the groups,  additional  databases from Magma need to be installed.
 
 
 
+## Current process for adding groups
+
+1. Create input files in the `Code/DATA` folder by labeling and concatenating files from various sources.
+  * `to_add.txt` with lines consisting of the groups to add, formatted as either a label (for groups with a small group id) or a space separated list of [a label, the hash, a display string and a string for computing with] (e.g. `1024.dig 8786600968869603230 32T65262 32T65262`)
+  * `aliases.txt` and `mat_aliases.txt` with lines consisting of a label, a space, and a description (e.g. `512.1 2,257MAT10224231` and `2.1 2,6MAT560`)
+  * `TinyLie.txt` in the same format, with groups of Lie type that have small group ids (e.g. `180.19 GL(2,4)`)
+  * `PerfChevSpor.txt` giving translations of Perf, Chev and sporadic group codes into concrete permutation and matrix group descriptions (e.g. `Perf1 5Perm8,25`)
+  * `LieGens.txt` consisting of group descriptions (and thus explicit generators) for classical groups of Lie type, with each line consisting of a magma command, a space, and a description (e.g. `GL(2,9) 2,q9MAT173,732`)
+  * `nTt_to_Perm.txt` consisting of explicit generators for transitive permutation groups (e.g. `16T1085 16Perm12526722811577,5606450467177,14002566278422`)
+  * `abelian.txt` lists the labels of the abelian groups to be added, used so that abelian groups always prioritize their polycyclic presentation over a permutation representation.
+  * In the `homs` folder, add maps to permutation groups and polycyclic groups from groups that are harder to compute with, such as matrix groups over Z/N (e.g. `homs/1024.bf` contains `1024pc10,2,2,2,2,2,2,2,2,2,2,20,12602,1942,11843,3143,113,624,144,7866,2836,206--21513,48261,54373,61575,15427-->2,16Mat1,8,0,1,1,4,0,1,1,2,0,1,9,0,0,1,3,0,0,1,9,0,0,9,1,8,8,9,7,12,4,3,13,12,4,5,3,12,4,3`)
+  * In the `pcreps` folder, give polycyclic presentations by listing the output of `SmallGroupEncoding`, the generators used, and the output of `CompactPresentation` (e.g. `pcreps/1024.bo` contains `24137635498254323920630793634327656083180394407851|1,2,4,6,8|10,2,2,2,2,2,2,2,2,2,2,7680,601,51,602,113,21125,175,40326,26257,1657,237,268|17800996435040569003106554739653241,35031083215738271150547183770583655,26340829465340581229718422655917118,34580164663022324854485395269967086,66960863642116864457196449188071078`).  The `pcreps_fast` and `pcreps_fastest` contain files with the same format, but produced by algorithms that are faster to run.
+  * In the `RePresentations` folder, give the output of `CompactPresentation`, along with generators used and a time spent (e.g. `RePresentations/100.10` contains `<PCGroup([ 4, -2, -2, -5, -5, 8, 98, 102, 1283 ]), [ 4, 3, 1 ], 0.240>`)
+  * In the `minreps` folder, give the minimal degree permutation representations, giving the label, a description, the degree, and encoded generators for permutations in that degree (e.g. `minreps/1024.bo` contains `1024.bo|2,16Mat1,8,0,1,1,4,0,1,1,2,0,1,9,0,0,1,3,1,0,1,9,0,0,9,1,8,8,9,13,8,8,5,7,12,4,3,3,12,4,3|32|{97575703332664760306835443712000,17800996435040569003106554739653241,43069475033578083881057708593152000,26278631729877200938898280140268692,35092986950487841343844644183560602,43069475033578083881063516986888602,42989583273087273728074402253135086,9090923229567031635381750036860221,26349671180800888109669597755820520,26871335136546588359936854917464802}`)
+2. Use `create_descriptions.py` to create cloud input data:
+  * The `descriptions` folder, with files named by label and contents the output of `StringToGroup` on a group with that label
+  * The `preload` folder, with files named by label and contents the quantities for that group that have already been created (label, hash, representations, element_repr_type, transitive degree, permutation degree, pc rank, name, tex_name, some others in certain cases).  These files are used to prepopulate quantities that are already known.
+  * The `hash_lookup` folder, with subfolders for each label, files for each hash containing lines with the labels having that order and hash.
+3. Use `cloud_prep.py` to create a tarball containing all of the code needed for running in the cloud.  This currently needs a bit of cleaning up.
+4. Extract the tarball anywhere you like, then run `./cloud_compute.py M`, where `M` is an integer from 1 to the number of groups (you can also run multiple such commands in parallel).  This will copy all output to the `output` file, labeled with a prefix.
+5. If running computations on multiple machines, collect all the output files and concatenate them into one large output file.  Then run `cloud_collect.py` to produce upload files for postgres (this file needs a bit more work).
 
 
-## Computation ToDo
 
-* There are several groups where we need to update the description (we don't have an explicit isomorphism from the representation as a matrix group with Z/NZ coefficients to a permutation group)
-* It would be cleaner to do the computation of the subgroup lattices in the cloud.  I did this for modular curves, and we actually don't need to move the code to Magma: it just needs to get added to cloud_compute.py
-* Some of the code for preloading Lie group names means that we don't use F5 or S5 for those groups when we should.  We need to modify the logic a bit.
-* There are a few errors that pop up where it's not clear whether they're our fault or Magma's.  It would be good to debug these to the extent possible.
-  * 46656.hz (and 7 more), Subgroups.m line 668 (Hnew := L`subs[j];): Runtime error in '[]': Sequence index 987 should be in the range 1 to 822
-* We should test the new conjugacy class labeling code more (e.g. on 564221981491200.i, which was slow)
-* There are some computations (notably the labeling of conjugacy classes) which should be saved when completed since they're somewhat expensive and are used in later stages of the computation.
-* Finish updates to `cloud_prep.py`, `cloud_compute.py` and `cloud_collect.py`
+
 
 ## Census of Files
 
@@ -267,13 +260,3 @@ Some of these were used in producing the input folders for the cloud process or 
 * UpdatePerm.m - Explicitly stores generators in the description, even for transitive permutation groups
 
 
-## Old instructions for adding Groups
-To add all groups of a given order in the SmallGroups database, use the `AddSmallGroups.m` file.
-
-To add groups, you first need to determine their labels and labels for any subgroups/quotients that should also be added.
-
-Step 1: generate a file with a line for each group you want to add.  Each line should be of the following form:
-`G outer_equivalences index_bounds numsub_limits normals maximals sylows CTbounds RCTbounds`
-where
-- `G` is a string with no spaces evaluating to the desired group in Magma,
-- `outer_equivalences` is a comma separated list of either `t`, `f` or `auto` determining whether to compute subgroups up to automorphism at each level of recursion.  `auto` uses `index_bounds` and `numsub_limits`
