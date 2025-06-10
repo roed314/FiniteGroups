@@ -2,7 +2,7 @@
 intrinsic MakeSmallGroup(N::RngIntElt, i::RngIntElt : represent:=true) -> Any
     {Create an LMFDBGrp object for SmallGroup(N,i) and compute attributes}
     G := NewLMFDBGrp(SmallGroup(N, i), Sprintf("%o.%o", N, i));
-    AssignBasicAttributes(G);
+    G`order := N;
     if represent then
         repfile := Sprintf("RePresentations/%o.%o", N, i);
         stored, F := OpenTest(repfile, "r");

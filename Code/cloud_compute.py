@@ -23,11 +23,12 @@ internal_re = re.compile(r'Magma: Internal error')
 
 parser = argparse.ArgumentParser("Dispatch to appropriate magma script")
 parser.add_argument("job", type=int, help="job number")
+parser.add_argument("timeout", type=int, help="timeout", nargs="?", default=None)
 
 args = parser.parse_args()
 job = args.job - 1 # shift from 1-based to 0-based indexing
 
-#OUTPUT = "output"
+#OUTPUT = f"output{job}"
 OUTPUT = "/scratch/grp/relabel.output" # Temporarily change output location for disc reasons
 
 # This sets the preload, but not the saved final values in basics
@@ -61,9 +62,9 @@ def run(label, codes, timeout, memlimit, subgroup_index_bound, subgroup_inclusio
         labelname = "label"
     if sys.platform == "linux":
         # 1048576B = 1MB
-        subprocess.run('parallel -n0 --timeout %s --memfree 256MB "ulimit -v 1000000; magma -b %s:=%s codes:=%s ComputeCodes.m >> DATA/errors/%s 2>&1" ::: 1' % (ceil(timeout), labelname, label, codes, label), shell=True)
+        subprocess.run('parallel -n0 --timeout %s --memfree 256M "ulimit -v 16000000; magma -b %s:=%s codes:=%s ComputeCodes.m >> DATA/errors/%s 2>&1" ::: 1' % (ceil(timeout), labelname, label, codes, label), shell=True)
         # subprocess.run('prlimit --as=%s --cpu=%s magma -b %s:=%s codes:=%s ComputeCodes.m >> DATA/errors/%s 2>&1' % (memlimit*1048576, ceil(timeout), labelname, label, codes, label), shell=True)
-        #subprocess.run('parallel -n0 --timeout %s --memfree 256MB "magma -b %s:=%s codes:=%s ComputeCodes.m >> DATA/errors/%s 2>&1" ::: 1' % (ceil(timeout), labelname, label, codes, label), shell=True)
+        #subprocess.run('parallel -n0 --timeout %s --memfree 256M "magma -b %s:=%s codes:=%s ComputeCodes.m >> DATA/errors/%s 2>&1" ::: 1' % (ceil(timeout), labelname, label, codes, label), shell=True)
     else:
         # For now, don't enforce a memory limit
         subprocess.run('parallel -n0 --timeout %s "magma -b %s:=%s codes:=%s ComputeCodes.m >> DATA/errors/%s 2>&1" ::: 1' % (ceil(timeout), labelname, label, codes, label), shell=True)
@@ -117,7 +118,7 @@ def run(label, codes, timeout, memlimit, subgroup_index_bound, subgroup_inclusio
         if ope(e):
             with open(e) as F:
                 for line in F:
-                    _ = Fout.write(f"E{label}({utcnow()})|{line}")
+                    _ = Fout.write(f"E{label}({utcnow()})|{line.rstrip()}\n")
                     m = err_location_re.search(line)
                     if m:
                         loc = m.group(0)
@@ -349,7 +350,11 @@ def compute_diagramx(label, sublines, subgroup_index_bound, end_time, memlimit):
 
 # We want dependencies as close as possible to each other, so that failures in between don't mean we need to recompute
 dependencies = {
-    "a": "JsSDLWhguoIi", # depend on MagmaAutGroup (might be possible to change subgroup labeling to function without automorphism group, but it would require a lot of work)
+    # Aut related: daekG%M@#guo (old), d01425g3uo6#@7 (new)
+    "a": "ekGJsSDLWh%M@#guoIi", # depend on MagmaAutGroup (might be possible to change subgroup labeling to function without automorphism group, but it would require a lot of work)
+    "0": "1425JsSDLWhg3uo6#@7Ii", # depend on MagmaAutGroup (new version)
+    "1": "425g3o6#@7", # depend on MagmaClassAction
+    "4": "5o6", # depend on MagmaOuterGroup
     "j": "JzcCrqQsSDLWhuIi", # depend on MagmaConjugacyClasses
     "J": "zCrQsSDLWhIi", # depend on ConjugacyClasses
     "z": "sSDLWhIi", # depend on conj_centralizer_gens
@@ -363,7 +368,8 @@ dependencies = {
     "I": "i", # depend on Mobius
 }
 # You can call tmpheaders(summarize=True) from cloud_collect.py to get a summary of the codes
-codes = "blajJzcCrqQsvSLWhtguoIimw" # Note that D = subagg3 (diagramx) is skipped since it's filled in below
+codes = "bdlaekGjJzcCrqQsvSnLWht%M@#guoIimw"
+#codes = "blajJzcCrqQsvSnLWhtguoIimw" # Note that D = subagg3 (diagramx) is skipped since it's filled in below
 # By default we skip XxYy (used in labeling subgroups that were postponed until later) and n (which is used only to save some information about which normal subgroups were saved
 def skip_codes(codes, skipped):
     if codes[0] in dependencies:
@@ -388,6 +394,8 @@ def load_sublines(label):
 with open("DATA/manifest") as F:
     for line in F:
         todo, out, timings, script, cnt, per_job, job_timeout, total_timeout = line.strip().split()
+        if args.timeout is not None:
+            job_timeout = total_timeout = args.timeout
         # Hard code memlimit for now
         memlimit = 7936 # in MB = 7.75GB
         #memlimit = 3840 # in MB = 3.75GB

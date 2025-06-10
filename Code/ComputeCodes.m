@@ -5,7 +5,9 @@ SetColumns(0);
 
 if not assigned codes then
     // default order for computing invariants
-    codes := "blajJzcCrqQsvSBLWhtguoIimw";
+    // Prior was "blajJzcCrqQsvSnBLWhtguoIimw" before aut additions
+    // daekG%M@#guo then d01425g3uo6#@7
+    codes := "bdl01425jJzcCrqQsvSnBLWhtg3uo6#@7Iimw";
 end if;
 if not assigned label then
     if not ("X" in codes or "Y" in codes) then
@@ -84,12 +86,12 @@ outfile := "DATA/computes/" * label;
 infile := "DATA/descriptions/" * label;
 desc := Read(infile);
 
-G := MakeBigGroup(desc, label : preload:=true);
+G := MakeBigGroup(desc, label : preload:=false);
 
 // We don't use the infrastructure below for finding transitive permutation representations,
 // since we just want to find as many as we can in the time allotted
 if codes eq "x" then
-    if not G`abelian then
+    if not Get(G, "abelian") then
         WriteTransitivePermutationRepresentations(G`MagmaGrp, outfile, label);
     end if;
     quit;
@@ -126,9 +128,12 @@ if "R" in codes then
     infile := "/scratch/grp/relabel/" * label; // For now, put files in scratch since it has more space
     lines := Split(Read(infile), "\n");
     G`outer_equivalence, G`subgroup_inclusions_known, G`complements_known, G`normal_subgroups_known := Explode([LoadBool(x) : x in Split(lines[1], "|")]);
-    G`complements_known := false; // We don't recompute complements, since with the labels in hand we can redo this.
     G`subgroup_index_bound := StringToInteger(lines[2]);
-    if not G`outer_equivalence then
+    if G`outer_equivalence then
+        G`SubGrpLstByDivisorTerminate := G`subgroup_index_bound;
+        G`SubGrpLstCutoff := 31536000; // Don't cut off subgroup computation since we need to match
+    else
+        G`complements_known := false; // We don't recompute complements, since with the labels in hand we can redo this.
         res := LoadSubgroupLattice(G, lines[3..#lines]);
         G`SubGrpLat := res;
     end if;

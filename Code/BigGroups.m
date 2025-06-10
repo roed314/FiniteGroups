@@ -12,7 +12,6 @@ intrinsic MakeBigGroup(desc::MonStgElt, label::MonStgElt : preload:=false) -> LM
     if preload then
         Preload(G);
     end if;
-    AssignBasicAttributes(G);
     G`ElementReprHom := f;
     G`ElementReprCovers := cover;
     return G;

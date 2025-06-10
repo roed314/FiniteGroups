@@ -28,4 +28,5 @@
   counter.m
   Intransitive.m
   Quotients.m
+  Aut.m
 }

@@ -75,13 +75,13 @@ intrinsic centralizer(C::LMFDBGrpPermConjCls) -> Any
   return label(C1 : giveup:=true);
 end intrinsic;
 
-intrinsic size(C::LMFDBGrpPermConjCls) -> RingIntElt
+intrinsic size(C::LMFDBGrpPermConjCls) -> RngIntElt
   {Number of elements in this conjugacy class}
   CC := Get(C, "MagmaConjCls");
   return CC[2]; // For a magma class CC, CC[2] gives its size
 end intrinsic;
 
-intrinsic order(C::LMFDBGrpPermConjCls) -> RingIntElt
+intrinsic order(C::LMFDBGrpPermConjCls) -> RngIntElt
   {Number of elements in this conjugacy class}
   CC := Get(C, "MagmaConjCls");
   return CC[1];// For a magma class CC, CC[1] gives the order of an element

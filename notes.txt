@@ -1,6 +1,0 @@
-The Magma group types we will be dealing with are:
-  - GrpAb
-  - GrpMat
-  - GrpPC
-  - GrpPerm
-  (So no GrpGPC.) The functions and parameters of these functions available to each type may be different!

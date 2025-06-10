@@ -279,22 +279,37 @@ Also returns
     return cnt, path, reps, Zs;
 end intrinsic;
 
+function Modseq(g)
+    // For matrix groups and pc groups, we prefer lots of zeros and a small sum
+    v := Eltseq(g);
+    if Type(g) ne GrpPermElt and #v gt 0 then
+        zero := Parent(v[1])!0;
+        zerocnt := #[c : c in v | c eq zero];
+        if Type(g) eq GrpPCElt then
+            return <-zerocnt, &+v, v>;
+        else
+            return <-zerocnt, v>;
+        end if;
+    end if;
+    return v;
+end function;
+
 intrinsic minrep(T::MaximalSubgroupTree, path::SeqEnum, reps::SeqEnum, Zs::SeqEnum) -> GrpElt
 {Find the best representative, using the data returned by narrow}
     H := sub(T, path);
     best := reps[1];
-    b := Eltseq(best);
+    b := Modseq(best);
     for i in [1..#reps] do
         rep := reps[i];
         for x in Conjugates(H, rep) do
-            z := Eltseq(x);
+            z := Modseq(x);
             if z lt b then
                 best := x;
                 b := z;
             end if;
         end for;
     end for;
-    return best;
+    return best, b;
 end intrinsic;
 
 intrinsic num2letters(n::RngIntElt: Case:="upper") -> MonStgElt
@@ -399,12 +414,16 @@ intrinsic MagmaDivisions(G::LMFDBGrp) -> SeqEnum
     return divisions;
 end intrinsic;
 
+CANONICAL_J := true; // Whether we aim to choose conjugacy class representatives canonically
+// This is desireable, but may be prohibitively slow.
+
 // Pass in the group data
 intrinsic ordercc(G::LMFDBGrp, gens::SeqEnum: dorandom:=true) -> Any
 {Take an LMFDB group, and a sequence of generators and return ordered classes and labels.}
     t1 := ReportStart(G, "ordercc");
     g := G`MagmaGrp;
     cc := Get(G, "MagmaConjugacyClasses");
+    canreps := [g.0 : z in cc]; // will be updated with the chosen rep for each conjugacy class
     cm := Get(G, "MagmaClassMap");
     pm := Get(G, "MagmaPowerMap");
     t0 := Cputime();
@@ -450,6 +469,7 @@ intrinsic ordercc(G::LMFDBGrp, gens::SeqEnum: dorandom:=true) -> Any
       end for;
     end for;
   end for;
+  step2keys := Sort([k : k->v in step2]);
   ReportEnd(G, "ordercc-step2", t0);
   // Within a division, or between divisions which are as yet
   // unordered, we break ties via the priority, which is essentially
@@ -461,7 +481,7 @@ intrinsic ordercc(G::LMFDBGrp, gens::SeqEnum: dorandom:=true) -> Any
   // Just the key to step 2 plus the priority
   finalkeys:= [[0,0,0,0] : z in cc];
   // utility for below, gen is a class index
-  setpriorities:=function(adiv,cnt,gen,priorities,expos)
+  setpriorities:=function(adiv,cnt,gen,priorities,expos,canreps)
     notdone:=0;
     for j in adiv do
       if priorities[j] gt ncc then notdone+:=1; end if;
@@ -471,7 +491,10 @@ intrinsic ordercc(G::LMFDBGrp, gens::SeqEnum: dorandom:=true) -> Any
       if GCD(pcnt, cc[gen][1]) eq 1 then
         for sgn in [1,-1] do
           ac := pm(gen, sgn*pcnt);
-//"Testing", gen, " to ", sgn*pcnt," got ", ac, priorities;
+          //"Testing", gen, " to ", sgn*pcnt," got ", ac, priorities;
+          if canreps[ac] eq g.0 then
+            canreps[ac] := canreps[gen]^(sgn*pcnt);
+          end if;
           if priorities[ac] gt ncc then
             notdone -:=1;
             priorities[ac]:=cnt;
@@ -482,22 +505,25 @@ intrinsic ordercc(G::LMFDBGrp, gens::SeqEnum: dorandom:=true) -> Any
       end if;
       pcnt+:=1;
     end while;
-    return priorities, cnt, expos;
+    return priorities, cnt, expos, canreps;
   end function;
-  setpriorities_recursive := function(adiv, cnt, gen, priorities, expos)
-    priorities, cnt, expos := setpriorities(adiv, cnt, gen, priorities, expos);
+  setpriorities_recursive := function(adiv, cnt, gen, priorities, expos, canreps)
+    priorities, cnt, expos, canreps := setpriorities(adiv, cnt, gen, priorities, expos, canreps);
     divisors := Divisors(cc[gen][1]);
     for k:=2 to #divisors-1 do
       newgen := pm(gen, divisors[k]);
+      if canreps[newgen] eq g.0 then
+        canreps[newgen] := canreps[gen]^divisors[k];
+      end if;
       powerdiv := revmap[newgen];
       for divi in step2[powerdiv] do
         if newgen in divi then
-          priorities, cnt, expos := setpriorities(divi, cnt, newgen, priorities, expos);
+          priorities, cnt, expos, canreps := setpriorities(divi, cnt, newgen, priorities, expos, canreps);
           break;
         end if;
       end for;
     end for;
-    return priorities, cnt, expos;
+    return priorities, cnt, expos, canreps;
   end function;
 
   // We divide keys into those that should be labeled by enumeration (small)
@@ -505,8 +531,10 @@ intrinsic ordercc(G::LMFDBGrp, gens::SeqEnum: dorandom:=true) -> Any
   big_keys := [];
   small_keys := [];
   T := NewMaximalSubgroupTree(g);
-  for ky -> divilist in step2 do
-      if #divilist eq 1 and #Rep(divilist) eq 1 then
+  for ky in step2keys do
+      divilist := step2[ky];
+      // Since we want to produce a canonical representative in each class, we have to do something even when the class is unique in its key.  This may be costly....
+      if not CANONICAL_J and #divilist eq 1 and #Rep(divilist) eq 1 then
           continue; // nothing to do
       end if;
       //t2 := Cputime();
@@ -540,18 +568,32 @@ intrinsic ordercc(G::LMFDBGrp, gens::SeqEnum: dorandom:=true) -> Any
       small := (small_cnt le SMALL_THRESHOLD or small_cnt * size le SMALL_SCALE * G`order);
       if small then
           dctr := 1;
+          mseqs := [];
+          mseq_data := [];
           for divi in divilist do
               if not ismax[Rep(divi)] then continue; end if;
               mreps := [];
               diviL := [u : u in divi];
               for u in diviL do
                   //t3 := Cputime();
-                  Append(~mreps, Eltseq(minrep(T, paths[dctr], repss[dctr], Zss[dctr])));
+                  canrep, repseq := minrep(T, paths[dctr], repss[dctr], Zss[dctr]);
+                  canreps[u] := canrep;
+                  Append(~mreps, repseq);
                   //tm +:= Cputime() - t3;
                   dctr +:= 1;
               end for;
               mseq, loc := Min(mreps);
-              priorities, cnt, expos := setpriorities_recursive(divi, cnt, diviL[loc], priorities, expos);
+              Append(~mseqs, mseq);
+              Append(~mseq_data, <diviL[loc], divi>);
+          end for;
+          // With a different ordering of input conjugacy classes,
+          // divilist could arise in a different order.  So we need to
+          // choose priorities in a fixed order.
+          ParallelSort(~mseqs, ~mseq_data);
+          for pair in mseq_data do
+              diviLloc, divi := Explode(pair);
+              //print "smallpri", ky, cnt, diviLloc, SaveElt(canreps[diviLloc]), priorities;
+              priorities, cnt, expos, canreps := setpriorities_recursive(divi, cnt, diviLloc, priorities, expos, canreps);
           end for;
           Append(~small_keys, ky);
           //vprint User1: "Completed ky", sprint(ky), Cputime() - t2, tn, tm;
@@ -602,10 +644,12 @@ intrinsic ordercc(G::LMFDBGrp, gens::SeqEnum: dorandom:=true) -> Any
         end if;
         gcl:=cm(ggcl);
         if ismax[gcl] and priorities[gcl] gt ncc then
+          canreps[gcl] := ggcl;
           mydivkey:=revmap[gcl];
           for dd in step2[mydivkey] do
             if gcl in dd then
-              priorities, cnt, expos:=setpriorities_recursive(dd,cnt,gcl,priorities,expos);
+              priorities, cnt, expos, canreps:=setpriorities_recursive(dd,cnt,gcl,priorities,expos,canreps);
+              //print "bigpri", cnt, gcl, SaveElt(ggcl), priorities;
               break;
             end if;
           end for;
@@ -613,7 +657,8 @@ intrinsic ordercc(G::LMFDBGrp, gens::SeqEnum: dorandom:=true) -> Any
       end if;
     end while;
   end for; // End of keys loop
-  for k -> divilist in step2 do
+  for k in step2keys do
+    divilist := step2[k];
     // We now have enough apex generators for all divisions
     for divi in divilist do
       for aclass in divi do
@@ -622,7 +667,13 @@ intrinsic ordercc(G::LMFDBGrp, gens::SeqEnum: dorandom:=true) -> Any
     end for;
   end for;
   ReportEnd(G, "ordercc-keys-loop", t0);
-  ParallelSort(~finalkeys,~cc);
+  //ParallelSort(~finalkeys,~cc);
+  if CANONICAL_J then
+      assert &and[cm(cc[i][3]) eq cm(canreps[i]) : i in [1..#cc]];
+  else
+      canreps := [z[3] : z in cc];
+  end if;
+  ParallelSort(~finalkeys, ~canreps);
   labels:=["" : z in cc]; divcnt:=0;
   oord:=0;
   divcntdown:=0;
@@ -645,9 +696,8 @@ intrinsic ordercc(G::LMFDBGrp, gens::SeqEnum: dorandom:=true) -> Any
       labels[j]:=Sprintf("%o%o", finalkeys[j][1], num2letters(divcnt));
     end if;
   end for;
-  cc:=[c[3] : c in cc];
   ReportEnd(G, "ordercc", t1);
-  return cc, finalkeys, labels;
+  return canreps, finalkeys, labels, step2, priorities, expos;
 end intrinsic;
 
 intrinsic testCCs(G::LMFDBGrp: dorandom:=true)->Any

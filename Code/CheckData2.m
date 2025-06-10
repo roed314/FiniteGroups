@@ -163,7 +163,6 @@ if not invalid_gen then
         fake_label := Sprintf("%o.a", sub`order);
         HH := sub`subgroup;
         H := NewLMFDBGrp(HH, fake_label);
-        AssignBasicAttributes(H);
         agp := SaveAttr("Agroup", Get(H, "Agroup"), H);
         zgp := SaveAttr("Zgroup", Get(H, "Zgroup"), H);
         ssolv := SaveAttr("supersolvable", Get(H, "supersolvable"), H);
@@ -191,7 +190,7 @@ if not invalid_gen then
             qsimp := "\\N";
         end if;
         simp := SaveBool(subcomplen eq 1);
-        if H`solvable then
+        if Get(H, "solvable") then
             D := DerivedSubgroup(HH);
             ma := SaveBool(IsAbelian(D));
             mc := EasyIsMetacyclic(H);

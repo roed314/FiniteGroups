@@ -746,11 +746,11 @@ intrinsic GroupToString(G::Grp : use_id:=true) -> MonStgElt
             G := PCGroup(G);
         end if;
         if Type(G) eq GrpPC then
-            // Unfortunately, there's a bug in SmallGroupDecoding, so we prefer to use CompactPresentation
-            // code, N := SmallGroupEncoding(G);
-            // return Sprintf("%oPC%o", N, code);
-            pres := CompactPresentation(G);
-            return Sprintf("%opc%o", #G, Join([Sprint(c) : c in pres], ","));
+            // The bug in SmallGroupDecoding has been fixed, so we use it for compatibility with GAP
+            code, N := SmallGroupEncoding(G);
+            return Sprintf("%oPC%o", N, code);
+            // pres := CompactPresentation(G);
+            // return Sprintf("%opc%o", #G, Join([Sprint(c) : c in pres], ","));
         end if;
         error Sprintf("Unsupported group type %o of order %o", Type(G), N);
     end if;

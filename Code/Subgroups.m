@@ -331,7 +331,7 @@ function SplitByAuts(L, G : use_order:=true, use_hash:=true, use_gassman:=false,
         use_graph := false;
     else
         // We spend some time minimizing the number of generators here, since the runtime below is directly proportional to the number of generators
-        outs := Get(G, "FewOuterGenerators");
+        outs := Get(G, "OuterGenerators");
         // We don't need the renumbered class map for this application
         cm := Get(G, "MagmaClassMap");
         CC := Get(G, "MagmaConjugacyClasses");
@@ -548,14 +548,6 @@ intrinsic HolInj(X::LMFDBGrp) -> HomGrp
     return X`HolInj;
 end intrinsic;
 
-intrinsic FewOuterGenerators(X::LMFDBGrp) -> SeqEnum
-{A short list of generators for the outer automorphism group (ie automorphisms whose images generate the outer automorphism group)}
-    t0 := ReportStart(X, "FewOuterGenerators");
-    outs := FewGenerators(Get(X, "MagmaAutGroup") : outer:=true);
-    ReportEnd(X, "FewOuterGenerators", t0);
-    return outs;
-end intrinsic;
-
 intrinsic aut_component_data(L::SubgroupLat) -> Tuple
 {Returns lookup, inv_lookup, retract; where lookup[i] is the index i0 of the chosen subgroup in the same component as subs[i], inv_lookup[i0] is the list of all i in the same component as i0, and retract[i] is an automorphism mapping subs[i] to subs[i0]}
     subs := Get(L, "by_index_aut");
@@ -567,7 +559,7 @@ intrinsic aut_component_data(L::SubgroupLat) -> Tuple
     G := L`Grp;
     GG := G`MagmaGrp;
     Aut := Get(G, "MagmaAutGroup");
-    outs := Get(G, "FewOuterGenerators");
+    outs := Get(G, "OuterGenerators");
     cm := Get(G, "ClassMap");
     /*
     Each of the entries in subs is an automorphism class of subgroups, consisting of a sequence of conjugacy classes making up the automorphism class.
@@ -683,7 +675,7 @@ intrinsic CCAutCollapse(X::LMFDBGrp) -> Map
     elif Get(X, "HaveAutomorphisms") then
         Aut := Get(X, "MagmaAutGroup");
         cm := Get(X, "ClassMap");
-        outs := Get(X, "FewOuterGenerators");
+        outs := Get(X, "OuterGenerators");
         edges := [{Integers()|} : _ in [1..#CC]];
         for f in outs do
             for i in [1..#CC] do
@@ -744,7 +736,7 @@ intrinsic IsCharacteristic(G::LMFDBGrp, H::Grp) -> BoolElt
         inj := Get(G, "HolInj");
         return IsNormal(Ambient, inj(H));
     else
-        outs := Get(G, "FewOuterGenerators");
+        outs := Get(G, "OuterGenerators");
         return IsNormal(G`MagmaGrp, H) and &and[f(H) eq H : f in outs];
     end if;
 end intrinsic;
@@ -936,7 +928,7 @@ intrinsic MarkMaximalSubgroups(L::SubgroupLat)
     // IsMaximal is fast when the index is small, while subgroup identification is harder there (easy hash is hard, as is the current approach for Gassman classes)
     // So we start by marking all the subgroups of small index using IsMaximal
     bi := Get(L, "by_index");
-    solv := G`solvable;
+    solv := Get(G, "solvable");
     THRESHOLD := 1000000;
     for d in Keys(bi) do
         subs := bi[d];
@@ -957,7 +949,11 @@ intrinsic MarkMaximalSubgroups(L::SubgroupLat)
             end for;
         end if;
     end for;
-    minp := Min(PrimeDivisors(G`order));
+    if G`order eq 1 then
+        minp := 1;
+    else
+        minp := Min(PrimeDivisors(G`order));
+    end if;
     if G`order ge THRESHOLD * minp then
         have_max := Get(G, "maximal_subgroups_known");
         have_norms := Get(G, "normal_subgroups_known");
@@ -1260,7 +1256,7 @@ intrinsic TrimSubgroups(L::SubgroupLat)
     // The only subgroups we don't want to throw away are the core-free ones with index up to 47,
     // since these will give transitive group representations
     keep := {@ H`i : H in L`subs | H`keep @};
-    if not X`abelian then
+    if not Get(X, "abelian") then
         for m -> V in Get(L, "by_index") do
             if m gt indbd and m le 47 then
                 ctr := 1;
@@ -1472,7 +1468,7 @@ intrinsic IncludeSpecialSubgroups(L::SubgroupLat : index_bound:=0)
 
     noaut := FindSubsWithoutAut(G);
     for tup in SpecialGrps do
-        if (index_bound gt 0 and Gord le index_bound * #tup[1] or index_bound lt 0 and Gord gt -index_bound * #tup[1]) then continue; end if;
+        if (index_bound gt 0 and Gord gt index_bound * #tup[1] or index_bound lt 0 and Gord le -index_bound * #tup[1]) then continue; end if;
         i := SubgroupIdentify(L, tup[1] : use_gassman:=false, characteristic:=tup[3], error_if_missing:=not noaut);
         if i ne -1 then
             L`subs[i]`keep := true;
@@ -3058,6 +3054,7 @@ intrinsic LMFDBSubgroup(H::SubgroupLatElt : normal_lattice:=false) -> LMFDBSubGr
     res`Grp := G;
     res`MagmaAmbient := G`MagmaGrp;
     res`MagmaSubGrp := H`subgroup;
+    res`order := H`order;
     res`standard_generators := H`standard_generators;
     res`label := G`label * "." * H`label;
     res`short_label := H`label;
@@ -3099,7 +3096,6 @@ intrinsic LMFDBSubgroup(H::SubgroupLatElt : normal_lattice:=false) -> LMFDBSubGr
             res`maximal := H`maximal;
         end if;
     end if;
-    AssignBasicAttributes(res);
     return res;
 end intrinsic;
 
@@ -3162,13 +3158,15 @@ intrinsic LoadSubgroupLattice(G::LMFDBGrp, lines::SeqEnum) -> SubgroupLat
 
     subs := [];
     for line in lines do
-        stored_label, gens, normal, cha, overs, unders, normal_closure := Explode(Split(line, "|"));
+        stored_label, gens, normal, cha, overs, unders, normal_closure, subcnt, cccnt := Explode(Split(line, "|"));
         gens := [LoadElt(Sprint(gen), G) : gen in LoadTextList(gens)];
         HH := sub<GG | gens>;
         H := SubgroupLatElement(res, HH : i:=1+#subs);
         H`stored_label := stored_label;
         H`normal := LoadBool(normal);
         H`characteristic := LoadBool(cha);
+        H`subgroup_count := StringToInteger(subcnt);
+        H`cc_count := StringToInteger(cccnt);
         if res`inclusions_known then
             H`overs := AssociativeArray();
             for j in LoadIntegerList(overs) do

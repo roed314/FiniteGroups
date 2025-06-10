@@ -5,10 +5,12 @@ from collections import defaultdict, Counter
 import os, sys, re, time, argparse
 CHAR_LABEL_RE = re.compile(r"(\d+\.[0-9a-z]+.\d+[a-z]+)\d*")
 
-def poset_data(group):
+def poset_data(group=None, sub_in=None):
     mobius = {}
     E = []
-    for rec in db.gps_subgroups.search({"ambient": group, "normal":True}, ["short_label", "mobius_quo", "count", "normal_contains"]):
+    if sub_in is None:
+        sub_in = db.gps_subgroups.search({"ambient": group, "normal":True}, ["short_label", "mobius_quo", "count", "normal_contains"])
+    for rec in sub_in:
         assert rec["count"] == 1 # The algorithm doesn't work when we only have groups up to automorphism
         if rec["mobius_quo"] is None:
             raise ValueError("Missing mobius")
@@ -17,13 +19,17 @@ def poset_data(group):
     poset = Poset([list(mobius), E], cover_relations=True)
     return mobius, poset
 
-def char_data(group):
+def char_data(group=None, cchars_in=None, qchars_in=None):
+    if cchars_in is None:
+        cchars_in = db.gps_char.search({"group": group}, ["label", "dim", "kernel", "faithful", "indicator"])
+    if qchars_in is None:
+        qchars_in = db.gps_qchar.search({"group": group}, ["label", "qdim", "schur_index", "faithful"])
     Cchars = defaultdict(Counter)
     Rchars = defaultdict(Counter)
     kernels = {}
     irrC_degree = -1
     irrR_degree = -1
-    for rec in db.gps_char.search({"group": group}, ["label", "dim", "kernel", "faithful", "indicator"]):
+    for rec in cchars_in:
         rdim = rec["dim"] if rec["indicator"] == 1 else 2*rec["dim"]
         K = rec["kernel"]
         Cchars[K][rec["dim"]] += 1
@@ -52,7 +58,7 @@ def char_data(group):
     irrQ_degree = -1
     Qchars_dim = defaultdict(Counter)
     irrQ_dim = -1
-    for rec in db.gps_qchar.search({"group": group}, ["label", "qdim", "schur_index", "faithful"]):
+    for rec in qchars_in:
         deg = rec["qdim"]
         dim = deg * rec["schur_index"]
         Qchars_deg[kernels[rec["label"]]][deg] += 1

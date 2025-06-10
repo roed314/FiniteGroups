@@ -27,7 +27,6 @@ for N in [4..64] do
         end if;
         try
             SetGrp(G);
-            AssignBasicAttributes(G);
         catch e
             // Bug in Magma's SmallGroupDecoding
             G := MakeSmallGroup(G`order, StringToInteger(Gdata[19]));

@@ -37,7 +37,7 @@ intrinsic maximal(H::LMFDBSubGrp) -> BoolElt
     G := H`Grp;
     GG := G`MagmaGrp;
     HH := H`MagmaSubGrp;
-    if G`solvable then
+    if Get(G, "solvable") then
         n := Get(H, "quotient_order");
         if n eq 1 then return false; end if;
         if Get(G, "pgroup") gt 1 then
@@ -133,7 +133,6 @@ intrinsic ComputeBools(H::LMFDBSubGrp)
     HH := H`MagmaSubGrp;
     fake_label := Sprintf("%o.a", Get(H, "subgroup_order"));
     HG := NewLMFDBGrp(HH, fake_label);
-    AssignBasicAttributes(HG); // port
     H`Agroup := Get(HG, "Agroup");
     H`Zgroup := Get(HG, "Zgroup");
     H`supersolvable := Get(HG, "supersolvable");
@@ -159,7 +158,7 @@ intrinsic ComputeBools(H::LMFDBSubGrp)
         elif H`quotient_nilpotent then
             H`quotient_supersolvable := true;
         else
-            CSords := [Order(sub<GG|HH>) : U in CS];
+            CSords := [Order(sub<GG|HH,U>) : U in CS];
             CSrats := [CSords[i] div CSords[i+1] : i in [1..#CSords-1]];
             H`quotient_supersolvable := &and[m eq 1 or IsPrime(m) : m in CSrats];
         end if;
@@ -305,8 +304,31 @@ intrinsic subgroup(H::LMFDBSubGrp) -> MonStgElt // Need to be together with all 
 {Determine label of subgroup}
     hsh := Get(H, "subgroup_hash");
     if Type(hsh) eq NoneType then hsh := 0; end if;
-    // This happens when FindSubsWithoutAut is true
-    return label_subgroup(H`Grp, H`MagmaSubGrp : hsh:=hsh, giveup:=true);
+    G := H`Grp;
+    sord := Get(H, "subgroup_order");
+    if assigned G`subgroup_label_info and not CanIdentifyGroup(sord) then
+        key := [sord, hsh];
+        if IsDefined(G`subgroup_label_info, key) then
+            opts := G`subgroup_label_info[key];
+            if #opts eq 1 then
+                return opts[1];
+            end if;
+            Hs := GroupsWithLabels(opts[1..#opts-1]);
+            HH := H`MagmaSubGrp;
+            for pair in Hs do
+                label, H := Explode(pair);
+                if IsIsomorphic(HH, H) then
+                    return label;
+                end if;
+            end for;
+            if opts[#opts] eq "\\N" then
+                return None();
+            end if;
+            return opts[#opts];
+        end if;
+        return None();
+    end if;
+    return label_subgroup(G, H`MagmaSubGrp : hsh:=hsh, giveup:=true);
 end intrinsic;
 
 intrinsic subgroup_order(H::LMFDBSubGrp) -> RngIntElt // Need to be subgroup attribute file
@@ -334,7 +356,7 @@ end intrinsic;
 
 intrinsic core_order(H::LMFDBSubGrp) -> RngIntElt
 {}
-    return Order(H`core);
+    return Order(Get(H, "core"));
 end intrinsic;
 
 intrinsic Quotient(H::LMFDBSubGrp) -> Grp
@@ -361,8 +383,31 @@ intrinsic quotient(H::LMFDBSubGrp) -> Any // Need to be together with all the la
     else
         hsh := Get(H, "quotient_hash");
         if Type(hsh) eq NoneType then hsh := 0; end if;
-        // This happens when FindSubsWithoutAut is true
-        return label_quotient(H`Grp, H`MagmaSubGrp : GN:=Get(H, "Quotient"), hsh:=hsh, giveup:=true);
+        G := H`Grp;
+        qord := Get(H, "quotient_order");
+        if assigned G`quotient_label_info and not CanIdentifyGroup(qord) then
+            key := [qord, hsh];
+            if IsDefined(G`quotient_label_info, key) then
+                opts := G`quotient_label_info[key];
+                if #opts eq 1 then
+                    return opts[1];
+                end if;
+                Qs := GroupsWithLabels(opts[1..#opts-1]);
+                GN := Get(H, "Quotient");
+                for pair in Qs do
+                    label, Q := Explode(pair);
+                    if IsIsomorphic(GN, Q) then
+                        return label;
+                    end if;
+                end for;
+                if opts[#opts] eq "\\N" then
+                    return None();
+                end if;
+                return opts[#opts];
+            end if;
+            return None();
+        end if;
+        return label_quotient(G, H`MagmaSubGrp : GN:=Get(H, "Quotient"), hsh:=hsh, giveup:=true);
     end if;
 end intrinsic;
 
@@ -792,16 +837,21 @@ end intrinsic;
 intrinsic SetStoredLabels(Lat::SubgroupLat)
 {}
     G := Lat`Grp;
+    //infile := "DATA/relabel/" * G`label;
     infile := "/scratch/grp/relabel/" * G`label; // For now, put files in scratch since it has more space
     lines := Split(Read(infile), "\n");
     GG := G`MagmaGrp;
     for line in lines[3..#lines] do
-        stored_label, gens, normal, cha, overs, unders, normal_closure := Explode(Split(line, "|"));
+        stored_label, gens, normal, cha, overs, unders, normal_closure, subcnt, cccnt := Explode(Split(line, "|"));
         gens := [LoadElt(Sprint(gen), G) : gen in LoadTextList(gens)];
         HH := sub<GG| gens>;
         i := SubgroupIdentify(Lat, HH : error_if_missing:=false);
         if i ne -1 then
-            Lat`subs[i]`stored_label := stored_label;
+            if assigned Lat`subs[i]`stored_label then
+                Lat`subs[i]`stored_label := Lat`subs[i]`stored_label * "," * stored_label;
+            else
+                Lat`subs[i]`stored_label := stored_label;
+            end if;
         end if;
     end for;
     for i in [1..#Lat] do
