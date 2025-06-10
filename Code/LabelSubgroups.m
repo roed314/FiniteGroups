@@ -321,7 +321,7 @@ intrinsic LabelNormalSubgroups(S::SubgroupLat)
                 by_anum := SortGClass(asubs, true);
             end if;
             for anum in [1..#by_anum] do
-                atie := (inc_known or #asubs eq 1) select IntegerToString(anum) else CremonaCode(anum : upper:=true);
+                atie := (inc_known or #asubs eq 1) select IntegerToString(anum) else CremonaCode(anum-1 : upper:=true);
                 if autjugacy then
                     sub := by_anum[anum][1];
                     sub`aut_label := [index, acode, anum];

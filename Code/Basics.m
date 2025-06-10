@@ -113,6 +113,8 @@ end intrinsic;
 
 intrinsic centralizer(H::LMFDBSubGrp) -> Grp
 {Centralizer of this subgroup}
+    GG := H`MagmaAmbient;
+    HH := H`MagmaSubGrp;
     try
         return Centralizer(GG,HH);
     catch e     //dealing with a strange Magma bug in 120.5
