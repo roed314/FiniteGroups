@@ -11,6 +11,36 @@
 #    fi;
 #end;
 
+PySplit := function(s, sep)
+    local ans, i, j, pos;
+    if Length(sep) = 0 then
+        ErrorNoReturn("Empty separator");
+    elif Length(sep) = 1 then
+        # Use GAP's built in SplitString
+        ans := SplitString(s, sep);
+        if s[Length(s)] = sep[1] then
+            Append(ans, [""]);
+        fi;
+        return ans;
+    fi;
+    i := 1;
+    j := 0;
+    ans := [];
+    while true do
+        pos := PositionSublist(s, sep, i-1);
+        if pos = fail then break; fi;
+        j := pos - 1;
+        Append(ans, [s{[i..j]}]);
+        i := j + Length(sep) + 1;
+    od;
+    Append(ans, [s{[i..Length(s)]}]);
+    return ans;
+end;
+
+IsSubstring := function(x, y)
+    return PositionSublist(x, y) <> fail;
+end;
+
 IV_merge_and_countv := function(ivA_A, ivB_B)
     local ivA, A, ivB, B, ivC, C, i, j, lA, lB;
     ivA := ivA_A[1];
@@ -256,6 +286,13 @@ DecodeMat := function(x, d, Rcode, b)
 end;
 
 StringToGroup := function(s)
+    # Differences from the Magma version:
+    # Doesn't support Simp, Perf or Chev
+    # Doesn't support older Mat notation for matrix groups
+    # Doesn't support iterative descriptions
+    # Doesn't support pc (which uses CompactDescription), only PC (SmallGroupEncoding)
+    # Doesn't include most classical matrix groups (e.g. SU, PGL), which must be translated to explicit matrix or permutation groups
+    # Doesn't support the sporadic group codes, which must be translated to explicit matrix or permutation groups
     local i, dR, L, n, N, dbc, code, cmd, pieces, q, GAP_translation;
     NormalizeWhitespace(s);
     i := PositionSublist(s, "MAT");
@@ -277,28 +314,28 @@ StringToGroup := function(s)
         code := Int(s{[i+2..Length(s)]});
         return PcGroupCode(code, N);
     fi;
-    if s[Length(s)] = ')' then
-        pieces := SplitString(s{[1..Length(s)-1]}, "(");
-        if Length(pieces) = 2 then
-            cmd := pieces[1];
+    #if s[Length(s)] = ')' then
+    #    pieces := SplitString(s{[1..Length(s)-1]}, "(");
+    #    if Length(pieces) = 2 then
+    #        cmd := pieces[1];
             # SOPlus, SOMinus -> SO(1, n, q), SO(-1, n, q)
             # OmegaPlus, OmegaMinus -> Omega(1, n, q), Omega(-1, n, q)
             # GOPlus, GOMinus, PGOPlus, PGOMinus, PSOPlus, PSOMinus, POmegaPlus, POmegaMinus
             # Missing: CSp, CSO, CSOPlus, CSOMinus, CSU, CO, COPlus, COMinus, CU
             # Missing: Spin, SpinPlus, SpinMinus, PSigmaSp, PGammaU, AGL, ASL, ASp, AGammaL, ASigmaL, ASigmaSp
             # OK, but bumping since there are different conventions around which form to use: "Sp", "SO", "SU", "GO", "GU", "PGL", "PSL", "PGU", "PSU", "PSp", "PGO", "PSO", "POmega", "PGammaL", "PSigmaL"
-            if cmd in ["GL", "SL"] then
-                pieces := SplitString(pieces[2], ",");
-                n := Int(pieces[1]);
-                q := Int(pieces[2]);
-                if cmd = "GL" then
-                    return GL(n,q);
-                else
-                    return SL(n,q);
-                fi;
-            fi;
-        fi;
-    fi;
+    #        if cmd in ["GL", "SL"] then
+    #            pieces := SplitString(pieces[2], ",");
+    #            n := Int(pieces[1]);
+    #            q := Int(pieces[2]);
+    #            if cmd = "GL" then
+    #                return GL(n,q);
+    #            else
+    #                return SL(n,q);
+    #            fi;
+    #        fi;
+    #    fi;
+    #fi;
     if '.' in s then
         pieces := SplitString(s, ".");
         return SmallGroup(Int(pieces[1]), Int(pieces[2]));
@@ -307,9 +344,52 @@ StringToGroup := function(s)
         pieces := SplitString(s, "T");
         return TransitiveGroup(Int(pieces[1]), Int(pieces[2])); # fails in degree 32
     fi;
-    #GAP_translation := LoadTranslation(s);
-    #if GAP_translation <> fail then
-    #    return StringToGroup(GAP_translation);
-    #fi;
-    # TODO: THIS FUNCTION HAS NOT BEEN FINISHED
 end;
+
+StringToGroupHom := function(s)
+    local pieces, G, f, HH, mapdir, H, dRL, dR, L, dbRcode, d, b, Rcode, x, n;
+    if IsSubstring(s, "--") then
+        pieces := PySplit(s, "--");
+        if Length(pieces) = 2 then
+            Assert(0, pieces[2] = Concatenation(">", pieces[1]));
+            return [IdentityMapping(StringToGroup(pieces[1])), 0];
+        elif Length(pieces) <> 3 then
+            ErrorNoReturn(Concatenation("Invalid hom string with ", String(Length(pieces)), " -- segments"));
+        fi;
+        G := pieces[1]; f := pieces[2]; HH := pieces[3];
+        Assert(0, Length(HH) > 1 and HH[1] = '>');
+        if HH[2] = '>' then
+            mapdir := -1;
+            HH := HH{[3..Length(HH)]};
+        else
+            mapdir := 1;
+            HH := HH{[2..Length(HH)]};
+        fi;
+        G := StringToGroup(G);
+        H := StringToGroup(HH);
+        f := SplitString(f, ",");
+        if IsSubstring(HH, "MAT") then
+            dRL := PySplit(HH, "MAT");
+            dR := dRL[1]; L := dRL[2];
+            dbRcode := dbcFromdR(dR);
+            d := dbRcode[1]; b := dbRcode[2]; Rcode := dbRcode[3];
+            f := List(f, x->DecodeMat(Int(x), d, Rcode, b));
+        elif IsSubstring(HH, "PC") then
+            f := List(f, x->DecodePcElt(x, H));
+        elif IsSubstring(HH, "Perm") then
+            n := Int(PySplit(HH, "Perm")[1]);
+            f := List(f, x->DecodePerm(x, n));
+        elif 'T' in HH then
+            n := Int(SplitString(HH, "T")[1]);
+            f := List(f, x->DecodePerm(x, n));
+        else
+            ErrorNoReturn("Unsupported format string for H");
+        fi;
+        Assert(0, Length(GeneratorsOfGroup(G)) = Length(f));
+        f := GroupHomomorphismByImages(G, H, f); # May eventually want to switch to NC version
+        return [f, mapdir];
+    fi;
+    G := StringToGroup(s);
+    return [IdentityMapping(G), 0];
+end;
+

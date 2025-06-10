@@ -229,6 +229,24 @@ for pair in data["b"] do
     end if;
 end for;
 
+function GetBasicAttributesGrp()
+  // You shouldn't add any attribute here that depends on the specific choice of generators,
+  // since this is called before RePresent.
+  return [
+   ["Order","order"],
+   ["Exponent","exponent"],
+   ["IsAbelian" , "abelian"],
+   ["IsCyclic" , "cyclic"],
+   ["IsSolvable" , "solvable"],
+   ["IsNilpotent" , "nilpotent"],
+   ["IsSimple" , "simple"],
+   ["IsPerfect" , "perfect"],
+   ["NilpotencyClass" , "nilpotency_class"],
+   ["Ngens" , "ngens"],
+   ["DerivedLength" , "derived_length"]
+    ];
+end function;
+
 // Set necessary attributes on G
 Grp := AssociativeArray();
 basicdata := data["b"][1][2];

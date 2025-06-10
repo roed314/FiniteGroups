@@ -1,4 +1,4 @@
-# sage -gap -b -c "label:={label};" Aut.g
+# parallel -j 88 -a DATA/gapaut1.todo --timeout 3600 --results DATA/autresults 'gap -b -c "label:=\"{}\";" Aut.g'
 
 # SplitString (bad style), JoinStringsWithSeparator, Concatenation
 # PositionSublist("abcdefg","cdf") = fail
@@ -11,37 +11,40 @@
 # PermListList(B, A) finds a permutation mapping A to B.
 # Cartesian gives cartesian product
 
-Read(Concatenation("DATA/gap_descriptions/", label));
-# Defines G (the group to call Aut on), gens, phi and mapdir (0 for no map, 1 for G->Disp, -1 for Disp->G)
-
-if mapdir = 1 then
-    H := Image(phi, G);
-elif mapdir = -1 then
-    H := Domain(phi);
+Read("IO.g");
+s := ReadAll(InputTextFile(Concatenation("DATA/gap_descriptions/", label)));
+phicov := StringToGroupHom(s);
+phi := phicov[1]; mapdir := phicov[2];
+# mapdir: 0 for no map, 1 for G->Disp, -1 for Disp->G
+# Disp = H is how elements should be displayed, G is the actual group that we compute with.
+if mapdir = -1 then
+    H := Source(phi);
+    G := Range(phi);
 else
-    H := G;
+    H := Range(phi);
+    G := Source(phi);
 fi;
+gens := GeneratorsOfGroup(G);
+
 if IsPermGroup(H) then
     Hdeg := Size(MovedPoints(H));
+else
+    Hdeg := 0;
 fi;
 
 
-IsSubstring := function(x, y)
-    return PositionSublist(x, y) <> fail;
-end;
-
-Encode := function(g)
+EncodeB := function(g)
     if mapdir = 1 then
         g := Image(phi, g);
     elif mapdir = -1 then
         g := PreImagesRepresentative(phi, g);
     fi;
     if IsPerm(g) then
-        return Sprint(EncodePerm(g, Hdeg));
+        return String(EncodePerm(g, Hdeg));
     elif IsPcGroup(H) then
-        return Sprint(EncodePcElt(g, H));
+        return String(EncodePcElt(g, H));
     elif IsMatrixGroup(H) then
-        return Sprint(EncodeMat(g, H));
+        return String(EncodeMat(g, H));
     fi;
 end;
 
@@ -49,11 +52,11 @@ A := AutomorphismGroup(G);
 Agens := GeneratorsOfGroup(A);
 
 EncodeA := function(agen)
-    return JoinStringsWithSeparator(List(gens, g -> Encode(g^agen)));
+    return JoinStringsWithSeparator(List(gens, g -> EncodeB(g^agen)));
 end ;
 
-out := "{{";
-Append(out, JoinStringsWithSeparator(List(gens, Encode)));
-Append(out, "},{");
-Append(out, JoinStringsWithSeparator(List(Agens, EncodeA), "},{"));
-Append(out, "}}");
+out := Concatenation([String(Size(A)), "|{{", JoinStringsWithSeparator(List(gens, EncodeB)), "},{", JoinStringsWithSeparator(List(Agens, EncodeA), "},{"), "}}\n"]);
+
+WriteAll(OutputTextFile(Concatenation("DATA/gap_autgroup/", label), false), out);
+QuitGap(0);
+

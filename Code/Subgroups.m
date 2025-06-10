@@ -928,7 +928,7 @@ intrinsic MarkMaximalSubgroups(L::SubgroupLat)
     // IsMaximal is fast when the index is small, while subgroup identification is harder there (easy hash is hard, as is the current approach for Gassman classes)
     // So we start by marking all the subgroups of small index using IsMaximal
     bi := Get(L, "by_index");
-    solv := G`solvable;
+    solv := Get(G, "solvable");
     THRESHOLD := 1000000;
     for d in Keys(bi) do
         subs := bi[d];
@@ -1256,7 +1256,7 @@ intrinsic TrimSubgroups(L::SubgroupLat)
     // The only subgroups we don't want to throw away are the core-free ones with index up to 47,
     // since these will give transitive group representations
     keep := {@ H`i : H in L`subs | H`keep @};
-    if not X`abelian then
+    if not Get(X, "abelian") then
         for m -> V in Get(L, "by_index") do
             if m gt indbd and m le 47 then
                 ctr := 1;
@@ -3054,6 +3054,7 @@ intrinsic LMFDBSubgroup(H::SubgroupLatElt : normal_lattice:=false) -> LMFDBSubGr
     res`Grp := G;
     res`MagmaAmbient := G`MagmaGrp;
     res`MagmaSubGrp := H`subgroup;
+    res`order := H`order;
     res`standard_generators := H`standard_generators;
     res`label := G`label * "." * H`label;
     res`short_label := H`label;
@@ -3095,7 +3096,6 @@ intrinsic LMFDBSubgroup(H::SubgroupLatElt : normal_lattice:=false) -> LMFDBSubGr
             res`maximal := H`maximal;
         end if;
     end if;
-    AssignBasicAttributes(res);
     return res;
 end intrinsic;
 

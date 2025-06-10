@@ -76,14 +76,12 @@ def revise_subgroup_labels(label, data):
                 Ds.sort(key=lambda D: label_to_key(D["stored_label"]))
             else:
                 Ds.sort(key=lambda D: label_to_key(D["label"]))
-            ctr = 0
             if oe:
                 pattern = "{}.{}"
             else:
                 pattern = "{}._.{}"
-            for D in Ds:
+            for ctr, D in enumerate(Ds):
                 D["short_label"] = pattern.format(ind, cremona_letter_code(ctr).upper())
-                #D["label"] = f"{D['ambient']}.{D['short_label']}"
         else:
             for D in Ds:
                 D["short_label"] = long_to_short(D["label"])
@@ -139,13 +137,16 @@ def label_to_key(label):
     return ans
 
 def create_upload_files(overwrite=False):
+    # TODO: Add new data computed for automorphism groups
+    # TODO: Compute data for automorphism groups
     # TODO: Update reload() to change order of columns
     # TODO (gps_subgroups): delete columns diagram_x, diagram_aut_x, diagram_norm_x; add counter
     # TODO: Change _sort for gps_subgroup to ambient_order, ambient_counter, counter
     # TODO: Update header files to match desired layout
     # TODO: Port attributes in fill back to Magma when possible
     # TODO: Check backslash repetition in tex
-    # TODO: Standardize subgroup_tex and quotient_tex in virtual cases (e.g. 2187.5299 not in database, but appears several times)
+    # TODO: Standardize subgroup_tex and quotient_tex in virtual cases (e.g. 2187.5299 not in database, but appears several times); insert into this function
+    # TODO: Missing pres (e.g. 1944.2547)
     badK = set()
     # gps_subgroups (text): aut_label, centralizer, core, label, normal_closure, normalizer, short_label
     # gps_subgroups (text[]): complements, contained_in, contains, normal_contained_in, normal_contains
@@ -186,7 +187,6 @@ def create_upload_files(overwrite=False):
     for rec in db.gps_groups.search({}, ["label", "order", "counter", "hash"]):
         Jlookup[rec["order"], rec["counter"]] = rec["label"]
         hash_lookup[rec["label"]] = rec["hash"]
-    Jlookup = {(rec["order"], rec["counter"]): rec["label"] for rec in db.gps_groups.search({}, ["label", "order", "counter"])}
     print("Initial setup complete")
     if not cur_coll.exists():
         cur_coll.mkdir()
@@ -346,6 +346,7 @@ def create_upload_files(overwrite=False):
                         lab = line["stored_label"]
                         if "," in lab:
                             # The new subgroup matched multiple old ones; this is bad
+                            # TODO: recompute these cases, put into replace_collated, then raise error her
                             pass
                             
                         assert lab in data[tbl]
@@ -584,6 +585,7 @@ def create_upload_files(overwrite=False):
     return badK
 
 """
+TODO
 Broken groups recomputed: /scratch/grp/pcredo.output
 - needs to be collated - done, in /scratch/grp/replace_collated (along with 43 of the bad 47)
 Subgroup relabel: /scratch/grp/bigfix/sub_relabel.txt

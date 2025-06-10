@@ -20,7 +20,6 @@ else
     psi := IdentityHomomorphism(G0);
 end if;
 G := NewLMFDBGrp(G0, label);
-AssignBasicAttributes(G);
 if not Get(G, "solvable") then
     System("rm " * infile);
     exit;

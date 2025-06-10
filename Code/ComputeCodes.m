@@ -91,7 +91,7 @@ G := MakeBigGroup(desc, label : preload:=false);
 // We don't use the infrastructure below for finding transitive permutation representations,
 // since we just want to find as many as we can in the time allotted
 if codes eq "x" then
-    if not G`abelian then
+    if not Get(G, "abelian") then
         WriteTransitivePermutationRepresentations(G`MagmaGrp, outfile, label);
     end if;
     quit;

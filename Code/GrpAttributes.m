@@ -3,7 +3,7 @@
 intrinsic almost_simple(G::LMFDBGrp) -> Any
     {}
     // In order to be almost simple, we need a simple nonabelian normal subgroup with trivial centralizer
-    if G`abelian or G`solvable then
+    if Get(G, "abelian") or Get(G, "solvable") then
         return false;
     end if;
 
@@ -516,8 +516,8 @@ end intrinsic;
 intrinsic irrQ_degree(G::LMFDBGrp) -> Any
 {}
     n := G`order;
-    if G`abelian then
-        if G`cyclic then
+    if Get(G, "abelian") then
+        if Get(G, "cyclic") then
             return EulerPhi(n);
         else
             return -1;
@@ -538,7 +538,7 @@ end intrinsic;
 // The following attributes are set externally for now (using Preload)
 intrinsic linC_degree(G::LMFDBGrp) -> Any
 {}
-    if G`abelian then
+    if Get(G, "abelian") then
         return #Get(G, "smith_abelian_invariants");
     end if;
     return None();
@@ -728,7 +728,7 @@ end intrinsic;
 intrinsic primary_abelian_invariants(G::LMFDBGrp) -> Any
   {Compute primary abelian invariants of maximal abelian quotient}
   GG := G`MagmaGrp;
-  if G`abelian then
+  if Get(G, "abelian") then
       A := GG;
   else
       C := Get(G, "MagmaCommutator");
@@ -874,7 +874,7 @@ end intrinsic;
 intrinsic MagmaFrattini(G::LMFDBGrp) -> Any
 { Frattini Subgroup}
     GG := G`MagmaGrp;
-    if Type(GG) eq GrpMat and not G`solvable then
+    if Type(GG) eq GrpMat and not Get(G, "solvable") then
         // Magma's built in function fails
         return Core(GG, &meet[H`subgroup : H in MaximalSubgroups(GG)]);
     end if;
@@ -922,7 +922,7 @@ intrinsic order_stats(G::LMFDBGrp) -> Any
     A := AssociativeArray();
     if G`order eq 1 then
         return [[1, 1]];
-    elif G`abelian then
+    elif Get(G, "abelian") then
         primary := AssociativeArray();
         for q in Get(G, "primary_abelian_invariants") do
             _, p, e := IsPrimePower(q);
@@ -964,7 +964,7 @@ end intrinsic;
 
 intrinsic cc_stats(G::LMFDBGrp) -> Any
 {returns the list of triples [o, s, m] where m is the number of conjugacy classes of order o and size s}
-    if G`abelian then
+    if Get(G, "abelian") then
         return [[pair[1], 1, pair[2]] : pair in Get(G, "order_stats")];
     elif IsCpxCq(G`order) then
         q, p := Explode(PrimeDivisors(G`order));
@@ -984,7 +984,7 @@ end intrinsic;
 
 intrinsic div_stats(G::LMFDBGrp) -> Any
 {returns the list of quadruples [o, s, k, m] where m is the number of divisions of order o containing k conjugacy classes of size s}
-    if G`abelian then
+    if Get(G, "abelian") then
         return [[pair[1], 1, EulerPhi(pair[1]), pair[2] div EulerPhi(pair[1])] : pair in Get(G, "order_stats")];
     elif IsCpxCq(G`order) then
         return [trip cat [1] : trip in Get(G, "cc_stats")]; // a single division of each order
@@ -1085,9 +1085,9 @@ end intrinsic;
 intrinsic direct_factorization(G::LMFDBGrp) -> Any
 {}
   GG := G`MagmaGrp;
-  if Get(G, "simple") or (G`cyclic and IsPrimePower(G`order)) then
+  if Get(G, "simple") or (Get(G, "cyclic") and IsPrimePower(G`order)) then
       return [];
-  elif G`abelian then
+  elif Get(G, "abelian") then
       return CollectDirectFactors([CyclicGroup(m) : m in PrimaryAbelianInvariants(G`MagmaGrp)]);
   end if;
   if not Get(G, "normal_subgroups_known") or FindSubsWithoutAut(G) then return None(); end if;
@@ -1444,7 +1444,7 @@ end intrinsic;
 
 intrinsic ratrep_stats(G::LMFDBGrp) -> Any
 {Return the sequence of pairs <d, m>, where m is the number of rational representations of G of dimension d that are irreducible over Q}
-    if G`abelian then
+    if Get(G, "abelian") then
         A := AssociativeArray();
         for d in Get(G, "div_stats") do
             n := EulerPhi(d[1]);
@@ -1806,9 +1806,9 @@ end intrinsic;
 intrinsic central_product(G::LMFDBGrp) -> BoolElt
 {Checks if the group G is a central product.}
     GG := G`MagmaGrp;
-    if G`abelian then
+    if Get(G, "abelian") then
         /* G abelian will not be a central product <=> it is cyclic of prime power order (including trivial group).*/
-        return not (G`cyclic and #Get(G, "factors_of_order") in {0,1});
+        return not (Get(G, "cyclic") and #Get(G, "factors_of_order") in {0,1});
     else
         /* G is not abelian. We run through the proper nontrivial normal subgroups N and consider whether
 the centralizer C = C_G(N) together with N form a central product decomposition for G. We skip over N that are
@@ -2076,6 +2076,10 @@ intrinsic easy_rank(G::LMFDBGrp) -> Any
 {Computes the rank in cases where doing so does not require the full subgroup lattice; -1 if too hard}
     if Get(G, "order") eq 1 then return 0; end if;
     if Get(G, "abelian") then return #Get(G, "smith_abelian_invariants"); end if;
+    if Ngens(G`MagmaGrp) eq 2 then
+        // Not cyclic since not abelian
+        return 2;
+    end if;
     if Get(G, "pgroup") ne 0 then
         _, p, m := IsPrimePower(Get(G, "order"));
         F := #Get(G, "MagmaFrattini");
@@ -2095,7 +2099,8 @@ intrinsic rank(G::LMFDBGrp) -> Any
     if r ne -1 then
         return r;
     end if;
-    if not Get(G, "subgroup_inclusions_known") then return None(); end if;
+    return #SmallestGeneratingSet(G`MagmaGrp);
+    /*if not Get(G, "subgroup_inclusions_known") then return None(); end if;
     if Get(G, "subgroup_index_bound") ne 0 then return None(); end if;
     Subs := Get(G, "Subgroups");
     if &or[Type(Get(H, "mobius_sub")) eq NoneType : H in Subs] then
@@ -2108,12 +2113,14 @@ intrinsic rank(G::LMFDBGrp) -> Any
             return r;
         end if;
     end for;
-    error "rank calculation overflow";
+    error "rank calculation overflow";*/
 end intrinsic;
 
 intrinsic eulerian_function(G::LMFDBGrp) -> Any
 {Calculates the Eulerian function of G for n = rank(G)}
     if Get(G, "order") eq 1 then return 1; end if;
+    // TODO: FIX THIS
+    return None();
     if not Get(G, "subgroup_inclusions_known") then return None(); end if;
     r := Get(G,"rank"); // sets EulerianTimesAut unless easy_rank
     if Type(r) eq NoneType then return None(); end if;
@@ -2146,7 +2153,7 @@ intrinsic MinPermDeg(G::LMFDBGrp) -> RngSerPowElt
         f := &+[N`mobius_quo * N`conjugacy_class_count * &*[(1 - x^(m div Get(H, "subgroup_order")))^(-H`conjugacy_class_count) : H in S | IsConjugateSubgroup(Ambient, inj(H`core), inj(N`MagmaSubGrp))] : N in NormalSubgroups(G)];*/
     else
         S := Get(G, "Subgroups");
-        f := &+[N`mobius_quo * &*[(1 - x^(m div Get(H, "subgroup_order")))^(-1) : H in S | N`MagmaSubGrp subset H`core] : N in N0];
+        f := &+[N`mobius_quo * &*[(1 - x^(m div Get(H, "subgroup_order")))^(-1) : H in S | N`MagmaSubGrp subset Get(H, "core")] : N in N0];
     end if;
     return f;
 end intrinsic;
@@ -2235,10 +2242,9 @@ intrinsic MinPermDegSplit(G::LMFDBGrp, K::LMFDBSubGrp) -> RngSerPowElt, RngSerPo
     print [N`mobius_quo : N in N1];
     N2 := [N : N in N0 | not K`MagmaSubGrp subset N`MagmaSubGrp];
     print [N`mobius_quo : N in N2];
-    f1 := &+[N`mobius_quo * &*[(1 - x^(m div Get(H, "subgroup_order")))^(-1) : H in S | N`MagmaSubGrp subset H`core] : N in N1];
-    f2 := &+[N`mobius_quo * &*[(1 - x^(m div Get(H, "subgroup_order")))^(-1) : H in S | N`MagmaSubGrp subset H`core] : N in N2];
+    f1 := &+[N`mobius_quo * &*[(1 - x^(m div Get(H, "subgroup_order")))^(-1) : H in S | N`MagmaSubGrp subset Get(H, "core")] : N in N1];
+    f2 := &+[N`mobius_quo * &*[(1 - x^(m div Get(H, "subgroup_order")))^(-1) : H in S | N`MagmaSubGrp subset Get(H, "core")] : N in N2];
     GK := NewLMFDBGrp(G`MagmaGrp / K`MagmaSubGrp, "G/K");
-    AssignBasicAttributes(GK);
     f3 := MinPermDeg(GK);
     return f1, f2, f3;
 end intrinsic;

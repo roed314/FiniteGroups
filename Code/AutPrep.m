@@ -15,7 +15,6 @@ procedure PrepSmallGroup(N, i)
             F := Open("RePresentations/log", "a");
             Write(F, Sprintf("%o.%o\n", N, i));
             Flush(F);
-            AssignBasicAttributes(G);
             t0 := Cputime();
             RePresent(G : reset_attrs:=false);
             t := Cputime() - t0;

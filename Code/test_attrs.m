@@ -1,6 +1,5 @@
 /*
 G := NewLMFDBGrp(SmallGroup(24,3), "24.3");
-AssignBasicAttributes(G);
 */
 G := MakeSmallGroup(24,3);
 // NOTE: DefaultAttributes does not currently include all attributes: there is a blacklist

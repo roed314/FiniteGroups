@@ -330,6 +330,17 @@ intrinsic outer_gens3(G::LMFDBGrp) -> SeqEnum
     return [[SaveElt(phi(g), G) : g in gens] : phi in ogens];
 end intrinsic;
 
+intrinsic OuterGenerators(G::LMFDBGrp) -> SeqEnum
+{Various computations use generators of the outer automorphism group, with runtime proportional to the number of generators.  So we want to use smaller sets of generators of possible, but don't want to spend a lot of time computing}
+    if assigned G`OuterGenerators2 then
+        return G`OuterGenerators2;
+    elif assigned G`OuterGenerators1 then
+        return G`OuterGenerators1;
+    else
+        return Get(G, "OuterGenerators0");
+    end if;
+end intrinsic;
+
 intrinsic outer_permdeg(G::LMFDBGrp) -> RngIntElt
 {}
     return Degree(Get(G, "MagmaOuterGroup"));
@@ -568,7 +579,7 @@ end intrinsic;
 intrinsic MagmaOuterGroup(G::LMFDBGrp) -> Grp
 {A permutation group isomorphic to the outer automorphism group.  Sets MagmaOuterProjection.}
     P := MagmaAutGroupPerm(G);
-    if G`abelian then
+    if Get(G, "abelian") then
         G`MagmaOuterProjection := IdentityHomomorphism(P);
         return P;
     end if;
@@ -607,7 +618,7 @@ end intrinsic;
 
 intrinsic outer_group(G::LMFDBGrp) -> Any
 {returns OuterAutomorphism Group}
-    if G`abelian then
+    if Get(G, "abelian") then
         return Get(G, "aut_group");
     end if;
     if not PossiblyLabelable(Get(G, "outer_order")) then
@@ -629,18 +640,24 @@ end intrinsic;
 
 intrinsic OutLabelIso(G::LMFDBGrp) -> Map
 {}
-    if G`abelian then
+    if Get(G, "abelian") then
         return Get(G, "AutLabelIso");
     end if;
-    s := Get(G, "outer_group");
-    if Type(s) eq NoneType then
+    outer_label := Get(G, "outer_group");
+    if Type(outer_label) eq NoneType then
         G`OutLabelIso := None();
     elif not assigned G`OutLabelIso then
-        out := Get(G, "MagmaOuterGroup");
-        O := GroupsWithLabels([s])[1][2];
-        t0 := ReportStart(G, "LabelIsoOutGroup");
-        _, G`OutLabelIso := IsIsomorphic(O, out);
-        ReportEnd(G, "LabelIsoOutGroup", t0);
+        // It's possible that we've identified the group but it is not in the LMFDB
+        desc_exists := OpenTest("DATA/descriptions/" * outer_label, "r");
+        if desc_exists then
+            out := Get(G, "MagmaOuterGroup");
+            O := GroupsWithLabels([outer_label])[1][2];
+            t0 := ReportStart(G, "LabelIsoOutGroup");
+            _, G`OutLabelIso := IsIsomorphic(O, out);
+            ReportEnd(G, "LabelIsoOutGroup", t0);
+        else
+            G`OutLabelIso := None();
+        end if;
     end if;
     return G`OutLabelIso;
 end intrinsic;

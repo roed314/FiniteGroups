@@ -37,7 +37,7 @@ intrinsic maximal(H::LMFDBSubGrp) -> BoolElt
     G := H`Grp;
     GG := G`MagmaGrp;
     HH := H`MagmaSubGrp;
-    if G`solvable then
+    if Get(G, "solvable") then
         n := Get(H, "quotient_order");
         if n eq 1 then return false; end if;
         if Get(G, "pgroup") gt 1 then
@@ -133,7 +133,6 @@ intrinsic ComputeBools(H::LMFDBSubGrp)
     HH := H`MagmaSubGrp;
     fake_label := Sprintf("%o.a", Get(H, "subgroup_order"));
     HG := NewLMFDBGrp(HH, fake_label);
-    AssignBasicAttributes(HG); // port
     H`Agroup := Get(HG, "Agroup");
     H`Zgroup := Get(HG, "Zgroup");
     H`supersolvable := Get(HG, "supersolvable");
@@ -357,7 +356,7 @@ end intrinsic;
 
 intrinsic core_order(H::LMFDBSubGrp) -> RngIntElt
 {}
-    return Order(H`core);
+    return Order(Get(H, "core"));
 end intrinsic;
 
 intrinsic Quotient(H::LMFDBSubGrp) -> Grp
