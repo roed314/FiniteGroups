@@ -29,20 +29,14 @@ def tmpheaders():
             codes[code] = attrs.split("|")
     return codes
 
-# TODO: Update the headers to account for the new columns
 def headers():
-    # Return a dictionary giving the the columns and types in each header, indexed by the header name
-    base = Path("/home/roed/FiniteGroups/Code")
     headers = {}
-    for head in base.iterdir():
-        if head.name.endswith(".header") and head.name.startswith("LMFDB"):
-            name = head.name[5:-7]
-            with open(head) as F:
-                cols, types = F.read().strip().split("\n")
-            cols = cols.split("|")
-            types = types.split("|")
-            assert len(cols) == len(types)
-            headers[name] = (cols, types)
+    # Return a dictionary giving the the columns and types in each header, indexed by the header name
+    for name, tbl in [("Grp", "gps_groups"), ("SubGrp", "gps_subgroups"), ("GrpConjCls", "gps_conj_classes"), ("GrpChtrCC", "gps_char"), ("GrpChtrQQ", "gps_qchar")]:
+        tbl = db[tbl]
+        cols = tbl.search_cols
+        types = [tbl.col_type[col] for col in cols]
+        headers[name] = (cols, types)
     return headers
 
 breaker = re.compile(r"([a-z]+)([A-Z]+)")
@@ -138,15 +132,11 @@ def label_to_key(label):
 
 def create_upload_files(overwrite=False):
     # TODO: Add new data computed for automorphism groups
-    # TODO: Compute data for automorphism groups
-    # TODO: Update reload() to change order of columns
-    # TODO (gps_subgroups): delete columns diagram_x, diagram_aut_x, diagram_norm_x; add counter
-    # TODO: Change _sort for gps_subgroup to ambient_order, ambient_counter, counter
-    # TODO: Update header files to match desired layout
-    # TODO: Port attributes in fill back to Magma when possible
-    # TODO: Check backslash repetition in tex
+    # TODO: Review and test psycodict PR #36 (reload resorting columns)
     # TODO: Standardize subgroup_tex and quotient_tex in virtual cases (e.g. 2187.5299 not in database, but appears several times); insert into this function
-    # TODO: Missing pres (e.g. 1944.2547)
+    # LATER TODO: Change _sort for gps_subgroup to ambient_order, ambient_counter, counter
+    # LATER TODO: Port attributes in fill back to Magma when possible
+    # LATER TODO: Compute more data for automorphism groups
     badK = set()
     # gps_subgroups (text): aut_label, centralizer, core, label, normal_closure, normalizer, short_label
     # gps_subgroups (text[]): complements, contained_in, contains, normal_contained_in, normal_contains
@@ -168,8 +158,8 @@ def create_upload_files(overwrite=False):
 
     tmps = tmpheaders()
     H = headers()
-    tbl_codes = {"Grp": "abcfghijlmnopqrstuvwz", # TODO: Update with all fix codes
-                 "SubGrp": "BDFIKLNPRSUVW",
+    tbl_codes = {"Grp": "abcdefghijklmnopqrstuvwzGM012345678@#%",
+                 "SubGrp": "ABDFIKLNPRSUVW",
                  "GrpConjCls": "JO",
                  "GrpChtrCC": "C",
                  "GrpChtrQQ": "Q"}
@@ -282,6 +272,20 @@ def create_upload_files(overwrite=False):
                         _, _, short_label, ch = line.strip().split("|")
                         _ = Fout.write(f"K{label}.{short_label}|{ch}\n")
         print("Collating char_check done!            ")
+        with open(base / "NewRankData.txt") as F:
+            for j, line in enumerate(F):
+                if j%100000 == 0:
+                    print(f"Collating ranks {j}...", end="\r")
+                label = line[1:].split("|")[0]
+                with open(fix_coll / label, "a") as Fout:
+                    _ = Fout.write(line)
+        print("Collating ranks done!                 ")
+        with open(base / "FixPres.txt") as F:
+            for line in F:
+                label = line[1:].split("|")[0]
+                with open(fix_coll / label, "a") as Fout:
+                    _ = Fout.write(line)
+        print("Collating fixpres done!               ")
 
     #if not ren_coll.exists():
     #    ren_coll.mkdir()
@@ -377,6 +381,9 @@ def create_upload_files(overwrite=False):
                         elif code == "K" and lab not in data[tbl]:
                             badK.add(".".join(lab.split(".")[:2]))
                             continue
+                        elif code == "i" and line["eulerian_function"] == r"\N":
+                            # We recomputed rank but not Eulerian function; don't want to wipe out old data
+                            del line["eulerian_function"]
                     data[tbl][lab].update(line)
         if reset_labels and "SubGrp" in data:
             # Need label to be unique since we're reseting keys below
@@ -418,17 +425,24 @@ def create_upload_files(overwrite=False):
         N, c = ord_counter(label)
         n = ZZ(N)
         if "GrpConjCls" in data:
-            L = sorted(data["GrpConjCls"].values(), key=lambda rec: int(rec["counter"]))
-            if "conj_centralizers" in G:
-                Z = G["conj_centralizers"][1:-1].split(",")
-                assert len(L) == len(Z)
+            # Remove conjugacy class data when more than the limit for storing rational character tables
+            if ("GrpChtrCC" not in data and "GrpChtrQQ" not in data and
+                ("number_divisions" not in G or G["number_divisions"] >= 512) and
+                ("number_conjugacy_classes" not in G or G["number_conjugacy_classes"] >= 512)):
+                # No characters stored, so we delete conjugacy classes to save space
+                del data["GrpConjCls"]
             else:
-                Z = [r"\N"] * len(L)
-            for D, z in zip(L, Z):
-                D["group_order"], D["group_counter"] = N, c
-                if z != r"\N":
-                    # We may have set this already using cent_collated, so don't want to overwrite with null
-                    D["centralizer"] = z
+                L = sorted(data["GrpConjCls"].values(), key=lambda rec: int(rec["counter"]))
+                if "conj_centralizers" in G:
+                    Z = G["conj_centralizers"][1:-1].split(",")
+                    assert len(L) == len(Z)
+                else:
+                    Z = [r"\N"] * len(L)
+                for D, z in zip(L, Z):
+                    D["group_order"], D["group_counter"] = N, c
+                    if z != r"\N":
+                        # We may have set this already using cent_collated, so don't want to overwrite with null
+                        D["centralizer"] = z
         if "GrpChtrCC" in data:
             L = sorted(data["GrpChtrCC"].values(), key=lambda rec: int(rec["counter"]))
             if "charc_centers" in G:
@@ -527,7 +541,7 @@ def create_upload_files(overwrite=False):
         for oname, (final_cols, final_types) in finals.items():
             _ = writers[oname].write("|".join(final_cols) + "\n" + "|".join(final_types) + "\n\n")
         for j, label in enumerate(db.gps_groups.search({}, "label")): # Fixes the ordering correctly
-            if j < 284629: continue # TODO: remove this
+            #if j < 284629: continue # TODO: remove this
             if j % 1000 == 0:
                 print(f"Writing {j} ({label})...         ", end="\r")
             # Load data
