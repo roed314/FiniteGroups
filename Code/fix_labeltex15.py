@@ -132,6 +132,9 @@ def label_to_key(label):
 
 def create_upload_files(overwrite=False):
     # TODO: Add new data computed for automorphism groups
+    # TODO: Split gps_subgroups (and maybe gps_groups) into search and extras tables
+    #       Agroup, Zgroup, abelian, ambient, ambient_counter, ambient_order, ambient_tex, central, characteristic, core_order, counter, cyclic, direct, generators??, hall, label, maximal, maximal_normal, metabelian, metacyclic, minimal, minimal_normal, nilpotent, normal, outer_equivalence, perfect, proper, quotient, quotient_Agroup, quotient_abelian, quotient_cyclic, quotient_hash, quotient_metabelian, quotient_nilpotent, quotient_order, quotient_simple, quotient_solvable, quotient_supersolvable, quotient_tex, simple, solvable, special_labels, split, stem, subgroup, subgroup_hash, subgroup_order, subgroup_tex, supersolvable, sylow
+    # TODO: Subgroup contains lookup problem: 5832.jd
     # TODO: Review and test psycodict PR #36 (reload resorting columns)
     # TODO: Standardize subgroup_tex and quotient_tex in virtual cases (e.g. 2187.5299 not in database, but appears several times); insert into this function
     # LATER TODO: Change _sort for gps_subgroup to ambient_order, ambient_counter, counter
@@ -153,6 +156,7 @@ def create_upload_files(overwrite=False):
     cur_coll = base / "cur_collated"
     fix_coll = base / "fix_collated"
     ren_coll = base / "relabel_collated"
+    aut_coll = base / "aut_collated"
     cen_coll = base / "cent_collated"
     boo_coll = base / "subool_collated"
 
@@ -349,10 +353,9 @@ def create_upload_files(overwrite=False):
                     if reset_labels:
                         lab = line["stored_label"]
                         if "," in lab:
-                            # The new subgroup matched multiple old ones; this is bad
-                            # TODO: recompute these cases, put into replace_collated, then raise error her
-                            pass
-                            
+                            # The new subgroup matched multiple old ones
+                            # These should have been diverted into replace_collated
+                            raise RuntimeError
                         assert lab in data[tbl]
                     elif code == "D":
                         # D uses short_label and ambient rather than full label
@@ -541,7 +544,7 @@ def create_upload_files(overwrite=False):
         for oname, (final_cols, final_types) in finals.items():
             _ = writers[oname].write("|".join(final_cols) + "\n" + "|".join(final_types) + "\n\n")
         for j, label in enumerate(db.gps_groups.search({}, "label")): # Fixes the ordering correctly
-            if j < 73491: continue # TODO: remove this
+            if j < 282654: continue # TODO: remove this
             if j % 1000 == 0:
                 print(f"Writing {j} ({label})...         ", end="\r")
             # Load data
@@ -574,6 +577,7 @@ def create_upload_files(overwrite=False):
                 load_file(data, new_coll / label, reset_labels=True) # Here we change the keys for data["SubGrp"] to use the labels computed in the new run
                 load_file(data, cen_coll / label)
                 load_file(data, new_coll / label, loading_new=True)
+                #load_file(data, aut_coll / label) # Load new automorphism group data
             fill(label, data)
             revise_subgroup_labels(label, data) # Here we change subgroup labels to the new format
             # Note that we don't bother to reset the keys in data["SubGrp"]
