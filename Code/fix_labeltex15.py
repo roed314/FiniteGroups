@@ -427,8 +427,8 @@ def create_upload_files(overwrite=False):
         if "GrpConjCls" in data:
             # Remove conjugacy class data when more than the limit for storing rational character tables
             if ("GrpChtrCC" not in data and "GrpChtrQQ" not in data and
-                ("number_divisions" not in G or G["number_divisions"] >= 512) and
-                ("number_conjugacy_classes" not in G or G["number_conjugacy_classes"] >= 512)):
+                ("number_divisions" not in G or int(G["number_divisions"]) >= 512) and
+                ("number_conjugacy_classes" not in G or int(G["number_conjugacy_classes"]) >= 512)):
                 # No characters stored, so we delete conjugacy classes to save space
                 del data["GrpConjCls"]
             else:
@@ -541,7 +541,7 @@ def create_upload_files(overwrite=False):
         for oname, (final_cols, final_types) in finals.items():
             _ = writers[oname].write("|".join(final_cols) + "\n" + "|".join(final_types) + "\n\n")
         for j, label in enumerate(db.gps_groups.search({}, "label")): # Fixes the ordering correctly
-            #if j < 284629: continue # TODO: remove this
+            if j < 73491: continue # TODO: remove this
             if j % 1000 == 0:
                 print(f"Writing {j} ({label})...         ", end="\r")
             # Load data
