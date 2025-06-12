@@ -134,7 +134,7 @@ def create_upload_files(overwrite=False):
     # TODO: Add new data computed for automorphism groups
     # TODO: Split gps_subgroups (and maybe gps_groups) into search and extras tables
     #       Agroup, Zgroup, abelian, ambient, ambient_counter, ambient_order, ambient_tex, central, characteristic, core_order, counter, cyclic, direct, generators??, hall, label, maximal, maximal_normal, metabelian, metacyclic, minimal, minimal_normal, nilpotent, normal, outer_equivalence, perfect, proper, quotient, quotient_Agroup, quotient_abelian, quotient_cyclic, quotient_hash, quotient_metabelian, quotient_nilpotent, quotient_order, quotient_simple, quotient_solvable, quotient_supersolvable, quotient_tex, simple, solvable, special_labels, split, stem, subgroup, subgroup_hash, subgroup_order, subgroup_tex, supersolvable, sylow
-    # TODO: Subgroup contains lookup problem: 5832.jd
+    # TODO: Subgroup contains lookup problem: 5832.jd (282653), 17496.dc (297367)
     # TODO: Review and test psycodict PR #36 (reload resorting columns)
     # TODO: Standardize subgroup_tex and quotient_tex in virtual cases (e.g. 2187.5299 not in database, but appears several times); insert into this function
     # LATER TODO: Change _sort for gps_subgroup to ambient_order, ambient_counter, counter
@@ -544,7 +544,7 @@ def create_upload_files(overwrite=False):
         for oname, (final_cols, final_types) in finals.items():
             _ = writers[oname].write("|".join(final_cols) + "\n" + "|".join(final_types) + "\n\n")
         for j, label in enumerate(db.gps_groups.search({}, "label")): # Fixes the ordering correctly
-            if j < 282654: continue # TODO: remove this
+            if j < 297368: continue # TODO: remove this
             if j % 1000 == 0:
                 print(f"Writing {j} ({label})...         ", end="\r")
             # Load data
