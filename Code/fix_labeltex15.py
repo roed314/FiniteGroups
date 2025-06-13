@@ -732,15 +732,17 @@ def collate_upload_files():
     sub_pos, stex_pos, quo_pos, qtex_pos = [H["SubGrpSearch"][0].index(col) for col in ["subgroup", "subgroup_tex", "quotient", "quotient_tex"]]
     dup_tex = defaultdict(set)
     for label in labels:
-        with open(out_coll / ("SubGrpSearch_" + label)) as F:
-            for line in F:
-                pieces = line.split("|")
-                sub, sub_tex = pieces[sub_pos], pieces[stex_pos]
-                if sub != r"\N" and sub_tex != r"\N" and sub.split(".")[-1].isdigit() and sub not in labelset:
-                    dup_tex[sub].add(sub_tex)
-                quo, quo_tex = pieces[quo_pos], pieces[qtex_pos]
-                if quo != r"\N" and quo_tex != r"\N" and quo.split(".")[-1].isdigit() and quo not in labelset:
-                    dup_tex[quo].add(quo_tex)
+        fname = out_coll / ("SubGrpSearch_" + label)
+        if fname.exists():
+            with open(fname) as F:
+                for line in F:
+                    pieces = line.split("|")
+                    sub, sub_tex = pieces[sub_pos], pieces[stex_pos]
+                    if sub != r"\N" and sub_tex != r"\N" and sub.split(".")[-1].isdigit() and sub not in labelset:
+                        dup_tex[sub].add(sub_tex)
+                    quo, quo_tex = pieces[quo_pos], pieces[qtex_pos]
+                    if quo != r"\N" and quo_tex != r"\N" and quo.split(".")[-1].isdigit() and quo not in labelset:
+                        dup_tex[quo].add(quo_tex)
     common_tex = {}
     for label, S in dup_tex.items():
         if len(S) > 1:
