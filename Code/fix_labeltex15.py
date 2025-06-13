@@ -11,6 +11,7 @@ if "/home/roed/lmfdb" not in sys.path:
     sys.path.append("/home/roed/lmfdb")
 from lmfdb import db
 from sage.databases.cremona import class_to_int, cremona_letter_code
+from sage.all import ZZ
 from faithful_reps import poset_data, char_data, linC_degree, linR_degree, linQ_degree, linQ_dim
 from sage.misc.cachefunc import cached_function
 
@@ -172,6 +173,7 @@ def create_upload_files(start=None, step=None, overwrite=False):
     aut_coll = base / "aut_collated"
     cen_coll = base / "cent_collated"
     boo_coll = base / "subool_collated"
+    out_coll = base / "out_collated"
 
     tmps = tmpheaders()
     tbl_codes = {"Grp": "abcdefghijklmnopqrstuvwzGM012345678@#%",
