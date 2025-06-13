@@ -225,30 +225,30 @@ def check_linQ(linQ):
         timings[group] = time.time() - t0
     return timings, missing_mobius, invalid
 
-parser = argparse.ArgumentParser()
-parser.add_argument("n", type=int, nargs="?")
-parser.add_argument("-i", action="store_true") # to support interactive use from Sage
-args = parser.parse_args()
-if args.n is not None:
-    sys.path.append(os.path.expanduser("~/lmfdb"))
-    from lmfdb import db
-    infile = f"DATA/faithful_in/{args.n}"
-    outfile = f"DATA/faithful_out/{args.n}"
-    mobfile = f"DATA/faithful_mob/{args.n}"
-    runfile = f"DATA/faithful_run/{args.n}"
-    for x in ["out", "mob", "run"]:
-        os.makedirs(f"DATA/faithful_{x}", exist_ok=True)
-    with open(infile) as F:
-        with open(outfile, "w") as Fout:
-            with open(mobfile, "w") as Fmob:
-                with open(runfile, "w") as Frun:
-                    for label in F:
-                        label = label.strip()
-                        try:
-                            linC, linC_count, linR, linR_count, Qdeg, Qdeg_count, Qdim, Qdim_count = linCRQ_degree(label)
-                        except ValueError:
-                            _ = Fmob.write(label + "\n")
-                        except RuntimeError:
-                            _ = Frun.write(label + "\n")
-                        else:
-                            _ = Fout.write(f"{label}|{linC}|{linR}|{Qdeg}|{Qdim}|{linC_count}|{linR_count}|{Qdeg_count}|{Qdim_count}\n")
+#parser = argparse.ArgumentParser()
+#parser.add_argument("n", type=int, nargs="?")
+#parser.add_argument("-i", action="store_true") # to support interactive use from Sage
+#args = parser.parse_args()
+#if args.n is not None:
+#    sys.path.append(os.path.expanduser("~/lmfdb"))
+#    from lmfdb import db
+#    infile = f"DATA/faithful_in/{args.n}"
+#    outfile = f"DATA/faithful_out/{args.n}"
+#    mobfile = f"DATA/faithful_mob/{args.n}"
+#    runfile = f"DATA/faithful_run/{args.n}"
+#    for x in ["out", "mob", "run"]:
+#        os.makedirs(f"DATA/faithful_{x}", exist_ok=True)
+#    with open(infile) as F:
+#        with open(outfile, "w") as Fout:
+#            with open(mobfile, "w") as Fmob:
+#                with open(runfile, "w") as Frun:
+#                    for label in F:
+#                        label = label.strip()
+#                        try:
+#                            linC, linC_count, linR, linR_count, Qdeg, Qdeg_count, Qdim, Qdim_count = linCRQ_degree(label)
+#                        except ValueError:
+#                            _ = Fmob.write(label + "\n")
+#                        except RuntimeError:
+#                            _ = Frun.write(label + "\n")
+#                        else:
+#                            _ = Fout.write(f"{label}|{linC}|{linR}|{Qdeg}|{Qdim}|{linC_count}|{linR_count}|{Qdeg_count}|{Qdim_count}\n")
