@@ -731,7 +731,9 @@ def collate_upload_files():
     labelset = set(labels)
     sub_pos, stex_pos, quo_pos, qtex_pos = [H["SubGrpSearch"][0].index(col) for col in ["subgroup", "subgroup_tex", "quotient", "quotient_tex"]]
     dup_tex = defaultdict(set)
-    for label in labels:
+    for i, label in enumerate(labels):
+        if i%10000 == 0:
+            print(f"Finding dup tex {i} ({label})...", end="\r")
         fname = out_coll / ("SubGrpSearch_" + label)
         if fname.exists():
             with open(fname) as F:
@@ -743,6 +745,7 @@ def collate_upload_files():
                     quo, quo_tex = pieces[quo_pos], pieces[qtex_pos]
                     if quo != r"\N" and quo_tex != r"\N" and quo.split(".")[-1].isdigit() and quo not in labelset:
                         dup_tex[quo].add(quo_tex)
+    print("Done finding dup tex                       ")
     common_tex = {}
     for label, S in dup_tex.items():
         if len(S) > 1:
