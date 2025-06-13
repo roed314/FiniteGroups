@@ -149,10 +149,6 @@ def create_upload_files(start=None, step=None, overwrite=False):
     # LATER TODO: Compute more data for automorphism groups
     if (start is None) != (step is None):
         raise ValueError("Must specify both start and step, or neither")
-    if start is None:
-        suff = ""
-    else:
-        suff = f"_{start}_{step}"
     badK = set()
     badQ = set()
     # gps_subgroups (text): aut_label, centralizer, core, label, normal_closure, normalizer, short_label
@@ -186,7 +182,7 @@ def create_upload_files(start=None, step=None, overwrite=False):
         for code in codes:
             tbl_lookup[code] = tbl
     finals = headers()
-    if not overwrite and any((bigfix / (final+suff+".txt")).exists() for final in finals):
+    if not overwrite and any((bigfix / (final+".txt")).exists() for final in finals):
         raise ValueError("An output file already exists; you can use overwrite to proceed anyway")
 
     curhead = defaultdict(tuple)
@@ -341,7 +337,7 @@ def create_upload_files(start=None, step=None, overwrite=False):
         PhiG = {".".join(x.split(".")[:2]): x.strip() for x in F}
     pcredo = set(path.name for path in rep_coll.iterdir())
     if start is None:
-        writers = {final: open(bigfix / (final+suff+".txt"), "w") for final in finals}
+        writers = {final: open(bigfix / (final+".txt"), "w") for final in finals}
     cc_tbls = set(["GrpConjCls", "GrpChtrCC", "GrpChtrQQ"])
 
     def load_file(data, path, skip_cc=False, reset_labels=False, cache_labels=False, loading_new=False):
@@ -611,7 +607,7 @@ def create_upload_files(start=None, step=None, overwrite=False):
                 if start is None:
                     F = writers[tbl]
                 else:
-                    F = open(out_coll / f"{tbl}_{label}{suff}", "w")
+                    F = open(out_coll / f"{tbl}_{label}", "w")
                 try:
                     for rec in L:
                         line = "|".join(rec.get(col, r"\N") for col in cols) + "\n"
@@ -725,6 +721,48 @@ def set_preload_label_info():
         if not os.path.exists("DATA/preload_label_info/" + fname):
             shutil.copy("DATA/preload/"+fname, "DATA/preload_label_info/"+fname)
 
+def collate_upload_files():
+    from cloud_collect import parse
+    base = Path("/scratch/grp")
+    out_coll = base / "out_collated"
+    bigfix = base / "bigfix"
+    H = headers()
+    labels = list(db.gps_groups.search({}, "label"))
+    labelset = set(labels)
+    sub_pos, stex_pos, quo_pos, qtex_pos = [H["SubGrpSearch"][0].index(col) for col in ["subgroup", "subgroup_tex", "quotient", "quotient_tex"]]
+    dup_tex = defaultdict(set)
+    for label in labels:
+        with open(out_coll / "SubGrpSearch_" + label) as F:
+            for line in F:
+                pieces = line.split("|")
+                sub, sub_tex = pieces[sub_pos], pieces[stex_pos]
+                if sub != r"\N" and sub_tex != r"\N" and sub.split(".")[-1].isdigit() and sub not in labelset:
+                    dup_tex[sub].add(sub_tex)
+                quo, quo_tex = pieces[quo_pos], pieces[qtex_pos]
+                if quo != r"\N" and quo_tex != r"\N" and quo.split(".")[-1].isdigit() and quo not in labelset:
+                    dup_tex[quo].add(quo_tex)
+    common_tex = {}
+    for label, S in dup_tex.items():
+        if len(S) > 1:
+            opts = [parse(s) for s in S]
+            opts.sort(key=lambda s: (s.value, 1000000000 if s.order is None else s.order, s.latex))
+            common_tex[label] = opts[0].latex.replace("\\", "\\\\") # double backslashes for loading into postgres
+    for tbl in ["Grp", "SubGrpSearch", "SubGrpData", "GrpConjCls", "GrpChtrCC", "GrpChtrQQ"]:
+        with open(bigfix / tbl + ".txt", "w") as Fout:
+            for label in labels:
+                fname = out_coll / f"{tbl}_{label}"
+                if fname.exists():
+                    with open(fname) as F:
+                        for line in F:
+                            if tbl == "SubGrpSearch":
+                                pieces = line.split("|")
+                                sub, quo = pieces[sub_pos], pieces[quo_pos]
+                                if sub in common_tex:
+                                    pieces[stex_pos] = common_tex[sub]
+                                if quo in common_tex:
+                                    pieces[qtex_pos] = common_tex[quo]
+                                line = "|".join(pieces)
+                            _ = Fout.write(line)
 
 
 if sys.argv[0] == "./fix_labeltex15.py":
@@ -734,7 +772,7 @@ if sys.argv[0] == "./fix_labeltex15.py":
     badK, badQ = create_upload_files(start=start, step=step, overwrite=True)
     if badK:
         with open("/scratch/grp/badK", "a") as F:
-            _ = F.write("\n".join(badK))
+            _ = F.write("\n".join(badK)+"\n")
     if badQ:
         with open("/scratch/grp/badQ", "a") as F:
-            _ = F.write("\n".join(badQ))
+            _ = F.write("\n".join(badQ)+"\n")
