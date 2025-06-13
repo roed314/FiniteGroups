@@ -13,7 +13,7 @@ end intrinsic;
 
 intrinsic order(G::LMFDBGrp) -> RngIntElt
 {Order of the group}
-    return Order(G`MagmaGrp);
+    return #(G`MagmaGrp);
 end intrinsic;
 
 intrinsic exponent(G::LMFDBGrp) -> RngIntElt
@@ -64,6 +64,11 @@ end intrinsic;
 intrinsic derived_length(G::LMFDBGrp) -> RngIntElt
 {Derived length of the group: length of the derived series}
     return DerivedLength(G`MagmaGrp);
+end intrinsic;
+
+intrinsic subgroup_order(H::LMFDBSubGrp) -> RngIntElt
+{Order of the subgroup}
+    return #(H`MagmaSubGrp);
 end intrinsic;
 
 intrinsic abelian(H::LMFDBSubGrp) -> BoolElt

@@ -396,7 +396,11 @@ intrinsic SplitMatrixCodes(L::MonStgElt, d::RngIntElt, Rcode::MonStgElt) -> SeqE
     else
         N := StringToInteger(Rcode);
         b := 1 + Ilog(16, N-1);
-        R := Integers(N);
+        if IsPrime(N) then
+            R := GF(N);
+        else
+            R := Integers(N);
+        end if;
     end if;
     if "," in L then
         L := [StringToInteger(c) : c in Split(L, ",")];
@@ -435,7 +439,11 @@ intrinsic SplitMATRIXCodes(L::MonStgElt, d::RngIntElt, Rcode::MonStgElt, b::MonS
     else
         N := StringToInteger(Rcode);
         b := N;
-        R := Integers(N);
+        if IsPrime(N) then
+            R := GF(N);
+        else
+            R := Integers(N);
+        end if;
     end if;
     L := [StringToInteger(c) : c in Split(L, ",")];
     L := [IntegerToSequence(mat, b) : mat in L];

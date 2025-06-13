@@ -35,8 +35,14 @@ def headers():
     for name, tbl in [("Grp", "gps_groups"), ("SubGrp", "gps_subgroups"), ("GrpConjCls", "gps_conj_classes"), ("GrpChtrCC", "gps_char"), ("GrpChtrQQ", "gps_qchar")]:
         tbl = db[tbl]
         cols = tbl.search_cols
-        types = [tbl.col_type[col] for col in cols]
-        headers[name] = (cols, types)
+        if name == "SubGrp":
+            search_cols = "Agroup, Zgroup, abelian, ambient, ambient_counter, ambient_order, ambient_tex, central, characteristic, core_order, counter, cyclic, direct, generators??, hall, label, maximal, maximal_normal, metabelian, metacyclic, minimal, minimal_normal, nilpotent, normal, outer_equivalence, perfect, proper, quotient, quotient_Agroup, quotient_abelian, quotient_cyclic, quotient_hash, quotient_metabelian, quotient_nilpotent, quotient_order, quotient_simple, quotient_solvable, quotient_supersolvable, quotient_tex, simple, solvable, special_labels, split, stem, subgroup, subgroup_hash, subgroup_order, subgroup_tex, supersolvable, sylow".split(", ")
+            data_cols = ["label"] + [col for col in cols if col not in search_cols]
+            headers["SubGrpSearch"] = (search_cols, [tbl.col_type[col] for col in search_cols])
+            headers["SubGrpData"] = (data_cols, [tbl.col_type[col] for col in data_cols])
+        else:
+            types = [tbl.col_type[col] for col in cols]
+            headers[name] = (cols, types)
     return headers
 
 breaker = re.compile(r"([a-z]+)([A-Z]+)")
@@ -131,10 +137,9 @@ def label_to_key(label):
     return ans
 
 def create_upload_files(overwrite=False):
+    # TODO: parallelize this script
     # TODO: Add new data computed for automorphism groups
     # TODO: Fix question mark placeholders in replace_collated
-    # TODO: Split gps_subgroups (and maybe gps_groups) into search and extras tables
-    #       Agroup, Zgroup, abelian, ambient, ambient_counter, ambient_order, ambient_tex, central, characteristic, core_order, counter, cyclic, direct, generators??, hall, label, maximal, maximal_normal, metabelian, metacyclic, minimal, minimal_normal, nilpotent, normal, outer_equivalence, perfect, proper, quotient, quotient_Agroup, quotient_abelian, quotient_cyclic, quotient_hash, quotient_metabelian, quotient_nilpotent, quotient_order, quotient_simple, quotient_solvable, quotient_supersolvable, quotient_tex, simple, solvable, special_labels, split, stem, subgroup, subgroup_hash, subgroup_order, subgroup_tex, supersolvable, sylow
     # TODO: Subgroup contains lookup problem: 5832.jd (282653), 17496.dc (297367)
     # TODO: Error in linC_degree: 148176.a (327088)
     # TODO: Review and test psycodict PR #36 (reload resorting columns)
@@ -163,7 +168,6 @@ def create_upload_files(overwrite=False):
     boo_coll = base / "subool_collated"
 
     tmps = tmpheaders()
-    H = headers()
     tbl_codes = {"Grp": "abcdefghijklmnopqrstuvwzGM012345678@#%",
                  "SubGrp": "ABDFIKLNPRSUVW",
                  "GrpConjCls": "JO",
@@ -173,7 +177,7 @@ def create_upload_files(overwrite=False):
     for tbl, codes in tbl_codes.items():
         for code in codes:
             tbl_lookup[code] = tbl
-    finals = {x: H[x] for x in tbl_codes}
+    finals = headers()
     if not overwrite and any((bigfix / (final+".txt")).exists() for final in finals):
         raise ValueError("An output file already exists; you can use overwrite to proceed anyway")
 
@@ -546,7 +550,6 @@ def create_upload_files(overwrite=False):
         for oname, (final_cols, final_types) in finals.items():
             _ = writers[oname].write("|".join(final_cols) + "\n" + "|".join(final_types) + "\n\n")
         for j, label in enumerate(db.gps_groups.search({}, "label")): # Fixes the ordering correctly
-            if j < 327089: continue # TODO: remove this
             if j % 1000 == 0:
                 print(f"Writing {j} ({label})...         ", end="\r")
             # Load data
@@ -579,14 +582,15 @@ def create_upload_files(overwrite=False):
                 load_file(data, new_coll / label, reset_labels=True) # Here we change the keys for data["SubGrp"] to use the labels computed in the new run
                 load_file(data, cen_coll / label)
                 load_file(data, new_coll / label, loading_new=True)
-                #load_file(data, aut_coll / label) # Load new automorphism group data
+                load_file(data, aut_coll / label) # Load new automorphism group data
             fill(label, data)
             revise_subgroup_labels(label, data) # Here we change subgroup labels to the new format
             # Note that we don't bother to reset the keys in data["SubGrp"]
 
             # TODO: check invalid subgroup label matches in comparing new and old subool data
-            for tbl, D in data.items():
-                cols = finals[tbl][0]
+            for tbl, (cols, types) in finals.items():
+                dtbl = "SubGrp" if tbl.startswith("SubGrp") else tbl
+                D = data[dtbl]
                 F = writers[tbl]
                 if tbl == "Grp":
                     L = list(D.values())

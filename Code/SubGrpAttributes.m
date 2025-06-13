@@ -413,9 +413,7 @@ end intrinsic;
 
 intrinsic quotient_order(H::LMFDBSubGrp) -> Any // Need to be subgroup attribute file
 {Determine the order of the quotient group}
-  GG := Get(H, "MagmaAmbient");
-  HH := H`MagmaSubGrp;
-  return Index(GG, HH);
+    return Get(H`Grp, "order") div Get(H, "subgroup_order");
 end intrinsic;
 
 intrinsic quotient_hash(H::LMFDBSubGrp) -> Any
