@@ -1,6 +1,6 @@
 #!/usr/bin/env -S sage -python
 
-# Usage: parallel -j40 --results create_upload_output ./fix_labeltex15.py {} 40 ::: {0..39}
+# Usage: parallel -j40 --results create_upload_output ./fix_labeltex15.py {} ::: {0..39}
 import sys
 import re
 import shutil
@@ -727,7 +727,8 @@ def set_preload_label_info():
 
 if sys.argv[0] == "./fix_labeltex15.py":
     start = int(sys.argv[1])
-    step = int(sys.argv[2])
+    with open("/scratch/grp/step") as F:
+        step = int(F.read())
     badK, badQ = create_upload_files(start=start, step=step, overwrite=True)
     if badK:
         with open("/scratch/grp/badK", "a") as F:
