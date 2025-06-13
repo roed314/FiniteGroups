@@ -732,7 +732,7 @@ def collate_upload_files():
     sub_pos, stex_pos, quo_pos, qtex_pos = [H["SubGrpSearch"][0].index(col) for col in ["subgroup", "subgroup_tex", "quotient", "quotient_tex"]]
     dup_tex = defaultdict(set)
     for label in labels:
-        with open(out_coll / "SubGrpSearch_" + label) as F:
+        with open(out_coll / ("SubGrpSearch_" + label)) as F:
             for line in F:
                 pieces = line.split("|")
                 sub, sub_tex = pieces[sub_pos], pieces[stex_pos]
@@ -748,7 +748,7 @@ def collate_upload_files():
             opts.sort(key=lambda s: (s.value, 1000000000 if s.order is None else s.order, s.latex))
             common_tex[label] = opts[0].latex.replace("\\", "\\\\") # double backslashes for loading into postgres
     for tbl in ["Grp", "SubGrpSearch", "SubGrpData", "GrpConjCls", "GrpChtrCC", "GrpChtrQQ"]:
-        with open(bigfix / tbl + ".txt", "w") as Fout:
+        with open(bigfix / (tbl + ".txt"), "w") as Fout:
             for label in labels:
                 fname = out_coll / f"{tbl}_{label}"
                 if fname.exists():
