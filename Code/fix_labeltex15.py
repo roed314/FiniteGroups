@@ -146,12 +146,12 @@ def create_upload_files(start=None, step=None, overwrite=False):
     # LATER TODO: Change _sort for gps_subgroup to ambient_order, ambient_counter, counter
     # LATER TODO: Port attributes in fill back to Magma when possible
     # LATER TODO: Compute more data for automorphism groups
-    if (start is None) != (skip is None):
-        raise ValueError("Must specify both start and skip, or neither")
+    if (start is None) != (step is None):
+        raise ValueError("Must specify both start and step, or neither")
     if start is None:
         suff = ""
     else:
-        suff = f"_{start}_{skip}"
+        suff = f"_{start}_{step}"
     badK = set()
     badQ = set()
     # gps_subgroups (text): aut_label, centralizer, core, label, normal_closure, normalizer, short_label
