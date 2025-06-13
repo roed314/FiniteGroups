@@ -746,12 +746,15 @@ def collate_upload_files():
     common_tex = {}
     for label, S in dup_tex.items():
         if len(S) > 1:
-            opts = [parse(s) for s in S]
+            opts = [parse(s.replace("\\\\", "\\")) for s in S]
             opts.sort(key=lambda s: (s.value, 1000000000 if s.order is None else s.order, s.latex))
             common_tex[label] = opts[0].latex.replace("\\", "\\\\") # double backslashes for loading into postgres
     for tbl in ["Grp", "SubGrpSearch", "SubGrpData", "GrpConjCls", "GrpChtrCC", "GrpChtrQQ"]:
+        print("Starting", tbl)
         with open(bigfix / (tbl + ".txt"), "w") as Fout:
-            for label in labels:
+            for i, label in enumerate(labels):
+                if i%10000 == 0:
+                    print(f"Writing {i} ({label}....", end="\r")
                 fname = out_coll / f"{tbl}_{label}"
                 if fname.exists():
                     with open(fname) as F:
@@ -765,6 +768,7 @@ def collate_upload_files():
                                     pieces[qtex_pos] = common_tex[quo]
                                 line = "|".join(pieces)
                             _ = Fout.write(line)
+        print(f"Done writing {tbl}!                          ")
 
 
 if sys.argv[0] == "./fix_labeltex15.py":
