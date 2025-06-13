@@ -1,7 +1,11 @@
 
+
+# Usage: parallel -j40 --results create_upload_output sage -python fix_labeltex15.py {} 40 ::: {0..39}
+import sys
 import re
 import shutil
 from collections import defaultdict, Counter
+from itertools import islice
 from pathlib import Path
 if "/home/roed/lmfdb" not in sys.path:
     sys.path.append("/home/roed/lmfdb")
@@ -85,7 +89,6 @@ def revise_subgroup_labels(label, data):
         else:
             for D in Ds:
                 D["short_label"] = long_to_short(D["label"])
-    # TODO: Need to always have stored_label available
     old_lookup = {long_to_short(D["stored_label"]): D["short_label"] for D in data["SubGrp"].values()}
     new_lookup = {long_to_short(D["label"]): D["short_label"] for D in data["SubGrp"].values()}
     old_lookup[r"\N"] = new_lookup[r"\N"] = r"\N"
@@ -136,18 +139,21 @@ def label_to_key(label):
             ans.append(class_to_int(piece))
     return ans
 
-def create_upload_files(overwrite=False):
-    # TODO: parallelize this script
-    # TODO: Add new data computed for automorphism groups
-    # TODO: Fix question mark placeholders in replace_collated
-    # TODO: Subgroup contains lookup problem: 5832.jd (282653), 17496.dc (297367)
-    # TODO: Error in linC_degree: 148176.a (327088)
+def create_upload_files(start=None, step=None, overwrite=False):
     # TODO: Review and test psycodict PR #36 (reload resorting columns)
+    # TODO: Should check consistency, e.g. subgroup_tex = tex_name[subgroup]
     # TODO: Standardize subgroup_tex and quotient_tex in virtual cases (e.g. 2187.5299 not in database, but appears several times); insert into this function
     # LATER TODO: Change _sort for gps_subgroup to ambient_order, ambient_counter, counter
     # LATER TODO: Port attributes in fill back to Magma when possible
     # LATER TODO: Compute more data for automorphism groups
+    if (start is None) != (skip is None):
+        raise ValueError("Must specify both start and skip, or neither")
+    if start is None:
+        suff = ""
+    else:
+        suff = f"_{start}_{skip}"
     badK = set()
+    badQ = set()
     # gps_subgroups (text): aut_label, centralizer, core, label, normal_closure, normalizer, short_label
     # gps_subgroups (text[]): complements, contained_in, contains, normal_contained_in, normal_contains
     # gps_char (text): center, kernel
@@ -178,7 +184,7 @@ def create_upload_files(overwrite=False):
         for code in codes:
             tbl_lookup[code] = tbl
     finals = headers()
-    if not overwrite and any((bigfix / (final+".txt")).exists() for final in finals):
+    if not overwrite and any((bigfix / (final+suff+".txt")).exists() for final in finals):
         raise ValueError("An output file already exists; you can use overwrite to proceed anyway")
 
     curhead = defaultdict(tuple)
@@ -223,8 +229,6 @@ def create_upload_files(overwrite=False):
                     label, tex_name, name = line.strip().split("|")
                     with open(fix_coll / label, "a") as Fout:
                         _ = Fout.write(f"t{label}|{name}|{tex_name}\n")
-        # TODO: Should check consistency, e.g. subgroup_tex = tex_name[subgroup]
-        # TODO: This seems to never be none???
         print("Collating group latex done!            ")
         with open(base / "NewSubgroupTexNames.txt") as F:
             for j, line in enumerate(F):
@@ -334,7 +338,8 @@ def create_upload_files(overwrite=False):
     with open(base / "PhiG.txt") as F:
         PhiG = {".".join(x.split(".")[:2]): x.strip() for x in F}
     pcredo = set(path.name for path in rep_coll.iterdir())
-    writers = {final: open(bigfix / (final+".txt"), "w") for final in finals}
+    if start is None:
+        writers = {final: open(bigfix / (final+suff+".txt"), "w") for final in finals}
     cc_tbls = set(["GrpConjCls", "GrpChtrCC", "GrpChtrQQ"])
 
     def load_file(data, path, skip_cc=False, reset_labels=False, cache_labels=False, loading_new=False):
@@ -547,9 +552,13 @@ def create_upload_files(overwrite=False):
             G["irrC_degree"], G["linC_degree"], G["linC_count"], G["irrR_degree"], G["linR_degree"], G["linR_count"], G["irrQ_degree"], G["linQ_degree"], G["linQ_degree_count"], G["irrQ_dim"], G["linQ_dim"], G["linQ_dim_count"] = [str(x) for x in [irrC_degree, linC, linC_count, irrR_degree, linR, linR_count, irrQ_degree, Q_deg, Qdeg_count, irrQ_dim, Q_dim, Qdim_count]]
 
     try:
-        for oname, (final_cols, final_types) in finals.items():
-            _ = writers[oname].write("|".join(final_cols) + "\n" + "|".join(final_types) + "\n\n")
-        for j, label in enumerate(db.gps_groups.search({}, "label")): # Fixes the ordering correctly
+        label_source = db.gps_groups.search({}, "label")
+        if start is None:
+            for oname, (final_cols, final_types) in finals.items():
+                _ = writers[oname].write("|".join(final_cols) + "\n" + "|".join(final_types) + "\n\n")
+        else:
+            label_source = islice(label_source, start, db.gps_groups.count(), step)
+        for j, label in enumerate(label_source): # Fixes the ordering correctly
             if j % 1000 == 0:
                 print(f"Writing {j} ({label})...         ", end="\r")
             # Load data
@@ -591,22 +600,36 @@ def create_upload_files(overwrite=False):
             for tbl, (cols, types) in finals.items():
                 dtbl = "SubGrp" if tbl.startswith("SubGrp") else tbl
                 D = data[dtbl]
-                F = writers[tbl]
                 if tbl == "Grp":
                     L = list(D.values())
                 else:
                     L = sorted(D.values(), key=lambda rec: rec["counter"])
-                for rec in L:
-                    line = "|".join(rec.get(col, r"\N") for col in cols) + "\n"
-                    _ = F.write(line)
+                if not L:
+                    continue
+                if start is None:
+                    F = writers[tbl]
+                else:
+                    F = open(out_coll / f"{tbl}_{label}{suff}", "w")
+                try:
+                    for rec in L:
+                        line = "|".join(rec.get(col, r"\N") for col in cols) + "\n"
+                        if "?" in line:
+                            badQ.add(label)
+                        _ = F.write(line)
+                finally:
+                    if start is not None:
+                        F.close()
         print("Writing done!            ")
     except Exception:
+        with open("/scratch/grp/create_upload_files_errors.txt", "a") as F:
+            _ = F.write(f"Error with start={start}, step={step}\n")
         print(f"Writing {j} ({label})...             ") # Don't overwrite status message earlier
         raise
     finally:
-        for F in writers.values():
-            F.close()
-    return badK
+        if start is None:
+            for F in writers.values():
+                F.close()
+    return badK, badQ
 
 """
 TODO
@@ -699,3 +722,16 @@ def set_preload_label_info():
     for fname in os.listdir("DATA/preload"):
         if not os.path.exists("DATA/preload_label_info/" + fname):
             shutil.copy("DATA/preload/"+fname, "DATA/preload_label_info/"+fname)
+
+
+
+if sys.argv[0] == "fix_labeltex15.py":
+    start = int(sys.argv[1])
+    step = int(sys.argv[2])
+    badK, badQ = create_upload_files(start=start, step=step, overwrite=True)
+    if badK:
+        with open("/scratch/grp/badK", "a") as F:
+            _ = F.write("\n".join(badK))
+    if badQ:
+        with open("/scratch/grp/badQ", "a") as F:
+            _ = F.write("\n".join(badQ))
