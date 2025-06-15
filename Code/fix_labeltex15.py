@@ -141,16 +141,20 @@ def label_to_key(label):
     return ans
 
 def create_upload_files(start=None, step=None, overwrite=False):
+    # TODO: Make sure we're actually wiping out bad char, qchar and conj_classes
+    # Make sure _others and WebAbstractSupergroup are working with only gps_subgroup_search data.
     # TODO: Review and test psycodict PR #36 (reload resorting columns)
     # TODO: Should check consistency, e.g. subgroup_tex = tex_name[subgroup]
     # TODO: Standardize subgroup_tex and quotient_tex in virtual cases (e.g. 2187.5299 not in database, but appears several times); insert into this function
-    # LATER TODO: Change _sort for gps_subgroup to ambient_order, ambient_counter, counter
+    # SOON TODO: Change _sort for gps_subgroup to ambient_order, ambient_counter, counter
+    # SOON TODO: Update subgroup downloader to get data from gps_subgroups_data
     # LATER TODO: Port attributes in fill back to Magma when possible
     # LATER TODO: Compute more data for automorphism groups
     if (start is None) != (step is None):
         raise ValueError("Must specify both start and step, or neither")
     badK = set()
     badQ = set()
+    changed_cols = {}
     # gps_subgroups (text): aut_label, centralizer, core, label, normal_closure, normalizer, short_label
     # gps_subgroups (text[]): complements, contained_in, contains, normal_contained_in, normal_contains
     # gps_char (text): center, kernel
@@ -382,8 +386,8 @@ def create_upload_files(start=None, step=None, overwrite=False):
                                 if lab not in data[tbl]:
                                     # We didn't succeed in relabeling this group, so we skip updating B
                                     continue
-                            if line["metacyclic"] == r"\N":
-                                del line["metacyclic"]
+                            #if line["metacyclic"] == r"\N":
+                            #    del line["metacyclic"]
                         elif code == "S" and loading_new:
                             if lab in data[tbl]:
                                 data[tbl][lab]["updated"] = True
@@ -393,10 +397,16 @@ def create_upload_files(start=None, step=None, overwrite=False):
                         elif code == "K" and lab not in data[tbl]:
                             badK.add(".".join(lab.split(".")[:2]))
                             continue
-                        elif code == "i" and line["eulerian_function"] == r"\N":
-                            # We recomputed rank but not Eulerian function; don't want to wipe out old data
-                            del line["eulerian_function"]
-                    data[tbl][lab].update(line)
+                        #elif code == "i" and line["eulerian_function"] == r"\N":
+                        #    # We recomputed rank but not Eulerian function; don't want to wipe out old data
+                        #    del line["eulerian_function"]
+                    to_update = data[tbl][lab]
+                    for col, val in line.items():
+                        if val != r"\N":
+                            if to_update[col] != r"\N" and to_update[col] != val:
+                                if (tbl,col) not in changed_cols:
+                                    changed_cols[tbl,col] = lab
+                            to_update[col] = val
         if reset_labels and "SubGrp" in data:
             # Need label to be unique since we're reseting keys below
             # Since these subgroups did not show up in results in newer_collated, we set them to arbitrary unique values for now; we will reset these in revise_subgroup_labels
@@ -627,7 +637,7 @@ def create_upload_files(start=None, step=None, overwrite=False):
         if start is None:
             for F in writers.values():
                 F.close()
-    return badK, badQ
+    return badK, badQ, changed_cols
 
 """
 TODO
@@ -745,7 +755,7 @@ def collate_upload_files():
                     quo, quo_tex = pieces[quo_pos], pieces[qtex_pos]
                     if quo != r"\N" and quo_tex != r"\N" and quo.split(".")[-1].isdigit() and quo not in labelset:
                         dup_tex[quo].add(quo_tex)
-    print("Done finding dup tex                       ")
+    print(f"Done finding dup tex ({len(dup_tex)} found)              ")
     common_tex = {}
     for label, S in dup_tex.items():
         if len(S) > 1:
@@ -757,7 +767,7 @@ def collate_upload_files():
         with open(bigfix / (tbl + ".txt"), "w") as Fout:
             for i, label in enumerate(labels):
                 if i%10000 == 0:
-                    print(f"Writing {i} ({label}....", end="\r")
+                    print(f"Writing {i} ({label})....", end="\r")
                 fname = out_coll / f"{tbl}_{label}"
                 if fname.exists():
                     with open(fname) as F:
@@ -778,10 +788,15 @@ if sys.argv[0] == "./fix_labeltex15.py":
     start = int(sys.argv[1])
     with open("/scratch/grp/step") as F:
         step = int(F.read())
-    badK, badQ = create_upload_files(start=start, step=step, overwrite=True)
+    badK, badQ, changed_cols = create_upload_files(start=start, step=step, overwrite=True)
     if badK:
         with open("/scratch/grp/badK", "a") as F:
             _ = F.write("\n".join(badK)+"\n")
     if badQ:
         with open("/scratch/grp/badQ", "a") as F:
             _ = F.write("\n".join(badQ)+"\n")
+
+    if changed_cols:
+        with open("/scratch/grp/changed_cols", "a") as F:
+            for (tbl, col), lab in changed_cols.items():
+                _ = F.write(f"{tbl}:{col}: {lab}\n")
