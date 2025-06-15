@@ -442,7 +442,32 @@ def create_upload_files(start=None, step=None, overwrite=False):
             return N, str(class_to_int(i) + 1)
 
     def fill(label, data):
+        # First we delete entries that don't fit within numeric's 131072 digit limit
+        for tbl, X in data.items():
+            for D in X.values():
+                for col, val in D.items():
+                    if len(val) >= 131072:
+                        parts = re.split(r"(\D+)", val)
+                        if any(len(part) >= 131072 for part in parts):
+                            del D[col]
+        # Now fill in aut and outer gens with the best option computed
         G = data["Grp"][label]
+        def check(typ, i):
+            stubs = ["gens", "gen_orders", "perms"]
+            if typ == "outer":
+                stubs.append("gen_pows")
+            return all(f"{typ}_{x}{i}" in G for x in stubs)
+        def set(typ, i):
+            G[f"{typ}_gens"] = G[f"{typ}_gens{i}"]
+            G[f"{typ}_gen_orders"] = G[f"{typ}_gen_orders{i}"]
+            G[f"{typ}_perms"] = G[f"{typ}_perms{i}"]
+            if typ == "outer":
+                G[f"{typ}_gen_pows"] = G[f"{typ}_gen_pows{i}"]
+        for typ in ["aut", "outer"]:
+            for i in [3,2,1,0]:
+                if check(typ, i):
+                    set(typ, i)
+                    break
         # Set group_order, group_counter in GrpConjCls
         N, c = ord_counter(label)
         n = ZZ(N)
