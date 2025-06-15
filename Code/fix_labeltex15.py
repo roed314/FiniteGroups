@@ -446,7 +446,7 @@ def create_upload_files(start=None, step=None, overwrite=False):
         for tbl, X in data.items():
             for D in X.values():
                 for col, val in D.items():
-                    if len(val) >= 131072:
+                    if isinstance(val, str) and len(val) >= 131072:
                         parts = re.split(r"(\D+)", val)
                         if any(len(part) >= 131072 for part in parts):
                             del D[col]
@@ -790,6 +790,7 @@ def collate_upload_files():
     for tbl in ["Grp", "SubGrpSearch", "SubGrpData", "GrpConjCls", "GrpChtrCC", "GrpChtrQQ"]:
         print("Starting", tbl)
         with open(bigfix / (tbl + ".txt"), "w") as Fout:
+            _ = Fout.write("|".join(H[tbl][0]) + "\n" + "|".join(H[tbl][1]) + "\n\n")
             for i, label in enumerate(labels):
                 if i%10000 == 0:
                     print(f"Writing {i} ({label})....", end="\r")
