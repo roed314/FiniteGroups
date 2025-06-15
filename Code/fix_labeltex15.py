@@ -107,7 +107,7 @@ def revise_subgroup_labels(label, data):
         for col in ["centralizer", "core", "normal_closure", "normalizer"]:
             D[col] = lookup[D[col]]
         for col in ["complements", "contained_in", "contains", "normal_contained_in", "normal_contains"]:
-            if D[col] not in [r"\N", "{}"]:
+            if D.get(col, r"\N") not in [r"\N", "{}"]:
                 D[col] = "{" + ",".join(lookup[x] for x in D[col][1:-1].split(",")) + "}"
     for C in data["GrpConjCls"].values():
         if "centralizer" in C:
