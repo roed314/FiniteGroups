@@ -1,6 +1,6 @@
 #!/usr/bin/env -S sage -python
 
-# Usage: parallel -j40 --results create_upload_output ./fix_labeltex15.py {} ::: {0..39}
+# Usage: parallel -j40 --results /scratch/grp/create_upload_output ./fix_labeltex15.py {} ::: {0..39}
 import sys
 import re
 import shutil
@@ -403,7 +403,7 @@ def create_upload_files(start=None, step=None, overwrite=False):
                     to_update = data[tbl][lab]
                     for col, val in line.items():
                         if val != r"\N":
-                            if to_update[col] != r"\N" and to_update[col] != val:
+                            if to_update.get(col, r"\N") != r"\N" and to_update[col] != val:
                                 if (tbl,col) not in changed_cols:
                                     changed_cols[tbl,col] = lab
                             to_update[col] = val
