@@ -102,8 +102,9 @@ def revise_subgroup_labels(label, data):
         else:
             D["aut_label"] = ".".join(D["short_label"].split(".")[:2])
         for col in ["centralizer", "core", "normal_closure", "normalizer"]:
-            lookup = new_lookup if col in updated else old_lookup
-            D[col] = lookup[D[col]]
+            if col in D:
+                lookup = new_lookup if col in updated else old_lookup
+                D[col] = lookup[D[col]]
         for col in ["complements", "contained_in", "contains", "normal_contained_in", "normal_contains"]:
             if D.get(col, r"\N") not in [r"\N", "{}"]:
                 lookup = new_lookup if col in updated else old_lookup
