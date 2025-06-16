@@ -390,7 +390,7 @@ def create_upload_files(start=None, step=None, overwrite=False):
                             #    del line["metacyclic"]
                         elif code == "S" and loading_new:
                             if lab in data[tbl]:
-                                data[tbl][lab]["updated"] = set(col for col ["centralizer", "core", "normal_closure", "normalizer", "complements", "contained_in", "contains", "normal_contained_in", "normal_contains"] if line.get(col, r"\N") != r"\N")
+                                data[tbl][lab]["updated"] = set([col for col ["centralizer", "core", "normal_closure", "normalizer", "complements", "contained_in", "contains", "normal_contained_in", "normal_contains"] if line.get(col, r"\N") != r"\N"])
                             else:
                                 # We didn't succeed in relabeling, so we ignore this line
                                 continue
