@@ -445,7 +445,7 @@ def create_upload_files(start=None, step=None, overwrite=False):
         # First we delete entries that don't fit within numeric's 131072 digit limit
         for tbl, X in data.items():
             for D in X.values():
-                for col, val in D.items():
+                for col, val in list(D.items()):
                     if isinstance(val, str) and len(val) >= 131072:
                         parts = re.split(r"(\D+)", val)
                         if any(len(part) >= 131072 for part in parts):
