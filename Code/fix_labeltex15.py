@@ -94,20 +94,19 @@ def revise_subgroup_labels(label, data):
     new_lookup = {long_to_short(D["label"]): D["short_label"] for D in data["SubGrp"].values()}
     old_lookup[r"\N"] = new_lookup[r"\N"] = r"\N"
     for D in data["SubGrp"].values():
-        if D.get("updated"):
-            # Some columns have been updated while loading newer_collated
-            lookup = new_lookup
-        else:
-            lookup = old_lookup
+        # Some columns have been updated while loading newer_collated
+        updated = D.get("updated", set())
         D["label"] = f"{D['ambient']}.{D['short_label']}"
         if "_" in D["short_label"]:
             D["aut_label"] = r"\N"
         else:
             D["aut_label"] = ".".join(D["short_label"].split(".")[:2])
         for col in ["centralizer", "core", "normal_closure", "normalizer"]:
+            lookup = new_lookup if col in updated else old_lookup
             D[col] = lookup[D[col]]
         for col in ["complements", "contained_in", "contains", "normal_contained_in", "normal_contains"]:
             if D.get(col, r"\N") not in [r"\N", "{}"]:
+                lookup = new_lookup if col in updated else old_lookup
                 D[col] = "{" + ",".join(lookup[x] for x in D[col][1:-1].split(",")) + "}"
     for C in data["GrpConjCls"].values():
         if "centralizer" in C:
@@ -142,6 +141,7 @@ def label_to_key(label):
 
 def create_upload_files(start=None, step=None, overwrite=False):
     # TODO: Make sure we're actually wiping out bad char, qchar and conj_classes
+    # TODO: Save old_label for checking purposes
     # Make sure _others and WebAbstractSupergroup are working with only gps_subgroup_search data.
     # TODO: Review and test psycodict PR #36 (reload resorting columns)
     # TODO: Should check consistency, e.g. subgroup_tex = tex_name[subgroup]
@@ -390,7 +390,7 @@ def create_upload_files(start=None, step=None, overwrite=False):
                             #    del line["metacyclic"]
                         elif code == "S" and loading_new:
                             if lab in data[tbl]:
-                                data[tbl][lab]["updated"] = True
+                                data[tbl][lab]["updated"] = set(col for col ["centralizer", "core", "normal_closure", "normalizer", "complements", "contained_in", "contains", "normal_contained_in", "normal_contains"] if line.get(col, r"\N") != r"\N")
                             else:
                                 # We didn't succeed in relabeling, so we ignore this line
                                 continue
