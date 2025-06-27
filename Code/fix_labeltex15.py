@@ -501,7 +501,7 @@ def create_upload_files(start=None, step=None, overwrite=False):
             if typ == "outer":
                 stubs.append("gen_pows")
             return all(f"{typ}_{x}{i}" in G for x in stubs)
-        def set(typ, i):
+        def set_by_type(typ, i):
             G[f"{typ}_gens"] = G[f"{typ}_gens{i}"]
             G[f"{typ}_gen_orders"] = G[f"{typ}_gen_orders{i}"]
             G[f"{typ}_perms"] = G[f"{typ}_perms{i}"]
@@ -510,7 +510,7 @@ def create_upload_files(start=None, step=None, overwrite=False):
         for typ in ["aut", "outer"]:
             for i in [3,2,1,0]:
                 if check(typ, i):
-                    set(typ, i)
+                    set_by_type(typ, i)
                     break
         # Set group_order, group_counter in GrpConjCls
         N, G_ctr = ord_counter(label)
