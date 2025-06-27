@@ -638,7 +638,9 @@ def create_upload_files(start=None, step=None, overwrite=False):
             repdic = eval(G["representations"])
             lies = [(fam_sort[rec["family"]], rec["d"], rec["q"], rec["family"], tuple(rec.get("gens", []))) for rec in repdic["Lie"]]
             first = lies[0]
-            lies = sorted(set(lies + [(fam_sort[fam], params["n"], params["q"], fam, ()) for (fam, params) in special_names[label]]))
+            new_lies = [(fam_sort[fam], params["n"], params["q"], fam, ()) for (fam, params) in special_names[label]]
+            lies += new_lies
+            lies = sorted(set(lies))
             if G["element_repr_type"] == "Lie":
                 # Preserve first element
                 lies = [first] + [lie for lie in lies if lie != first]
