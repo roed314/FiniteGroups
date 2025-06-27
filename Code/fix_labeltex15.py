@@ -99,7 +99,7 @@ def revise_subgroup_labels(label, data):
             else:
                 for D in Ds:
                     D["short_label"] = long_to_short(D["label"])
-            if any("NULL" in D["short_label"]) for D in Ds:
+            if any("NULL" in D["short_label"] for D in Ds):
                 with open("/scratch/grp/NULLsub.txt", "a") as F:
                     _ = F.write(f"{label}|{ind}\n")
     old_lookup = {long_to_short(D["stored_label"]): D["short_label"] for D in data["SubGrp"].values()}
