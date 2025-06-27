@@ -209,7 +209,7 @@ def create_upload_files(start=None, step=None, overwrite=False):
     for rec in db.gps_special_names.search({}, ["label", "family", "parameters"]):
         params = rec["parameters"]
         if "q" in params and "fam" not in params:
-            special_names[rec["label"]].append(("family", "parameters"))
+            special_names[rec["label"]].append((rec["family"], rec["parameters"]))
     fam_sort = {rec["family"]: rec["priority"] for rec in db.gps_families.search({}, ["family", "priority"])}
 
     elt_repr_to_perm = set(["3170119680.a", "103675594014720.a", "756000.a"])
