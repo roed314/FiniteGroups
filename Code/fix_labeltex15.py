@@ -1,6 +1,6 @@
 #!/usr/bin/env -S sage -python
 
-# Usage: parallel -j40 --results /scratch/grp/create_upload_output ./fix_labeltex15.py {} ::: {0..39}
+# Usage: parallel -j80 --results /scratch/grp/create_upload_output ./fix_labeltex15.py {} ::: {0..79}
 import sys
 import re
 import shutil
@@ -787,9 +787,9 @@ def create_upload_files(start=None, step=None, overwrite=False):
                     if start is not None:
                         F.close()
         print("Writing done!            ")
-    except Exception:
+    except Exception as err:
         with open("/scratch/grp/create_upload_files_errors.txt", "a") as F:
-            _ = F.write(f"Error with start={start}, step={step}\n")
+            _ = F.write(f"Error with start={start}, step={step}\n" + str(err))
         print(f"Writing {j} ({label})...             ") # Don't overwrite status message earlier
         raise
     finally:
