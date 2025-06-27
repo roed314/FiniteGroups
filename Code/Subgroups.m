@@ -3055,6 +3055,7 @@ intrinsic LMFDBSubgroup(H::SubgroupLatElt : normal_lattice:=false) -> LMFDBSubGr
     res`MagmaAmbient := G`MagmaGrp;
     res`MagmaSubGrp := H`subgroup;
     res`subgroup_order := H`order;
+    res`quotient_order := H`index;
     res`standard_generators := H`standard_generators;
     res`label := G`label * "." * H`label;
     res`short_label := H`label;

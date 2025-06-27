@@ -6,6 +6,9 @@ intrinsic almost_simple(G::LMFDBGrp) -> Any
     if Get(G, "abelian") or Get(G, "solvable") then
         return false;
     end if;
+    if Get(G, "simple") then
+        return true;
+    end if;
 
     GG := G`MagmaGrp;
     Norms := Get(G, "MagmaMinimalNormalSubgroups");
