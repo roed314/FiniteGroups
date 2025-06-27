@@ -551,6 +551,16 @@ def create_upload_files(start=None, step=None, overwrite=False):
                 assert len(char_by_counter) == len(K)
             else:
                 K = [r"\N"] * len(char_by_counter)
+            nib = G.get("normal_index_bound", r"\N")
+            if nib == r"\N" and G.get("normal_subgroups_known") == "t":
+                nib = "0"
+            if nib != r"\N":
+                nib = int(nib)
+            nob = G.get("normal_order_bound", r"\N")
+            if nob == r"\N" and G.get("normal_subgroups_known") == "t":
+                nob = "0"
+            if nob != r"\N":
+                nob = int(nob)
             for D, z, k in zip(char_by_counter, Z, K):
                 D["group_order"], D["group_counter"], D["center"], D["kernel"] = N, G_ctr, z, k
                 d = D["dim"]
@@ -597,7 +607,7 @@ def create_upload_files(start=None, step=None, overwrite=False):
                                 D["image_isoclass"] = f"{isize}.1"
                             elif d == "1" and isize in cyclic_lookup:
                                 D["image_isoclass"] = cyclic_lookup[isize]
-                            elif "SubGrp" in data and (G["normal_index_bound"] == "0" or isize <= int(G["normal_index_bound"]) or ksize <= ind(G["normal_order_bound"])):
+                            elif "SubGrp" in data and nib is not None and nob is not None (nib == 0 or isize <= nib or ksize <= nob):
                                 opts = set(S["quotient"] for S in data["SubGrp"].values() if S["normal"] == "t" and S["quotient_order"] == str(isize))
                                 if len(opts) == 1:
                                     D["image_isoclass"] = list(opts)[0]
