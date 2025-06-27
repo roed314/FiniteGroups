@@ -636,12 +636,14 @@ def create_upload_files(start=None, step=None, overwrite=False):
             G["element_repr_type"] = "Perm"
         if label in special_names:
             repdic = eval(G["representations"])
-            lies = [(fam_sort[rec["family"]], rec["d"], rec["q"], rec["family"], tuple(rec.get("gens", []))) for rec in repdic["Lie"]]
-            first = lies[0]
-            new_lies = [(fam_sort[fam], params["n"], params["q"], fam, ()) for (fam, params) in special_names[label]]
-            lies += new_lies
-            lies = sorted(set(lies))
+            if "Lie" in repdic:
+                lies = [(fam_sort[rec["family"]], rec["d"], rec["q"], rec["family"], tuple(rec.get("gens", []))) for rec in repdic["Lie"]]
+                first = lies[0]
+            else:
+                lies = []
+            lies = sorted(set(lies + [(fam_sort[fam], params["n"], params["q"], fam, ()) for (fam, params) in special_names[label]]))
             if G["element_repr_type"] == "Lie":
+                assert "Lie" in repdic
                 # Preserve first element
                 lies = [first] + [lie for lie in lies if lie != first]
             def makeD(tup):
