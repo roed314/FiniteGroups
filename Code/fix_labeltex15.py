@@ -707,9 +707,9 @@ def create_upload_files(start=None, step=None, overwrite=False):
                     G["order_factorization_type"] = "311"
                 else:
                     G["order_factorization_type"] = "321"
-        for x in ["normal_subgroups_known", "all_subgroups_known", "maximal_subgroups_known", "subgroup_inclusions_known", "sylow_subgroups_known"]:
-            if G.get(x, r"\N") == r"\N":
-                G[x] = "f"
+        #for x in ["normal_subgroups_known", "all_subgroups_known", "maximal_subgroups_known", "subgroup_inclusions_known", "sylow_subgroups_known"]:
+        #    if G.get(x, r"\N") == r"\N":
+        #        G[x] = "f"
         if G.get("normal_counts", r"\N") == r"\N" and G["normal_subgroups_known"] == "t":
             nctr = Counter()
             for rec in data["SubGrp"].values():
