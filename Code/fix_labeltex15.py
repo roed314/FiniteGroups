@@ -65,7 +65,8 @@ def revise_subgroup_labels(label, data):
         canre = re.compile(r"\d+\.[0-9a-z]+\.\d+\.[a-z]+\d+\.[a-z]+\d+")
     sib = int(data["Grp"][label]["subgroup_index_bound"])
     def noncanonical(ind, Ds):
-        if ind == 1 or ind == N or (ind.gcd(N // ind) == 1 and (ind.is_prime_power() or solv)):
+        sub_ord = N // ind
+        if ind == 1 or ind == N or (ind.gcd(sub_ord) == 1 and (sub_ord.is_prime_power() or solv)):
             return False
         if sib != 0 and ind > sib:
             return True
@@ -98,6 +99,9 @@ def revise_subgroup_labels(label, data):
             else:
                 for D in Ds:
                     D["short_label"] = long_to_short(D["label"])
+            if any("NULL" in D["short_label"]) for D in Ds:
+                with open("/scratch/grp/NULLsub.txt", "a") as F:
+                    _ = F.write(f"{label}|{ind}\n")
     old_lookup = {long_to_short(D["stored_label"]): D["short_label"] for D in data["SubGrp"].values()}
     new_lookup = {long_to_short(D["label"]): D["short_label"] for D in data["SubGrp"].values()}
     old_lookup[r"\N"] = new_lookup[r"\N"] = r"\N"
@@ -710,16 +714,16 @@ def create_upload_files(start=None, step=None, overwrite=False):
         #for x in ["normal_subgroups_known", "all_subgroups_known", "maximal_subgroups_known", "subgroup_inclusions_known", "sylow_subgroups_known"]:
         #    if G.get(x, r"\N") == r"\N":
         #        G[x] = "f"
-        if G.get("normal_counts", r"\N") == r"\N" and G["normal_subgroups_known"] == "t":
+        if G.get("normal_counts", r"\N") == r"\N" and G.get("normal_subgroups_known") == "t":
             nctr = Counter()
             for rec in data["SubGrp"].values():
                 if rec["normal"] == "t":
                     nctr[rec["subgroup_order"]] += int(rec["count"])
             G["normal_counts"] = "{" + ",".join(str(nctr[d]) for d in n.divisors()) + "}"
         for x in ["normal_index_bound", "normal_order_bound"]:
-            if G.get(x, r"\N") == r"\N" and G["normal_subgroups_known"] == "t":
+            if G.get(x, r"\N") == r"\N" and G.get("normal_subgroups_known") == "t":
                 G[x] = "0"
-        if "GrpChtrCC" in data and "GrpChtrQQ" in data and "SubGrp" in data and G["normal_subgroups_known"] == "t" and G["outer_equivalence"] == "f" and any(G.get(x, r"\N") == r"\N" for x in ["irrR_degree", "linR_count", "linQ_degree_count", "linQ_dim_count", "irrQ_dim", "linR_degree", "linQ_dim", "linC_count"]) and all(rec.get("mobius_quo", r"\N") != r"\N" and rec.get("normal_contains", r"\N") != r"\N" for rec in data["SubGrp"].values() if rec["normal"] == "t"):
+        if "GrpChtrCC" in data and "GrpChtrQQ" in data and "SubGrp" in data and G.get("normal_subgroups_known") == "t" and G["outer_equivalence"] == "f" and any(G.get(x, r"\N") == r"\N" for x in ["irrR_degree", "linR_count", "linQ_degree_count", "linQ_dim_count", "irrQ_dim", "linR_degree", "linQ_dim", "linC_count"]) and all(rec.get("mobius_quo", r"\N") != r"\N" and rec.get("normal_contains", r"\N") != r"\N" for rec in data["SubGrp"].values() if rec["normal"] == "t"):
             sub_in = [{"short_label": rec["short_label"], "count": ZZ(rec["count"]), "mobius_quo": ZZ(rec["mobius_quo"]), "normal_contains": rec["normal_contains"][1:-1].split(",")} for rec in data["SubGrp"].values() if rec["normal"] == "t"]
             cchars_in = [{"label": rec["label"], "dim": ZZ(rec["dim"]), "kernel": rec["kernel"], "faithful": rec["faithful"] == "t", "indicator": ZZ(rec["indicator"])} for rec in data["GrpChtrCC"].values()]
             qchars_in = [{"label": rec["label"], "qdim": ZZ(rec["qdim"]), "schur_index": ZZ(rec["schur_index"]), "faithful": rec["faithful"] == "t"} for rec in data["GrpChtrQQ"].values()]
