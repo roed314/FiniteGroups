@@ -825,7 +825,7 @@ def create_upload_files(start=None, step=None, overwrite=False):
                                     curgens = data["SubGrp"][slabel].get("generators", r"\\N").replace(" ", "")
                                     if curgens != sgens:
                                         with open(base / "chartex_mismatch" / label, "a") as Fout:
-                                        _ = Fout.write(f"Mismatch {slabel}:{curgens}:{sgens}\n")
+                                            _ = Fout.write(f"Mismatch {slabel}:{curgens}:{sgens}\n")
             load_file(data, chartex_coll / label)
 
             # TODO: check invalid subgroup label matches in comparing new and old subool data
