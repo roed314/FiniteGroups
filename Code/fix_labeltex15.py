@@ -124,7 +124,7 @@ def revise_subgroup_labels(label, data):
     # Now update the keys in data["SubGroup"]
     data["SubGroup"] = {rec["label"]: rec for rec in data["SubGroup"].values()}
     for C in data["GrpConjCls"].values():
-        if "centralizer" in C:
+        if "centralizer" in C and C["centralizer"] in old_lookup:
             C["centralizer"] = old_lookup[C["centralizer"]]
     for R in data["GrpChtrCC"].values():
         for col in ["center", "kernel"]:
