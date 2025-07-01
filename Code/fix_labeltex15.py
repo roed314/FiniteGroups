@@ -808,8 +808,8 @@ def create_upload_files(start=None, step=None, overwrite=False):
                 load_file(data, aut_coll / label) # Load new automorphism group data
             fill(label, data)
             revise_subgroup_labels(label, data) # Here we change subgroup labels to the new format
-            postfill(label, data)
             # Double check no mismatch on different runs
+            mismatched = False
             for fold in ["chartex", "chartex1", "chartex2"]:
                 ctfile = base / fold / label
                 if ctfile.exists():
@@ -818,15 +818,20 @@ def create_upload_files(start=None, step=None, overwrite=False):
                             if line.count("|") == 2:
                                 ctcodes, slabel, sgens = line.strip().split("|")
                                 if slabel not in data["SubGrp"]:
+                                    mismatched = True
                                     (base / "chartex_mismatch").mkdir(exist_ok=True)
                                     with open(base / "chartex_mismatch" / label, "a") as Fout:
+                                         # This happens     
                                         _ = Fout.write(f"Missing {slabel}\n")
                                 else:
                                     curgens = data["SubGrp"][slabel].get("generators", r"\\N").replace(" ", "")
                                     if curgens != sgens:
+                                        mismatched = True
                                         with open(base / "chartex_mismatch" / label, "a") as Fout:
                                             _ = Fout.write(f"Mismatch {slabel}:{curgens}:{sgens}\n")
-            load_file(data, chartex_coll / label)
+            if not mismatched:
+                load_file(data, chartex_coll / label)
+            postfill(label, data)
 
             # TODO: check invalid subgroup label matches in comparing new and old subool data
             for tbl, (cols, types) in finals.items():
