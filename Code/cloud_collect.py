@@ -1167,6 +1167,9 @@ def fix_latex(tokens):
 class Expr:
     def __repr__(self):
         return self.latex
+    @lazy_attribute
+    def latex_to_file(self):
+        return self.latex.replace("\\", "\\\\")
 
 class Paren(Expr):
     minpriority = 9 # never affects minpriority for products, since this is larger than the largest
@@ -1594,7 +1597,7 @@ def smith_to_names(invs):
         nameterms.append(f"C{n}{nexp}")
     return "*".join(nameterms), r"\times ".join(texterms)
 
-def get_tex_data_gps(order_limit=None, from_db=False):
+def get_tex_data_gps(order_limit=None, from_db=False, gpsource=None):
     lmfdb_path = os.path.expanduser("~/lmfdb")
     if lmfdb_path not in sys.path:
         sys.path.append(lmfdb_path)
@@ -1604,8 +1607,8 @@ def get_tex_data_gps(order_limit=None, from_db=False):
     tex_names = {}
     orig_tex_names = {}
     orig_names = {}
-    options = defaultdict(list)
-    by_order = defaultdict(list)
+    options = defaultdict(dict)
+    by_order = defaultdict(set)
     wreath_data = {}
     direct_data = {}
     cyclic = set()
@@ -1615,11 +1618,11 @@ def get_tex_data_gps(order_limit=None, from_db=False):
         if order_limit:
             query["order"] = {"$lte": order_limit}
         gpsource = db.gps_groups.search(query, ["label", "tex_name", "name", "representations", "order", "cyclic", "abelian", "smith_abelian_invariants", "direct_factorization", "wreath_data"])
-    else:
+    elif gpsource is None:
         gpsource = _gps_data_from_file(order_limit)
     for ctr, rec in enumerate(gpsource):
         label = rec["label"]
-        by_order[rec["order"]].append(label)
+        by_order[rec["order"]].add(label)
         if rec["abelian"]:
             # Need to deal with exponents/multiplicities to make this work
             rec["name"], rec["tex_name"] = smith_to_names(rec["smith_abelian_invariants"])
@@ -1639,13 +1642,15 @@ def get_tex_data_gps(order_limit=None, from_db=False):
         if isinstance(reps, dict):
             reps = reps.get("Lie", [])
         for X in reps:
-            options[label].append(Lie(X))
+            Y = Lie(X)
+            options[label][Y.latex] = Y
         if rec["wreath_data"]:
             wreath_data[label] = rec["wreath_data"]
         if rec["direct_factorization"]:
             direct_data[label] = rec["direct_factorization"]
-        if ctr and ctr % 100000 == 0:
-            print("groups", ctr, time.time() - t0)
+        if ctr and ctr % 10000 == 0:
+            print(f"groups {ctr} ({label}) {time.time() - t0}", end="\r")
+    print("groups done!                                    ")
     return tex_names, orig_tex_names, orig_names, options, by_order, wreath_data, direct_data, cyclic, finalized
 
 def _sub_data_from_file(order_limit=None):
@@ -1662,7 +1667,7 @@ def _sub_data_from_file(order_limit=None):
                     continue
                 yield dict(zip(cols, vals))
 
-def get_tex_data_subs(orig_tex_names, wreath_data, options, order_limit=None, from_db=False):
+def get_tex_data_subs(orig_tex_names, wreath_data, options, by_order, order_limit=None, from_db=False, subsource=None):
     # Now we get more options from gps_subgroups_test
     lmfdb_path = os.path.expanduser("~/lmfdb")
     if lmfdb_path not in sys.path:
@@ -1671,6 +1676,7 @@ def get_tex_data_subs(orig_tex_names, wreath_data, options, order_limit=None, fr
     t0 = time.time()
     subs = defaultdict(set) # Store normal subgroups from which we can construct new product decompositions
     sub_update = defaultdict(lambda: defaultdict(list)) # Record where we need to update the subgroup table after computing new tex_names
+    sub_oneoff = defaultdict(dict)
     wd_lookup = defaultdict(dict)
     borked = []
     if from_db:
@@ -1678,7 +1684,7 @@ def get_tex_data_subs(orig_tex_names, wreath_data, options, order_limit=None, fr
         if order_limit:
             query["ambient_order"] = {"$lte": order_limit}
         subsource = db.gps_subgroups_test.search(query, ["label", "short_label", "subgroup", "ambient", "quotient", "subgroup_tex", "ambient_tex", "quotient_tex", "subgroup_order", "quotient_order", "split", "direct"])
-    else:
+    elif subsource is None:
         subsource = _sub_data_from_file(order_limit)
     for ctr, rec in enumerate(subsource):
         subgroup, ambient, quotient = rec["subgroup"], rec["ambient"], rec["quotient"]
@@ -1687,13 +1693,20 @@ def get_tex_data_subs(orig_tex_names, wreath_data, options, order_limit=None, fr
         sord, qord = rec["subgroup_order"], rec["quotient_order"]
         for typ, label, tex in [("subgroup", subgroup, stex), ("ambient", ambient, atex), ("quotient", quotient, qtex)]:
 
-            if label is not None and label in orig_tex_names: # we might not have added this small group
+            if label is None:
+                if tex is not None:
+                    oneoff = parse(tex)
+                    if oneoff.latex != tex:
+                        sub_oneoff[typ][tex] = oneoff.latex
+            else:
                 sub_update[typ][label].append(rec["label"])
-                if tex is not None and tex != orig_tex_names[label]:
+                if tex is not None and tex != orig_tex_names[label] and tex not in options[label]:
                     newopt = parse(tex)
                     N = int(label.split(".")[0])
                     if newopt.order is None or newopt.order == N:
-                        options[label].append(newopt)
+                        if label not in by_order[N]: # Might be a small group id not in the database
+                            by_order[N].add(label)
+                        options[label][tex] = newopt
                     else:
                         borked.append((rec["label"], typ, label, tex))
         if subgroup is not None and quotient is not None and sord != 1 and qord != 1:
@@ -1708,9 +1721,10 @@ def get_tex_data_subs(orig_tex_names, wreath_data, options, order_limit=None, fr
             len(wreath_data[ambient]) == 4 and
             rec["short_label"] in wreath_data[ambient][:2]):
             wd_lookup[ambient][rec["short_label"]] = (subgroup, stex)
-        if ctr and ctr % 1000000 == 0:
-            print("subgroups", ctr, time.time() - t0)
-    return subs, sub_update, wd_lookup, borked
+        if ctr and ctr % 10000 == 0:
+            print(f"subgroups {ctr} ({ambient}) {time.time() - t0}", end="\r")
+    print("subgroups done!                               ")
+    return subs, sub_update, sub_oneoff, wd_lookup, borked
 
 def get_good_names(tex_names, options, by_order, wreath_data, wd_lookup, direct_data, cyclic, finalized, subs, borked):
     lmfdb_path = os.path.expanduser("~/lmfdb")
@@ -1766,7 +1780,7 @@ def get_good_names(tex_names, options, by_order, wreath_data, wd_lookup, direct_
                     terms += [B]
                 newopt = Prod(terms, ops)
                 assert newopt.order in [None, order]
-                options[label].append(newopt)
+                options[label][newopt.latex] = newopt
             if label in direct_data:
                 # TODO: collapse cyclic factors, collect terms appropriately before parenthesizing
                 terms = []
@@ -1794,12 +1808,12 @@ def get_good_names(tex_names, options, by_order, wreath_data, wd_lookup, direct_
                     # All of the factors have names
                     if len(terms) == 1:
                         assert terms[0].order in [None, order]
-                        options[label].append(terms[0])
+                        options[label][terms[0].latex] = terms[0]
                     else:
                         terms.sort(key=lambda term: (term.value, 1000000000 if term.order is None else term.order))
                         newopt = Prod(terms, [r"\times "] * (len(terms) - 1))
                         assert newopt.order in [None, order]
-                        options[label].append(newopt)
+                        options[label][newopt.latex] = newopt
                     if len(cyclics) > 1:
                         invs = sum([[base.N]*e for (base, e) in cyclics], [])
                         invs.sort()
@@ -1835,18 +1849,17 @@ def get_good_names(tex_names, options, by_order, wreath_data, wd_lookup, direct_
                                 terms.append(Exp(base, str(e)))
                         if len(terms) == 1:
                             assert terms[0].order in [None, order]
-                            options[label].append(terms[0])
+                            options[label][terms[0].latex] = terms[0]
                         else:
                             terms.sort(key=lambda term: (term.value, 1000000000 if term.order is None else term.order))
                             newopt = Prod(terms, [r"\times "] * (len(terms) - 1))
                             assert newopt.order in [None, order]
-                            options[label].append(newopt)
-            # Would be nice to deduplicate
+                            options[label][newopt.latex] = newopt
             if options[label]:
                 by_val = defaultdict(list)
                 if tex_names.get(label):
                     by_val[tex_names[label].value].append(tex_names[label])
-                for opt in options[label]:
+                for opt in options[label].values():
                     by_val[opt.value].append(opt)
                 best = by_val[min(by_val)]
                 if len(best) > 1:
@@ -1862,7 +1875,7 @@ def get_all_names(order_limit=None, from_db=False):
     tex_names, orig_tex_names, orig_names, options, by_order, wreath_data, direct_data, cyclic, finalized = get_tex_data_gps(order_limit=order_limit, from_db=from_db)
 
     # also updates options
-    subs, sub_update, wd_lookup, borked = get_tex_data_subs(orig_tex_names, wreath_data, options, order_limit=order_limit, from_db=from_db)
+    subs, sub_update, sub_oneoff, wd_lookup, borked = get_tex_data_subs(orig_tex_names, wreath_data, options, by_order, order_limit=order_limit, from_db=from_db)
 
     # also updates tex_names
     ties = get_good_names(tex_names, options, by_order, wreath_data, wd_lookup, direct_data, cyclic, finalized, subs, borked)
@@ -1878,9 +1891,7 @@ def get_all_names(order_limit=None, from_db=False):
                 _ = Fout.write(f"{label}|\\N|\\N\n")
                 null += 1
             else:
-                newtex = newtex.latex
-                # Smith computations were done in orig_tex_names, so we include everything.
-                newtex = newtex.replace("\\", "\\\\") # Need to double the backslashes to load into postgres
+                newtex = newtex.latex_to_file # Need to double the backslashes to load into postgres
                 ctr += 1
                 _ = Fout.write(f"{label}|{newtex}|{tex_names[label].plain}\n")
         print(f"{ctr} latex updated, {null} set to null")
@@ -1892,7 +1903,7 @@ def get_all_names(order_limit=None, from_db=False):
             for abstract_label, sub_labels in sub_update[typ].items():
                 for sub_label in sub_labels:
                     if tex_names[abstract_label] is not None:
-                        newtex = tex_names[abstract_label].latex.replace("\\", "\\\\")
+                        newtex = tex_names[abstract_label].latex_to_file
                         _ = Fout.write(f"{sub_label}|{newtex}\n")
                         ctr += 1
         print(f"{ctr} latex updated")
