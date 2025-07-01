@@ -1002,7 +1002,7 @@ def collate_upload_files():
     #texname_pos, name_pos = [H["Grp"][0].index(col) for col in ["tex_name", "name"]]
     subcols = ["label", "short_label", "subgroup", "ambient", "quotient", "subgroup_tex", "ambient_tex", "quotient_tex", "subgroup_order", "quotient_order", "split", "direct"]
     subtyps = [str, str, str, str, str, str, str, str, int, int, booler, booler]
-    subpos = {col: H["SubGrpSearch"][0].index(col) for col subcols}
+    subpos = {col: H["SubGrpSearch"][0].index(col) for col in subcols}
     def subsource():
         for label in labels:
             fname = out_coll / ("SubGrpSearch_" + label)
