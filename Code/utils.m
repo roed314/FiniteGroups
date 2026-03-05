@@ -557,6 +557,12 @@ intrinsic StringToGroup(s::MonStgElt : baseG:=0) -> Grp
         assert cmd in ["GL", "SL", "Sp", "SO", "SOPlus", "SOMinus", "SU", "GO", "GOPlus", "GOMinus", "GU", "CSp", "CSO", "CSOPlus", "CSOMinus", "CSU", "CO", "COPlus", "COMinus", "CU", "Omega", "OmegaPlus", "OmegaMinus", "Spin", "SpinPlus", "SpinMinus", "PGL", "PSL", "PSp", "PSO", "PSOPlus", "PSOMinus", "PSU", "PGO", "PGOPlus", "PGOMinus", "PGU", "POmega", "POmegaPlus", "POmegaMinus", "PGammaL", "PSigmaL", "PSigmaSp", "PGammaU", "AGL", "ASL", "ASp", "AGammaL", "ASigmaL", "ASigmaSp"];
         CMD := eval cmd;
         if cmd in ["AGL", "ASL"] then // wish we could do "ASp", "AGammaL", "ASigmaL", "ASigmaSp"
+            if n eq 1 and cmd eq "AGL" then
+                // Magma fails at this
+                k := GF(q);
+                a := PrimitiveElement(k);
+                return sub<GL(2,k)|[a,0,0,1],[1,0,1,1]>;
+            end if;
             return CMD(GrpMat, n, q);
         else
             return CMD(n, q);

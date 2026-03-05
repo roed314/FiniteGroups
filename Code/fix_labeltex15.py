@@ -3,6 +3,7 @@
 # Usage: parallel -j80 --results /scratch/grp/create_upload_output ./fix_labeltex15.py {} ::: {0..79}
 import sys
 import re
+import time
 import shutil
 from collections import defaultdict, Counter
 from itertools import islice
@@ -41,9 +42,9 @@ def headers():
         tbl = db[tbl]
         cols = tbl.search_cols
         if name == "SubGrp":
-            search_cols = "Agroup, Zgroup, abelian, ambient, ambient_counter, ambient_order, ambient_tex, central, central_factor, centralizer_order, characteristic, core_order, counter, cyclic, direct, hall, label, maximal, maximal_normal, metabelian, metacyclic, minimal, minimal_normal, nilpotent, normal, outer_equivalence, perfect, proper, quotient, quotient_Agroup, quotient_abelian, quotient_cyclic, quotient_hash, quotient_metabelian, quotient_nilpotent, quotient_order, quotient_simple, quotient_solvable, quotient_supersolvable, quotient_tex, simple, solvable, special_labels, split, standard_generators, stem, subgroup, subgroup_hash, subgroup_order, subgroup_tex, supersolvable, sylow".split(", ")
+            search_cols = "Agroup, Zgroup, abelian, ambient, ambient_counter, ambient_order, ambient_tex, central, central_factor, centralizer_order, characteristic, core_order, counter, cyclic, dihedral, direct, familial, hall, label, maximal, maximal_normal, metabelian, metacyclic, minimal, minimal_normal, nilpotent, normal, old_label, outer_equivalence, perfect, proper, quotient, quotient_Agroup, quotient_abelian, quotient_cyclic, quotient_hash, quotient_metabelian, quotient_nilpotent, quotient_order, quotient_simple, quotient_solvable, quotient_supersolvable, quotient_tex, simple, solvable, special_labels, split, standard_generators, stem, subgroup, subgroup_hash, subgroup_order, subgroup_tex, supersolvable, sylow".split(", ")
             data_cols = ["label", "ambient"] + [col for col in cols if col not in search_cols]
-            headers["SubGrpSearch"] = (search_cols, [tbl.col_type[col] for col in search_cols])
+            headers["SubGrpSearch"] = (search_cols, ["boolean" if col in ["dihedral", "familial"] else tbl.col_type[col] for col in search_cols])
             headers["SubGrpData"] = (data_cols, [tbl.col_type[col] for col in data_cols])
         else:
             types = [tbl.col_type[col] for col in cols]
@@ -54,16 +55,17 @@ breaker = re.compile(r"([a-z]+)([A-Z]+)")
 canpiece = re.compile(r"([a-z]+)(\d+)")
 def revise_subgroup_labels(label, data):
     # Set subgroup labels to their final form, update other columns where they appear
-    N = ZZ(data["Grp"][label]["order"])
+    G = data["Grp"][label]
+    N = ZZ(G["order"])
     if "SubGrp" not in data or not data["SubGrp"]:
         return
-    solv = (data["Grp"][label]["solvable"] == "t")
-    oe = (data["Grp"][label]["outer_equivalence"] == "t")
+    solv = (G["solvable"] == "t")
+    oe = (G["outer_equivalence"] == "t")
     if oe:
         canre = re.compile(r"\d+\.[0-9a-z]+\.\d+\.[a-z]+\d+")
     else:
         canre = re.compile(r"\d+\.[0-9a-z]+\.\d+\.[a-z]+\d+\.[a-z]+\d+")
-    sib = int(data["Grp"][label]["subgroup_index_bound"])
+    sib = int(G["subgroup_index_bound"])
     def noncanonical(ind, Ds):
         sub_ord = N // ind
         if ind == 1 or ind == N or (ind.gcd(sub_ord) == 1 and (sub_ord.is_prime_power() or solv)):
@@ -78,6 +80,7 @@ def revise_subgroup_labels(label, data):
     by_index = defaultdict(list)
     for D in data["SubGrp"].values():
         by_index[ZZ(D["quotient_order"])].append(D)
+        D["old_label"] = D["short_label"]
     for ind, Ds in by_index.items():
         if noncanonical(ind, Ds):
             # Despite being non-canonical, we use the existing labels to sort since they will sometimes group by meaningful quantities
@@ -121,11 +124,24 @@ def revise_subgroup_labels(label, data):
             if D.get(col, r"\N") not in [r"\N", "{}"]:
                 lookup = new_lookup if col in updated else old_lookup
                 D[col] = "{" + ",".join(lookup[x] for x in D[col][1:-1].split(",")) + "}"
+    if G.get("wreath_data", r"\N").count(",") == 3:
+        # It's possible that we have a false positive if there's a comma in a latex name
+        A, B, C, T = G["wreath_data"][1:-1].split(",")
+        A, B, C = A.strip(), B.strip(), C.strip()
+        if A in old_lookup and B in old_lookup and C in old_lookup:
+            A, B, C = old_lookup[A], old_lookup[B], old_lookup[C]
+            G["wreath_data"] = "{%s,%s,%s,%s}" % (A, B, C, T)
+        else:
+            with open("/scratch/grp/bad_wreath.txt", "a") as F:
+                _ = F.write(f"{label}|{A}|{B}|{C}|{T}\n")
     # Now update the keys in data["SubGroup"]
-    data["SubGroup"] = {rec["label"]: rec for rec in data["SubGroup"].values()}
+    data["SubGrp"] = {rec["label"]: rec for rec in data["SubGrp"].values()}
     for C in data["GrpConjCls"].values():
-        if "centralizer" in C and C["centralizer"] in old_lookup:
-            C["centralizer"] = old_lookup[C["centralizer"]]
+        if "centralizer" in C:
+            if C["centralizer"] in old_lookup:
+                C["centralizer"] = old_lookup[C["centralizer"]]
+            else:
+                C["centralizer"] = r"\N"
     for R in data["GrpChtrCC"].values():
         for col in ["center", "kernel"]:
             if col in R:
@@ -153,6 +169,28 @@ def label_to_key(label):
         else:
             ans.append(class_to_int(piece))
     return ans
+
+# Ooops
+@cached_function
+def oops():
+    ggps = []
+    def ZZmaker(x):
+        if x == r"\N":
+            return None
+        return ZZ(x)
+    def boolmaker(x):
+        if x == r"\N":
+            return None
+        return x == "t"
+    with open("/scratch/grp/bigfix0/gps_groups.txt") as F:
+        for i, line in enumerate(F):
+            if i == 0:
+                ggcols = line.strip().split("|")
+            elif i > 2:
+                gg = dict(zip(ggcols, line.strip().split("|")))
+                ggtrim = {col: maker(gg[col]) for col, maker in [("label", str), ("cyclic", boolmaker), ("hash", ZZmaker), ("order", ZZmaker), ("counter", ZZmaker)]}
+                ggps.append(ggtrim)
+    return ggps
 
 def create_upload_files(start=None, step=None, overwrite=False):
     # TODO: Make sure we're actually wiping out bad char, qchar and conj_classes
@@ -208,15 +246,22 @@ def create_upload_files(start=None, step=None, overwrite=False):
     curhead = defaultdict(tuple)
     Jlookup = {}
     hash_lookup = {}
-    for rec in db.gps_groups.search({}, ["label", "order", "counter", "hash"]):
+    #for rec in db.gps_groups.search({}, ["label", "order", "counter", "hash"]):
+    for rec in oops():
         Jlookup[rec["order"], rec["counter"]] = rec["label"]
         hash_lookup[rec["label"]] = rec["hash"]
-    cyclic_lookup = {rec["order"]: rec["label"] for rec in db.gps_groups.search({"cyclic":True}, ["order", "label"])}
+    #cyclic_lookup = {rec["order"]: rec["label"] for rec in db.gps_groups.search({"cyclic":True}, ["order", "label"])}
+    cyclic_lookup = {rec["order"]: rec["label"] for rec in oops() if rec["cyclic"]}
     special_names = defaultdict(list)
+    familial = set()
+    dihedral = set()
     for rec in db.gps_special_names.search({}, ["label", "family", "parameters"]):
-        params = rec["parameters"]
+        label, family, params = rec["label"], rec["family"], rec["parameters"]
+        familial.add(label)
+        if family == "D":
+            dihedral.add(label)
         if "q" in params and "fam" not in params:
-            special_names[rec["label"]].append((rec["family"], rec["parameters"]))
+            special_names[label].append((family, params))
     fam_sort = {rec["family"]: rec["priority"] for rec in db.gps_families.search({}, ["family", "priority"])}
 
     # These slipped through the cracks somehow so we correct them manually
@@ -396,7 +441,7 @@ def create_upload_files(start=None, step=None, overwrite=False):
         writers = {final: open(bigfix / (final+".txt"), "w") for final in finals}
     cc_tbls = set(["GrpConjCls", "GrpChtrCC", "GrpChtrQQ"])
 
-    def load_file(data, path, skip_cc=False, reset_labels=False, cache_labels=False, loading_new=False):
+    def load_file(data, path, skip_cc=False, reset_labels=False, cache_labels=False, loading_new=False, nullifyK=False):
         if reset_labels and "SubGrp" in data:
             for D in data["SubGrp"].values():
                 D["stored_label"] = D["label"]
@@ -454,14 +499,16 @@ def create_upload_files(start=None, step=None, overwrite=False):
                             if line["special_labels"] == '{""}':
                                 line["special_labels"] = "{}"
                         elif code == "K" and lab not in data[tbl]:
-                            badK.add(".".join(lab.split(".")[:2]))
+                            badK.add(f"{lab}:{path}")
                             continue
                         #elif code == "i" and line["eulerian_function"] == r"\N":
                         #    # We recomputed rank but not Eulerian function; don't want to wipe out old data
                         #    del line["eulerian_function"]
                     to_update = data[tbl][lab]
                     for col, val in line.items():
-                        if val != r"\N":
+                        if val == "none": # Not sure how these slipped in
+                            val = r"\N"
+                        if val != r"\N" or nullifyK and col == "characteristic":
                             if to_update.get(col, r"\N") != r"\N" and to_update[col] != val:
                                 if (tbl,col) not in changed_cols:
                                     changed_cols[tbl,col] = lab
@@ -555,6 +602,7 @@ def create_upload_files(start=None, step=None, overwrite=False):
         else:
             G["conjugacy_classes_known"] = "f";
         if "GrpChtrCC" in data:
+            G["complex_characters_known"] = "t"
             char_by_counter = sorted(data["GrpChtrCC"].values(), key=lambda rec: int(rec["counter"]))
             if "charc_centers" in G:
                 Z = G["charc_centers"][1:-1].split(",")
@@ -629,10 +677,16 @@ def create_upload_files(start=None, step=None, overwrite=False):
                     else:
                         with open("/scratch/grp/bad_charvalue", "a") as Fbad:
                             _ = Fbad.write(f"Z{label}|{D['label']}|{len(values)}|{len(cc_size)}\n")
+        else:
+            G["complex_characters_known"] = "f"
         if "GrpChtrQQ" in data:
+            G["rational_characters_known"] = "t"
             for D in data["GrpChtrQQ"].values():
                 D["group_order"] = N
+        else:
+            G["rational_characters_known"] = "f"
         if "SubGrp" in data:
+            subords = set()
             L = list(data["SubGrp"].values())
             L.sort(key=lambda rec: label_to_key(rec["short_label"]))
             for ctr, D in enumerate(L, 1):
@@ -642,12 +696,12 @@ def create_upload_files(start=None, step=None, overwrite=False):
                 # Subgroups and quotient groups being marked cyclic without being identified was causing problems
                 # In these cases, we can often find the id, so we do that here
                 subord, quoord = ZZ(D["subgroup_order"]), ZZ(D["quotient_order"])
-                if D.get("subgroup_cyclic") == "t" and subord in cyclic_lookup:
-                    if D.get("subgroup", r"\N") == r"\N":
-                        D["subgroup"] = cyclic_lookup[subord]
-                    elif D["subgroup"] != cyclic_lookup[subord]:
-                        with open("/scratch/grp/bad_cylic", "a") as Fbad:
-                            _ = Fbad.write(f"S{label}|{D['short_label']}\n")
+                subords.add(subord)
+                if D.get("cyclic") == "t" and subord in cyclic_lookup:
+                    if D.get("subgroup", r"\N") != r"\N" and D["subgroup"] != cyclic_lookup[subord]:
+                        with open("/scratch/grp/bad_cyclic", "a") as Fbad:
+                            _ = Fbad.write(f"S{label}|{D['short_label']}|{D['subgroup']}|{cyclic_lookup[subord]}\n")
+                    D["subgroup"] = cyclic_lookup[subord]
                 if D.get("quotient_cyclic") == "t" and quoord in cyclic_lookup:
                     assert D["normal"] == "t"
                     if D.get("quotient", r"\N") == r"\N":
@@ -657,7 +711,15 @@ def create_upload_files(start=None, step=None, overwrite=False):
                             _ = Fbad.write(f"Q{label}|{D['short_label']}\n")
                 if D.get("central", r"\N") == "t" and D.get("abelian", r"\N") == "f":
                     D["central"] = "f"
+            if all(p**e in subords for (p,e) in n.factor()):
+                G["sylow_subgroups_known"] = "t"
+            else:
+                G["sylow_subgroups_known"] = "f"
+        else:
+            G["sylow_subgroups_known"] = r"\N"
         G["counter"] = G_ctr # Not sure how this was wrong in Magma....
+        G["familial"] = "t" if label in familial else "f"
+        G["dihedral"] = "t" if label in dihedral else "f"
         if label in elt_repr_to_perm:
             G["element_repr_type"] = "Perm"
         if label in special_names:
@@ -759,18 +821,15 @@ def create_upload_files(start=None, step=None, overwrite=False):
             Q_dim, Qdim_count = linQ_dim(label, irrQ_dim=irrQ_dim, mobius=mobius, poset=poset, chars=Qchars_dim)
             G["irrC_degree"], G["linC_degree"], G["linC_count"], G["irrR_degree"], G["linR_degree"], G["linR_count"], G["irrQ_degree"], G["linQ_degree"], G["linQ_degree_count"], G["irrQ_dim"], G["linQ_dim"], G["linQ_dim_count"] = [str(x) for x in [irrC_degree, linC, linC_count, irrR_degree, linR, linR_count, irrQ_degree, Q_deg, Qdeg_count, irrQ_dim, Q_dim, Qdim_count]]
 
-    def postfill(label, data):
-        # fill after revise_subgroups and loading from chartex
-        # TODO
-        pass      
-
     try:
-        label_source = db.gps_groups.search({}, "label")
+        #label_source = db.gps_groups.search({}, "label")
+        label_source = [rec["label"] for rec in oops()]
         if start is None:
             for oname, (final_cols, final_types) in finals.items():
                 _ = writers[oname].write("|".join(final_cols) + "\n" + "|".join(final_types) + "\n\n")
         else:
-            label_source = islice(label_source, start, db.gps_groups.count(), step)
+            #label_source = islice(label_source, start, db.gps_groups.count(), step)
+            label_source = islice(label_source, start, len(oops()), step)
         for j, label in enumerate(label_source): # Fixes the ordering correctly
             if j % 1000 == 0:
                 print(f"Writing {j} ({label})...         ", end="\r")
@@ -821,7 +880,6 @@ def create_upload_files(start=None, step=None, overwrite=False):
                                     mismatched = True
                                     (base / "chartex_mismatch").mkdir(exist_ok=True)
                                     with open(base / "chartex_mismatch" / label, "a") as Fout:
-                                         # This happens     
                                         _ = Fout.write(f"Missing {slabel}\n")
                                 else:
                                     curgens = data["SubGrp"][slabel].get("generators", r"\\N").replace(" ", "")
@@ -830,8 +888,51 @@ def create_upload_files(start=None, step=None, overwrite=False):
                                         with open(base / "chartex_mismatch" / label, "a") as Fout:
                                             _ = Fout.write(f"Mismatch {slabel}:{curgens}:{sgens}\n")
             if not mismatched:
-                load_file(data, chartex_coll / label)
-            postfill(label, data)
+                load_file(data, chartex_coll / label, nullifyK=True)
+            if any(H["characteristic"] == r"\N" for H in data["SubGrp"].values()):
+                # Try to conclude that some subgroups are characteristic
+                Gdata = data["Grp"][label]
+                nob = ZZ(Gdata["normal_order_bound"])
+                nib = ZZ(Gdata["normal_index_bound"])
+                by_suborder = defaultdict(list)
+                for H in data["SubGrp"].values():
+                    if H["normal"] == "t":
+                        sord = ZZ(H["subgroup_order"])
+                        sind = ZZ(H["quotient_order"])
+                        if sord.gcd(sind) == 1 and (sord.is_prime_power() or Gdata["solvable"] == "t"):
+                            H["characteristic"] = "t"
+                            continue
+                        if nob == 0 or sord <= nob or sind <= nib:
+                            by_suborder[sord].append(H)
+                for m, Hs in by_suborder.items():
+                    if len(Hs) == 1:
+                        Hs[0]["characteristic"] = "t"
+                        continue
+                    by_SQ = defaultdict(list)
+                    if all(H.get("subgroup",r"\N") != r"\N" for H in Hs):
+                        Skey = "subgroup"
+                    elif all(H.get("subgroup_hash",r"\N")  != r"\N" for H in Hs):
+                        Skey = "subgroup_hash"
+                    else:
+                        Skey = None
+                    if all(H.get("quotient",r"\N") != r"\N" for H in Hs):
+                        Qkey = "quotient"
+                    elif all(H.get("quotient_hash",r"\N") != r"\N" for H in Hs):
+                        Qkey = "quotient_hash"
+                    else:
+                        Qkey = None
+                    for H in Hs:
+                        by_SQ[H.get(Skey),H.get(Qkey)].append(H)
+                    for key, HHs in by_SQ.items():
+                        if len(HHs) == 1:
+                            HHs[0]["characteristic"] = "t"
+                        else:
+                            for H in HHs:
+                                if H.get("special_labels","{}") != "{}":
+                                    spec_labels = H["special_labels"][1:-1].split(",")
+                                    if not all(spec[0] == "C" for spec in spec_labels):
+                                        # chief series are not characteristic
+                                        H["characteristic"] = "t"
 
             # TODO: check invalid subgroup label matches in comparing new and old subool data
             for tbl, (cols, types) in finals.items():
@@ -919,7 +1020,8 @@ def set_preload_label_info():
             with open("DATA/preload_label_info/" + ambient, "w") as Fout:
                 _ = Fout.write(f"{keys}\n{vals}\n")
     amb = None
-    hash_lookup = {rec["label"]: rec["hash"] for rec in db.gps_groups.search({}, ["label", "hash"])}
+    #hash_lookup = {rec["label"]: rec["hash"] for rec in db.gps_groups.search({}, ["label", "hash"])}
+    hash_lookup = {rec["label"]: rec["hash"] for rec in oops()}
     for rec in db.gps_subgroups.search({"outer_equivalence":True, "ambient_order":{"$or":[{"$gt":2000}, {"$in":[512,1024,1152,1536,1920]}]}}, ["ambient", "subgroup", "subgroup_hash", "subgroup_order", "quotient", "quotient_hash", "quotient_order", "normal"]):
         if rec["ambient"] != amb:
             if amb is not None:
@@ -960,76 +1062,99 @@ def set_preload_label_info():
         if not os.path.exists("DATA/preload_label_info/" + fname):
             shutil.copy("DATA/preload/"+fname, "DATA/preload_label_info/"+fname)
 
-def collate_upload_files():
-    from cloud_collect import get_tex_data_gps, get_tex_data_subs, booler
+def collate_upload_files(tbls=["Grp", "SubGrpSearch", "SubGrpData", "GrpConjCls", "GrpChtrCC", "GrpChtrQQ"]):
+    assert not Path("/scratch/grp/create_upload_files_errors.txt").exists()
     base = Path("/scratch/grp")
     out_coll = base / "out_collated"
     bigfix = base / "bigfix"
     H = headers()
-    labels = list(db.gps_groups.search({}, "label"))
-    gpcols = ["label", "tex_name", "name", "representations", "order", "cyclic", "abelian", "smith_abelian_invariants", "direct_factorization", "wreath_data"]
-    gptyps = [str, str, str, sage_eval, int, booler, booler, sage_eval, sage_eval, sage_eval]
-    gppos = {col: H["Grp"][0].index(col) for col in gpcols}
-    newfrob = {
-        "600.149": "F_{25}",
-        "702.47": "F_{27}",
-        "992.194": "F_{32}",
-        "2352.b": "F_{49}",
-        "4032.n": "F_{64}",
-        "6480.a": "F_{81}",
-        "14520.b": "F_{121}",
-        "15500.d": "F_{125}",
-        "16256.19325": "F_{128}",
-        "28392.a": "F_{169}",
-        "37056.a": "F_{193}",
-        "58806.b": "F_{243}",
-        "65280.a": "F_{256}",
-        "65792.1118964": "F_{257}",
-        "83232.a": "F_{289}",
-        "117306.b": "F_{343}",
-        "129960.a": "F_{361}",
-        "187056.a": "F_{433}",
-        "201152.a": "F_{449}",
-    }
-    def gpsource():
-        for label in labels:
-            fname == out_coll / ("Grp_" + label)
-            if fname.exists():
-                with open(fname) as F:
-                    line = F.read().strip().replace("\\\\", "\\")
-                    pieces = line.split("|")
-                    rec = {col: pieces[gppos[col]] for col in gpcols}
-                    if label in newfrob:
-                        rec["tex_name"] = newfrob[label]
-                    rec = {col: (None if rec[col] == r"\N" else typ(rec[col])) for (typ, col) in zip(gptyps, gpcols)}
-                    yield rec
-    #sub_pos, stex_pos, quo_pos, qtex_pos = [H["SubGrpSearch"][0].index(col) for col in ]
-    #texname_pos, name_pos = [H["Grp"][0].index(col) for col in ["tex_name", "name"]]
-    subcols = ["label", "short_label", "subgroup", "ambient", "quotient", "subgroup_tex", "ambient_tex", "quotient_tex", "subgroup_order", "quotient_order", "split", "direct"]
-    subtyps = [str, str, str, str, str, str, str, str, int, int, booler, booler]
-    subpos = {col: H["SubGrpSearch"][0].index(col) for col in subcols}
-    def subsource():
-        for label in labels:
-            fname = out_coll / ("SubGrpSearch_" + label)
-            if fname.exists():
-                with open(fname) as F:
-                    for line in F:
-                        line = line.replace("\\\\", "\\")
+    #labels = list(db.gps_groups.search({}, "label"))
+    labels = [rec["label"] for rec in oops()]
+    borked = []
+    if "Grp" in tbls or "SubGrpSearch" in tbls:
+        from cloud_collect import get_tex_data_gps, get_tex_data_subs, get_good_names, booler
+        gpcols = ["label", "tex_name", "name", "representations", "order", "cyclic", "abelian", "smith_abelian_invariants", "direct_factorization", "wreath_data", "aut_tex", "outer_tex", "inner_tex", "autcent_tex", "autcentquo_tex", "aut_group", "outer_group", "central_quotient", "autcent_group", "autcentquo_group"]
+        def wreath_proc(x):
+            assert x[0] == "{" and x[-1] == "}"
+            return x[1:-1].split(",")
+        def smith_proc(x):
+            assert x[0] == "{" and x[-1] == "}"
+            if x == "{}":
+                return []
+            return [int(c) for c in x[1:-1].split(",")]
+        gptyps = [str, str, str, sage_eval, int, booler, booler, smith_proc, sage_eval, wreath_proc] + [str] * 10
+        gppos = {col: H["Grp"][0].index(col) for col in gpcols}
+        manual_tex = {
+            "600.149": "F_{25}",
+            "702.47": "F_{27}",
+            "992.194": "F_{32}",
+            "2352.b": "F_{49}",
+            "4032.n": "F_{64}",
+            "6480.a": "F_{81}",
+            "14520.b": "F_{121}",
+            "15500.d": "F_{125}",
+            "16256.19325": "F_{128}",
+            "28392.a": "F_{169}",
+            "37056.a": "F_{193}",
+            "58806.b": "F_{243}",
+            "65280.a": "F_{256}",
+            "65792.1118964": "F_{257}",
+            "83232.a": "F_{289}",
+            "103680.b": "CSp(4,3)",
+            "117306.b": "F_{343}",
+            "129960.a": "F_{361}",
+            "187056.a": "F_{433}",
+            "201152.a": "F_{449}",
+            "2937600.a": "GSp(4,4)",
+            "7396945920.a": "GSp(4,8)",
+            "12318179328000.a": "GSp(6,4)",
+            #"17971200.a": "{}^2F(4,2)'",
+        }
+        def gpsource():
+            for i, label in enumerate(labels):
+                fname = out_coll / ("Grp_" + label)
+                if fname.exists():
+                    with open(fname) as F:
+                        line = F.read().strip().replace("\\\\", "\\")
                         pieces = line.split("|")
-                        rec = {col: pieces[subpos[col]] for col in subcols}
-                        rec = {col: (None if rec[col] == r"\N" else typ(rec[col])) for (typ, col) in zip(subtyps, subcols)}
+                        rec = {col: pieces[gppos[col]] for col in gpcols}
+                        if label in manual_tex:
+                            rec["tex_name"] = manual_tex[label]
+                        rec = {col: (None if rec[col] == r"\N" else typ(rec[col])) for (typ, col) in zip(gptyps, gpcols)}
                         yield rec
+        #sub_pos, stex_pos, quo_pos, qtex_pos = [H["SubGrpSearch"][0].index(col) for col in ]
+        #texname_pos, name_pos = [H["Grp"][0].index(col) for col in ["tex_name", "name"]]
+        subcols = ["label", "subgroup", "ambient", "quotient", "subgroup_tex", "ambient_tex", "quotient_tex", "subgroup_order", "quotient_order", "ambient_order", "split", "direct", "abelian"]
+        subtyps = [str, str, str, str, str, str, str, int, int, int, booler, booler, booler]
+        subpos = {col: H["SubGrpSearch"][0].index(col) for col in subcols}
+        def subsource():
+            for i, label in enumerate(labels):
+                fname = out_coll / ("SubGrpSearch_" + label)
+                if fname.exists():
+                    with open(fname) as F:
+                        for line in F:
+                            line = line.replace("\\\\", "\\")
+                            pieces = line.split("|")
+                            rec = {col: pieces[subpos[col]] for col in subcols}
+                            rec = {col: (None if rec[col] == r"\N" else typ(rec[col])) for (typ, col) in zip(subtyps, subcols)}
+                            #if rec["subgroup"] is None and rec["quotient_order"] == 1:
+                            #    rec["subgroup"] = rec["ambient"]
+                            #if rec["quotient"] is None and rec["subgroup_order"] == 1:
+                            #    rec["quotient"] = rec["ambient"]
+                            rec["short_label"] = ".".join(rec["label"].split(".")[2:])
+                            yield rec
 
-    tex_names, orig_tex_names, orig_names, options, by_order, wreath_data, direct_data, cyclic, finalized = get_tex_data_gps(gpsource=gpsource())
+        tex_names, orig_tex_names, orig_names, options, by_order, wreath_data, direct_data, cyclic, finalized, oneoff, update, borked = get_tex_data_gps(gpsource=gpsource())
 
-    # also updates options
-    subs, sub_update, sub_oneoff, wd_lookup, borked = get_tex_data_subs(orig_tex_names, wreath_data, options, subsource=subsource())
+        # also updates options
+        subs, wd_lookup = get_tex_data_subs(orig_tex_names, wreath_data, options, by_order, oneoff, update, borked, subsource=subsource())
 
-    # also updates tex_names
-    ties = get_good_names(tex_names, options, by_order, wreath_data, wd_lookup, direct_data, cyclic, finalized, subs, borked)
+        # also updates tex_names
+        ties = get_good_names(tex_names, options, by_order, wreath_data, wd_lookup, direct_data, cyclic, finalized, subs, borked)
 
-    for tbl in ["Grp", "SubGrpSearch", "SubGrpData", "GrpConjCls", "GrpChtrCC", "GrpChtrQQ"]:
+    for tbl in tbls:
         print("Starting", tbl)
+        t0 = time.time()
         with open(bigfix / (tbl + ".txt"), "w") as Fout:
             _ = Fout.write("|".join(H[tbl][0]) + "\n" + "|".join(H[tbl][1]) + "\n\n")
             for i, label in enumerate(labels):
@@ -1040,25 +1165,52 @@ def collate_upload_files():
                     with open(fname) as F:
                         for line in F:
                             if tbl == "Grp":
-                                new = tex_names[rec["label"]]
                                 pieces = line.strip().split("|")
+                                new = tex_names[pieces[gppos["label"]]]
                                 pieces[gppos["tex_name"]] = new.latex_to_file
                                 pieces[gppos["name"]] = new.plain
+                                for typ in ["aut", "outer", "inner", "autcent", "autcentquo"]:
+                                    if typ == "inner":
+                                        lcol = "central_quotient"
+                                    else:
+                                        lcol = typ + "_group"
+                                    tcol = typ + "_tex"
+                                    alab, atex = pieces[gppos[lcol]], pieces[gppos[tcol]]
+                                    if alab == r"\N":
+                                        if atex != r"\N" and atex in oneoff[typ]:
+                                            pieces[gppos[tcol]] = oneoff[typ][atex]
+                                    else:
+                                        new = tex_names.get(alab)
+                                        if new is not None:
+                                            pieces[gppos[tcol]] = new.latex_to_file
                                 line = "|".join(pieces) + "\n"
                             elif tbl == "SubGrpSearch":
                                 pieces = line.strip().split("|")
                                 for col in ["subgroup", "ambient", "quotient"]:
                                     lab = pieces[subpos[col]]
                                     if lab == r"\N":
+                                        amb = pieces[subpos["ambient"]]
+                                        amb_order = amb.split(".")[0]
+                                        if pieces[subpos[col+"_order"]] == amb_order:
+                                            lab = pieces[subpos[col]] = amb
+                                    if lab == r"\N":
                                         old = pieces[subpos[col+"_tex"]]
-                                        if old != r"\N" and old in sub_oneoff:
-                                            pieces[subpos[col+"_tex"]] = sub_oneoff[old]
+                                        if old != r"\N" and old in oneoff[col]:
+                                            pieces[subpos[col+"_tex"]] = oneoff[col][old]
+                                        elif "rm" in old:
+                                            borked.append(("Nrm", pieces[subpos["label"]], old))
                                     else:
-                                        new = tex_names[lab]
-                                        pieces[subpos[col+"_tex"]] = new.latex_to_file
+                                        new = tex_names.get(lab)
+                                        if new is not None:
+                                            pieces[subpos[col+"_tex"]] = new.latex_to_file
+                                        else:
+                                            old = pieces[subpos[col+"_tex"]]
+                                            if "rm" in old:
+                                                borked.append(("Lrm", pieces[subpos["label"]], old))
                                 line = "|".join(pieces) + "\n"
                             _ = Fout.write(line)
-        print(f"Done writing {tbl}!                          ")
+        print(f"Done writing {tbl}! {time.time() - t0}                         ")
+    return borked
 
 
 if sys.argv[0] == "./fix_labeltex15.py":
@@ -1067,7 +1219,7 @@ if sys.argv[0] == "./fix_labeltex15.py":
         step = int(F.read())
     badK, badQ, changed_cols = create_upload_files(start=start, step=step, overwrite=True)
     if badK:
-        with open("/scratch/grp/badK", "a") as F:
+        with open("/scratch/grp/badK", "w") as F:
             _ = F.write("\n".join(badK)+"\n")
     if badQ:
         with open("/scratch/grp/badQ", "a") as F:

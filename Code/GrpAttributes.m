@@ -1088,7 +1088,7 @@ end intrinsic;
 intrinsic direct_factorization(G::LMFDBGrp) -> Any
 {}
   GG := G`MagmaGrp;
-  if Get(G, "simple") or (Get(G, "cyclic") and IsPrimePower(G`order)) then
+  if Get(G, "simple") or G`order eq 1 or (Get(G, "cyclic") and IsPrimePower(G`order)) then
       return [];
   elif Get(G, "abelian") then
       return CollectDirectFactors([CyclicGroup(m) : m in PrimaryAbelianInvariants(G`MagmaGrp)]);
