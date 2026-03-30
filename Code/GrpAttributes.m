@@ -1524,6 +1524,7 @@ intrinsic characters_add_sort_and_labels(G::LMFDBGrp, cchars::Any, rchars::Any) 
   rct := Get(G,"MagmaRationalCharacterTable");
   matching := Get(G,"MagmaCharacterMatching");
   perm := Get(G, "CCpermutation"); // perm[j] is the a Magma index
+  perminv := Get(G, "CCpermutationInv"); // perm[j] is the a Magma index
   glabel := Get(G, "label");
   // Need outer sort for rct, and then an inner sort for ct
   goodsubs := getgoodsubs(g, ct); // gives <subs, tvals>
@@ -1538,8 +1539,8 @@ intrinsic characters_add_sort_and_labels(G::LMFDBGrp, cchars::Any, rchars::Any) 
   // Want sort list to be <degree, size of Gal orbit, n, t, lex info, ...>
   // We give rational character values first, then complex
   // Priorities by lex sort
-  forlexsortrat := <<rct[comp2rat[j]][perm[k]] : k in [1..#ct]> : j in [1..#ct]>;
-  forlexsort := <Flat(<<Round(10^25*Real(ct[j,perm[k]])), Round(10^25*Imaginary(ct[j,perm[k]]))> : k in [1..#ct]>) : j in [1..#ct]>;
+  forlexsortrat := <<rct[comp2rat[j]][perminv[k]] : k in [1..#ct]> : j in [1..#ct]>;
+  forlexsort := <Flat(<<Round(10^25*Real(ct[j,perminv[k]])), Round(10^25*Imaginary(ct[j,perminv[k]]))> : k in [1..#ct]>) : j in [1..#ct]>;
 //"forlexsortrat";
 //forlexsortrat;
 //"forlexsort";
@@ -1609,7 +1610,7 @@ intrinsic characters_add_sort_and_labels(G::LMFDBGrp, cchars::Any, rchars::Any) 
       Kn := CyclotomicField(cyclon);
       cchars[cindex]`cyclotomic_n := cyclon;
       //cchars[cindex]`values := [PrintRelExtElement(Kn!thischar[perm[z]]) : z in [1..#thischar]];
-      cchars[cindex]`values := [WriteCyclotomicElement(Kn!thischar[perm[z]],cyclon,cyc_cache) : z in [1..#thischar]];
+      cchars[cindex]`values := [WriteCyclotomicElement(Kn!thischar[perminv[z]],cyclon,cyc_cache) : z in [1..#thischar]];
       if dat[len-2] notin donec then
         ccnt +:= 1;
         ctotalcnt +:= 1;
@@ -1624,7 +1625,7 @@ intrinsic characters_add_sort_and_labels(G::LMFDBGrp, cchars::Any, rchars::Any) 
         cyclon := CyclotomicOrder(basef);
         Kn := CyclotomicField(cyclon);
         cchars[cindex]`cyclotomic_n := cyclon;
-        cchars[cindex]`values := [WriteCyclotomicElement(Kn!thischar[perm[z]], cyclon, cyc_cache) : z in [1..#thischar]];
+        cchars[cindex]`values := [WriteCyclotomicElement(Kn!thischar[perminv[z]], cyclon, cyc_cache) : z in [1..#thischar]];
       end if;
     end if;
   end for;
