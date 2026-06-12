@@ -42,9 +42,9 @@ def headers():
         tbl = db[tbl]
         cols = tbl.search_cols
         if name == "SubGrp":
-            search_cols = "Agroup, Zgroup, abelian, ambient, ambient_counter, ambient_order, ambient_tex, central, central_factor, centralizer_order, characteristic, core_order, counter, cyclic, direct, hall, label, maximal, maximal_normal, metabelian, metacyclic, minimal, minimal_normal, nilpotent, normal, old_label, outer_equivalence, perfect, proper, quotient, quotient_Agroup, quotient_abelian, quotient_cyclic, quotient_hash, quotient_metabelian, quotient_nilpotent, quotient_order, quotient_simple, quotient_solvable, quotient_supersolvable, quotient_tex, simple, solvable, special_labels, split, standard_generators, stem, subgroup, subgroup_hash, subgroup_order, subgroup_tex, supersolvable, sylow".split(", ")
+            search_cols = "Agroup, Zgroup, abelian, ambient, ambient_counter, ambient_order, ambient_tex, central, central_factor, centralizer_order, characteristic, core_order, counter, cyclic, dihedral, direct, familial, hall, label, maximal, maximal_normal, metabelian, metacyclic, minimal, minimal_normal, nilpotent, normal, old_label, outer_equivalence, perfect, proper, quotient, quotient_Agroup, quotient_abelian, quotient_cyclic, quotient_hash, quotient_metabelian, quotient_nilpotent, quotient_order, quotient_simple, quotient_solvable, quotient_supersolvable, quotient_tex, simple, solvable, special_labels, split, standard_generators, stem, subgroup, subgroup_hash, subgroup_order, subgroup_tex, supersolvable, sylow".split(", ")
             data_cols = ["label", "ambient"] + [col for col in cols if col not in search_cols]
-            headers["SubGrpSearch"] = (search_cols, [tbl.col_type[col] for col in search_cols])
+            headers["SubGrpSearch"] = (search_cols, ["boolean" if col in ["dihedral", "familial"] else tbl.col_type[col] for col in search_cols])
             headers["SubGrpData"] = (data_cols, [tbl.col_type[col] for col in data_cols])
         else:
             types = [tbl.col_type[col] for col in cols]
