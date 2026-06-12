@@ -425,7 +425,7 @@ intrinsic LabelSubgroups(S::SubgroupLat)
             end for;
         end for;
     end for;
-end intrinsic
+end intrinsic;
 
 function testsig(m:index := 0)
     for n:= 4 to m do

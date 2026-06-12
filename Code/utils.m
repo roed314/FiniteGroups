@@ -37,7 +37,7 @@ intrinsic PySplit(s::MonStgElt, sep::MonStgElt : limit:=-1) -> SeqEnum[MonStgElt
         error "Empty separator";
     elif #sep eq 1 then
         // Magma's built in Split is faster here
-        return Split(s, sep: IncludeEmpty) cat (s[#s] eq sep select [""] else []);
+        return Split(s, sep: IncludeEmpty);
     end if;
     i := 1;
     j := 0;
@@ -281,13 +281,25 @@ intrinsic CremonaUncode(code::MonStgElt) -> RngIntElt
     if &and[48 le c and c le 57 : c in digits] then
         return StringToInteger(code);
     elif &and[97 le c and c le 122 : c in digits] then
+        shift := 97;
+    elif &and[65 le c and c le 90 : c in digits] then
+        shift := 65;
+    else
+        error "Not a valid cremona code";
+    end if;
+    return &+[(digits[i] - shift) * 26^(#digits - i) : i in [1..#digits]];
+    // The following code does not work since Magma's StringToInteger has a bug for base > 16
+    /*digits := [StringToCode(c) : c in Eltseq(code)];
+    if &and[48 le c and c le 57 : c in digits] then
+        return StringToInteger(code);
+    elif &and[97 le c and c le 122 : c in digits] then
         code := Join([CodeToString(c le 106 select c-49 else c-10) : c in digits], "");
     elif &and[65 le c and c le 90 : c in digits] then
         code := Join([CodeToString(c le 74 select c-17 else c-10) : c in digits], "");
     else
         error "Not a valid cremona code";
     end if;
-    return StringToInteger(code, 26);
+    return StringToInteger(code, 26);*/
 end intrinsic;
 
 intrinsic SortLabels(labels::SeqEnum) -> SeqEnum
@@ -557,6 +569,12 @@ intrinsic StringToGroup(s::MonStgElt : baseG:=0) -> Grp
         assert cmd in ["GL", "SL", "Sp", "SO", "SOPlus", "SOMinus", "SU", "GO", "GOPlus", "GOMinus", "GU", "CSp", "CSO", "CSOPlus", "CSOMinus", "CSU", "CO", "COPlus", "COMinus", "CU", "Omega", "OmegaPlus", "OmegaMinus", "Spin", "SpinPlus", "SpinMinus", "PGL", "PSL", "PSp", "PSO", "PSOPlus", "PSOMinus", "PSU", "PGO", "PGOPlus", "PGOMinus", "PGU", "POmega", "POmegaPlus", "POmegaMinus", "PGammaL", "PSigmaL", "PSigmaSp", "PGammaU", "AGL", "ASL", "ASp", "AGammaL", "ASigmaL", "ASigmaSp"];
         CMD := eval cmd;
         if cmd in ["AGL", "ASL"] then // wish we could do "ASp", "AGammaL", "ASigmaL", "ASigmaSp"
+            if n eq 1 and cmd eq "AGL" then
+                // Magma fails at this
+                k := GF(q);
+                a := PrimitiveElement(k);
+                return sub<GL(2,k)|[a,0,0,1],[1,0,1,1]>;
+            end if;
             return CMD(GrpMat, n, q);
         else
             return CMD(n, q);
@@ -729,7 +747,7 @@ intrinsic GroupToString(G::Grp : use_id:=true) -> MonStgElt
         if Type(G) eq GrpPC then
             gens := PCGenerators(G);
         else
-            gens := Generators(G);
+            gens := GeneratorsSequence(G);
         end if;
         auts := &cat[[phi(g) : g in gens] : phi in Generators(A)];
         gens := [SaveElt(g) : g in gens];
@@ -742,12 +760,12 @@ intrinsic GroupToString(G::Grp : use_id:=true) -> MonStgElt
             t,n := TransitiveGroupIdentification(G);
             return Sprintf("%oT%o", n, t);
         else
-            return Sprintf("%oPerm%o", Degree(G), Join([Sprint(EncodePerm(g)) : g in Generators(G)], ","));
+            return Sprintf("%oPerm%o", Degree(G), Join([Sprint(EncodePerm(g)) : g in GeneratorsSequence(G)], ","));
         end if;
     elif Type(G) eq GrpMat then
         // L, R := MatricesToHexlist([g : g in Generators(G)], CoefficientRing(G));
         // return Sprintf("%o,%oMat%o", Dimension(G), R, &*[Sprint(c) : c in L]);
-        L, R := MatricesToIntegers([g : g in Generators(G)], CoefficientRing(G));
+        L, R := MatricesToIntegers([g : g in GeneratorsSequence(G)], CoefficientRing(G));
         return Sprintf("%o,%oMAT%o", Dimension(G), R, Join([Sprint(c) : c in L], ","));
     else
         if Type(G) eq GrpAb then

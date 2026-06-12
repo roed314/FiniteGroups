@@ -56,11 +56,6 @@ intrinsic nilpotency_class(G::LMFDBGrp) -> RngIntElt
     return NilpotencyClass(G`MagmaGrp);
 end intrinsic;
 
-intrinsic ngens(G::LMFDBGrp) -> RngIntElt
-{Number of generators of the group in this presentation}
-    return Ngens(G`MagmaGrp);
-end intrinsic;
-
 intrinsic derived_length(G::LMFDBGrp) -> RngIntElt
 {Derived length of the group: length of the derived series}
     return DerivedLength(G`MagmaGrp);

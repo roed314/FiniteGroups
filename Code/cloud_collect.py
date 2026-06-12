@@ -1091,15 +1091,114 @@ def make_collation(code_lookup=None, label_lookup=None):
 
 # To improve the comparison of latex names, we parse them into a structured form using regular expressions
 
+lie_lookup = {
+    "GL": ("GL", 105), # prefer these to any product expression
+    "SL": ("SL", 106),
+    "PSL": ("PSL", 107),
+    "PGL": ("PGL", 108),
+    "Sp": ("Sp", 109),
+    "SO": ("SO", 110),
+    "GSp": ("GSp", 111),
+    "CSp": ("GSp", 111),
+    "SU": ("SU", 205), # prefer these to non-direct product expressions
+    "PSp": ("PSp", 206),
+    "PSO": ("PSO", 207),
+    "PSU": ("PSU", 208),
+    "SOPlus": ("SOPlus", 209),
+    "SO+": ("SOPlus", 209),
+    "SOMinus": ("SOMinus", 210),
+    "SO-": ("SOMinus", 210),
+    "Orth": ("Orth", 211),
+    "GO": ("Orth", 211),
+    "OrthPlus": ("OrthPlus", 212),
+    "GOPlus": ("OrthPlus", 212),
+    "Orth+": ("OrthPlus", 212),
+    "GO+": ("OrthPlus", 212),
+    "OrthMinus": ("OrthMinus", 213),
+    "GOMinus": ("OrthMinus", 213),
+    "Orth-": ("OrthMinus", 213),
+    "GO-": ("OrthMinus", 213),
+    "Unitary": ("Unitary", 214),
+    "GU": ("Unitary", 214),
+    "Omega": ("Omega", 215),
+    "OmegaPlus": ("OmegaPlus", 216),
+    "Omega+": ("OmegaPlus", 216),
+    "OmegaMinus": ("OmegaMinus", 217),
+    "Omega-": ("OmegaMinus", 217),
+    "PSOPlus": ("PSOPlus", 218),
+    "PSO+": ("PSOPlus", 218),
+    "PSOMinus": ("PSOMinus", 219),
+    "PSO-": ("PSOMinus", 219),
+    "PO": ("PO", 220),
+    "PGO": ("PO", 220),
+    "POPlus": ("POPlus", 221),
+    "PGOPlus": ("POPlus", 221),
+    "PO+": ("POPlus", 221),
+    "PGO+": ("POPlus", 221),
+    "POMinus": ("POMinus", 222),
+    "PGOMinus": ("POMinus", 222),
+    "PO-": ("POMinus", 222),
+    "PGO-": ("POMinus", 222),
+    "PU": ("PU", 223),
+    "PGU": ("PU", 223),
+    "POmega": ("POmega", 224),
+    "POmegaPlus": ("POmegaPlus", 225),
+    "POmega+": ("POmegaPlus", 225),
+    "POmegaMinus": ("POmegaMinus", 226),
+    "POmega-": ("POmegaMinus", 226),
+    "Spin": ("Spin", 260), # prefer a 2-term product to these
+    "SpinPlus": ("SpinPlus", 261),
+    "Spin+": ("SpinPlus", 261),
+    "SpinMinus": ("SpinMinus", 262),
+    "Spin-": ("SpinMinus", 262),
+    "GSO": ("GSO", 263),
+    "CSO": ("GSO", 263),
+    "GSOPlus": ("GSOPlus", 264),
+    "CSOPlus": ("GSOPlus", 264),
+    "GSO+": ("GSOPlus", 264),
+    "CSO+": ("GSOPlus", 264),
+    "GSOMinus": ("GSOMinus", 265),
+    "CSOMinus": ("GSOMinus", 265),
+    "GSO-": ("GSOMinus", 265),
+    "CSO-": ("GSOMinus", 265),
+    "GSU": ("GSU", 266),
+    "CSU": ("GSU", 266),
+    "GOrth": ("GOrth", 267),
+    "CO": ("GOrth", 267),
+    "GOrthPlus": ("GOrthPlus", 268),
+    "GOPlus": ("GOrthPlus", 268),
+    "COPlus": ("GOrthPlus", 268),
+    "GOrth+": ("GOrthPlus", 268),
+    "GO+": ("GOrthPlus", 268),
+    "CO+": ("GOrthPlus", 268),
+    "GOrthMinus": ("GOrthMinus", 269),
+    "GOMinus": ("GOrthMinus", 269),
+    "COMinus": ("GOrthMinus", 269),
+    "GOrth-": ("GOrthMinus", 269),
+    "GO-": ("GOrthMinus", 269),
+    "CO-": ("GOrthMinus", 269),
+    "GUnitary": ("GUnitary", 270),
+    "CU": ("GUnitary", 270),
+    "PGammaL": ("PGammaL", 271),
+    "PSigmaL": ("PSigmaL", 272),
+    "PSigmaSp": ("PSigmaSp", 273),
+    "PGammaU": ("PGammaU", 274),
+    "AGL": ("AGL", 275),
+    "ASL": ("ASL", 276),
+    "ASp": ("ASp", 277),
+    "AGammaL": ("AGammaL", 278),
+    "ASigmaL": ("ASigmaL", 279),
+    "ASigmaSp": ("ASigmaSp", 280),
+}
 wreath_sub = re.compile(r"\{\\rm wr([^\}]+)\}")
 tokenD = dict([
-    ("chev1", r"(?:\{\}\^(?P<chev1twist>\d))?(?P<chev1family>[A-G])_(?P<chev1d>\d)\((?P<chev1q>\d+)\)"), # chevalley groups in first notation; has to come before basic so that F_4(2) takes priority over F_4, etc.
+    ("chev1", r"(?:\{\}\^(?P<chev1twist>\d))?(?P<chev1family>[A-G])_(?P<chev1d>\d)\((?P<chev1q>\d+)\)(?P<chev1prime>'?)"), # chevalley groups in first notation; has to come before basic so that F_4(2) takes priority over F_4, etc.
     ("basic", r"(?P<basicfamily>[ACDFMQS])_\{?(?P<basicN>\d+)\}?"), # alternating, cyclic, dihedral, Frobenius, Mathieu, generalized quaternion, symmetric
     ("dihedral", r"(?:\{\\rm |\\)?(?P<dihedralfamily>[OS]?D)\}?_\{?(?P<dihedralN>\d+)\}?"), # semidihedral, other-dihedral
     ("heisenberg", r"(?:\{\\rm |\\)?He\}?_\{?(?P<heisenbergN>\d+)\}?"), # Heisenberg
-    ("lie", r"(?:(?:\{\\rm |\\)?(?P<liefamily>[AP]?[GS](?:igma|amma)?L|[CP]?[GS]?(?:amma)?U|[ACP]?(?:G|S|SigmaS)?[Op](?:Plus|Minus)?|P?(?:Omega|Spin)(?:Plus|Minus)?)\}?(?P<lieplus>\+?))\((?P<lied>\d+),(?P<lieq>\d+|(?:\\mathbb\{)?Z\}?/4)\)"), # matrix groups
-    ("chev2", r"(?:\{\}\^)?(?P<chev2twist>\d)?(?P<chev2family>[A-G])\((?P<chev2d>\d+),(?P<chev2q>\d+)\)'?"), # chevalley groups in second notation
-    ("sporadic", r"(?:\\?operatorname\{|\\)?(?P<sporadicfamily>Ru|McL|He|J|Co|HS)\}?(?:_(?P<sporadicN>\d))?"),
+    ("lie", r"(?:(?:\{\\rm |\\)?(?P<liefamily>" + "|".join(x.replace("+", r"\+") for x in lie_lookup) + r")\}?(?P<lieplus>\+?))\((?P<lied>\d+),(?P<lieq>\d+|(?:\\mathbb\{)*Z\}*/4)\)"), # matrix groups
+    ("chev2", r"(?:\{\}\^)?(?P<chev2twist>\d)?(?P<chev2family>[A-G])\((?P<chev2d>\d+),(?P<chev2q>\d+)\)(?P<chev2prime>'?)"), # chevalley groups in second notation
+    ("sporadic", r"(?:\\?operatorname\{|\\)?(?P<sporadicfamily>Ru|McL|He|HE|J|Co|HS|Suz|Fi|Ly|ON|Th|HN|B|M)\}?(?:_(?P<sporadicN>\d))?"),
     ("oparen", r"\("),
     ("cparen", r"\)"),
     ("exp", r"\^\{?(?P<expN>\d+)\}?"),
@@ -1139,7 +1238,7 @@ def fix_latex(tokens):
             # For Chevalley groups, we prefer classical notation like PSL(2, q) when available, and otherwise notation like {}^3D(4, 2).
             kind = "chev"
             if groups["twist"]:
-                tex = f'{{}}^{groups["twist"]}{groups["family"]}({groups["d"]},{groups["q"]})'
+                tex = f'{{}}^{groups["twist"]}{groups["family"]}({groups["d"]},{groups["q"]}){groups["prime"]}'
             else:
                 tex = f'{groups["family"]}({groups["d"]},{groups["q"]})'
         elif kind == "heisenberg":
@@ -1154,10 +1253,18 @@ def fix_latex(tokens):
             if groups["plus"]:
                 family += "Plus"
             groups["family"] = family
-            groups["q"] = q = groups["q"].replace("Z", r"\mathbb{Z}")
+            # We have replaced Z by \mathbb{Z} too many times...
+            q = groups["q"]
+            while r"\mathbb{Z}" in q:
+                q = q.replace(r"\mathbb{Z}", "Z")
+            # Now add one back in...
+            q = q.replace("Z", r"\mathbb{Z}")
+            groups["q"] = q
             tex = fr'\{family}({groups["d"]},{q})'
         elif kind == "sporadic":
             tex = groups["family"]
+            if tex == "HE":
+                tex = "He"
             if tex != "J":
                 tex = fr"\{tex}"
             if groups["N"]:
@@ -1170,6 +1277,10 @@ class Expr:
     @lazy_attribute
     def latex_to_file(self):
         return self.latex.replace("\\", "\\\\")
+    @lazy_attribute
+    def value_in_direct_prod(self):
+        # Behaves the same as value, except for terms of the form X^a,
+        return self.value
 
 class Paren(Expr):
     minpriority = 9 # never affects minpriority for products, since this is larger than the largest
@@ -1203,6 +1314,10 @@ class Exp(Expr):
     @lazy_attribute
     def value(self):
         return self.base.value + 2*self.n + 1
+    @lazy_attribute
+    def value_in_direct_prod(self):
+        # Behaves the same as value, except for terms of the form X^a,
+        return self.base.value + 0.01*self.n
     @lazy_attribute
     def latex(self):
         if len(str(self.n)) == 1:
@@ -1298,29 +1413,20 @@ class Prod(Expr):
         if self.abelian: # only case where it's clear what to do
             return self.order
 
-goodlies = ["GL", "SL", "PSL", "PGL", "Sp", "SO"] # prefer these to any product expression
-mediumlies = ["SU", "PSp", "PSO", "PSU", "SOPlus", "SOMinus", "GO", "GOPlus", "GOMinus", "GU", "Omega", "OmegaPlus", "OmegaMinus", "PSOPlus", "PSOMinus", "PGO", "PGOPlus", "PGOMinus", "PGU", "POmega", "POmegaPlus", "POmegaMinus"] # prefer these to non-direct product expressions
-badlies = ["Spin", "SpinPlus", "SpinMinus", "CSp", "CSO", "CSOPlus", "CSOMinus", "CSU", "CO", "COPlus", "COMinus", "CU", "PGammaL", "PSigmaL", "PSigmaSp", "PGammaU", "AGL", "ASL", "ASp", "AGammaL", "ASigmaL", "ASigmaSp"]
 class Lie(Expr):
     minpriority = 10
     def __init__(self, groups):
-        self.family = groups["family"]
+        self.family, self.value = lie_lookup[groups["family"]]
+        if groups.get("plus"):
+            self.family += "Plus"
+        # value might have ties, which we break by d, then q.
         self.d = groups["d"]
-        self.q = str(groups["q"]) # note that this could be a string like Z/4
+        self.q = str(groups["q"]) # note that this could be a string like \mathbb{Z}/4
         # Adjust to use GL/SL rather than PSL in some circumstances
         if self.family in ["SL", "PSL", "PGL"] and self.q == "2":
             self.family = "GL"
         if self.family == "PSL" and self.q.isdigit() and (int(self.q) % 2 == 0 and self.d == "2" or self.q == "3" and int(self.d) % 2 == 1):
             self.family = "SL"
-    @lazy_attribute
-    def value(self):
-        # These might have ties, which we break by d, then q.
-        if self.family in goodlies:
-            return 105 + goodlies.index(self.family)
-        elif self.family in mediumlies:
-            return 205 + mediumlies.index(self.family) # Prefer a 2-term direct product over this; prefer this over a semidirect or nonsplit product
-        else:
-            return 260 + badlies.index(self.family) # Prefer a 2-term product to these.
     @lazy_attribute
     def latex(self):
         # We require that appropriate macros for each family are defined
@@ -1529,9 +1635,14 @@ def parse_tokens(tokens):
         return terms[0]
     return Prod(terms, ops)
 
+def clean_tex(tex_name):
+    # Deal with common issues from input files
+    return tex_name.replace("\\\\", "\\").replace('"', '')
+
 @cached_function
 def parse(tex_name):
     if tex_name is not None and tex_name != r"\N":
+        tex_name = clean_tex(tex_name)
         tokens = tokenize(tex_name)
         fix_latex(tokens)
         return parse_tokens(tokens)
@@ -1613,11 +1724,14 @@ def get_tex_data_gps(order_limit=None, from_db=False, gpsource=None):
     direct_data = {}
     cyclic = set()
     finalized = set()
+    oneoff = defaultdict(dict)
+    update = defaultdict(lambda: defaultdict(list)) # Record where we need to update the subgroup table after computing new tex_names
+    borked = []
     if from_db:
         query = {}
         if order_limit:
             query["order"] = {"$lte": order_limit}
-        gpsource = db.gps_groups.search(query, ["label", "tex_name", "name", "representations", "order", "cyclic", "abelian", "smith_abelian_invariants", "direct_factorization", "wreath_data"])
+        gpsource = db.gps_groups.search(query, ["label", "tex_name", "name", "representations", "order", "cyclic", "abelian", "smith_abelian_invariants", "direct_factorization", "wreath_data", "aut_tex", "outer_tex", "inner_tex", "autcent_tex", "autcentquo_tex", "aut_group", "outer_group", "central_quotient", "autcent_group", "autcentquo_group"])
     elif gpsource is None:
         gpsource = _gps_data_from_file(order_limit)
     for ctr, rec in enumerate(gpsource):
@@ -1638,6 +1752,31 @@ def get_tex_data_gps(order_limit=None, from_db=False, gpsource=None):
             orig_tex_names[label] = None
             tex_names[label] = None
             orig_names[label] = None
+        for typ, olabel, tex in [("aut", rec.get("aut_group"), rec.get("aut_tex")),
+                                ("outer", rec.get("outer_group"), rec.get("outer_tex")),
+                                ("inner", rec.get("central_quotient"), rec.get("inner_tex")),
+                                ("autcent", rec.get("autcent_group"), rec.get("autcent_tex")),
+                                ("autcentquo", rec.get("autcentquo_group"), rec.get("autcentquo_tex"))]:
+            if olabel is None:
+                if tex is not None:
+                    one = parse(tex)
+                    if one.latex_to_file != tex:
+                        oneoff[typ][tex] = one.latex_to_file
+                        if "\\" in tex:
+                            # We've sometimes replaced the double underscores in the file with single underscores
+                            # but at the location oneoff is used that hasn't been done.
+                            oneoff[typ][tex.replace("\\", "\\\\")] = one.latex_to_file
+            else:
+                update[typ][olabel].append(label)
+                if tex is not None and tex not in options.get(olabel, []):
+                    newopt = parse(tex)
+                    N = int(olabel.split(".")[0])
+                    if (newopt.order is None or newopt.order == N) and (newopt.abelian is None or rec["abelian"] is None or newopt.abelian == rec["abelian"]):
+                        if olabel not in by_order[N]: # Might be a small group id not in the database
+                            by_order[N].add(olabel)
+                        options[olabel][tex] = newopt
+                    else:
+                        borked.append((label, typ, olabel, tex))
         reps = rec["representations"]
         if isinstance(reps, dict):
             reps = reps.get("Lie", [])
@@ -1648,10 +1787,10 @@ def get_tex_data_gps(order_limit=None, from_db=False, gpsource=None):
             wreath_data[label] = rec["wreath_data"]
         if rec["direct_factorization"]:
             direct_data[label] = rec["direct_factorization"]
-        if ctr and ctr % 10000 == 0:
+        if ctr and ctr % 1000 == 0:
             print(f"groups {ctr} ({label}) {time.time() - t0}", end="\r")
-    print("groups done!                                    ")
-    return tex_names, orig_tex_names, orig_names, options, by_order, wreath_data, direct_data, cyclic, finalized
+    print(f"groups done! ({time.time() - t0})                                   ")
+    return tex_names, orig_tex_names, orig_names, options, by_order, wreath_data, direct_data, cyclic, finalized, oneoff, update, borked
 
 def _sub_data_from_file(order_limit=None):
     cols = ["label", "short_label", "subgroup", "ambient", "quotient", "subgroup_tex", "ambient_tex", "quotient_tex", "subgroup_order", "quotient_order", "split", "direct"]
@@ -1667,7 +1806,7 @@ def _sub_data_from_file(order_limit=None):
                     continue
                 yield dict(zip(cols, vals))
 
-def get_tex_data_subs(orig_tex_names, wreath_data, options, by_order, order_limit=None, from_db=False, subsource=None):
+def get_tex_data_subs(orig_tex_names, wreath_data, options, by_order, oneoff, update, borked, order_limit=None, from_db=False, subsource=None):
     # Now we get more options from gps_subgroups_test
     lmfdb_path = os.path.expanduser("~/lmfdb")
     if lmfdb_path not in sys.path:
@@ -1675,35 +1814,39 @@ def get_tex_data_subs(orig_tex_names, wreath_data, options, by_order, order_limi
     from lmfdb import db
     t0 = time.time()
     subs = defaultdict(set) # Store normal subgroups from which we can construct new product decompositions
-    sub_update = defaultdict(lambda: defaultdict(list)) # Record where we need to update the subgroup table after computing new tex_names
-    sub_oneoff = defaultdict(dict)
     wd_lookup = defaultdict(dict)
-    borked = []
     if from_db:
         query = {}
         if order_limit:
             query["ambient_order"] = {"$lte": order_limit}
-        subsource = db.gps_subgroups_test.search(query, ["label", "short_label", "subgroup", "ambient", "quotient", "subgroup_tex", "ambient_tex", "quotient_tex", "subgroup_order", "quotient_order", "split", "direct"])
+        subsource = db.gps_subgroups_search.search(query, ["label", "short_label", "subgroup", "ambient", "quotient", "subgroup_tex", "ambient_tex", "quotient_tex", "subgroup_order", "quotient_order", "split", "direct"])
     elif subsource is None:
         subsource = _sub_data_from_file(order_limit)
     for ctr, rec in enumerate(subsource):
         subgroup, ambient, quotient = rec["subgroup"], rec["ambient"], rec["quotient"]
+        if ctr and ctr % 1000 == 0:
+            print(f"subgroups {ctr} ({ambient}) {time.time() - t0}", end="\r")
         assert ambient is not None
         stex, atex, qtex = rec["subgroup_tex"], rec["ambient_tex"], rec["quotient_tex"]
         sord, qord = rec["subgroup_order"], rec["quotient_order"]
         for typ, label, tex in [("subgroup", subgroup, stex), ("ambient", ambient, atex), ("quotient", quotient, qtex)]:
-
             if label is None:
                 if tex is not None:
-                    oneoff = parse(tex)
-                    if oneoff.latex != tex:
-                        sub_oneoff[typ][tex] = oneoff.latex
+                    one = parse(tex)
+                    if one.latex_to_file != tex:
+                        oneoff[typ][tex] = one.latex_to_file
+                        if "\\" in tex:
+                            # We've sometimes replaced the double underscores in the file with single underscores
+                            # but at the location oneoff is used that hasn't been done.
+                            oneoff[typ][tex.replace("\\", "\\\\")] = one.latex_to_file
             else:
-                sub_update[typ][label].append(rec["label"])
-                if tex is not None and tex != orig_tex_names[label] and tex not in options[label]:
+                update[typ][label].append(rec["label"])
+                # Note that label might be a small group id that's not in the database, so orig_tex_names[label] may not be defined.
+                if tex is not None and tex != orig_tex_names.get(label) and tex not in options.get(label, []):
                     newopt = parse(tex)
                     N = int(label.split(".")[0])
-                    if newopt.order is None or newopt.order == N:
+                    abcol = "quotient_abelian" if typ == "quotient" else "abelian"
+                    if (newopt.order is None or newopt.order == N) and (newopt.abelian is None or rec["abelian"] is None or typ == "ambient" or newopt.abelian == rec[abcol]):
                         if label not in by_order[N]: # Might be a small group id not in the database
                             by_order[N].add(label)
                         options[label][tex] = newopt
@@ -1721,10 +1864,8 @@ def get_tex_data_subs(orig_tex_names, wreath_data, options, by_order, order_limi
             len(wreath_data[ambient]) == 4 and
             rec["short_label"] in wreath_data[ambient][:2]):
             wd_lookup[ambient][rec["short_label"]] = (subgroup, stex)
-        if ctr and ctr % 10000 == 0:
-            print(f"subgroups {ctr} ({ambient}) {time.time() - t0}", end="\r")
-    print("subgroups done!                               ")
-    return subs, sub_update, sub_oneoff, wd_lookup, borked
+    print(f"subgroups done! ({time.time() - t0})                              ")
+    return subs, wd_lookup
 
 def get_good_names(tex_names, options, by_order, wreath_data, wd_lookup, direct_data, cyclic, finalized, subs, borked):
     lmfdb_path = os.path.expanduser("~/lmfdb")
@@ -1734,8 +1875,8 @@ def get_good_names(tex_names, options, by_order, wreath_data, wd_lookup, direct_
     t0 = time.time()
     ties = {}
     for ctr, order in enumerate(sorted(by_order)):
-        if ctr and ctr % 400 == 0:
-            print("Finalizing order", order, time.time() - t0)
+        if ctr and ctr % 50 == 0:
+            print(f"Finalizing order {order} {time.time() - t0}", end="\r")
         for label in by_order[order]:
             if label in finalized:
                 continue
@@ -1779,8 +1920,10 @@ def get_good_names(tex_names, options, by_order, wreath_data, wd_lookup, direct_
                 else:
                     terms += [B]
                 newopt = Prod(terms, ops)
-                assert newopt.order in [None, order]
-                options[label][newopt.latex] = newopt
+                if newopt.order in [None, order]:
+                    options[label][newopt.latex] = newopt
+                else:
+                    borked.append(newopt)
             if label in direct_data:
                 # TODO: collapse cyclic factors, collect terms appropriately before parenthesizing
                 terms = []
@@ -1810,7 +1953,7 @@ def get_good_names(tex_names, options, by_order, wreath_data, wd_lookup, direct_
                         assert terms[0].order in [None, order]
                         options[label][terms[0].latex] = terms[0]
                     else:
-                        terms.sort(key=lambda term: (term.value, 1000000000 if term.order is None else term.order))
+                        terms.sort(key=lambda term: (term.value_in_direct_prod, 1000000000 if term.order is None else term.order, term.latex))
                         newopt = Prod(terms, [r"\times "] * (len(terms) - 1))
                         assert newopt.order in [None, order]
                         options[label][newopt.latex] = newopt
@@ -1851,7 +1994,7 @@ def get_good_names(tex_names, options, by_order, wreath_data, wd_lookup, direct_
                             assert terms[0].order in [None, order]
                             options[label][terms[0].latex] = terms[0]
                         else:
-                            terms.sort(key=lambda term: (term.value, 1000000000 if term.order is None else term.order))
+                            terms.sort(key=lambda term: (term.value_in_direct_prod, 1000000000 if term.order is None else term.order, term.latex))
                             newopt = Prod(terms, [r"\times "] * (len(terms) - 1))
                             assert newopt.order in [None, order]
                             options[label][newopt.latex] = newopt
@@ -1869,13 +2012,14 @@ def get_good_names(tex_names, options, by_order, wreath_data, wd_lookup, direct_
                     tex_names[label] = best[0]
                 else:
                     borked.append((label, None, "final"))
+    print(f"Done with good_names {time.time() - t0}               ")
     return ties
 
 def get_all_names(order_limit=None, from_db=False):
-    tex_names, orig_tex_names, orig_names, options, by_order, wreath_data, direct_data, cyclic, finalized = get_tex_data_gps(order_limit=order_limit, from_db=from_db)
+    tex_names, orig_tex_names, orig_names, options, by_order, wreath_data, direct_data, cyclic, finalized, oneoff, update, borked = get_tex_data_gps(order_limit=order_limit, from_db=from_db)
 
     # also updates options
-    subs, sub_update, sub_oneoff, wd_lookup, borked = get_tex_data_subs(orig_tex_names, wreath_data, options, by_order, order_limit=order_limit, from_db=from_db)
+    subs, wd_lookup = get_tex_data_subs(orig_tex_names, wreath_data, options, by_order, oneoff, update, borked, order_limit=order_limit, from_db=from_db)
 
     # also updates tex_names
     ties = get_good_names(tex_names, options, by_order, wreath_data, wd_lookup, direct_data, cyclic, finalized, subs, borked)
@@ -1900,7 +2044,7 @@ def get_all_names(order_limit=None, from_db=False):
         ctr = 0
         with open(f"New{typ.capitalize()}TexNames.txt", "w") as Fout:
             _ = Fout.write(f"label|{typ}_tex\ntext|text\n\n")
-            for abstract_label, sub_labels in sub_update[typ].items():
+            for abstract_label, sub_labels in update[typ].items():
                 for sub_label in sub_labels:
                     if tex_names[abstract_label] is not None:
                         newtex = tex_names[abstract_label].latex_to_file
@@ -2022,16 +2166,6 @@ def create_gps_subgroups_indexes():
                  ['mobius_quo'],
                  ['direct']]:
         db.gps_subgroups_test.create_index(cols)
-
-#basics = "CSADQFM"
-
-    ("chev1", r"(?:\{\}\^(?P<chev1twist>\d))?(?P<chev1family>[A-G])_(?P<chev1d>\d)\((?P<chev1q>\d+)\)"), # chevalley groups in first notation; has to come before basic so that F_4(2) takes priority over F_4, etc.
-    ("basic", r"(?P<basicfamily>[ACDFMQS])_\{?(?P<basicN>\d+)\}?"), # alternating, cyclic, dihedral, Frobenius, Mathieu, generalized quaternion, symmetric
-    ("dihedral", r"(?:\{\\rm )?(?P<dihedralfamily>[OS]?D)\}?_\{?(?P<dihedralN>\d+)\}?"), # semidihedral, other-dihedral
-    ("heisenberg", r"(?:\{\\rm )?He\}?_\{?(?P<heisenbergN>\d+)\}?"), # Heisenberg
-    ("lie", r"(?:(?:\{\\rm )?(?P<liefamily>[AP]?[GS]L|[CP]?SU|P?SO?)\}?(?P<lieplus>\+?))\((?P<lied>\d+),(?P<lieq>\d+|Z/4)\)"), # matrix groups
-    ("chev2", r"(?P<chev2twist>\d)?(?P<chev2family>[A-G])\((?P<chev2d>\d+),(?P<chev2q>\d+)\)'?"), # chevalley groups in second notation
-    ("sporadic", r"(?:operatorname\{)?(?P<sporadicfamily>Ru|McL|He|J|Co|HS)\}?(?:_(?P<sporadicN>\d))?"),
 
 def make_special_names():
     lmfdb_path = os.path.expanduser("~/lmfdb")

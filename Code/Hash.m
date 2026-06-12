@@ -113,6 +113,14 @@ Estimates on how long it will take to run for the small group orders
     end if;
 end intrinsic;
 
+intrinsic perm_hash(G::GrpPerm) -> RngIntElt
+{A variant on hash that is only an invariant up to isomorphism of permutation groups (ie, conjugacy within the ambient symmetric group).}
+    // Should add things here, like the orbit structure
+    Ts := Sort([[#O, TransitiveGroupIdentification(Image(Action(G, O)))] : O in Orbits(G)]);
+    Ms := Sort([[Order(G), CycleHash(G)]] cat [[H`order, CycleHash(H`subgroup)] : H in MaximalSubgroups(G)]);
+    return CollapseIntList(Ts cat Ms);
+end intrinsic;
+
 function NQ(G, H)
     // Either the normalizer or the quotient (or G if index too large)
     if IsNormal(G, H) then

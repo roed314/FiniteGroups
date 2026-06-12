@@ -393,3 +393,22 @@ StringToGroupHom := function(s)
     return [IdentityMapping(G), 0];
 end;
 
+LoadElt := function(x, G)
+    if IsPermGroup(G) then
+        return DecodePerm(x, LargestMovedPoint(G));
+    fi;
+    if IsPcGroup(G) then
+        return DecodePcElt(x, G);
+    fi;
+    ErrorNoReturn("Unsupported group type");
+end;
+
+SaveElt := function(x, G)
+    if IsPermGroup(G) then
+        return EncodePerm(x, LargestMovedPoint(G));
+    fi;
+    if IsPcGroup(G) then
+        return EncodePcElt(x, G);
+    fi;
+    ErrorNoReturn("Unsupported group type");
+end;
